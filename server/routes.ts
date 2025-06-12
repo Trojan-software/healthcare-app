@@ -260,6 +260,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile
+  app.put("/api/user", verifyToken, async (req: any, res) => {
+    try {
+      const { firstName, lastName, username, mobileNumber } = req.body;
+      const userId = req.user.userId;
+
+      // Check if username is already taken by another user
+      if (username) {
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ message: "Username is already taken" });
+        }
+      }
+
+      // Update user data
+      const updatedUser = await storage.updateUser(userId, {
+        firstName,
+        lastName,
+        username,
+        mobileNumber,
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   // Record vital signs
   app.post("/api/vital-signs", verifyToken, async (req: any, res) => {
     try {
