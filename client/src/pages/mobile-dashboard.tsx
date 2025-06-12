@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Smartphone, Settings, Bluetooth, Heart, TrendingUp, Users, Calendar, AlertTriangle, ArrowLeft, History } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Smartphone, Settings, Bluetooth, Heart, TrendingUp, Users, Calendar, AlertTriangle, ArrowLeft, History, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
@@ -20,6 +20,39 @@ interface DashboardStats {
 
 export default function MobileDashboard() {
   const [activeTab, setActiveTab] = useState<'monitor' | 'bluetooth' | 'history' | 'analytics' | 'settings'>('monitor');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check if user is already authenticated
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const quickLogin = async () => {
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'password123'
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('auth_user', JSON.stringify(data.user));
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  };
 
   // Mock dashboard stats for demonstration
   const { data: stats } = useQuery<DashboardStats>({
@@ -66,13 +99,32 @@ export default function MobileDashboard() {
             </div>
             
             <div className="flex items-center space-x-2">
+              {!isAuthenticated && (
+                <Button 
+                  onClick={quickLogin}
+                  variant="outline" 
+                  size="sm" 
+                  className="px-3 py-1 text-xs"
+                >
+                  <LogIn className="h-4 w-4 mr-1" />
+                  Login
+                </Button>
+              )}
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm" className="p-2">
                   <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                 </Button>
               </Link>
-              <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                isAuthenticated 
+                  ? 'bg-green-100 dark:bg-green-900' 
+                  : 'bg-gray-100 dark:bg-gray-700'
+              }`}>
+                <div className={`w-3 h-3 rounded-full ${
+                  isAuthenticated 
+                    ? 'bg-green-500 animate-pulse' 
+                    : 'bg-gray-400'
+                }`}></div>
               </div>
             </div>
           </div>
