@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Smartphone, Settings, Bluetooth, Heart, TrendingUp, Users, Calendar, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Smartphone, Settings, Bluetooth, Heart, TrendingUp, Users, Calendar, AlertTriangle, ArrowLeft, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import BluetoothDeviceManager from "@/components/BluetoothDeviceManager";
 import MobileVitalSignsInput from "@/components/MobileVitalSignsInput";
+import VitalSignsHistory from "@/components/VitalSignsHistory";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import AlertsPanel from "@/components/AlertsPanel";
 import ReminderSettings from "@/components/ReminderSettings";
@@ -18,7 +19,7 @@ interface DashboardStats {
 }
 
 export default function MobileDashboard() {
-  const [activeTab, setActiveTab] = useState<'monitor' | 'bluetooth' | 'analytics' | 'settings'>('monitor');
+  const [activeTab, setActiveTab] = useState<'monitor' | 'bluetooth' | 'history' | 'analytics' | 'settings'>('monitor');
 
   // Mock dashboard stats for demonstration
   const { data: stats } = useQuery<DashboardStats>({
@@ -43,6 +44,7 @@ export default function MobileDashboard() {
   const tabs = [
     { id: 'monitor', label: 'Monitor', icon: Heart },
     { id: 'bluetooth', label: 'Bluetooth', icon: Bluetooth },
+    { id: 'history', label: 'History', icon: History },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -117,20 +119,20 @@ export default function MobileDashboard() {
         {/* Mobile Tab Navigation */}
         <div className="mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-2 shadow-sm">
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-5 gap-1">
               {tabs.map((tab) => {
                 const IconComponent = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all ${
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
                       activeTab === tab.id
                         ? 'bg-blue-500 text-white shadow-lg'
                         : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                   >
-                    <IconComponent className="h-5 w-5 mb-1" />
+                    <IconComponent className="h-4 w-4 mb-1" />
                     <span className="text-xs font-medium">{tab.label}</span>
                   </button>
                 );
@@ -179,6 +181,12 @@ export default function MobileDashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'history' && (
+            <div className="space-y-4">
+              <VitalSignsHistory />
             </div>
           )}
 

@@ -382,6 +382,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create sample vital signs data for testing
+  app.post("/api/create-sample-data", verifyToken, async (req: any, res) => {
+    try {
+      const patientId = req.user.patientId;
+      const sampleData = [];
+      
+      // Create varied sample data over the past week
+      for (let i = 0; i < 15; i++) {
+        const date = new Date();
+        date.setHours(date.getHours() - (i * 8)); // 8 hours apart
+        
+        // Vary the data types (sometimes missing values)
+        const samples = [
+          {
+            patientId,
+            heartRate: 70 + Math.floor(Math.random() * 40),
+            bloodPressureSystolic: 110 + Math.floor(Math.random() * 30),
+            bloodPressureDiastolic: 70 + Math.floor(Math.random() * 20),
+            temperature: 98.0 + Math.random() * 3,
+            oxygenLevel: 96 + Math.floor(Math.random() * 4),
+            timestamp: date
+          },
+          {
+            patientId,
+            heartRate: 65 + Math.floor(Math.random() * 35),
+            bloodPressureSystolic: null,
+            bloodPressureDiastolic: null,
+            temperature: 97.8 + Math.random() * 2.5,
+            oxygenLevel: null,
+            timestamp: date
+          },
+          {
+            patientId,
+            heartRate: null,
+            bloodPressureSystolic: 120 + Math.floor(Math.random() * 25),
+            bloodPressureDiastolic: 75 + Math.floor(Math.random() * 15),
+            temperature: null,
+            oxygenLevel: 97 + Math.floor(Math.random() * 3),
+            timestamp: date
+          }
+        ];
+        
+        // Randomly pick one of the sample patterns
+        const randomSample = samples[Math.floor(Math.random() * samples.length)];
+        const vitalSigns = await storage.createVitalSigns(randomSample);
+        sampleData.push(vitalSigns);
+      }
+      
+      res.json({ message: "Sample data created successfully", count: sampleData.length });
+    } catch (error) {
+      console.error("Create sample data error:", error);
+      res.status(500).json({ message: "Failed to create sample data" });
+    }
+  });
+
   // Setup reminder cron job
   cron.schedule('0 * * * *', async () => {
     try {
