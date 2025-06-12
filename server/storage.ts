@@ -1,11 +1,51 @@
-import { users, type User, type InsertUser } from "@shared/schema";
+import { 
+  users, otpCodes, vitalSigns, checkupLogs, reminderSettings, alerts,
+  type User, type InsertUser, type OtpCode, type InsertOtpCode,
+  type VitalSigns, type InsertVitalSigns, type CheckupLog, type InsertCheckupLog,
+  type ReminderSettings, type InsertReminderSettings, type Alert, type InsertAlert
+} from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc, and, gte, sql } from "drizzle-orm";
 
-// keep IStorage the same
+export interface IStorage {
+  // User methods
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPatientId(patientId: string): Promise<User | undefined>;
+  createUser(insertUser: InsertUser): Promise<User>;
+  markUserAsVerified(email: string): Promise<void>;
 
-// rewrite MemStorage to DatabaseStorage
+  // OTP methods
+  createOtpCode(insertOtp: InsertOtpCode): Promise<OtpCode>;
+  verifyOtp(email: string, code: string): Promise<boolean>;
+
+  // Vital signs methods
+  createVitalSigns(insertVitals: InsertVitalSigns): Promise<VitalSigns>;
+  getVitalSignsByPatient(patientId: string): Promise<VitalSigns[]>;
+  getLatestVitalSigns(patientId: string): Promise<VitalSigns | undefined>;
+
+  // Checkup log methods
+  createCheckupLog(insertLog: InsertCheckupLog): Promise<CheckupLog>;
+  getCheckupHistory(patientId: string): Promise<CheckupLog[]>;
+  getLastCheckupTime(patientId: string): Promise<Date | undefined>;
+
+  // Reminder settings methods
+  upsertReminderSettings(insertSettings: InsertReminderSettings): Promise<ReminderSettings>;
+  getReminderSettings(patientId: string): Promise<ReminderSettings | undefined>;
+  getAllActiveReminderSettings(): Promise<ReminderSettings[]>;
+
+  // Alert methods
+  createAlert(insertAlert: InsertAlert): Promise<Alert>;
+  getAlertsByPatient(patientId: string): Promise<Alert[]>;
+  markAlertAsNotified(alertId: number): Promise<void>;
+
+  // Dashboard stats
+  getDashboardStats(patientId: string): Promise<any>;
+}
+
 export class DatabaseStorage implements IStorage {
+  // User methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -16,12 +56,221 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserByPatientId(patientId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.patientId, patientId));
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(insertUser)
       .returning();
     return user;
+  }
+
+  async markUserAsVerified(email: string): Promise<void> {
+    await db.update(users).set({ isVerified: true }).where(eq(users.email, email));
+  }
+
+  // OTP methods
+  async createOtpCode(insertOtp: InsertOtpCode): Promise<OtpCode> {
+    const [otp] = await db
+      .insert(otpCodes)
+      .values(insertOtp)
+      .returning();
+    return otp;
+  }
+
+  async verifyOtp(email: string, code: string): Promise<boolean> {
+    const [otp] = await db
+      .select()
+      .from(otpCodes)
+      .where(
+        and(
+          eq(otpCodes.email, email),
+          eq(otpCodes.code, code),
+          eq(otpCodes.isUsed, false),
+          gte(otpCodes.expiresAt, new Date())
+        )
+      );
+
+    if (otp) {
+      await db.update(otpCodes).set({ isUsed: true }).where(eq(otpCodes.id, otp.id));
+      return true;
+    }
+    return false;
+  }
+
+  // Vital signs methods
+  async createVitalSigns(insertVitals: InsertVitalSigns): Promise<VitalSigns> {
+    const [vitals] = await db
+      .insert(vitalSigns)
+      .values(insertVitals)
+      .returning();
+    return vitals;
+  }
+
+  async getVitalSignsByPatient(patientId: string): Promise<VitalSigns[]> {
+    return await db
+      .select()
+      .from(vitalSigns)
+      .where(eq(vitalSigns.patientId, patientId))
+      .orderBy(desc(vitalSigns.timestamp));
+  }
+
+  async getLatestVitalSigns(patientId: string): Promise<VitalSigns | undefined> {
+    const [latest] = await db
+      .select()
+      .from(vitalSigns)
+      .where(eq(vitalSigns.patientId, patientId))
+      .orderBy(desc(vitalSigns.timestamp))
+      .limit(1);
+    return latest || undefined;
+  }
+
+  // Checkup log methods
+  async createCheckupLog(insertLog: InsertCheckupLog): Promise<CheckupLog> {
+    const [log] = await db
+      .insert(checkupLogs)
+      .values(insertLog)
+      .returning();
+    return log;
+  }
+
+  async getCheckupHistory(patientId: string): Promise<CheckupLog[]> {
+    return await db
+      .select()
+      .from(checkupLogs)
+      .where(eq(checkupLogs.patientId, patientId))
+      .orderBy(desc(checkupLogs.date));
+  }
+
+  async getLastCheckupTime(patientId: string): Promise<Date | undefined> {
+    const [log] = await db
+      .select()
+      .from(checkupLogs)
+      .where(
+        and(
+          eq(checkupLogs.patientId, patientId),
+          eq(checkupLogs.status, 'checked')
+        )
+      )
+      .orderBy(desc(checkupLogs.date))
+      .limit(1);
+    return log?.date || undefined;
+  }
+
+  // Reminder settings methods
+  async upsertReminderSettings(insertSettings: InsertReminderSettings): Promise<ReminderSettings> {
+    const existing = await this.getReminderSettings(insertSettings.patientId);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(reminderSettings)
+        .set(insertSettings)
+        .where(eq(reminderSettings.patientId, insertSettings.patientId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(reminderSettings)
+        .values(insertSettings)
+        .returning();
+      return created;
+    }
+  }
+
+  async getReminderSettings(patientId: string): Promise<ReminderSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(reminderSettings)
+      .where(eq(reminderSettings.patientId, patientId));
+    return settings || undefined;
+  }
+
+  async getAllActiveReminderSettings(): Promise<ReminderSettings[]> {
+    return await db
+      .select()
+      .from(reminderSettings)
+      .where(eq(reminderSettings.isActive, true));
+  }
+
+  // Alert methods
+  async createAlert(insertAlert: InsertAlert): Promise<Alert> {
+    const [alert] = await db
+      .insert(alerts)
+      .values(insertAlert)
+      .returning();
+    return alert;
+  }
+
+  async getAlertsByPatient(patientId: string): Promise<Alert[]> {
+    return await db
+      .select()
+      .from(alerts)
+      .where(eq(alerts.patientId, patientId))
+      .orderBy(desc(alerts.createdAt));
+  }
+
+  async markAlertAsNotified(alertId: number): Promise<void> {
+    await db.update(alerts).set({ doctorNotified: true }).where(eq(alerts.id, alertId));
+  }
+
+  // Dashboard stats
+  async getDashboardStats(patientId: string): Promise<any> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [completedCheckups] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(checkupLogs)
+      .where(
+        and(
+          eq(checkupLogs.patientId, patientId),
+          eq(checkupLogs.status, 'checked'),
+          gte(checkupLogs.date, thirtyDaysAgo)
+        )
+      );
+
+    const [missedCheckups] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(checkupLogs)
+      .where(
+        and(
+          eq(checkupLogs.patientId, patientId),
+          eq(checkupLogs.status, 'missed'),
+          gte(checkupLogs.date, thirtyDaysAgo)
+        )
+      );
+
+    const [criticalAlerts] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(alerts)
+      .where(
+        and(
+          eq(alerts.patientId, patientId),
+          eq(alerts.type, 'critical'),
+          eq(alerts.isResolved, false)
+        )
+      );
+
+    const totalCheckups = (completedCheckups?.count || 0) + (missedCheckups?.count || 0);
+    const completionRate = totalCheckups > 0 ? ((completedCheckups?.count || 0) / totalCheckups) * 100 : 100;
+
+    return {
+      activePatients: 1, // Single patient view
+      checkupsToday: 0, // Would need more complex query for "today"
+      criticalAlerts: criticalAlerts?.count || 0,
+      completionRate: Math.round(completionRate * 10) / 10,
+      completedCheckups: completedCheckups?.count || 0,
+      missedCheckups: missedCheckups?.count || 0,
+    };
   }
 }
 

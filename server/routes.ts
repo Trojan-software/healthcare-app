@@ -11,7 +11,7 @@ import { z } from "zod";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 // Email transporter setup
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
   port: parseInt(process.env.SMTP_PORT || "587"),
   secure: false,
