@@ -1,0 +1,16 @@
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#34d399;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="38" fill="url(#bgGrad)"/>
+  <g transform="translate(96, 64)">
+    <path d="M-24 0 Q0 32 24 0 Q0 -32 -24 0" fill="white" opacity="0.9"/>
+    <circle cx="0" cy="24" r="9" fill="white" opacity="0.8"/>
+  </g>
+  <text x="96" y="144" text-anchor="middle" fill="white" font-family="Arial" font-size="24" font-weight="bold">24/7</text>
+  <text x="96" y="168" text-anchor="middle" fill="white" font-family="Arial" font-size="16">H</text>
+</svg>
