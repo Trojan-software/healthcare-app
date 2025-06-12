@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   History, 
   Heart, 
@@ -17,7 +18,8 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Download
+  Download,
+  Plus
 } from "lucide-react";
 
 interface VitalSigns {
@@ -36,11 +38,23 @@ export default function VitalSignsHistory() {
   const [filterType, setFilterType] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [dateRange, setDateRange] = useState<string>("all");
+  const queryClient = useQueryClient();
 
   // Fetch vital signs history
   const { data: vitalsHistory, isLoading, error } = useQuery<VitalSigns[]>({
     queryKey: ['/api/vital-signs'],
     staleTime: 30000,
+  });
+
+  // Create sample data mutation
+  const createSampleDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('/api/create-sample-data', 'POST', {});
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/vital-signs'] });
+    },
   });
 
   // Filter and process data
@@ -280,15 +294,27 @@ export default function VitalSignsHistory() {
             </SelectContent>
           </Select>
 
-          <Button
-            onClick={exportData}
-            variant="outline"
-            size="sm"
-            className="flex items-center space-x-2"
-          >
-            <Download className="h-4 w-4" />
-            <span>Export</span>
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => createSampleDataMutation.mutate()}
+              variant="outline"
+              size="sm"
+              disabled={createSampleDataMutation.isPending}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>{createSampleDataMutation.isPending ? "Creating..." : "Add Sample"}</span>
+            </Button>
+            <Button
+              onClick={exportData}
+              variant="outline"
+              size="sm"
+              className="flex items-center space-x-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>Export</span>
+            </Button>
+          </div>
         </div>
 
         {/* Sort Options */}

@@ -400,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             heartRate: 70 + Math.floor(Math.random() * 40),
             bloodPressureSystolic: 110 + Math.floor(Math.random() * 30),
             bloodPressureDiastolic: 70 + Math.floor(Math.random() * 20),
-            temperature: 98.0 + Math.random() * 3,
+            temperature: (98.0 + Math.random() * 3).toFixed(1),
             oxygenLevel: 96 + Math.floor(Math.random() * 4),
             timestamp: date
           },
@@ -409,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             heartRate: 65 + Math.floor(Math.random() * 35),
             bloodPressureSystolic: null,
             bloodPressureDiastolic: null,
-            temperature: 97.8 + Math.random() * 2.5,
+            temperature: (97.8 + Math.random() * 2.5).toFixed(1),
             oxygenLevel: null,
             timestamp: date
           },
@@ -426,7 +426,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Randomly pick one of the sample patterns
         const randomSample = samples[Math.floor(Math.random() * samples.length)];
-        const vitalSigns = await storage.createVitalSigns(randomSample);
+        
+        // Validate the data with the insert schema
+        const validatedData = insertVitalSignsSchema.parse(randomSample);
+        const vitalSigns = await storage.createVitalSigns(validatedData);
         sampleData.push(vitalSigns);
       }
       
