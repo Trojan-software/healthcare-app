@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Heart, Bell, User, Plus, TrendingUp, Users, Calendar, AlertTriangle, PieChart } from "lucide-react";
+import { Heart, Bell, User, Plus, TrendingUp, Users, Calendar, AlertTriangle, PieChart, Smartphone, Bluetooth } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 import RegistrationModal from "@/components/RegistrationModal";
 import VitalSignsCard from "@/components/VitalSignsCard";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
@@ -94,6 +95,12 @@ export default function Dashboard() {
                 <Plus className="mr-2 h-4 w-4" />
                 New Patient
               </Button>
+              <Link href="/mobile-dashboard">
+                <Button variant="outline" className="border-medical-blue text-medical-blue hover:bg-blue-50 dark:hover:bg-blue-950">
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Mobile Dashboard
+                </Button>
+              </Link>
               <Button className="btn-medical">
                 <TrendingUp className="mr-2 h-4 w-4" />
                 Reports
