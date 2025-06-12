@@ -10,6 +10,7 @@ import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import AlertsPanel from "@/components/AlertsPanel";
 import ReminderSettings from "@/components/ReminderSettings";
 import AuthWrapper from "@/components/AuthWrapper";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { useQuery } from "@tanstack/react-query";
 
 interface DashboardStats {
@@ -303,6 +304,9 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
           )}
         </div>
       </div>
+      
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 }
