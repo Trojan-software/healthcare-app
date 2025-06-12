@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import DeviceRegistrationFlow from "./DeviceRegistrationFlow";
 import { 
   Bluetooth, 
   BluetoothConnected, 
@@ -15,7 +16,8 @@ import {
   Zap,
   Power,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  User
 } from "lucide-react";
 
 // HC03 SDK Detection Types
@@ -78,7 +80,19 @@ export default function BluetoothDeviceManager() {
   const [bloodOxygenData, setBloodOxygenData] = useState<BloodOxygenData | null>(null);
   const [bloodPressureData, setBloodPressureData] = useState<BloodPressureData | null>(null);
   const [temperatureData, setTemperatureData] = useState<number | null>(null);
+  const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
+  const [isPatientRegistered, setIsPatientRegistered] = useState(false);
   const { toast } = useToast();
+
+  // Check for existing patient registration
+  useEffect(() => {
+    const registered = localStorage.getItem('hc03_patient_registered');
+    const patientId = localStorage.getItem('hc03_patient_id');
+    if (registered && patientId) {
+      setIsPatientRegistered(true);
+      setCurrentPatientId(patientId);
+    }
+  }, []);
 
   // Simulate HC03 SDK functionality for web demo
   const simulateDeviceDiscovery = useCallback(() => {
@@ -142,6 +156,29 @@ export default function BluetoothDeviceManager() {
         variant: "destructive",
       });
     }
+  }, [toast]);
+
+  // Handle patient registration completion
+  const handleRegistrationComplete = useCallback((patientId: string) => {
+    setCurrentPatientId(patientId);
+    setIsPatientRegistered(true);
+    
+    toast({
+      title: "Patient Profile Connected",
+      description: `Device linked to patient ${patientId}`,
+    });
+  }, [toast]);
+
+  // Handle guest mode/skip registration
+  const handleSkipRegistration = useCallback(() => {
+    const tempId = `GUEST_${Date.now()}`;
+    setCurrentPatientId(tempId);
+    
+    toast({
+      title: "Guest Mode Active",
+      description: "Limited functionality - register for full features",
+      variant: "destructive",
+    });
   }, [toast]);
 
   const disconnectDevice = useCallback(() => {
@@ -388,6 +425,15 @@ export default function BluetoothDeviceManager() {
 
   return (
     <div className="space-y-6">
+      {/* Device Registration Flow */}
+      <DeviceRegistrationFlow
+        isDeviceConnected={!!connectedDevice}
+        deviceName={connectedDevice?.name}
+        deviceId={connectedDevice?.id}
+        onRegistrationComplete={handleRegistrationComplete}
+        onSkip={handleSkipRegistration}
+      />
+
       {/* Device Connection Card */}
       <Card className="medical-card">
         <CardHeader>
@@ -466,6 +512,32 @@ export default function BluetoothDeviceManager() {
                   Disconnect
                 </Button>
               </div>
+
+              {/* Patient Status */}
+              {currentPatientId && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <Heart className="h-3 w-3 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          Patient: {currentPatientId}
+                        </p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          {isPatientRegistered ? 'Registered Patient' : 'Guest Mode'}
+                        </p>
+                      </div>
+                    </div>
+                    {!isPatientRegistered && (
+                      <Badge variant="secondary" className="text-xs">
+                        Limited Features
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
               
               {/* Detection Controls */}
               <div>
