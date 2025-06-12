@@ -437,10 +437,31 @@ export default function BluetoothDeviceManager() {
       {/* Device Connection Card */}
       <Card className="medical-card">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Bluetooth className="h-5 w-5 text-medical-blue" />
-            <span>HC03 Bluetooth Device Manager</span>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center space-x-2">
+              <Bluetooth className="h-5 w-5 text-medical-blue" />
+              <span>HC03 Bluetooth Device Manager</span>
+            </CardTitle>
+            {/* Test Registration Flow Button */}
+            <Button 
+              onClick={() => {
+                localStorage.removeItem('hc03_patient_registered');
+                localStorage.removeItem('hc03_patient_id');
+                localStorage.removeItem('hc03_temp_user');
+                setIsPatientRegistered(false);
+                setCurrentPatientId(null);
+                toast({
+                  title: "Registration Reset",
+                  description: "Connect a device to test patient registration",
+                });
+              }}
+              variant="outline"
+              size="sm"
+              className="text-xs"
+            >
+              Test Registration Flow
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {!connectedDevice ? (
