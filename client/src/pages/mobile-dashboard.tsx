@@ -89,12 +89,16 @@ export default function MobileDashboard() {
         <div className="px-4 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Heart className="text-white h-6 w-6" />
+              <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg bg-white">
+                <img 
+                  src="/attached_assets/logo2_1749727548844.JPG" 
+                  alt="24/7 Tele H Technology Services"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">HealthMonitor</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Mobile Health App</p>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">24/7 Tele H</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Technology Services</p>
               </div>
             </div>
             
