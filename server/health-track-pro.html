@@ -330,15 +330,62 @@
         }
         
         .chart-container {
-            height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            height: 400px;
+            position: relative;
             background: rgba(247, 250, 252, 0.5);
             border-radius: 12px;
-            border: 2px dashed rgba(203, 213, 224, 0.5);
-            color: #718096;
+            border: 1px solid rgba(203, 213, 224, 0.3);
             margin-top: 20px;
+            padding: 20px;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .legend-color.heart-rate {
+            background: #e53e3e;
+        }
+
+        .legend-color.blood-pressure {
+            background: #3182ce;
+        }
+
+        .chart-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
         }
         
         @media (max-width: 1200px) {
@@ -550,8 +597,19 @@
                             <button class="tab-btn" onclick="showChart('alerts')">Alert History</button>
                         </div>
                     </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color heart-rate"></div>
+                            <span>Heart Rate (BPM)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color blood-pressure"></div>
+                            <span>Blood Pressure (Systolic)</span>
+                        </div>
+                    </div>
                     <div class="chart-container" id="chartContainer">
-                        📈 Interactive Health Analytics Chart
+                        <canvas id="healthChart" class="chart-canvas"></canvas>
+                        <div id="chartTooltip" class="chart-tooltip"></div>
                     </div>
                 </div>
             </div>
@@ -988,8 +1046,193 @@
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             
-            const chartContainer = document.getElementById('chartContainer');
-            chartContainer.innerHTML = `📊 ${type.charAt(0).toUpperCase() + type.slice(1)} Analytics Chart`;
+            if (type === 'vitals') {
+                initializeHealthChart();
+            } else {
+                const chartContainer = document.getElementById('chartContainer');
+                chartContainer.innerHTML = `📊 ${type.charAt(0).toUpperCase() + type.slice(1)} Analytics Chart`;
+            }
+        }
+
+        // Chart implementation
+        let healthChart = null;
+        
+        function initializeHealthChart() {
+            const canvas = document.getElementById('healthChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const tooltip = document.getElementById('chartTooltip');
+            
+            // Sample data based on your image - Heart Rate and Blood Pressure over time
+            const timeLabels = ['6:00AM', '8:00AM', '10:00AM', '12:00PM', '2:00PM', '4:00PM', '6:00PM'];
+            const heartRateData = [68, 72, 75, 78, 76, 74, 70];
+            const bloodPressureData = [118, 122, 125, 128, 126, 124, 120];
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 60;
+            const chartWidth = width - (padding * 2);
+            const chartHeight = height - (padding * 2);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Chart background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Grid lines
+            ctx.strokeStyle = 'rgba(203, 213, 224, 0.3)';
+            ctx.lineWidth = 1;
+            
+            // Vertical grid lines
+            for (let i = 0; i <= 6; i++) {
+                const x = padding + (chartWidth / 6) * i;
+                ctx.beginPath();
+                ctx.moveTo(x, padding);
+                ctx.lineTo(x, height - padding);
+                ctx.stroke();
+            }
+            
+            // Horizontal grid lines
+            for (let i = 0; i <= 8; i++) {
+                const y = padding + (chartHeight / 8) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+            
+            // Y-axis labels (left side for heart rate, right side for blood pressure)
+            ctx.fillStyle = '#718096';
+            ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'right';
+            
+            // Heart rate labels (60-140 BPM)
+            for (let i = 0; i <= 8; i++) {
+                const value = 60 + (80 / 8) * (8 - i);
+                const y = padding + (chartHeight / 8) * i;
+                ctx.fillText(Math.round(value), padding - 10, y + 4);
+            }
+            
+            // Blood pressure labels (right side, 100-180 mmHg)
+            ctx.textAlign = 'left';
+            for (let i = 0; i <= 8; i++) {
+                const value = 100 + (80 / 8) * (8 - i);
+                const y = padding + (chartHeight / 8) * i;
+                ctx.fillText(Math.round(value), width - padding + 10, y + 4);
+            }
+            
+            // X-axis labels
+            ctx.textAlign = 'center';
+            timeLabels.forEach((label, i) => {
+                const x = padding + (chartWidth / 6) * i;
+                ctx.fillText(label, x, height - padding + 20);
+            });
+            
+            // Draw Heart Rate line (red)
+            ctx.strokeStyle = '#e53e3e';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            heartRateData.forEach((value, i) => {
+                const x = padding + (chartWidth / 6) * i;
+                const y = padding + chartHeight - ((value - 60) / 80) * chartHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            
+            // Draw Heart Rate points
+            ctx.fillStyle = '#e53e3e';
+            heartRateData.forEach((value, i) => {
+                const x = padding + (chartWidth / 6) * i;
+                const y = padding + chartHeight - ((value - 60) / 80) * chartHeight;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Draw Blood Pressure line (blue)
+            ctx.strokeStyle = '#3182ce';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            bloodPressureData.forEach((value, i) => {
+                const x = padding + (chartWidth / 6) * i;
+                const y = padding + chartHeight - ((value - 100) / 80) * chartHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            
+            // Draw Blood Pressure points
+            ctx.fillStyle = '#3182ce';
+            bloodPressureData.forEach((value, i) => {
+                const x = padding + (chartWidth / 6) * i;
+                const y = padding + chartHeight - ((value - 100) / 80) * chartHeight;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Add mouse interaction for tooltips
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                // Find closest data point
+                let closestIndex = -1;
+                let closestDistance = Infinity;
+                
+                heartRateData.forEach((value, i) => {
+                    const x = padding + (chartWidth / 6) * i;
+                    const y = padding + chartHeight - ((value - 60) / 80) * chartHeight;
+                    const distance = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
+                    
+                    if (distance < 20 && distance < closestDistance) {
+                        closestDistance = distance;
+                        closestIndex = i;
+                    }
+                });
+                
+                if (closestIndex !== -1) {
+                    const time = timeLabels[closestIndex];
+                    const hr = heartRateData[closestIndex];
+                    const bp = bloodPressureData[closestIndex];
+                    
+                    tooltip.innerHTML = `
+                        <strong>${time}</strong><br>
+                        Heart Rate: ${hr} BPM<br>
+                        Blood Pressure: ${bp} mmHg
+                    `;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+                    tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            });
+            
+            canvas.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
         }
 
         function logout() {
@@ -999,7 +1242,13 @@
         }
 
         // Initialize dashboard when page loads
-        document.addEventListener('DOMContentLoaded', initializeDashboard);
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDashboard();
+            // Initialize the vitals chart by default
+            setTimeout(() => {
+                initializeHealthChart();
+            }, 500);
+        });
     </script>
 </body>
 </html>

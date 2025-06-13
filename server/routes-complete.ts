@@ -1207,7 +1207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             patientId: patient.patientId,
             patientName: `${patient.firstName} ${patient.lastName}`,
             vitals: latestVitals,
-            timestamp: latestVitals.recordedAt,
+            timestamp: latestVitals.timestamp,
             status: determinePatientStatus(latestVitals)
           });
           
@@ -1219,7 +1219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               alertType: getCriticalAlertType(latestVitals),
               severity: getSeverityLevel(latestVitals),
               value: getCriticalValue(latestVitals),
-              timestamp: latestVitals.recordedAt
+              timestamp: latestVitals.timestamp
             });
           }
         }
