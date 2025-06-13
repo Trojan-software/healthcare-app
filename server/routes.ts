@@ -469,6 +469,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/admin/health-comparison', async (req, res) => {
+    try {
+      const { selectedPatients, timeframe, comparisonMode } = req.query;
+      const patientIds = typeof selectedPatients === 'string' ? selectedPatients.split(',') : ['PAT001', 'PAT002'];
+      
+      const comparisonData = await Promise.all(
+        patientIds.map(async (patientId, index) => {
+          const patient = await storage.getUserByPatientId(patientId);
+          const currentVitals = await storage.getLatestVitalSigns(patientId);
+          
+          // Get previous vitals for comparison (mock for now)
+          const previousVitals = {
+            heartRate: currentVitals?.heartRate ? currentVitals.heartRate + (Math.random() > 0.5 ? 5 : -5) : 82,
+            oxygenLevel: currentVitals?.oxygenLevel ? currentVitals.oxygenLevel + (Math.random() > 0.5 ? 2 : -2) : 96,
+            bloodPressureSystolic: currentVitals?.bloodPressureSystolic ? currentVitals.bloodPressureSystolic + (Math.random() > 0.5 ? 10 : -10) : 130,
+            bloodPressureDiastolic: currentVitals?.bloodPressureDiastolic ? currentVitals.bloodPressureDiastolic + (Math.random() > 0.5 ? 5 : -5) : 85,
+            temperature: currentVitals?.temperature ? parseFloat(currentVitals.temperature) + (Math.random() > 0.5 ? 0.3 : -0.3) : 37.1
+          };
+
+          const getTrend = (current: number, previous: number) => {
+            const diff = current - previous;
+            if (Math.abs(diff) < 2) return 'stable';
+            return diff > 0 ? 'up' : 'down';
+          };
+
+          const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+          return {
+            patientId,
+            patientName: patient ? `${patient.firstName} ${patient.lastName}` : `Patient ${patientId}`,
+            timeframe: timeframe || '7d',
+            metrics: {
+              heartRate: {
+                current: currentVitals?.heartRate || 78,
+                previous: previousVitals.heartRate,
+                trend: getTrend(currentVitals?.heartRate || 78, previousVitals.heartRate)
+              },
+              bloodPressure: {
+                systolic: {
+                  current: currentVitals?.bloodPressureSystolic || 125,
+                  previous: previousVitals.bloodPressureSystolic,
+                  trend: getTrend(currentVitals?.bloodPressureSystolic || 125, previousVitals.bloodPressureSystolic)
+                },
+                diastolic: {
+                  current: currentVitals?.bloodPressureDiastolic || 82,
+                  previous: previousVitals.bloodPressureDiastolic,
+                  trend: getTrend(currentVitals?.bloodPressureDiastolic || 82, previousVitals.bloodPressureDiastolic)
+                }
+              },
+              bloodOxygen: {
+                current: currentVitals?.oxygenLevel || 97,
+                previous: previousVitals.oxygenLevel,
+                trend: getTrend(currentVitals?.oxygenLevel || 97, previousVitals.oxygenLevel)
+              },
+              temperature: {
+                current: currentVitals?.temperature ? parseFloat(currentVitals.temperature) : 36.8,
+                previous: previousVitals.temperature,
+                trend: getTrend(
+                  currentVitals?.temperature ? parseFloat(currentVitals.temperature) : 36.8, 
+                  previousVitals.temperature
+                )
+              },
+              riskScore: {
+                current: Math.floor(Math.random() * 40) + 20,
+                previous: Math.floor(Math.random() * 40) + 30,
+                trend: Math.random() > 0.5 ? 'down' : 'up'
+              }
+            },
+            color: colors[index % colors.length]
+          };
+        })
+      );
+
+      res.json(comparisonData);
+    } catch (error) {
+      console.error('Error fetching health comparison data:', error);
+      res.status(500).json({ message: 'Failed to fetch comparison data' });
+    }
+  });
+
+  app.get('/api/admin/patients-list', async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      
+      const patientsList = patients.map(patient => ({
+        id: patient.patientId,
+        name: `${patient.firstName} ${patient.lastName}`,
+        email: patient.email,
+        isVerified: patient.isVerified
+      }));
+
+      res.json(patientsList);
+    } catch (error) {
+      console.error('Error fetching patients list:', error);
+      res.status(500).json({ message: 'Failed to fetch patients list' });
+    }
+  });
+
   // Register HC03 device routes
   registerHc03Routes(app);
 

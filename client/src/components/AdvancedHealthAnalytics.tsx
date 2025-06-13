@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import AnimatedHealthComparison from '@/components/AnimatedHealthComparison';
 
 interface HealthMetrics {
   totalPatients: number;
@@ -270,11 +271,12 @@ export default function AdvancedHealthAnalytics() {
 
       {/* Detailed Analytics Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="vitals">Vital Signs</TabsTrigger>
           <TabsTrigger value="risks">Risk Management</TabsTrigger>
           <TabsTrigger value="trends">Trends & Insights</TabsTrigger>
+          <TabsTrigger value="comparison">Health Comparison</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -584,6 +586,10 @@ export default function AdvancedHealthAnalytics() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="comparison" className="space-y-6">
+          <AnimatedHealthComparison />
         </TabsContent>
       </Tabs>
     </div>
