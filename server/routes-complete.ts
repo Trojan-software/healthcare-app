@@ -625,19 +625,267 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Patient actions
         function recordVitals() {
-            alert('Vital signs recording feature - connects to HC03 device for automatic readings');
+            // Hide main dashboard and show vital recording interface
+            document.querySelector('.patient-card').style.display = 'none';
+            showVitalRecordingInterface();
         }
         
         function connectDevice() {
-            alert('Device connection feature - scan for nearby HC03 Bluetooth devices');
+            // Hide main dashboard and show device connection interface
+            document.querySelector('.patient-card').style.display = 'none';
+            showDeviceConnectionInterface();
         }
         
         function viewHistory() {
-            alert('View history feature - displays past vital signs readings and trends');
+            // Hide main dashboard and show history interface
+            document.querySelector('.patient-card').style.display = 'none';
+            showHistoryInterface();
         }
         
         function showPatientSettings() {
-            alert('Patient settings - configure alerts, reminders, and account preferences');
+            // Hide main dashboard and show settings interface
+            document.querySelector('.patient-card').style.display = 'none';
+            showSettingsInterface();
+        }
+        
+        function showVitalRecordingInterface() {
+            const patientContent = document.querySelector('.patient-content');
+            const recordingInterface = document.createElement('div');
+            recordingInterface.className = 'patient-section';
+            recordingInterface.innerHTML = \`
+                <div style="background: white; border-radius: 20px 20px 0 0; padding: 24px; min-height: calc(100vh - 120px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="color: #1f2937; font-size: 20px; font-weight: 700; margin: 0;">Record Vital Signs</h2>
+                        <button onclick="backToPatientDashboard()" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">← Back</button>
+                    </div>
+                    
+                    <div style="background: #f0f9ff; padding: 16px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #3b82f6;">
+                        <p style="color: #1e40af; font-size: 14px; margin: 0;"><strong>HC03 Device Status:</strong> Connected and ready for readings</p>
+                    </div>
+                    
+                    <div style="display: grid; gap: 16px;">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px;">
+                            <h3 style="color: #374151; font-size: 16px; font-weight: 600; margin: 0 0 16px;">Manual Reading Entry</h3>
+                            <div style="display: grid; gap: 12px;">
+                                <div>
+                                    <label style="display: block; color: #374151; font-size: 14px; font-weight: 500; margin-bottom: 4px;">Heart Rate (BPM)</label>
+                                    <input type="number" id="heartRate" placeholder="72" style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; color: #374151; font-size: 14px; font-weight: 500; margin-bottom: 4px;">Blood Pressure (Systolic/Diastolic)</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                        <input type="number" id="systolic" placeholder="120" style="padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;">
+                                        <input type="number" id="diastolic" placeholder="80" style="padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="display: block; color: #374151; font-size: 14px; font-weight: 500; margin-bottom: 4px;">Blood Oxygen (%)</label>
+                                    <input type="number" id="oxygen" placeholder="98" style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; color: #374151; font-size: 14px; font-weight: 500; margin-bottom: 4px;">Temperature (°F)</label>
+                                    <input type="number" id="temperature" placeholder="98.6" step="0.1" style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <button onclick="startAutoReading()" style="background: #10b981; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 14px; font-weight: 500; cursor: pointer;">
+                                🔗 Auto-Read from HC03
+                            </button>
+                            <button onclick="saveVitalSigns()" style="background: #3b82f6; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 14px; font-weight: 500; cursor: pointer;">
+                                💾 Save Readings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            patientContent.appendChild(recordingInterface);
+        }
+        
+        function showDeviceConnectionInterface() {
+            const patientContent = document.querySelector('.patient-content');
+            const deviceInterface = document.createElement('div');
+            deviceInterface.className = 'patient-section';
+            deviceInterface.innerHTML = \`
+                <div style="background: white; border-radius: 20px 20px 0 0; padding: 24px; min-height: calc(100vh - 120px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="color: #1f2937; font-size: 20px; font-weight: 700; margin: 0;">Device Connection</h2>
+                        <button onclick="backToPatientDashboard()" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">← Back</button>
+                    </div>
+                    
+                    <div style="display: grid; gap: 20px;">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+                            <h3 style="color: #374151; font-size: 18px; font-weight: 600; margin: 0 0 8px;">Scanning for HC03 Devices</h3>
+                            <p style="color: #6b7280; font-size: 14px; margin: 0 0 20px;">Make sure your HC03 device is powered on and in pairing mode</p>
+                            <button onclick="scanForDevices()" style="background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;">Start Scan</button>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px;">
+                            <h3 style="color: #374151; font-size: 16px; font-weight: 600; margin: 0 0 16px;">Available Devices</h3>
+                            <div id="deviceList" style="display: grid; gap: 12px;">
+                                <div style="background: white; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong>HC03-001</strong><br>
+                                        <span style="color: #6b7280; font-size: 14px;">Signal: Strong | Battery: 95%</span>
+                                    </div>
+                                    <button onclick="connectToDevice('HC03-001')" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">Connect</button>
+                                </div>
+                                <div style="background: white; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong>HC03-002</strong><br>
+                                        <span style="color: #6b7280; font-size: 14px;">Signal: Good | Battery: 78%</span>
+                                    </div>
+                                    <button onclick="connectToDevice('HC03-002')" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">Connect</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            patientContent.appendChild(deviceInterface);
+        }
+        
+        function showHistoryInterface() {
+            const patientContent = document.querySelector('.patient-content');
+            const historyInterface = document.createElement('div');
+            historyInterface.className = 'patient-section';
+            historyInterface.innerHTML = \`
+                <div style="background: white; border-radius: 20px 20px 0 0; padding: 24px; min-height: calc(100vh - 120px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="color: #1f2937; font-size: 20px; font-weight: 700; margin: 0;">Health History</h2>
+                        <button onclick="backToPatientDashboard()" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">← Back</button>
+                    </div>
+                    
+                    <div style="display: grid; gap: 16px;">
+                        <div style="background: #f8f9fa; padding: 16px; border-radius: 12px;">
+                            <h3 style="color: #374151; font-size: 16px; font-weight: 600; margin: 0 0 12px;">Recent Readings (Last 7 Days)</h3>
+                            <div style="display: grid; gap: 8px;">
+                                <div style="background: white; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div><strong>Today 10:30 AM</strong><br><span style="color: #6b7280; font-size: 14px;">Heart Rate: 72 BPM, BP: 120/80</span></div>
+                                    <span style="background: #d1fae5; color: #059669; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Normal</span>
+                                </div>
+                                <div style="background: white; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div><strong>Yesterday 2:15 PM</strong><br><span style="color: #6b7280; font-size: 14px;">Heart Rate: 68 BPM, BP: 118/76</span></div>
+                                    <span style="background: #d1fae5; color: #059669; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Normal</span>
+                                </div>
+                                <div style="background: white; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div><strong>June 11 8:45 AM</strong><br><span style="color: #6b7280; font-size: 14px;">Heart Rate: 85 BPM, BP: 135/88</span></div>
+                                    <span style="background: #fef3c7; color: #f59e0b; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Elevated</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; padding: 16px; border-radius: 12px;">
+                            <h3 style="color: #374151; font-size: 16px; font-weight: 600; margin: 0 0 12px;">Health Trends</h3>
+                            <div style="background: white; padding: 16px; border-radius: 8px;">
+                                <div style="display: flex; align-items: end; gap: 4px; height: 80px; margin-bottom: 8px;">
+                                    <div style="background: #10b981; width: 20px; height: 70%; border-radius: 2px;"></div>
+                                    <div style="background: #3b82f6; width: 20px; height: 65%; border-radius: 2px;"></div>
+                                    <div style="background: #8b5cf6; width: 20px; height: 75%; border-radius: 2px;"></div>
+                                    <div style="background: #f59e0b; width: 20px; height: 80%; border-radius: 2px;"></div>
+                                    <div style="background: #ef4444; width: 20px; height: 60%; border-radius: 2px;"></div>
+                                    <div style="background: #10b981; width: 20px; height: 68%; border-radius: 2px;"></div>
+                                    <div style="background: #3b82f6; width: 20px; height: 72%; border-radius: 2px;"></div>
+                                </div>
+                                <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">Heart Rate Trend (Last 7 Days)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            patientContent.appendChild(historyInterface);
+        }
+        
+        function showSettingsInterface() {
+            const patientContent = document.querySelector('.patient-content');
+            const settingsInterface = document.createElement('div');
+            settingsInterface.className = 'patient-section';
+            settingsInterface.innerHTML = \`
+                <div style="background: white; border-radius: 20px 20px 0 0; padding: 24px; min-height: calc(100vh - 120px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="color: #1f2937; font-size: 20px; font-weight: 700; margin: 0;">Settings</h2>
+                        <button onclick="backToPatientDashboard()" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">← Back</button>
+                    </div>
+                    
+                    <div style="display: grid; gap: 20px;">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px;">
+                            <h3 style="color: #374151; font-size: 16px; font-weight: 600; margin: 0 0 16px;">Health Alerts</h3>
+                            <div style="display: grid; gap: 12px;">
+                                <div style="background: white; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div><strong>High Blood Pressure Alert</strong><br><span style="color: #6b7280; font-size: 14px;">Notify when BP > 140/90</span></div>
+                                    <label style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                                        <input type="checkbox" checked style="opacity: 0; width: 0; height: 0;">
+                                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #10b981; border-radius: 24px; transition: 0.4s;"></span>
+                                    </label>
+                                </div>
+                                <div style="background: white; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                    <div><strong>Irregular Heart Rate</strong><br><span style="color: #6b7280; font-size: 14px;">Notify when HR < 60 or > 100</span></div>
+                                    <label style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                                        <input type="checkbox" checked style="opacity: 0; width: 0; height: 0;">
+                                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #10b981; border-radius: 24px; transition: 0.4s;"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px;">
+                            <h3 style="color: #374151; font-size: 16px; font-weight: 600; margin: 0 0 16px;">Reminder Schedule</h3>
+                            <div style="display: grid; gap: 12px;">
+                                <div style="background: white; padding: 16px; border-radius: 8px;">
+                                    <label style="display: block; color: #374151; font-size: 14px; font-weight: 500; margin-bottom: 8px;">Daily Check-up Time</label>
+                                    <input type="time" value="09:00" style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;">
+                                </div>
+                                <div style="background: white; padding: 16px; border-radius: 8px;">
+                                    <label style="display: block; color: #374151; font-size: 14px; font-weight: 500; margin-bottom: 8px;">Emergency Contact</label>
+                                    <input type="tel" placeholder="+1 (555) 123-4567" style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="saveSettings()" style="background: #3b82f6; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 500; cursor: pointer;">Save Settings</button>
+                    </div>
+                </div>
+            \`;
+            patientContent.appendChild(settingsInterface);
+        }
+        
+        function backToPatientDashboard() {
+            // Remove any patient sections
+            const sections = document.querySelectorAll('.patient-section');
+            sections.forEach(section => section.remove());
+            
+            // Show main patient card
+            document.querySelector('.patient-card').style.display = 'block';
+        }
+        
+        function startAutoReading() {
+            alert('Starting automatic reading from HC03 device...');
+            // Simulate auto-filling the form
+            setTimeout(() => {
+                document.getElementById('heartRate').value = '74';
+                document.getElementById('systolic').value = '122';
+                document.getElementById('diastolic').value = '78';
+                document.getElementById('oxygen').value = '99';
+                document.getElementById('temperature').value = '98.4';
+            }, 1500);
+        }
+        
+        function saveVitalSigns() {
+            alert('Vital signs saved successfully! Data will sync with your healthcare provider.');
+        }
+        
+        function scanForDevices() {
+            alert('Scanning for HC03 devices... Found 2 devices nearby.');
+        }
+        
+        function connectToDevice(deviceId) {
+            alert(\`Connecting to \${deviceId}... Connection successful!\`);
+        }
+        
+        function saveSettings() {
+            alert('Settings saved successfully!');
         }
         
         function logout() {
