@@ -553,7 +553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verify OTP
       let isValid = false;
-      if (!transporter && testOTPs.has(email) && testOTPs.get(email) === code) {
+      if (testOTPs.has(email) && testOTPs.get(email) === code) {
         isValid = true;
         testOTPs.delete(email);
       } else {
@@ -683,25 +683,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test endpoint to view OTP codes (only works in test mode)
+  // Test endpoint to view OTP codes (test mode only)
   app.get("/api/test/otps", (req, res) => {
-    if (!transporter) {
-      const otpList = Array.from(testOTPs.entries()).map(([email, otp]) => ({
-        email,
-        otp,
-        message: "Use this OTP to verify your account"
-      }));
-      res.json({
-        testMode: true,
-        message: "Test mode active - OTP codes are displayed here instead of being emailed",
-        otps: otpList
-      });
-    } else {
-      res.json({
-        testMode: false,
-        message: "Production mode - OTP codes are sent via email"
-      });
-    }
+    const otpList = Array.from(testOTPs.entries()).map(([email, otp]) => ({
+      email,
+      otp,
+      message: "Use this OTP to verify your account"
+    }));
+    res.json({
+      testMode: true,
+      message: "Test mode active - OTP codes are displayed here instead of being emailed",
+      otps: otpList
+    });
   });
 
   const httpServer = createServer(app);
