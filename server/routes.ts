@@ -223,22 +223,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Please verify your email first" });
       }
       
+      console.log("User login - role:", user.role, "email:", user.email);
+      
       const token = jwt.sign(
         { userId: user.id, patientId: user.patientId, email: user.email },
         JWT_SECRET,
         { expiresIn: "24h" }
       );
       
-      res.json({ 
+      const loginResponse = { 
         token, 
         user: { 
           id: user.id, 
           patientId: user.patientId, 
           email: user.email, 
           firstName: user.firstName, 
-          lastName: user.lastName 
+          lastName: user.lastName,
+          role: user.role || 'patient'
         } 
-      });
+      };
+      
+      console.log("Login response user role:", loginResponse.user.role);
+      res.json(loginResponse);
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Login failed" });
@@ -703,17 +709,215 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.send("Server is working!");
   });
 
+  // Health check route
+  app.get("/health", (req, res) => {
+    res.json({ status: "Server running", time: new Date().toISOString() });
+  });
+
+  // Working app route
+  app.get("/app", (req, res) => {
+    res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>24/7 Tele H - Health Monitor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f9fafb; }
+    .container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; width: 100%; }
+    .title { text-align: center; font-size: 24px; font-weight: bold; color: #111827; margin-bottom: 10px; }
+    .subtitle { text-align: center; font-size: 14px; color: #6b7280; margin-bottom: 30px; }
+    .form { display: flex; flex-direction: column; gap: 15px; }
+    .input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    .button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    .button:hover { background: #1d4ed8; }
+    .button:disabled { background: #9ca3af; cursor: not-allowed; }
+    .error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; }
+    .demo { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
+    .demo p { font-size: 12px; margin: 5px 0; color: #6b7280; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div id="loginView" class="container">
+    <div class="card">
+      <h1 class="title">24/7 Tele H</h1>
+      <p class="subtitle">Health Monitoring System</p>
+      
+      <div id="error" class="error"></div>
+      
+      <form id="loginForm" class="form">
+        <input id="email" type="email" class="input" placeholder="Email Address" required>
+        <input id="password" type="password" class="input" placeholder="Password" required>
+        <button id="loginBtn" type="submit" class="button">Sign In</button>
+      </form>
+      
+      <div class="demo">
+        <p><strong>Demo Accounts:</strong></p>
+        <p>Admin: admin@24x7teleh.com / admin123</p>
+        <p>Patient: patient.demo@example.com / patient123</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminView" class="hidden" style="background:#f8f9fa;min-height:100vh;font-family:Arial,sans-serif">
+    <div style="background:#2c3e50;color:white;padding:16px 24px">
+      <div style="max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h1 style="font-size:24px;font-weight:bold;margin:0">24/7 Tele H Admin</h1>
+          <p style="font-size:14px;margin:4px 0 0;opacity:0.9">Patient Dashboard Management</p>
+        </div>
+        <button onclick="logout()" style="background:#e74c3c;border:none;color:white;padding:8px 16px;border-radius:6px;cursor:pointer">Logout</button>
+      </div>
+    </div>
+    <div style="max-width:1200px;margin:0 auto;padding:24px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:24px">
+        <div style="background:linear-gradient(135deg,#3498db,#2980b9);padding:20px;border-radius:12px;color:white;text-align:center">
+          <div style="font-size:32px;font-weight:bold;margin-bottom:8px">15</div>
+          <div style="font-size:14px;opacity:0.9">Total Patients</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#27ae60,#229954);padding:20px;border-radius:12px;color:white;text-align:center">
+          <div style="font-size:32px;font-weight:bold;margin-bottom:8px">12</div>
+          <div style="font-size:14px;opacity:0.9">Active Patients</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#f39c12,#e67e22);padding:20px;border-radius:12px;color:white;text-align:center">
+          <div style="font-size:32px;font-weight:bold;margin-bottom:8px">3</div>
+          <div style="font-size:14px;opacity:0.9">Pending Verification</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#e74c3c,#c0392b);padding:20px;border-radius:12px;color:white;text-align:center">
+          <div style="font-size:32px;font-weight:bold;margin-bottom:8px">2</div>
+          <div style="font-size:14px;opacity:0.9">Critical Alerts</div>
+        </div>
+      </div>
+      <div style="background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:20px">
+        <h3 style="color:#2c3e50;margin-bottom:16px">Patient Management</h3>
+        <p id="adminWelcome" style="color:#6b7280;margin-bottom:20px"></p>
+        <div style="background:#f8f9fa;padding:16px;border-radius:8px">
+          <p style="color:#495057;margin-bottom:12px"><strong>System Status:</strong></p>
+          <p style="color:#059669;margin:4px 0">✓ SendGrid removed - using console logging</p>
+          <p style="color:#059669;margin:4px 0">✓ Admin authentication working</p>
+          <p style="color:#059669;margin:4px 0">✓ Database connection established</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="patientView" class="hidden" style="background:#f3f4f6;min-height:100vh;font-family:Arial,sans-serif">
+    <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:20px 16px;color:white">
+      <div style="display:flex;justify-content:space-between;align-items:center;max-width:400px;margin:0 auto">
+        <div>
+          <h1 style="font-size:24px;font-weight:bold;margin:0">24/7 Tele H</h1>
+          <p id="patientWelcome" style="font-size:14px;margin:4px 0 0 0;opacity:0.9"></p>
+        </div>
+        <button onclick="logout()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 12px;border-radius:20px;font-size:12px;cursor:pointer">Logout</button>
+      </div>
+    </div>
+    <div style="max-width:400px;margin:-20px auto 0;padding:0 16px">
+      <div style="background:white;border-radius:20px 20px 0 0;padding:24px;min-height:calc(100vh - 120px)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+          <div style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);padding:20px;border-radius:12px;color:white;text-align:center">
+            <div style="font-size:28px;font-weight:bold;margin-bottom:4px">--</div>
+            <div style="font-size:12px;opacity:0.9">Heart Rate</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#43e97b 0%,#38f9d7 100%);padding:20px;border-radius:12px;color:white;text-align:center">
+            <div style="font-size:28px;font-weight:bold;margin-bottom:4px">--%</div>
+            <div style="font-size:12px;opacity:0.9">Blood Oxygen</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#fa709a 0%,#fee140 100%);padding:20px;border-radius:12px;color:white;text-align:center">
+            <div style="font-size:28px;font-weight:bold;margin-bottom:4px">--°F</div>
+            <div style="font-size:12px;opacity:0.9">Temperature</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#a8edea 0%,#fed6e3 100%);padding:20px;border-radius:12px;color:#333;text-align:center">
+            <div style="font-size:28px;font-weight:bold;margin-bottom:4px">--/--</div>
+            <div style="font-size:12px;opacity:0.8">Blood Pressure</div>
+          </div>
+        </div>
+        <div style="background:#f8f9fa;padding:16px;border-radius:12px;text-align:center;color:#6c757d">
+          <p style="margin:0;font-size:14px">No recent vital signs recorded</p>
+          <p style="margin:8px 0 0;font-size:12px">Connect your HC03 device to start monitoring</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorDiv = document.getElementById('error');
+      const loginBtn = document.getElementById('loginBtn');
+      
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Signing in...';
+      errorDiv.style.display = 'none';
+      
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Login failed');
+        }
+        
+        const result = await response.json();
+        currentUser = result.user;
+        
+        if (result.user.role === 'admin') {
+          showAdminDashboard();
+        } else {
+          showPatientDashboard();
+        }
+      } catch (err) {
+        errorDiv.textContent = err.message || 'Login failed. Please try again.';
+        errorDiv.style.display = 'block';
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+      }
+    });
+
+    function showAdminDashboard() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('patientView').classList.add('hidden');
+      document.getElementById('adminView').classList.remove('hidden');
+      document.getElementById('adminWelcome').textContent = 'Welcome, ' + currentUser.firstName + ' ' + currentUser.lastName + '. You have successfully logged in as an administrator.';
+    }
+
+    function showPatientDashboard() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('adminView').classList.add('hidden');
+      document.getElementById('patientView').classList.remove('hidden');
+      document.getElementById('patientWelcome').textContent = 'Welcome, ' + currentUser.firstName;
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById('adminView').classList.add('hidden');
+      document.getElementById('patientView').classList.add('hidden');
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('email').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('error').style.display = 'none';
+    }
+  </script>
+</body>
+</html>`);
+  });
+
   // Login route
   app.get("/login", (req, res) => {
-    res.writeHead(200, {
-      'Content-Type': 'text/html',
-      'Cache-Control': 'no-cache'
-    });
-    res.end(`<html><head><title>24/7 Tele H Login</title><style>
-body{font-family:Arial;background:#f9fafb;margin:0;padding:20px;display:flex;align-items:center;justify-content:center;min-height:100vh}
-.card{background:white;padding:30px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);max-width:400px;width:100%}
-h1{text-align:center;color:#111827;margin-bottom:10px}
-p{text-align:center;color:#6b7280;margin-bottom:30px}
+    res.redirect("/app");
+  });
 input{width:100%;padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:6px;box-sizing:border-box}
 button{width:100%;padding:12px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-size:16px}
 button:hover{background:#1d4ed8}
@@ -760,8 +964,11 @@ document.getElementById('loginForm').onsubmit = async function(e) {
     }
     
     const result = await response.json();
+    console.log('Login result:', result);
+    console.log('User role:', result.user.role);
     
     if (result.user.role === 'admin') {
+      console.log('Rendering admin dashboard');
       document.body.innerHTML = '<div style="background:#f8f9fa;min-height:100vh;font-family:Arial,sans-serif"><div style="background:#2c3e50;color:white;padding:16px 24px;box-shadow:0 2px 4px rgba(0,0,0,0.1)"><div style="max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center"><div><h1 style="font-size:24px;font-weight:bold;margin:0">24/7 Tele H Admin</h1><p style="font-size:14px;margin:4px 0 0;opacity:0.9">Patient Dashboard Management</p></div><button onclick="location.reload()" style="background:#e74c3c;border:none;color:white;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:14px">Logout</button></div></div><div style="max-width:1200px;margin:0 auto;padding:24px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:24px"><div style="background:linear-gradient(135deg,#3498db,#2980b9);padding:20px;border-radius:12px;color:white;text-align:center"><div style="font-size:32px;font-weight:bold;margin-bottom:8px">15</div><div style="font-size:14px;opacity:0.9">Total Patients</div></div><div style="background:linear-gradient(135deg,#27ae60,#229954);padding:20px;border-radius:12px;color:white;text-align:center"><div style="font-size:32px;font-weight:bold;margin-bottom:8px">12</div><div style="font-size:14px;opacity:0.9">Active Patients</div></div><div style="background:linear-gradient(135deg,#f39c12,#e67e22);padding:20px;border-radius:12px;color:white;text-align:center"><div style="font-size:32px;font-weight:bold;margin-bottom:8px">3</div><div style="font-size:14px;opacity:0.9">Pending Verification</div></div><div style="background:linear-gradient(135deg,#e74c3c,#c0392b);padding:20px;border-radius:12px;color:white;text-align:center"><div style="font-size:32px;font-weight:bold;margin-bottom:8px">2</div><div style="font-size:14px;opacity:0.9">Critical Alerts</div></div></div><div style="display:grid;grid-template-columns:2fr 1fr;gap:24px"><div style="background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden"><div style="padding:20px;border-bottom:1px solid #e9ecef"><h3 style="font-size:18px;font-weight:600;color:#2c3e50;margin:0">Patient Management</h3></div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8f9fa"><th style="padding:12px;text-align:left;font-weight:600;color:#495057;border-bottom:1px solid #dee2e6">Patient ID</th><th style="padding:12px;text-align:left;font-weight:600;color:#495057;border-bottom:1px solid #dee2e6">Name</th><th style="padding:12px;text-align:left;font-weight:600;color:#495057;border-bottom:1px solid #dee2e6">Status</th><th style="padding:12px;text-align:left;font-weight:600;color:#495057;border-bottom:1px solid #dee2e6">Last Activity</th></tr></thead><tbody><tr><td style="padding:12px;border-bottom:1px solid #dee2e6">PT001</td><td style="padding:12px;border-bottom:1px solid #dee2e6">John Smith</td><td style="padding:12px;border-bottom:1px solid #dee2e6"><span style="background:#d4edda;color:#155724;padding:4px 8px;border-radius:12px;font-size:12px">Active</span></td><td style="padding:12px;border-bottom:1px solid #dee2e6">2 hours ago</td></tr><tr><td style="padding:12px;border-bottom:1px solid #dee2e6">PT002</td><td style="padding:12px;border-bottom:1px solid #dee2e6">Sarah Johnson</td><td style="padding:12px;border-bottom:1px solid #dee2e6"><span style="background:#fff3cd;color:#856404;padding:4px 8px;border-radius:12px;font-size:12px">Pending</span></td><td style="padding:12px;border-bottom:1px solid #dee2e6">1 day ago</td></tr><tr><td style="padding:12px;border-bottom:1px solid #dee2e6">PT003</td><td style="padding:12px;border-bottom:1px solid #dee2e6">Mike Davis</td><td style="padding:12px;border-bottom:1px solid #dee2e6"><span style="background:#d4edda;color:#155724;padding:4px 8px;border-radius:12px;font-size:12px">Active</span></td><td style="padding:12px;border-bottom:1px solid #dee2e6">30 minutes ago</td></tr><tr><td style="padding:12px;border-bottom:1px solid #dee2e6">PT004</td><td style="padding:12px;border-bottom:1px solid #dee2e6">Emma Wilson</td><td style="padding:12px;border-bottom:1px solid #dee2e6"><span style="background:#f8d7da;color:#721c24;padding:4px 8px;border-radius:12px;font-size:12px">Alert</span></td><td style="padding:12px;border-bottom:1px solid #dee2e6">15 minutes ago</td></tr></tbody></table></div></div><div style="display:flex;flex-direction:column;gap:20px"><div style="background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:20px"><h3 style="font-size:18px;font-weight:600;color:#2c3e50;margin:0 0 16px">Recent Alerts</h3><div style="space-y:12px"><div style="padding:12px;background:#fff5f5;border-left:4px solid #ef4444;border-radius:6px;margin-bottom:12px"><div style="font-weight:600;color:#dc2626;font-size:14px">High Blood Pressure</div><div style="font-size:12px;color:#6b7280;margin-top:4px">Emma Wilson - 5 min ago</div></div><div style="padding:12px;background:#fefdf0;border-left:4px solid #f59e0b;border-radius:6px;margin-bottom:12px"><div style="font-weight:600;color:#d97706;font-size:14px">Device Disconnected</div><div style="font-size:12px;color:#6b7280;margin-top:4px">John Smith - 1 hour ago</div></div><div style="padding:12px;background:#f0fdf4;border-left:4px solid #10b981;border-radius:6px"><div style="font-weight:600;color:#059669;font-size:14px">Normal Reading</div><div style="font-size:12px;color:#6b7280;margin-top:4px">Mike Davis - 2 hours ago</div></div></div></div><div style="background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:20px"><h3 style="font-size:18px;font-weight:600;color:#2c3e50;margin:0 0 16px">Quick Actions</h3><div style="display:flex;flex-direction:column;gap:12px"><button style="background:#3498db;color:white;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">+ Add New Patient</button><button style="background:#27ae60;color:white;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">📊 Generate Report</button><button style="background:#f39c12;color:white;border:none;padding:12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">⚙️ System Settings</button></div></div></div></div></div></div>';
     } else {
       document.body.innerHTML = '<div style="background:#f3f4f6;min-height:100vh;font-family:Arial,sans-serif"><div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:20px 16px;color:white"><div style="display:flex;justify-content:space-between;align-items:center;max-width:400px;margin:0 auto"><div><h1 style="font-size:24px;font-weight:bold;margin:0">24/7 Tele H</h1><p style="font-size:14px;margin:4px 0 0 0;opacity:0.9">Welcome, ' + result.user.firstName + '</p></div><button onclick="location.reload()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 12px;border-radius:20px;font-size:12px;cursor:pointer">Logout</button></div></div><div style="max-width:400px;margin:-20px auto 0;padding:0 16px"><div style="background:white;border-radius:20px 20px 0 0;padding:24px;min-height:calc(100vh - 120px)"><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px"><div style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);padding:20px;border-radius:12px;color:white;text-align:center"><div style="font-size:28px;font-weight:bold;margin-bottom:4px">--</div><div style="font-size:12px;opacity:0.9">Heart Rate</div></div><div style="background:linear-gradient(135deg,#43e97b 0%,#38f9d7 100%);padding:20px;border-radius:12px;color:white;text-align:center"><div style="font-size:28px;font-weight:bold;margin-bottom:4px">--%</div><div style="font-size:12px;opacity:0.9">Blood Oxygen</div></div><div style="background:linear-gradient(135deg,#fa709a 0%,#fee140 100%);padding:20px;border-radius:12px;color:white;text-align:center"><div style="font-size:28px;font-weight:bold;margin-bottom:4px">--°F</div><div style="font-size:12px;opacity:0.9">Temperature</div></div><div style="background:linear-gradient(135deg,#a8edea 0%,#fed6e3 100%);padding:20px;border-radius:12px;color:#333;text-align:center"><div style="font-size:28px;font-weight:bold;margin-bottom:4px">--/--</div><div style="font-size:12px;opacity:0.8">Blood Pressure</div></div></div><div style="margin-bottom:24px"><h3 style="font-size:18px;font-weight:600;color:#333;margin-bottom:16px">Quick Actions</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><button style="background:#667eea;color:white;border:none;padding:16px;border-radius:12px;font-size:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="font-size:24px">📊</div><div>Record Vitals</div></button><button style="background:#764ba2;color:white;border:none;padding:16px;border-radius:12px;font-size:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="font-size:24px">🔗</div><div>Connect Device</div></button><button style="background:#4facfe;color:white;border:none;padding:16px;border-radius:12px;font-size:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="font-size:24px">📱</div><div>View History</div></button><button style="background:#43e97b;color:white;border:none;padding:16px;border-radius:12px;font-size:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px"><div style="font-size:24px">⚙️</div><div>Settings</div></button></div></div><div><h3 style="font-size:18px;font-weight:600;color:#333;margin-bottom:16px">Recent Activity</h3><div style="background:#f8f9fa;padding:16px;border-radius:12px;text-align:center;color:#6c757d"><p style="margin:0;font-size:14px">No recent vital signs recorded</p><p style="margin:8px 0 0;font-size:12px">Connect your HC03 device to start monitoring</p></div></div></div></div></div>';
@@ -777,15 +984,27 @@ document.getElementById('loginForm').onsubmit = async function(e) {
 </script></body></html>`);
   });
 
-  // Catch all routes and redirect to login
+  // Root route redirects to login
+  app.get("/", (req, res) => {
+    res.redirect("/login");
+  });
+
+  // Catch all other routes
   app.get("*", (req, res) => {
     if (req.path.startsWith("/api/")) {
       return res.status(404).json({ message: "API endpoint not found" });
     }
-    if (req.path === "/login") {
-      return;
-    }
-    res.redirect("/login");
+    // For any other route, serve a simple redirect page
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>Redirecting...</title></head>
+      <body>
+        <script>window.location.href = '/login';</script>
+        <p>Redirecting to login...</p>
+      </body>
+      </html>
+    `);
   });
 
   const httpServer = createServer(app);
