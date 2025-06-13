@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import cron from "node-cron";
-import { insertUserSchema, insertOtpCodeSchema, insertVitalSignsSchema, insertCheckupLogSchema, insertReminderSettingsSchema, insertAlertSchema } from "@shared/schema";
+import { insertUserSchema, adminCreatePatientSchema, insertOtpCodeSchema, insertVitalSignsSchema, insertCheckupLogSchema, insertReminderSettingsSchema, insertAlertSchema } from "@shared/schema";
 import { z } from "zod";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -637,6 +637,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Reset password error:", error);
       res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
+  // Admin: Get all patients
+  app.get("/api/admin/patients", verifyToken, verifyAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      res.json(patients);
+    } catch (error) {
+      console.error("Get patients error:", error);
+      res.status(500).json({ message: "Failed to fetch patients" });
+    }
+  });
+
+  // Admin: Create patient dashboard access
+  app.post("/api/admin/create-patient", verifyToken, verifyAdmin, async (req, res) => {
+    try {
+      const patientData = adminCreatePatientSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(patientData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+      
+      // Check if patient ID already exists
+      const existingPatient = await storage.getUserByPatientId(patientData.patientId);
+      if (existingPatient) {
+        return res.status(400).json({ message: "Patient ID already exists" });
+      }
+      
+      // Hash password
+      const hashedPassword = await bcrypt.hash(patientData.password, 10);
+      
+      // Create patient access
+      const patient = await storage.createPatientAccess({
+        ...patientData,
+        password: hashedPassword,
+      });
+      
+      res.status(201).json({ 
+        message: "Patient dashboard access created successfully", 
+        patientId: patient.patientId,
+        email: patient.email,
+        firstName: patient.firstName,
+        lastName: patient.lastName
+      });
+    } catch (error) {
+      console.error("Create patient access error:", error);
+      res.status(400).json({ message: "Failed to create patient access" });
+    }
+  });
+
+  // Admin: Update patient access status
+  app.put("/api/admin/patient/:patientId/access", verifyToken, verifyAdmin, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const { isActive } = req.body;
+      
+      await storage.updatePatientAccess(patientId, isActive);
+      
+      res.json({ 
+        message: `Patient access ${isActive ? 'activated' : 'deactivated'} successfully` 
+      });
+    } catch (error) {
+      console.error("Update patient access error:", error);
+      res.status(500).json({ message: "Failed to update patient access" });
+    }
+  });
+
+  // Create initial admin user (for setup only)
+  app.post("/api/setup/admin", async (req, res) => {
+    try {
+      // Check if admin already exists
+      const existingAdmin = await storage.getUserByEmail("admin@24x7teleh.com");
+      if (existingAdmin) {
+        return res.status(400).json({ message: "Admin user already exists" });
+      }
+
+      // Create admin user
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+      const adminUser = await storage.createUser({
+        username: "admin",
+        email: "admin@24x7teleh.com",
+        firstName: "System",
+        lastName: "Administrator",
+        mobileNumber: "1234567890",
+        password: hashedPassword,
+        patientId: "ADMIN-001",
+        role: "admin",
+        isVerified: true,
+      });
+
+      res.status(201).json({ 
+        message: "Admin user created successfully",
+        email: adminUser.email,
+        username: adminUser.username
+      });
+    } catch (error) {
+      console.error("Setup admin error:", error);
+      res.status(500).json({ message: "Failed to create admin user" });
     }
   });
 
