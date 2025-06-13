@@ -166,8 +166,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const user = await storage.createUser(userToCreate);
       
+      // Generate and send OTP for email verification
+      const otp = generateOTP();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      
+      await storage.createOtpCode({
+        email: userData.email,
+        code: otp,
+        expiresAt,
+      });
+      
+      await sendOTPEmail(userData.email, otp);
+      
       res.status(201).json({ 
-        message: "Registration successful", 
+        message: "Registration successful. Please check your email for verification code.", 
         userId: user.id,
         patientId: user.patientId 
       });
