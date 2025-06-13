@@ -66,61 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const path = require('path');
     const htmlContent = fs.readFileSync(path.join(__dirname, 'simple-app.html'), 'utf8');
     res.send(htmlContent);
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>24/7 Tele H - Health Monitor</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f9fafb; }
-    .container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; width: 100%; }
-    .title { text-align: center; font-size: 24px; font-weight: bold; color: #111827; margin-bottom: 10px; }
-    .subtitle { text-align: center; font-size: 14px; color: #6b7280; margin-bottom: 30px; }
-    .form { display: flex; flex-direction: column; gap: 15px; }
-    .input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-    .button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-    .button:hover { background: #1d4ed8; }
-    .button:disabled { background: #9ca3af; cursor: not-allowed; }
-    .error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; }
-    .demo { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
-    .demo p { font-size: 12px; margin: 5px 0; color: #6b7280; }
-    .hidden { display: none; }
-  </style>
-</head>
-<body>
-  <div id="loginView" class="container">
-    <div class="card">
-      <h1 class="title">24/7 Tele H</h1>
-      <p class="subtitle">Health Monitoring System</p>
-      
-      <div id="error" class="error"></div>
-      
-      <form id="loginForm" class="form">
-        <input id="email" type="email" class="input" placeholder="Email Address" required>
-        <input id="password" type="password" class="input" placeholder="Password" required>
-        <button id="loginBtn" type="submit" class="button">Sign In</button>
-      </form>
-      
-      <div class="demo">
-        <p><strong>Demo Accounts:</strong></p>
-        <p>Admin: admin@24x7teleh.com / admin123</p>
-        <p>Patient: patient.demo@example.com / patient123</p>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let currentUser = null;
-
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const errorDiv = document.getElementById('error');
-      const loginBtn = document.getElementById('loginBtn');
+  });
       
       loginBtn.disabled = true;
       loginBtn.textContent = 'Signing in...';
