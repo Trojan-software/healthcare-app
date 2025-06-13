@@ -16,6 +16,11 @@ export interface IStorage {
   createUser(insertUser: InsertUser): Promise<User>;
   updateUser(id: number, updateData: Partial<InsertUser>): Promise<User | undefined>;
   markUserAsVerified(email: string): Promise<void>;
+  
+  // Admin methods
+  getAllPatients(): Promise<User[]>;
+  createPatientAccess(insertUser: any): Promise<User>;
+  updatePatientAccess(patientId: string, isActive: boolean): Promise<void>;
 
   // OTP methods
   createOtpCode(insertOtp: InsertOtpCode): Promise<OtpCode>;
@@ -67,7 +72,7 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: any): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(insertUser)
@@ -86,6 +91,29 @@ export class DatabaseStorage implements IStorage {
 
   async markUserAsVerified(email: string): Promise<void> {
     await db.update(users).set({ isVerified: true }).where(eq(users.email, email));
+  }
+
+  // Admin methods
+  async getAllPatients(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.role, 'patient')).orderBy(desc(users.createdAt));
+  }
+
+  async createPatientAccess(insertUser: any): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...insertUser,
+        role: 'patient',
+        isVerified: true
+      })
+      .returning();
+    return user;
+  }
+
+  async updatePatientAccess(patientId: string, isActive: boolean): Promise<void> {
+    await db.update(users).set({ 
+      isVerified: isActive 
+    }).where(eq(users.patientId, patientId));
   }
 
   // OTP methods

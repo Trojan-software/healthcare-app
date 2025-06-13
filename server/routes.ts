@@ -40,6 +40,19 @@ const verifyToken = (req: any, res: any, next: any) => {
   }
 };
 
+// Middleware to verify admin role
+const verifyAdmin = async (req: any, res: any, next: any) => {
+  try {
+    const user = await storage.getUser(req.user.userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Access denied" });
+  }
+};
+
 // Generate OTP
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();

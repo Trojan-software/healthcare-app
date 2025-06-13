@@ -78,6 +78,16 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+export const adminCreatePatientSchema = createInsertSchema(users).pick({
+  username: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  mobileNumber: true,
+  password: true,
+  patientId: true,
+});
+
 export const insertOtpCodeSchema = createInsertSchema(otpCodes).pick({
   email: true,
   code: true,
