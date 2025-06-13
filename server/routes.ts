@@ -9,17 +9,6 @@ import { z } from "zod";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-// Email transporter setup - Test mode when no SMTP configured
-const transporter = process.env.SMTP_USER ? nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER || process.env.EMAIL_USER,
-    pass: process.env.SMTP_PASS || process.env.EMAIL_PASS,
-  },
-}) : null;
-
 // Test mode - store OTPs in memory for testing
 const testOTPs = new Map<string, string>();
 
@@ -59,54 +48,17 @@ const generateOTP = () => {
 
 // Send OTP email
 const sendOTPEmail = async (email: string, otp: string) => {
-  if (transporter) {
-    // Production mode - send actual email
-    const mailOptions = {
-      from: process.env.SMTP_USER || process.env.EMAIL_USER,
-      to: email,
-      subject: "24/7 Tele H - Email Verification",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563EB;">24/7 Tele H Technology Services</h2>
-          <p>Your email verification code is:</p>
-          <h1 style="background: #f3f4f6; padding: 20px; text-align: center; letter-spacing: 5px; font-size: 32px; color: #2563EB;">${otp}</h1>
-          <p>This code will expire in 10 minutes.</p>
-          <p>If you didn't request this code, please ignore this email.</p>
-        </div>
-      `,
-    };
-    await transporter.sendMail(mailOptions);
-  } else {
-    // Test mode - store OTP and log to console
-    testOTPs.set(email, otp);
-    console.log(`\n🔐 TEST MODE - OTP for ${email}: ${otp}`);
-    console.log(`💡 Use this code to verify your account in the mobile app\n`);
-  }
+  // Test mode - store OTP and log to console
+  testOTPs.set(email, otp);
+  console.log(`\n🔐 TEST MODE - OTP for ${email}: ${otp}`);
+  console.log(`💡 Use this code to verify your account in the mobile app\n`);
 };
 
-// Send alert email to doctor
+// Log alert for doctor (email functionality removed)
 const sendAlertEmail = async (patientId: string, alertTitle: string, alertDescription: string) => {
-  const doctorEmail = process.env.DOCTOR_EMAIL || "doctor@healthmonitor.com";
-  
-  const mailOptions = {
-    from: process.env.SMTP_USER || process.env.EMAIL_USER,
-    to: doctorEmail,
-    subject: `URGENT: Health Alert for Patient ${patientId}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #DC2626;">🚨 CRITICAL HEALTH ALERT</h2>
-        <div style="background: #fee2e2; padding: 20px; border-radius: 8px; border-left: 4px solid #DC2626;">
-          <h3 style="color: #DC2626; margin: 0 0 10px 0;">${alertTitle}</h3>
-          <p style="margin: 0 0 10px 0;"><strong>Patient ID:</strong> ${patientId}</p>
-          <p style="margin: 0;"><strong>Details:</strong> ${alertDescription}</p>
-        </div>
-        <p style="margin-top: 20px;">Please review the patient's condition immediately.</p>
-        <p><a href="#" style="background: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Patient Dashboard</a></p>
-      </div>
-    `,
-  };
-
-  await transporter.sendMail(mailOptions);
+  console.log(`\n🚨 CRITICAL HEALTH ALERT for Patient ${patientId}`);
+  console.log(`Alert: ${alertTitle}`);
+  console.log(`Details: ${alertDescription}\n`);
 };
 
 // Check for abnormal vital signs
@@ -231,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check test mode first, then database
       let isValid = false;
-      if (!transporter && testOTPs.has(email) && testOTPs.get(email) === code) {
+      if (testOTPs.has(email) && testOTPs.get(email) === code) {
         isValid = true;
         testOTPs.delete(email); // Remove used test OTP
       } else {
@@ -550,20 +502,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             description: `Check-up overdue by ${Math.floor((now.getTime() - (lastCheckup?.getTime() || 0)) / (1000 * 60 * 60))} hours`,
           });
           
-          // Send reminder email if enabled
-          if (setting.emailAlerts && transporter) {
+          // Log reminder (email functionality removed)
+          if (setting.emailAlerts) {
             const user = await storage.getUserByPatientId(setting.patientId);
             if (user) {
-              try {
-                await transporter.sendMail({
-                  from: process.env.SMTP_USER || process.env.EMAIL_USER,
-                  to: user.email,
-                  subject: "24/7 Tele H - Health Check Reminder",
-                  html: `<p>REMINDER: Your health check-up is overdue. Please complete your vital signs monitoring.</p>`
-                });
-              } catch (error) {
-                console.error("Failed to send reminder email:", error);
-              }
+              console.log(`📧 Reminder notification for ${user.email}: Health check-up overdue`);
             }
           }
         }
