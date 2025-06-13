@@ -703,8 +703,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.send("Server is working!");
   });
 
-  // Simple working login page
-  app.get("/", (req, res) => {
+  // Login route
+  app.get("/login", (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/html',
       'Cache-Control': 'no-cache'
@@ -775,6 +775,11 @@ document.getElementById('loginForm').onsubmit = async function(e) {
   }
 };
 </script></body></html>`);
+  });
+
+  // Redirect to login page
+  app.get("/", (req, res) => {
+    res.redirect("/login");
   });
 
   const httpServer = createServer(app);
