@@ -367,6 +367,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(404).send('Resource not found');
   });
 
+  // Register HC03 device routes
+  registerHc03Routes(app);
+
   // Catch all other routes
   app.get("*", (req, res) => {
     if (req.path.startsWith("/api/")) {

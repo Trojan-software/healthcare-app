@@ -1,4 +1,5 @@
 import React from 'react';
+import HealthMonitoring from '@/pages/health-monitoring';
 
 export default function SimpleApp() {
   const [state, setState] = React.useState({
@@ -161,20 +162,21 @@ export default function SimpleApp() {
   }
 
   return (
-    <div style={{ ...styles.page, padding: '1.5rem' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', margin: '0 0 1rem 0' }}>
-            Welcome, {(state.user as any)?.firstName} {(state.user as any)?.lastName}
+    <div style={{ ...styles.page, padding: '0' }}>
+      <div style={{ backgroundColor: 'white', padding: '1rem 1.5rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#111827', margin: '0' }}>
+            24/7 Tele H - Health Monitoring
           </h1>
-          <p style={{ color: '#6b7280', margin: '0 0 1.5rem 0' }}>
-            You have successfully logged in to the 24/7 Tele H health monitoring system.
+          <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0' }}>
+            Welcome, {(state.user as any)?.firstName} {(state.user as any)?.lastName}
           </p>
-          <button onClick={logout} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}>
-            Logout
-          </button>
         </div>
+        <button onClick={logout} style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}>
+          Logout
+        </button>
       </div>
+      <HealthMonitoring />
     </div>
   );
 }
