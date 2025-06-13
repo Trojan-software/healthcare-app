@@ -1,5 +1,6 @@
 import { 
   users, otpCodes, vitalSigns, checkupLogs, reminderSettings, alerts,
+  hc03Devices, ecgData, bloodOxygenData, bloodPressureData, bloodGlucoseData, temperatureData,
   type User, type InsertUser, type OtpCode, type InsertOtpCode,
   type VitalSigns, type InsertVitalSigns, type CheckupLog, type InsertCheckupLog,
   type ReminderSettings, type InsertReminderSettings, type Alert, type InsertAlert
@@ -331,6 +332,207 @@ export class DatabaseStorage implements IStorage {
       completedCheckups: completedCheckups?.count || 0,
       missedCheckups: missedCheckups?.count || 0,
     };
+  }
+
+  // HC03 Device Management Methods
+  async registerHc03Device(device: any): Promise<any> {
+    const [newDevice] = await db
+      .insert(hc03Devices)
+      .values({
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+        macAddress: device.macAddress,
+        firmwareVersion: device.firmwareVersion,
+        batteryLevel: device.batteryLevel || 100,
+        chargingStatus: device.chargingStatus || false,
+        connectionStatus: 'connected',
+        patientId: device.patientId,
+        lastConnected: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: hc03Devices.deviceId,
+        set: {
+          deviceName: device.deviceName,
+          connectionStatus: 'connected',
+          lastConnected: new Date(),
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return newDevice;
+  }
+
+  async updateHc03Device(deviceId: string, updates: any): Promise<any> {
+    const [updatedDevice] = await db
+      .update(hc03Devices)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(hc03Devices.deviceId, deviceId))
+      .returning();
+    return updatedDevice;
+  }
+
+  async getHc03DevicesByPatient(patientId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(hc03Devices)
+      .where(eq(hc03Devices.patientId, patientId));
+  }
+
+  async getHc03Device(deviceId: string): Promise<any | undefined> {
+    const [device] = await db
+      .select()
+      .from(hc03Devices)
+      .where(eq(hc03Devices.deviceId, deviceId));
+    return device;
+  }
+
+  async updateDeviceStatus(deviceId: string, status: string): Promise<void> {
+    await db
+      .update(hc03Devices)
+      .set({
+        connectionStatus: status,
+        lastConnected: status === 'connected' ? new Date() : undefined,
+        updatedAt: new Date(),
+      })
+      .where(eq(hc03Devices.deviceId, deviceId));
+  }
+
+  async updateDeviceBattery(deviceId: string, batteryLevel: number, chargingStatus: boolean): Promise<void> {
+    await db
+      .update(hc03Devices)
+      .set({
+        batteryLevel,
+        chargingStatus,
+        updatedAt: new Date(),
+      })
+      .where(eq(hc03Devices.deviceId, deviceId));
+  }
+
+  // HC03 Data Storage Methods
+  async saveEcgData(data: any): Promise<any> {
+    const [savedData] = await db
+      .insert(ecgData)
+      .values({
+        patientId: data.patientId,
+        deviceId: data.deviceId,
+        waveData: data.waveData,
+        heartRate: data.hr,
+        moodIndex: data.moodIndex,
+        rrInterval: data.rr,
+        hrv: data.hrv,
+        respiratoryRate: data.respiratoryRate,
+        fingerDetected: data.touch,
+        recordingDuration: data.recordingDuration || 30,
+      })
+      .returning();
+    return savedData;
+  }
+
+  async saveBloodOxygenData(data: any): Promise<any> {
+    const [savedData] = await db
+      .insert(bloodOxygenData)
+      .values({
+        patientId: data.patientId,
+        deviceId: data.deviceId,
+        bloodOxygen: data.bloodOxygen,
+        heartRate: data.heartRate,
+        fingerDetected: data.fingerDetection,
+        waveData: data.bloodOxygenWaveData,
+      })
+      .returning();
+    return savedData;
+  }
+
+  async saveBloodPressureData(data: any): Promise<any> {
+    const [savedData] = await db
+      .insert(bloodPressureData)
+      .values({
+        patientId: data.patientId,
+        deviceId: data.deviceId,
+        systolic: data.ps,
+        diastolic: data.pd,
+        heartRate: data.hr,
+        measurementProgress: data.progress,
+        cuffPressure: data.cuffPressure,
+      })
+      .returning();
+    return savedData;
+  }
+
+  async saveBloodGlucoseData(data: any): Promise<any> {
+    const [savedData] = await db
+      .insert(bloodGlucoseData)
+      .values({
+        patientId: data.patientId,
+        deviceId: data.deviceId,
+        glucoseLevel: data.bloodGlucosePaperData,
+        testStripStatus: data.bloodGlucosePaperState,
+        measurementType: data.measurementType || 'fingerstick',
+      })
+      .returning();
+    return savedData;
+  }
+
+  async saveTemperatureData(data: any): Promise<any> {
+    const [savedData] = await db
+      .insert(temperatureData)
+      .values({
+        patientId: data.patientId,
+        deviceId: data.deviceId,
+        temperature: data.temperature.toString(),
+        measurementSite: data.measurementSite || 'forehead',
+      })
+      .returning();
+    return savedData;
+  }
+
+  // HC03 Data Retrieval Methods
+  async getEcgDataByPatient(patientId: string, limit: number = 50): Promise<any[]> {
+    return await db
+      .select()
+      .from(ecgData)
+      .where(eq(ecgData.patientId, patientId))
+      .orderBy(desc(ecgData.timestamp))
+      .limit(limit);
+  }
+
+  async getBloodOxygenDataByPatient(patientId: string, limit: number = 50): Promise<any[]> {
+    return await db
+      .select()
+      .from(bloodOxygenData)
+      .where(eq(bloodOxygenData.patientId, patientId))
+      .orderBy(desc(bloodOxygenData.timestamp))
+      .limit(limit);
+  }
+
+  async getBloodPressureDataByPatient(patientId: string, limit: number = 50): Promise<any[]> {
+    return await db
+      .select()
+      .from(bloodPressureData)
+      .where(eq(bloodPressureData.patientId, patientId))
+      .orderBy(desc(bloodPressureData.timestamp))
+      .limit(limit);
+  }
+
+  async getBloodGlucoseDataByPatient(patientId: string, limit: number = 50): Promise<any[]> {
+    return await db
+      .select()
+      .from(bloodGlucoseData)
+      .where(eq(bloodGlucoseData.patientId, patientId))
+      .orderBy(desc(bloodGlucoseData.timestamp))
+      .limit(limit);
+  }
+
+  async getTemperatureDataByPatient(patientId: string, limit: number = 50): Promise<any[]> {
+    return await db
+      .select()
+      .from(temperatureData)
+      .where(eq(temperatureData.patientId, patientId))
+      .orderBy(desc(temperatureData.timestamp))
+      .limit(limit);
   }
 }
 

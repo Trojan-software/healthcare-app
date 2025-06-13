@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { registerHc03Routes } from "./routes-hc03";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
