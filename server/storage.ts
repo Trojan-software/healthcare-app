@@ -48,6 +48,28 @@ export interface IStorage {
 
   // Dashboard stats
   getDashboardStats(patientId: string): Promise<any>;
+
+  // HC03 Device Management
+  registerHc03Device(device: any): Promise<any>;
+  updateHc03Device(deviceId: string, updates: any): Promise<any>;
+  getHc03DevicesByPatient(patientId: string): Promise<any[]>;
+  getHc03Device(deviceId: string): Promise<any | undefined>;
+  updateDeviceStatus(deviceId: string, status: string): Promise<void>;
+  updateDeviceBattery(deviceId: string, batteryLevel: number, chargingStatus: boolean): Promise<void>;
+
+  // HC03 Data Storage
+  saveEcgData(data: any): Promise<any>;
+  saveBloodOxygenData(data: any): Promise<any>;
+  saveBloodPressureData(data: any): Promise<any>;
+  saveBloodGlucoseData(data: any): Promise<any>;
+  saveTemperatureData(data: any): Promise<any>;
+
+  // HC03 Data Retrieval
+  getEcgDataByPatient(patientId: string, limit?: number): Promise<any[]>;
+  getBloodOxygenDataByPatient(patientId: string, limit?: number): Promise<any[]>;
+  getBloodPressureDataByPatient(patientId: string, limit?: number): Promise<any[]>;
+  getBloodGlucoseDataByPatient(patientId: string, limit?: number): Promise<any[]>;
+  getTemperatureDataByPatient(patientId: string, limit?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {

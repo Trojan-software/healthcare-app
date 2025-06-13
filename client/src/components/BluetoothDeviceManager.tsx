@@ -21,13 +21,14 @@ import {
 } from "lucide-react";
 
 // HC03 SDK Detection Types
+// HC03 SDK Detection Types as per API documentation
 enum Detection {
-  BT = 'BT',           // Temperature
-  OX = 'OX',           // Blood oxygen
+  BT = 'BT',           // Body Temperature
+  OX = 'OX',           // Blood Oxygen
   ECG = 'ECG',         // Electrocardiogram
-  BP = 'BP',           // Blood pressure
-  BATTERY = 'BATTERY', // Battery
-  BG = 'BG'            // Blood sugar
+  BP = 'BP',           // Blood Pressure
+  BATTERY = 'BATTERY', // Battery Level
+  BG = 'BG'            // Blood Glucose
 }
 
 interface BluetoothDevice {
@@ -46,28 +47,44 @@ interface VitalReading {
   quality: 'good' | 'fair' | 'poor';
 }
 
+// HC03 SDK Data Structures as per API documentation
 interface ECGData {
-  wave: number[];
-  heartRate: number;
-  moodIndex: number;
-  rrInterval: number;
-  hrv: number;
-  respiratoryRate: number;
-  fingerDetected: boolean;
+  wave: number[];              // Data used for drawing waveforms
+  hr: number;                  // Heart rate data
+  moodIndex: number;           // Mood Index (1-20: chill, 21-40: relax, 41-60: balance, 61-80: excitation, 81-100: excitement/anxiety)
+  rr: number;                  // Peak to peak value (RR interval)
+  hrv: number;                 // Heart rate variability
+  respiratoryRate: number;     // Respiratory rate
+  touch: boolean;              // Finger detection
 }
 
 interface BloodOxygenData {
-  bloodOxygen: number;
-  heartRate: number;
-  fingerDetected: boolean;
-  waveData: number[];
+  bloodOxygen: number;         // Blood oxygen level
+  heartRate: number;           // Heart rate
+  fingerDetection: boolean;    // Finger detection status
+  bloodOxygenWaveData: number[]; // Draw waveform data
 }
 
 interface BloodPressureData {
-  systolic: number;
-  diastolic: number;
-  heartRate: number;
-  progress: number;
+  ps: number;                  // Systolic pressure
+  pd: number;                  // Diastolic pressure
+  hr: number;                  // Heart rate
+  progress: number;            // Blood pressure measurement progress
+}
+
+interface BloodGlucoseData {
+  bloodGlucoseSendData: any;   // Data to be sent to the device
+  bloodGlucosePaperState: string; // Blood glucose test strip status
+  bloodGlucosePaperData: number;  // Blood glucose data
+}
+
+interface TemperatureData {
+  temperature: number;         // Body temperature data
+}
+
+interface BatteryData {
+  batteryLevel: number;        // Battery percentage data
+  chargingStatus: boolean;     // Battery charging status
 }
 
 export default function BluetoothDeviceManager() {

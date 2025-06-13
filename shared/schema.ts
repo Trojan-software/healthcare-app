@@ -28,11 +28,91 @@ export const otpCodes = pgTable("otp_codes", {
 export const vitalSigns = pgTable("vital_signs", {
   id: serial("id").primaryKey(),
   patientId: text("patient_id").notNull(),
+  deviceId: text("device_id"),
   heartRate: integer("heart_rate"),
   bloodPressureSystolic: integer("blood_pressure_systolic"),
   bloodPressureDiastolic: integer("blood_pressure_diastolic"),
   temperature: decimal("temperature", { precision: 4, scale: 1 }),
   oxygenLevel: integer("oxygen_level"),
+  bloodGlucose: integer("blood_glucose"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// HC03 Device Management Table
+export const hc03Devices = pgTable("hc03_devices", {
+  id: serial("id").primaryKey(),
+  deviceId: text("device_id").notNull().unique(),
+  deviceName: text("device_name"),
+  macAddress: text("mac_address"),
+  firmwareVersion: text("firmware_version"),
+  batteryLevel: integer("battery_level"),
+  chargingStatus: boolean("charging_status").default(false),
+  connectionStatus: text("connection_status").default("disconnected"),
+  lastConnected: timestamp("last_connected"),
+  patientId: text("patient_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// HC03 ECG Data Table
+export const ecgData = pgTable("ecg_data", {
+  id: serial("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  deviceId: text("device_id").notNull(),
+  waveData: text("wave_data").array(),
+  heartRate: integer("heart_rate"),
+  moodIndex: integer("mood_index"),
+  rrInterval: integer("rr_interval"),
+  hrv: integer("hrv"),
+  respiratoryRate: integer("respiratory_rate"),
+  fingerDetected: boolean("finger_detected"),
+  recordingDuration: integer("recording_duration"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// HC03 Blood Oxygen Data Table  
+export const bloodOxygenData = pgTable("blood_oxygen_data", {
+  id: serial("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  deviceId: text("device_id").notNull(),
+  bloodOxygen: integer("blood_oxygen"),
+  heartRate: integer("heart_rate"),
+  fingerDetected: boolean("finger_detected"),
+  waveData: text("wave_data").array(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// HC03 Blood Pressure Data Table
+export const bloodPressureData = pgTable("blood_pressure_data", {
+  id: serial("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  deviceId: text("device_id").notNull(),
+  systolic: integer("systolic"),
+  diastolic: integer("diastolic"),
+  heartRate: integer("heart_rate"),
+  measurementProgress: integer("measurement_progress"),
+  cuffPressure: integer("cuff_pressure"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// HC03 Blood Glucose Data Table
+export const bloodGlucoseData = pgTable("blood_glucose_data", {
+  id: serial("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  deviceId: text("device_id").notNull(),
+  glucoseLevel: integer("glucose_level"),
+  testStripStatus: text("test_strip_status"),
+  measurementType: text("measurement_type"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// HC03 Temperature Data Table
+export const temperatureData = pgTable("temperature_data", {
+  id: serial("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  deviceId: text("device_id").notNull(),
+  temperature: decimal("temperature", { precision: 4, scale: 1 }),
+  measurementSite: text("measurement_site"),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
@@ -129,6 +209,65 @@ export const insertAlertSchema = createInsertSchema(alerts).pick({
   description: true,
 });
 
+// Insert schemas for HC03 tables
+export const insertHc03DeviceSchema = createInsertSchema(hc03Devices).pick({
+  deviceId: true,
+  deviceName: true,
+  macAddress: true,
+  firmwareVersion: true,
+  batteryLevel: true,
+  chargingStatus: true,
+  connectionStatus: true,
+  patientId: true,
+});
+
+export const insertEcgDataSchema = createInsertSchema(ecgData).pick({
+  patientId: true,
+  deviceId: true,
+  waveData: true,
+  heartRate: true,
+  moodIndex: true,
+  rrInterval: true,
+  hrv: true,
+  respiratoryRate: true,
+  fingerDetected: true,
+  recordingDuration: true,
+});
+
+export const insertBloodOxygenDataSchema = createInsertSchema(bloodOxygenData).pick({
+  patientId: true,
+  deviceId: true,
+  bloodOxygen: true,
+  heartRate: true,
+  fingerDetected: true,
+  waveData: true,
+});
+
+export const insertBloodPressureDataSchema = createInsertSchema(bloodPressureData).pick({
+  patientId: true,
+  deviceId: true,
+  systolic: true,
+  diastolic: true,
+  heartRate: true,
+  measurementProgress: true,
+  cuffPressure: true,
+});
+
+export const insertBloodGlucoseDataSchema = createInsertSchema(bloodGlucoseData).pick({
+  patientId: true,
+  deviceId: true,
+  glucoseLevel: true,
+  testStripStatus: true,
+  measurementType: true,
+});
+
+export const insertTemperatureDataSchema = createInsertSchema(temperatureData).pick({
+  patientId: true,
+  deviceId: true,
+  temperature: true,
+  measurementSite: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type OtpCode = typeof otpCodes.$inferSelect;
@@ -141,3 +280,17 @@ export type ReminderSettings = typeof reminderSettings.$inferSelect;
 export type InsertReminderSettings = z.infer<typeof insertReminderSettingsSchema>;
 export type Alert = typeof alerts.$inferSelect;
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
+
+// HC03 Device Types
+export type Hc03Device = typeof hc03Devices.$inferSelect;
+export type InsertHc03Device = z.infer<typeof insertHc03DeviceSchema>;
+export type EcgData = typeof ecgData.$inferSelect;
+export type InsertEcgData = z.infer<typeof insertEcgDataSchema>;
+export type BloodOxygenData = typeof bloodOxygenData.$inferSelect;
+export type InsertBloodOxygenData = z.infer<typeof insertBloodOxygenDataSchema>;
+export type BloodPressureData = typeof bloodPressureData.$inferSelect;
+export type InsertBloodPressureData = z.infer<typeof insertBloodPressureDataSchema>;
+export type BloodGlucoseData = typeof bloodGlucoseData.$inferSelect;
+export type InsertBloodGlucoseData = z.infer<typeof insertBloodGlucoseDataSchema>;
+export type TemperatureData = typeof temperatureData.$inferSelect;
+export type InsertTemperatureData = z.infer<typeof insertTemperatureDataSchema>;
