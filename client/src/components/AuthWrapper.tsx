@@ -3,6 +3,7 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import EmailVerificationForm from "./EmailVerificationForm";
 import UserProfile from "./UserProfile";
+import ForgotPasswordForm from "./ForgotPasswordForm";
 
 interface User {
   id: number;
@@ -16,7 +17,7 @@ interface AuthWrapperProps {
   children: (user: User, showProfile: boolean, setShowProfile: (show: boolean) => void, logout: () => void) => React.ReactNode;
 }
 
-type AuthStep = 'login' | 'register' | 'verify' | 'authenticated' | 'profile';
+type AuthStep = 'login' | 'register' | 'verify' | 'authenticated' | 'profile' | 'forgot-password';
 
 export default function AuthWrapper({ children }: AuthWrapperProps) {
   const [authStep, setAuthStep] = useState<AuthStep>('login');
@@ -101,6 +102,13 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
             email={emailToVerify}
             onVerified={handleVerified}
             onBack={() => setAuthStep('register')}
+          />
+        )}
+        
+        {authStep === 'forgot-password' && (
+          <ForgotPasswordForm
+            onBack={() => setAuthStep('login')}
+            onSuccess={() => setAuthStep('login')}
           />
         )}
       </div>

@@ -561,6 +561,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Forgot Password - Send reset OTP
+  app.post("/api/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "Email not found" });
+      }
+      
+      // Generate OTP for password reset
+      const otp = generateOTP();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      
+      await storage.createOtpCode({
+        email,
+        code: otp,
+        expiresAt,
+      });
+      
+      await sendOTPEmail(email, otp);
+      
+      res.json({ message: "Password reset code sent to your email" });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ message: "Failed to send reset code" });
+    }
+  });
+
+  // Reset Password - Verify OTP and set new password
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { email, code, newPassword } = req.body;
+      
+      // Verify OTP
+      let isValid = false;
+      if (!transporter && testOTPs.has(email) && testOTPs.get(email) === code) {
+        isValid = true;
+        testOTPs.delete(email);
+      } else {
+        isValid = await storage.verifyOtp(email, code);
+      }
+      
+      if (!isValid) {
+        return res.status(400).json({ message: "Invalid or expired reset code" });
+      }
+      
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Update user password
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      await storage.updateUser(user.id, { password: hashedPassword });
+      
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // Test endpoint to view OTP codes (only works in test mode)
   app.get("/api/test/otps", (req, res) => {
     if (!transporter) {
