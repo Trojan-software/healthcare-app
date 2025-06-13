@@ -14,7 +14,7 @@ async function initDemoUsers() {
     if (!existingAdmin) {
       const adminUser = await storage.createUser({
         email: "admin@24x7teleh.com",
-        passwordHash: adminPasswordHash,
+        password: adminPasswordHash,
         firstName: "Admin",
         lastName: "User",
         username: "admin",
@@ -25,7 +25,9 @@ async function initDemoUsers() {
       });
       console.log("Created admin user:", adminUser.email);
     } else {
-      console.log("Admin user already exists");
+      // Update existing admin user with hashed password
+      await storage.updateUser(existingAdmin.id, { password: adminPasswordHash });
+      console.log("Updated admin user password");
     }
     
     // Check if patient user exists
@@ -33,7 +35,7 @@ async function initDemoUsers() {
     if (!existingPatient) {
       const patientUser = await storage.createUser({
         email: "patient.demo@example.com",
-        passwordHash: patientPasswordHash,
+        password: patientPasswordHash,
         firstName: "John",
         lastName: "Doe",
         username: "patient_demo",
@@ -44,7 +46,9 @@ async function initDemoUsers() {
       });
       console.log("Created patient user:", patientUser.email);
     } else {
-      console.log("Patient user already exists");
+      // Update existing patient user with hashed password
+      await storage.updateUser(existingPatient.id, { password: patientPasswordHash });
+      console.log("Updated patient user password");
     }
     
     console.log("Demo users initialization complete");
