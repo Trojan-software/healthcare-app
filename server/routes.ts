@@ -698,208 +698,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Serve login page directly
+  // Test route
+  app.get("/test", (req, res) => {
+    res.send("Server is working!");
+  });
+
+  // Simple working login page
   app.get("/", (req, res) => {
-    res.send(`<!DOCTYPE html>
-<html>
-<head>
-  <title>24/7 Tele H - Health Monitor</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background: #f9fafb; 
-      margin: 0; 
-      padding: 0; 
-      min-height: 100vh; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-    }
-    .container { 
-      max-width: 400px; 
-      margin: 1rem; 
-      background: white; 
-      padding: 2rem; 
-      border-radius: 8px; 
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-      width: 100%;
-    }
-    .title { 
-      text-align: center; 
-      font-size: 1.5rem; 
-      font-weight: bold; 
-      color: #111827; 
-      margin-bottom: 0.5rem; 
-    }
-    .subtitle { 
-      text-align: center; 
-      font-size: 0.875rem; 
-      color: #6b7280; 
-      margin-bottom: 2rem; 
-    }
-    .form { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 1rem; 
-    }
-    .input { 
-      padding: 0.75rem; 
-      border: 1px solid #d1d5db; 
-      border-radius: 6px; 
-      font-size: 0.875rem; 
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .button { 
-      padding: 0.75rem; 
-      background: #2563eb; 
-      color: white; 
-      border: none; 
-      border-radius: 6px; 
-      font-size: 0.875rem; 
-      cursor: pointer; 
-      width: 100%;
-    }
-    .button:hover { background: #1d4ed8; }
-    .button:disabled { background: #9ca3af; cursor: not-allowed; }
-    .error { 
-      padding: 0.75rem; 
-      background: #fef2f2; 
-      border: 1px solid #fecaca; 
-      border-radius: 6px; 
-      color: #dc2626; 
-      font-size: 0.875rem; 
-      margin-bottom: 1rem; 
-      display: none; 
-    }
-    .demo { 
-      text-align: center; 
-      margin-top: 1.5rem; 
-      padding-top: 1.5rem; 
-      border-top: 1px solid #e5e7eb; 
-    }
-    .demo-title { 
-      font-size: 0.875rem; 
-      color: #6b7280; 
-      margin-bottom: 0.5rem; 
-    }
-    .demo-text { 
-      font-size: 0.75rem; 
-      color: #9ca3af; 
-      margin: 0.25rem 0; 
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1 class="title">24/7 Tele H</h1>
-    <p class="subtitle">Health Monitoring System</p>
-    
-    <div id="error" class="error"></div>
-    
-    <form id="loginForm" class="form">
-      <input id="email" type="email" class="input" placeholder="Email Address" required>
-      <input id="password" type="password" class="input" placeholder="Password" required>
-      <button id="loginBtn" type="submit" class="button">Sign In</button>
-    </form>
-    
-    <div class="demo">
-      <p class="demo-title">Demo Accounts:</p>
-      <p class="demo-text">Admin: admin@24x7teleh.com / admin123</p>
-      <p class="demo-text">Patient: patient.demo@example.com / patient123</p>
-    </div>
-  </div>
-
-  <script>
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const errorDiv = document.getElementById('error');
-      const loginBtn = document.getElementById('loginBtn');
-      
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Signing in...';
-      errorDiv.style.display = 'none';
-      
-      try {
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Login failed');
-        }
-        
-        const result = await response.json();
-        
-        if (result.user.role === 'admin') {
-          showAdminDashboard(result.user);
-        } else {
-          showPatientDashboard(result.user);
-        }
-      } catch (err) {
-        errorDiv.textContent = err.message || 'Login failed. Please try again.';
-        errorDiv.style.display = 'block';
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Sign In';
-      }
+    res.writeHead(200, {
+      'Content-Type': 'text/html',
+      'Cache-Control': 'no-cache'
     });
-
-    function showAdminDashboard(user) {
-      document.body.innerHTML = \`
-        <div style="background: #f9fafb; min-height: 100vh; padding: 1.5rem; font-family: Arial, sans-serif;">
-          <div style="max-width: 1200px; margin: 0 auto;">
-            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-              <div>
-                <h1 style="font-size: 1.75rem; font-weight: bold; color: #111827; margin-bottom: 0.5rem;">Admin Dashboard</h1>
-                <p style="font-size: 1rem; color: #6b7280; margin: 0;">Manage patient dashboard access for 24/7 Tele H</p>
-              </div>
-              <button onclick="location.reload()" style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; margin-top: 1rem;">Logout</button>
-            </div>
-            
-            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1rem;">Welcome, \${user.firstName} \${user.lastName}</h2>
-              <p style="color: #6b7280; margin-bottom: 1.5rem;">You have successfully logged in as an administrator. SendGrid has been removed and the system is working with test mode OTP.</p>
-              
-              <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; border: 1px solid #e5e7eb;">
-                <h3 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 0.75rem;">System Status</h3>
-                <ul style="margin: 0; padding-left: 1.25rem;">
-                  <li style="color: #059669; margin-bottom: 0.25rem;">✓ SendGrid email service removed</li>
-                  <li style="color: #059669; margin-bottom: 0.25rem;">✓ Test mode OTP system active</li>
-                  <li style="color: #059669; margin-bottom: 0.25rem;">✓ Admin authentication working</li>
-                  <li style="color: #059669;">✓ Database connection established</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      \`;
+    res.end(`<html><head><title>24/7 Tele H Login</title><style>
+body{font-family:Arial;background:#f9fafb;margin:0;padding:20px;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:white;padding:30px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);max-width:400px;width:100%}
+h1{text-align:center;color:#111827;margin-bottom:10px}
+p{text-align:center;color:#6b7280;margin-bottom:30px}
+input{width:100%;padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:6px;box-sizing:border-box}
+button{width:100%;padding:12px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-size:16px}
+button:hover{background:#1d4ed8}
+.demo{margin-top:20px;padding-top:20px;border-top:1px solid #eee;text-align:center}
+.demo p{font-size:12px;margin:5px 0}
+.error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:12px;border-radius:6px;margin:10px 0;display:none}
+</style></head><body><div class="card">
+<h1>24/7 Tele H</h1>
+<p>Health Monitoring System</p>
+<div id="error" class="error"></div>
+<form id="loginForm">
+<input id="email" type="email" placeholder="Email Address" required>
+<input id="password" type="password" placeholder="Password" required>
+<button id="loginBtn" type="submit">Sign In</button>
+</form>
+<div class="demo">
+<p><strong>Demo Accounts:</strong></p>
+<p>Admin: admin@24x7teleh.com / admin123</p>
+<p>Patient: patient.demo@example.com / patient123</p>
+</div>
+</div>
+<script>
+document.getElementById('loginForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const errorDiv = document.getElementById('error');
+  const loginBtn = document.getElementById('loginBtn');
+  
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Signing in...';
+  errorDiv.style.display = 'none';
+  
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Login failed');
     }
-
-    function showPatientDashboard(user) {
-      document.body.innerHTML = \`
-        <div style="background: #f9fafb; min-height: 100vh; padding: 1.5rem; font-family: Arial, sans-serif;">
-          <div style="max-width: 800px; margin: 0 auto;">
-            <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
-              <h1 style="font-size: 1.5rem; font-weight: bold; color: #111827; margin-bottom: 1rem;">Welcome, \${user.firstName} \${user.lastName}</h1>
-              <p style="color: #6b7280; margin-bottom: 1.5rem;">You have successfully logged in to the 24/7 Tele H health monitoring system.</p>
-              <button onclick="location.reload()" style="padding: 0.75rem 1.5rem; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer;">Logout</button>
-            </div>
-          </div>
-        </div>
-      \`;
+    
+    const result = await response.json();
+    
+    if (result.user.role === 'admin') {
+      document.body.innerHTML = '<div style="background:#f9fafb;min-height:100vh;padding:20px;font-family:Arial"><div style="max-width:1200px;margin:0 auto"><div style="background:white;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap"><div><h1 style="font-size:28px;font-weight:bold;color:#111827;margin-bottom:8px">Admin Dashboard</h1><p style="color:#6b7280;margin:0">Manage patient dashboard access for 24/7 Tele H</p></div><button onclick="location.reload()" style="padding:8px 16px;background:#ef4444;color:white;border:none;border-radius:6px;cursor:pointer">Logout</button></div><div style="background:white;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1)"><h2 style="color:#111827;margin-bottom:16px">Welcome, ' + result.user.firstName + ' ' + result.user.lastName + '</h2><p style="color:#6b7280;margin-bottom:20px">You have successfully logged in as an administrator. SendGrid has been removed and the system is working with test mode OTP.</p><div style="background:#f3f4f6;padding:16px;border-radius:6px;border:1px solid #e5e7eb"><h3 style="color:#111827;margin-bottom:12px">System Status</h3><ul style="margin:0;padding-left:20px"><li style="color:#059669;margin-bottom:4px">✓ SendGrid email service removed</li><li style="color:#059669;margin-bottom:4px">✓ Test mode OTP system active</li><li style="color:#059669;margin-bottom:4px">✓ Admin authentication working</li><li style="color:#059669">✓ Database connection established</li></ul></div></div></div></div>';
+    } else {
+      document.body.innerHTML = '<div style="background:#f9fafb;min-height:100vh;padding:20px;font-family:Arial"><div style="max-width:800px;margin:0 auto"><div style="background:white;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center"><h1 style="color:#111827;margin-bottom:16px">Welcome, ' + result.user.firstName + ' ' + result.user.lastName + '</h1><p style="color:#6b7280;margin-bottom:20px">You have successfully logged in to the 24/7 Tele H health monitoring system.</p><button onclick="location.reload()" style="padding:12px 24px;background:#ef4444;color:white;border:none;border-radius:6px;cursor:pointer">Logout</button></div></div></div>';
     }
-  </script>
-</body>
-</html>`);
+  } catch (err) {
+    errorDiv.textContent = err.message || 'Login failed. Please try again.';
+    errorDiv.style.display = 'block';
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Sign In';
+  }
+};
+</script></body></html>`);
   });
 
   const httpServer = createServer(app);
