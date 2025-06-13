@@ -153,11 +153,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash password
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
-      // Create user
-      const user = await storage.createUser({
+      // Generate unique patient ID
+      const patientId = `TH${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+      
+      // Create user with generated patientId
+      const userToCreate: any = {
         ...userData,
         password: hashedPassword,
-      });
+        patientId,
+        isVerified: false
+      };
+      
+      const user = await storage.createUser(userToCreate);
       
       res.status(201).json({ 
         message: "Registration successful", 
@@ -520,10 +527,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
           // Send reminder email if enabled
-          if (setting.emailAlerts) {
+          if (setting.emailAlerts && transporter) {
             const user = await storage.getUserByPatientId(setting.patientId);
             if (user) {
-              await sendOTPEmail(user.email, "REMINDER: Your health check-up is overdue. Please complete your vital signs monitoring.");
+              try {
+                await transporter.sendMail({
+                  from: process.env.SMTP_USER || process.env.EMAIL_USER,
+                  to: user.email,
+                  subject: "24/7 Tele H - Health Check Reminder",
+                  html: `<p>REMINDER: Your health check-up is overdue. Please complete your vital signs monitoring.</p>`
+                });
+              } catch (error) {
+                console.error("Failed to send reminder email:", error);
+              }
             }
           }
         }
