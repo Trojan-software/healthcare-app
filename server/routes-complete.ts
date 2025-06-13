@@ -661,6 +661,243 @@ export async function registerRoutes(app: Express): Promise<Server> {
             document.getElementById('settingsSection').style.display = 'block';
         }
         
+        // Advanced Analytics Functions
+        function showActivePatients() {
+            const activePatientsList = document.createElement('div');
+            activePatientsList.id = 'activePatientsModal';
+            activePatientsList.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            activePatientsList.innerHTML = \`
+                <div style="background: white; border-radius: 12px; padding: 24px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 700;">Active Patients (42)</h3>
+                        <button onclick="closeModal('activePatientsModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+                    </div>
+                    <div style="display: grid; gap: 12px;">
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <div><strong>John Smith</strong><br><small>Patient ID: PAT001</small></div>
+                            <div style="text-align: right;"><span style="color: #059669;">Active</span><br><small>Last check: 2 min ago</small></div>
+                        </div>
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <div><strong>Sarah Johnson</strong><br><small>Patient ID: PAT002</small></div>
+                            <div style="text-align: right;"><span style="color: #059669;">Active</span><br><small>Last check: 15 min ago</small></div>
+                        </div>
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <div><strong>Michael Brown</strong><br><small>Patient ID: PAT003</small></div>
+                            <div style="text-align: right;"><span style="color: #f59e0b;">Monitoring</span><br><small>Last check: 1 hour ago</small></div>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            document.body.appendChild(activePatientsList);
+        }
+        
+        function showCheckupsToday() {
+            const checkupsModal = document.createElement('div');
+            checkupsModal.id = 'checkupsTodayModal';
+            checkupsModal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            checkupsModal.innerHTML = \`
+                <div style="background: white; border-radius: 12px; padding: 24px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 700;">Check-ups Today (8)</h3>
+                        <button onclick="closeModal('checkupsTodayModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+                    </div>
+                    <div style="display: grid; gap: 12px;">
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 12px; background: #d1fae5; border-radius: 8px;">
+                            <div><strong>9:00 AM - John Smith</strong><br><small>Regular check-up</small></div>
+                            <span style="color: #059669; font-weight: 600;">✓ Completed</span>
+                        </div>
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 12px; background: #fef3c7; border-radius: 8px;">
+                            <div><strong>10:30 AM - Sarah Johnson</strong><br><small>Blood pressure monitoring</small></div>
+                            <span style="color: #f59e0b; font-weight: 600;">⏳ In Progress</span>
+                        </div>
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 12px; background: #e5e7eb; border-radius: 8px;">
+                            <div><strong>2:00 PM - Michael Brown</strong><br><small>Heart rate assessment</small></div>
+                            <span style="color: #6b7280; font-weight: 600;">📅 Scheduled</span>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            document.body.appendChild(checkupsModal);
+        }
+        
+        function showCriticalAlerts() {
+            const alertsModal = document.createElement('div');
+            alertsModal.id = 'criticalAlertsModal';
+            alertsModal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            alertsModal.innerHTML = \`
+                <div style="background: white; border-radius: 12px; padding: 24px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #dc2626; font-size: 20px; font-weight: 700;">⚠️ Critical Alerts (3)</h3>
+                        <button onclick="closeModal('criticalAlertsModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+                    </div>
+                    <div style="display: grid; gap: 12px;">
+                        <div style="padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; border-left: 4px solid #dc2626;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong style="color: #dc2626;">High Blood Pressure</strong>
+                                <span style="font-size: 12px; color: #6b7280;">12 min ago</span>
+                            </div>
+                            <div style="color: #374151; margin-bottom: 8px;">Patient: M. Johnson</div>
+                            <div style="color: #6b7280; font-size: 14px; margin-bottom: 12px;">Reading: 160/95 mmHg (Critical threshold exceeded)</div>
+                            <button onclick="acknowledgeAlert('bp001')" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Acknowledge Alert</button>
+                        </div>
+                        <div style="padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; border-left: 4px solid #dc2626;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong style="color: #dc2626;">Low Oxygen Saturation</strong>
+                                <span style="font-size: 12px; color: #6b7280;">1 hour ago</span>
+                            </div>
+                            <div style="color: #374151; margin-bottom: 8px;">Patient: R. Wilson</div>
+                            <div style="color: #6b7280; font-size: 14px; margin-bottom: 12px;">Reading: 88% SpO2 (Below normal range)</div>
+                            <button onclick="acknowledgeAlert('ox001')" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Acknowledge Alert</button>
+                        </div>
+                        <div style="padding: 16px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong style="color: #f59e0b;">Irregular Heart Rate</strong>
+                                <span style="font-size: 12px; color: #6b7280;">3 hours ago</span>
+                            </div>
+                            <div style="color: #374151; margin-bottom: 8px;">Patient: A. Davis</div>
+                            <div style="color: #6b7280; font-size: 14px; margin-bottom: 12px;">Reading: 45 bpm (Below normal range)</div>
+                            <button onclick="acknowledgeAlert('hr001')" style="background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Acknowledge Alert</button>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            document.body.appendChild(alertsModal);
+        }
+        
+        function showCompletionRate() {
+            const completionModal = document.createElement('div');
+            completionModal.id = 'completionRateModal';
+            completionModal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            completionModal.innerHTML = \`
+                <div style="background: white; border-radius: 12px; padding: 24px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 700;">Completion Rate Analytics</h3>
+                        <button onclick="closeModal('completionRateModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+                    </div>
+                    <div style="display: grid; gap: 16px;">
+                        <div style="padding: 16px; background: #f0f9ff; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong>Overall Completion Rate</strong>
+                                <span style="font-size: 24px; font-weight: 700; color: #059669;">94%</span>
+                            </div>
+                            <div style="background: #e5e7eb; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: #059669; height: 100%; width: 94%; border-radius: 4px;"></div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                                <div style="color: #6b7280; font-size: 14px;">Daily Check-ups</div>
+                                <div style="color: #059669; font-size: 18px; font-weight: 600;">96%</div>
+                            </div>
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                                <div style="color: #6b7280; font-size: 14px;">Medication Adherence</div>
+                                <div style="color: #f59e0b; font-size: 18px; font-weight: 600;">87%</div>
+                            </div>
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                                <div style="color: #6b7280; font-size: 14px;">Device Connectivity</div>
+                                <div style="color: #059669; font-size: 18px; font-weight: 600;">99%</div>
+                            </div>
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                                <div style="color: #6b7280; font-size: 14px;">Report Generation</div>
+                                <div style="color: #3b82f6; font-size: 18px; font-weight: 600;">92%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            document.body.appendChild(completionModal);
+        }
+        
+        function loadMoreActivity() {
+            const activityList = document.getElementById('recentActivityList');
+            const moreActivities = \`
+                <div class="activity-item">
+                    <div class="activity-icon reminder-icon">🔔</div>
+                    <div class="activity-details">
+                        <div class="activity-text">Check-up reminder sent to L. Garcia</div>
+                        <div class="activity-meta">
+                            <span class="activity-time">4 hours ago</span>
+                            <span class="activity-status pending">Appointment tomorrow</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon vital-icon">📊</div>
+                    <div class="activity-details">
+                        <div class="activity-text">Weekly report generated for T. Anderson</div>
+                        <div class="activity-meta">
+                            <span class="activity-time">5 hours ago</span>
+                            <span class="activity-status completed">All parameters stable</span>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            activityList.innerHTML += moreActivities;
+        }
+        
+        function acknowledgeAlert(alertId) {
+            // Simulate acknowledging alert
+            alert('Alert ' + alertId + ' has been acknowledged and logged for follow-up.');
+            closeModal('criticalAlertsModal');
+            // Update critical alerts count
+            document.getElementById('criticalAlertsCount').textContent = '2';
+        }
+        
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                document.body.removeChild(modal);
+            }
+        }
+        
+        // Patient analytics functions
+        function postponeCheckup() {
+            alert('Check-up has been rescheduled to next available slot.');
+            document.getElementById('nextCheckup').innerHTML = \`
+                <div>
+                    <div style="color: #374151; font-weight: 500; margin-bottom: 4px;">Next Check-up</div>
+                    <div style="color: #6b7280; font-size: 14px;">Friday at 10:30 AM</div>
+                </div>
+                <button onclick="postponeCheckup()" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">Reschedule</button>
+            \`;
+        }
+        
+        function markMedicationTaken() {
+            alert('Medication marked as taken. Next reminder scheduled.');
+        }
+        
+        function generateWeeklyReport() {
+            alert('Weekly health report generated and saved to patient records.');
+        }
+        
+        // Real-time vital signs simulation
+        function updateCurrentVitals() {
+            const heartRate = 68 + Math.floor(Math.random() * 10);
+            const oxygen = 96 + Math.floor(Math.random() * 4);
+            const temp = (98.2 + Math.random() * 1.2).toFixed(1);
+            const systolic = 115 + Math.floor(Math.random() * 10);
+            const diastolic = 75 + Math.floor(Math.random() * 10);
+            
+            const heartRateEl = document.getElementById('heartRateValue');
+            const oxygenEl = document.getElementById('oxygenValue');
+            const tempEl = document.getElementById('temperatureValue');
+            const bpEl = document.getElementById('bloodPressureValue');
+            
+            if (heartRateEl) heartRateEl.textContent = heartRate;
+            if (oxygenEl) oxygenEl.textContent = oxygen + '%';
+            if (tempEl) tempEl.textContent = temp + '°';
+            if (bpEl) bpEl.textContent = systolic + '/' + diastolic;
+            
+            // Update timestamps
+            const timestamps = document.querySelectorAll('.vital-timestamp');
+            timestamps.forEach(timestamp => {
+                timestamp.textContent = 'Just now';
+            });
+        }
+        
+        // Update vitals every 30 seconds
+        setInterval(updateCurrentVitals, 30000);
+        
         // Patient actions
         function recordVitals() {
             // Hide main dashboard and show vital recording interface
