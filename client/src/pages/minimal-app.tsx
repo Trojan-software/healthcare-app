@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-function App() {
-  const [currentView, setCurrentView] = useState('login');
+export default function MinimalApp() {
+  const [currentPage, setCurrentPage] = useState('login');
   const [user, setUser] = useState<any>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,9 +29,9 @@ function App() {
       setUser(result.user);
       
       if (result.user.role === 'admin') {
-        setCurrentView('admin');
+        setCurrentPage('admin');
       } else {
-        setCurrentView('dashboard');
+        setCurrentPage('dashboard');
       }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
@@ -42,130 +42,75 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
-    setCurrentView('login');
+    setCurrentPage('login');
     setEmail("");
     setPassword("");
-    setError("");
   };
 
-  const loginStyles = {
-    container: {
-      minHeight: '100vh',
-      background: '#f9fafb',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px'
-    },
-    card: {
-      width: '100%',
-      maxWidth: '400px',
-      background: 'white',
-      padding: '32px',
-      borderRadius: '8px',
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-    },
-    title: {
-      textAlign: 'center' as const,
-      fontSize: '24px',
-      fontWeight: 'bold',
-      color: '#111827',
-      margin: '0 0 8px 0'
-    },
-    subtitle: {
-      textAlign: 'center' as const,
-      fontSize: '14px',
-      color: '#6b7280',
-      margin: '0 0 32px 0'
-    },
-    error: {
-      marginBottom: '16px',
-      padding: '12px',
-      border: '1px solid #fecaca',
-      background: '#fef2f2',
-      borderRadius: '6px',
-      color: '#dc2626',
-      fontSize: '14px'
-    },
-    formGroup: {
-      marginBottom: '16px'
-    },
-    label: {
-      display: 'block',
-      fontSize: '14px',
-      fontWeight: '500',
-      color: '#374151',
-      marginBottom: '8px'
-    },
-    input: {
-      width: '100%',
-      padding: '12px',
-      border: '1px solid #d1d5db',
-      borderRadius: '6px',
-      fontSize: '14px',
-      boxSizing: 'border-box' as const
-    },
-    button: {
-      width: '100%',
-      padding: '12px',
-      background: isLoading ? '#9ca3af' : '#2563eb',
-      color: 'white',
-      border: 'none',
-      borderRadius: '6px',
-      fontSize: '14px',
-      fontWeight: '500',
-      cursor: isLoading ? 'not-allowed' : 'pointer'
-    },
-    demoInfo: {
-      textAlign: 'center' as const,
-      paddingTop: '24px',
-      borderTop: '1px solid #e5e7eb',
-      marginTop: '24px'
-    }
-  };
-
-  if (currentView === 'login') {
+  if (currentPage === 'login') {
     return (
-      <div style={loginStyles.container}>
-        <div style={loginStyles.card}>
-          <h1 style={loginStyles.title}>24/7 Tele H</h1>
-          <p style={loginStyles.subtitle}>Health Monitoring System</p>
+      <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+        <div style={{ width: '100%', maxWidth: '400px', background: 'white', padding: '32px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', margin: '0 0 8px 0' }}>24/7 Tele H</h1>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Health Monitoring System</p>
+          </div>
           
           {error && (
-            <div style={loginStyles.error}>{error}</div>
+            <div style={{ marginBottom: '16px', padding: '12px', border: '1px solid #fecaca', background: '#fef2f2', borderRadius: '6px' }}>
+              <p style={{ color: '#dc2626', fontSize: '14px', margin: 0 }}>{error}</p>
+            </div>
           )}
 
           <form onSubmit={handleLogin}>
-            <div style={loginStyles.formGroup}>
-              <label style={loginStyles.label}>Email Address</label>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                Email Address
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                style={loginStyles.input}
+                style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
                 placeholder="Enter your email"
                 required
               />
             </div>
 
-            <div style={loginStyles.formGroup}>
-              <label style={loginStyles.label}>Password</label>
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                style={loginStyles.input}
+                style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
                 placeholder="Enter your password"
                 required
               />
             </div>
 
-            <button type="submit" disabled={isLoading} style={loginStyles.button}>
+            <button
+              type="submit"
+              disabled={isLoading}
+              style={{ 
+                width: '100%', 
+                padding: '12px', 
+                background: isLoading ? '#9ca3af' : '#2563eb', 
+                color: 'white', 
+                border: 'none', 
+                borderRadius: '6px', 
+                fontSize: '14px', 
+                fontWeight: '500',
+                cursor: isLoading ? 'not-allowed' : 'pointer'
+              }}
+            >
               {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
-          <div style={loginStyles.demoInfo}>
+          <div style={{ textAlign: 'center', paddingTop: '24px', borderTop: '1px solid #e5e7eb', marginTop: '24px' }}>
             <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px 0' }}>Demo Accounts:</p>
             <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 4px 0' }}>Admin: admin@24x7teleh.com / admin123</p>
             <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>Patient: patient.demo@example.com / patient123</p>
@@ -175,7 +120,7 @@ function App() {
     );
   }
 
-  if (currentView === 'admin' && user?.role === 'admin') {
+  if (currentPage === 'admin' && user?.role === 'admin') {
     return (
       <div style={{ minHeight: '100vh', background: '#f9fafb', padding: '24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -240,5 +185,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
