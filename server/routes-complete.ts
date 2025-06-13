@@ -454,26 +454,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </div>
         <div class="patient-content">
             <div class="patient-card">
-                <div class="vitals-grid">
+                <div id="currentVitalsGrid" class="vitals-grid">
                     <div class="vital-card blue">
-                        <div class="vital-value">72</div>
+                        <div class="vital-value" id="heartRateValue">72</div>
                         <div class="vital-label">Heart Rate</div>
                         <div class="vital-unit">bpm</div>
+                        <div class="vital-timestamp" style="font-size: 10px; opacity: 0.8; margin-top: 4px;">2 min ago</div>
                     </div>
                     <div class="vital-card green">
-                        <div class="vital-value">98%</div>
+                        <div class="vital-value" id="oxygenValue">98%</div>
                         <div class="vital-label">Blood Oxygen</div>
                         <div class="vital-unit">SpO2</div>
+                        <div class="vital-timestamp" style="font-size: 10px; opacity: 0.8; margin-top: 4px;">2 min ago</div>
                     </div>
                     <div class="vital-card pink">
-                        <div class="vital-value">98.6°</div>
+                        <div class="vital-value" id="temperatureValue">98.6°</div>
                         <div class="vital-label">Temperature</div>
                         <div class="vital-unit">Fahrenheit</div>
+                        <div class="vital-timestamp" style="font-size: 10px; opacity: 0.8; margin-top: 4px;">2 min ago</div>
                     </div>
                     <div class="vital-card soft">
-                        <div class="vital-value">120/80</div>
+                        <div class="vital-value" id="bloodPressureValue">120/80</div>
                         <div class="vital-label">Blood Pressure</div>
                         <div class="vital-unit">mmHg</div>
+                        <div class="vital-timestamp" style="font-size: 10px; opacity: 0.8; margin-top: 4px;">2 min ago</div>
                     </div>
                 </div>
                 <div>
@@ -490,6 +494,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         <div class="info-item">
                             <span class="info-label">Device status</span>
                             <span class="info-value" style="color: #059669;">Connected</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="criticalAlertsSection">
+                    <h3 class="section-title">Critical Alerts</h3>
+                    <div id="alertsContainer" style="display: grid; gap: 12px;">
+                        <!-- Alerts will be dynamically added here -->
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="section-title">Check-up Reminders</h3>
+                    <div id="remindersContainer" style="background: #f8f9fa; padding: 20px; border-radius: 16px; border: 1px solid #e9ecef;">
+                        <div id="nextCheckup" style="background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="color: #374151; font-weight: 500; margin-bottom: 4px;">Next Check-up</div>
+                                <div style="color: #6b7280; font-size: 14px;">Tomorrow at 9:00 AM</div>
+                            </div>
+                            <button onclick="postponeCheckup()" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">Reschedule</button>
+                        </div>
+                        <div style="background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="color: #374151; font-weight: 500; margin-bottom: 4px;">Medication Reminder</div>
+                                <div style="color: #6b7280; font-size: 14px;">Take blood pressure medication - Due in 2 hours</div>
+                            </div>
+                            <button onclick="markMedicationTaken()" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">Mark Taken</button>
+                        </div>
+                        <div style="background: white; padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="color: #374151; font-weight: 500; margin-bottom: 4px;">Weekly Report</div>
+                                <div style="color: #6b7280; font-size: 14px;">Health summary due - Generate weekly report</div>
+                            </div>
+                            <button onclick="generateWeeklyReport()" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">Generate</button>
                         </div>
                     </div>
                 </div>
