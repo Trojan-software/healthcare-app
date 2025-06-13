@@ -10,8 +10,8 @@ import { z } from "zod";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-// Email transporter setup
-const transporter = nodemailer.createTransport({
+// Email transporter setup - Test mode when no SMTP configured
+const transporter = process.env.SMTP_USER ? nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
   port: parseInt(process.env.SMTP_PORT || "587"),
   secure: false,
@@ -19,7 +19,10 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER || process.env.EMAIL_USER,
     pass: process.env.SMTP_PASS || process.env.EMAIL_PASS,
   },
-});
+}) : null;
+
+// Test mode - store OTPs in memory for testing
+const testOTPs = new Map<string, string>();
 
 // Middleware to verify JWT token
 const verifyToken = (req: any, res: any, next: any) => {
@@ -44,22 +47,29 @@ const generateOTP = () => {
 
 // Send OTP email
 const sendOTPEmail = async (email: string, otp: string) => {
-  const mailOptions = {
-    from: process.env.SMTP_USER || process.env.EMAIL_USER,
-    to: email,
-    subject: "HealthMonitor 24x7 - Email Verification",
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2563EB;">HealthMonitor 24x7</h2>
-        <p>Your email verification code is:</p>
-        <h1 style="background: #f3f4f6; padding: 20px; text-align: center; letter-spacing: 5px; font-size: 32px; color: #2563EB;">${otp}</h1>
-        <p>This code will expire in 10 minutes.</p>
-        <p>If you didn't request this code, please ignore this email.</p>
-      </div>
-    `,
-  };
-
-  await transporter.sendMail(mailOptions);
+  if (transporter) {
+    // Production mode - send actual email
+    const mailOptions = {
+      from: process.env.SMTP_USER || process.env.EMAIL_USER,
+      to: email,
+      subject: "24/7 Tele H - Email Verification",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563EB;">24/7 Tele H Technology Services</h2>
+          <p>Your email verification code is:</p>
+          <h1 style="background: #f3f4f6; padding: 20px; text-align: center; letter-spacing: 5px; font-size: 32px; color: #2563EB;">${otp}</h1>
+          <p>This code will expire in 10 minutes.</p>
+          <p>If you didn't request this code, please ignore this email.</p>
+        </div>
+      `,
+    };
+    await transporter.sendMail(mailOptions);
+  } else {
+    // Test mode - store OTP and log to console
+    testOTPs.set(email, otp);
+    console.log(`\n🔐 TEST MODE - OTP for ${email}: ${otp}`);
+    console.log(`💡 Use this code to verify your account in the mobile app\n`);
+  }
 };
 
 // Send alert email to doctor
@@ -188,7 +198,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, code } = req.body;
       
-      const isValid = await storage.verifyOtp(email, code);
+      // Check test mode first, then database
+      let isValid = false;
+      if (!transporter && testOTPs.has(email) && testOTPs.get(email) === code) {
+        isValid = true;
+        testOTPs.delete(email); // Remove used test OTP
+      } else {
+        isValid = await storage.verifyOtp(email, code);
+      }
       
       if (isValid) {
         // Mark user as verified
@@ -513,6 +530,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Reminder cron job error:", error);
+    }
+  });
+
+  // Test endpoint to view OTP codes (only works in test mode)
+  app.get("/api/test/otps", (req, res) => {
+    if (!transporter) {
+      const otpList = Array.from(testOTPs.entries()).map(([email, otp]) => ({
+        email,
+        otp,
+        message: "Use this OTP to verify your account"
+      }));
+      res.json({
+        testMode: true,
+        message: "Test mode active - OTP codes are displayed here instead of being emailed",
+        otps: otpList
+      });
+    } else {
+      res.json({
+        testMode: false,
+        message: "Production mode - OTP codes are sent via email"
+      });
     }
   });
 
