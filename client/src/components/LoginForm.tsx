@@ -19,9 +19,10 @@ type LoginData = z.infer<typeof loginSchema>;
 interface LoginFormProps {
   onLogin: (user: any) => void;
   onSwitchToRegister: () => void;
+  onForgotPassword?: () => void;
 }
 
-export default function LoginForm({ onLogin, onSwitchToRegister }: LoginFormProps) {
+export default function LoginForm({ onLogin, onSwitchToRegister, onForgotPassword }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -148,7 +149,17 @@ export default function LoginForm({ onLogin, onSwitchToRegister }: LoginFormProp
           </Button>
         </form>
 
-        <div className="text-center pt-4">
+        <div className="text-center pt-4 space-y-2">
+          {onForgotPassword && (
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              <button
+                onClick={onForgotPassword}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Forgot Password?
+              </button>
+            </p>
+          )}
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Don't have an account?{' '}
             <button

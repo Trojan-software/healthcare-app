@@ -87,6 +87,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
           <LoginForm
             onLogin={handleLogin}
             onSwitchToRegister={() => setAuthStep('register')}
+            onForgotPassword={() => setAuthStep('forgot-password')}
           />
         )}
         
