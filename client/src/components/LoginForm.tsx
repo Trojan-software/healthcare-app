@@ -56,8 +56,8 @@ export default function LoginForm({ onLogin, onSwitchToRegister, onForgotPasswor
       const result = await response.json();
       
       // Store authentication data
-      localStorage.setItem('auth_token', result.token);
-      localStorage.setItem('auth_user', JSON.stringify(result.user));
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('user', JSON.stringify(result.user));
       
       onLogin(result.user);
     } catch (err: any) {

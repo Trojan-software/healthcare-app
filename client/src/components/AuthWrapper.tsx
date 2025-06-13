@@ -11,6 +11,7 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
+  role?: string;
 }
 
 interface AuthWrapperProps {
@@ -27,8 +28,8 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   useEffect(() => {
     // Check for existing authentication
-    const token = localStorage.getItem('auth_token');
-    const savedUser = localStorage.getItem('auth_user');
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
     
     if (token && savedUser) {
       try {
@@ -37,8 +38,8 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
         setAuthStep('authenticated');
       } catch (error) {
         // Clear invalid data
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       }
     }
   }, []);
@@ -61,8 +62,8 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     setUser(null);
     setAuthStep('login');
     setShowProfile(false);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   const handleShowProfile = (show: boolean) => {
