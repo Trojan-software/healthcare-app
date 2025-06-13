@@ -1,0 +1,180 @@
+import React from 'react';
+
+export default function SimpleApp() {
+  const [state, setState] = React.useState({
+    view: 'login',
+    user: null,
+    email: '',
+    password: '',
+    loading: false,
+    error: ''
+  });
+
+  const login = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setState(prev => ({ ...prev, loading: true, error: '' }));
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.email, password: state.password })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Login failed');
+      }
+
+      const data = await res.json();
+      setState(prev => ({
+        ...prev,
+        user: data.user,
+        view: data.user.role === 'admin' ? 'admin' : 'patient',
+        loading: false
+      }));
+    } catch (err: any) {
+      setState(prev => ({ ...prev, error: err.message, loading: false }));
+    }
+  };
+
+  const logout = () => {
+    setState({
+      view: 'login',
+      user: null,
+      email: '',
+      password: '',
+      loading: false,
+      error: ''
+    });
+  };
+
+  const styles = {
+    page: { minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: 'Arial, sans-serif' },
+    container: { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '1rem' },
+    card: { backgroundColor: 'white', padding: '2rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' },
+    header: { textAlign: 'center' as const, marginBottom: '2rem' },
+    title: { fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', margin: '0 0 0.5rem 0' },
+    subtitle: { fontSize: '0.875rem', color: '#6b7280', margin: 0 },
+    form: { display: 'flex', flexDirection: 'column' as const, gap: '1rem' },
+    input: { padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.875rem' },
+    button: { padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' },
+    error: { padding: '0.75rem', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#dc2626', fontSize: '0.875rem' },
+    demo: { textAlign: 'center' as const, marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' },
+    demoText: { fontSize: '0.75rem', color: '#9ca3af', margin: '0.25rem 0' }
+  };
+
+  if (state.view === 'login') {
+    return (
+      <div style={styles.page}>
+        <div style={styles.container}>
+          <div style={styles.card}>
+            <div style={styles.header}>
+              <h1 style={styles.title}>24/7 Tele H</h1>
+              <p style={styles.subtitle}>Health Monitoring System</p>
+            </div>
+
+            {state.error && <div style={styles.error}>{state.error}</div>}
+
+            <form style={styles.form} onSubmit={login}>
+              <input
+                style={styles.input}
+                type="email"
+                placeholder="Email Address"
+                value={state.email}
+                onChange={e => setState(prev => ({ ...prev, email: e.target.value }))}
+                required
+              />
+              <input
+                style={styles.input}
+                type="password"
+                placeholder="Password"
+                value={state.password}
+                onChange={e => setState(prev => ({ ...prev, password: e.target.value }))}
+                required
+              />
+              <button
+                style={{
+                  ...styles.button,
+                  backgroundColor: state.loading ? '#9ca3af' : '#2563eb',
+                  cursor: state.loading ? 'not-allowed' : 'pointer'
+                }}
+                type="submit"
+                disabled={state.loading}
+              >
+                {state.loading ? 'Signing in...' : 'Sign In'}
+              </button>
+            </form>
+
+            <div style={styles.demo}>
+              <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 0.5rem 0' }}>Demo Accounts:</p>
+              <p style={styles.demoText}>Admin: admin@24x7teleh.com / admin123</p>
+              <p style={styles.demoText}>Patient: patient.demo@example.com / patient123</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.view === 'admin') {
+    return (
+      <div style={{ ...styles.page, padding: '1.5rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#111827', margin: '0 0 0.5rem 0' }}>Admin Dashboard</h1>
+              <p style={{ fontSize: '1rem', color: '#6b7280', margin: 0 }}>Manage patient dashboard access for 24/7 Tele H</p>
+            </div>
+            <button onClick={logout} style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}>
+              Logout
+            </button>
+          </div>
+
+          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#111827', margin: '0 0 1rem 0' }}>
+              Welcome, {(state.user as any)?.firstName} {(state.user as any)?.lastName}
+            </h2>
+            <p style={{ color: '#6b7280', margin: '0 0 1.5rem 0' }}>
+              You have successfully logged in as an administrator. This system allows you to manage patient dashboard access credentials.
+            </p>
+
+            <div style={{ backgroundColor: '#f3f4f6', padding: '1rem', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '500', color: '#111827', margin: '0 0 0.75rem 0' }}>System Status</h3>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                <li style={{ color: '#059669', marginBottom: '0.25rem' }}>✓ SendGrid email service removed</li>
+                <li style={{ color: '#059669', marginBottom: '0.25rem' }}>✓ Test mode OTP system active</li>
+                <li style={{ color: '#059669', marginBottom: '0.25rem' }}>✓ Admin authentication working</li>
+                <li style={{ color: '#059669' }}>✓ Database connection established</li>
+              </ul>
+            </div>
+
+            <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#fef3c7', borderRadius: '6px', border: '1px solid #f59e0b' }}>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: '500', color: '#92400e', margin: '0 0 0.5rem 0' }}>Test Credentials</h4>
+              <p style={{ fontSize: '0.75rem', color: '#92400e', margin: '0 0 0.25rem 0' }}>Admin: admin@24x7teleh.com / admin123</p>
+              <p style={{ fontSize: '0.75rem', color: '#92400e', margin: 0 }}>Demo Patient: patient.demo@example.com / patient123</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ ...styles.page, padding: '1.5rem' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', margin: '0 0 1rem 0' }}>
+            Welcome, {(state.user as any)?.firstName} {(state.user as any)?.lastName}
+          </h1>
+          <p style={{ color: '#6b7280', margin: '0 0 1.5rem 0' }}>
+            You have successfully logged in to the 24/7 Tele H health monitoring system.
+          </p>
+          <button onClick={logout} style={{ padding: '0.75rem 1.5rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}>
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

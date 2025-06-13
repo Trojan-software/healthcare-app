@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -695,6 +696,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       message: "Test mode active - OTP codes are displayed here instead of being emailed",
       otps: otpList
     });
+  });
+
+  // Serve clean HTML application to bypass React issues
+  app.get("/", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "client/public/app.html"));
   });
 
   const httpServer = createServer(app);
