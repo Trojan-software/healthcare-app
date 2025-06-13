@@ -1,5 +1,6 @@
 import React from 'react';
 import HealthMonitoring from '@/pages/health-monitoring';
+import AdvancedHealthAnalytics from '@/components/AdvancedHealthAnalytics';
 
 export default function SimpleApp() {
   const [state, setState] = React.useState({
@@ -132,30 +133,7 @@ export default function SimpleApp() {
             </button>
           </div>
 
-          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#111827', margin: '0 0 1rem 0' }}>
-              Welcome, {(state.user as any)?.firstName} {(state.user as any)?.lastName}
-            </h2>
-            <p style={{ color: '#6b7280', margin: '0 0 1.5rem 0' }}>
-              You have successfully logged in as an administrator. This system allows you to manage patient dashboard access credentials.
-            </p>
-
-            <div style={{ backgroundColor: '#f3f4f6', padding: '1rem', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: '500', color: '#111827', margin: '0 0 0.75rem 0' }}>System Status</h3>
-              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-                <li style={{ color: '#059669', marginBottom: '0.25rem' }}>✓ SendGrid email service removed</li>
-                <li style={{ color: '#059669', marginBottom: '0.25rem' }}>✓ Test mode OTP system active</li>
-                <li style={{ color: '#059669', marginBottom: '0.25rem' }}>✓ Admin authentication working</li>
-                <li style={{ color: '#059669' }}>✓ Database connection established</li>
-              </ul>
-            </div>
-
-            <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#fef3c7', borderRadius: '6px', border: '1px solid #f59e0b' }}>
-              <h4 style={{ fontSize: '0.875rem', fontWeight: '500', color: '#92400e', margin: '0 0 0.5rem 0' }}>Test Credentials</h4>
-              <p style={{ fontSize: '0.75rem', color: '#92400e', margin: '0 0 0.25rem 0' }}>Admin: admin@24x7teleh.com / admin123</p>
-              <p style={{ fontSize: '0.75rem', color: '#92400e', margin: 0 }}>Demo Patient: patient.demo@example.com / patient123</p>
-            </div>
-          </div>
+          <AdvancedHealthAnalytics />
         </div>
       </div>
     );
