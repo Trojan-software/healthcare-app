@@ -56,58 +56,7 @@ export default function SimpleApp() {
     return <PatientAuthSystem onAuthSuccess={handleAuthSuccess} />;
   }
 
-  if (state.view === 'login') {
-    return (
-      <div style={styles.page}>
-        <div style={styles.container}>
-          <div style={styles.card}>
-            <div style={styles.header}>
-              <h1 style={styles.title}>24/7 Tele H</h1>
-              <p style={styles.subtitle}>Health Monitoring System</p>
-            </div>
 
-            {state.error && <div style={styles.error}>{state.error}</div>}
-
-            <form style={styles.form} onSubmit={login}>
-              <input
-                style={styles.input}
-                type="email"
-                placeholder="Email Address"
-                value={state.email}
-                onChange={e => setState(prev => ({ ...prev, email: e.target.value }))}
-                required
-              />
-              <input
-                style={styles.input}
-                type="password"
-                placeholder="Password"
-                value={state.password}
-                onChange={e => setState(prev => ({ ...prev, password: e.target.value }))}
-                required
-              />
-              <button
-                style={{
-                  ...styles.button,
-                  backgroundColor: state.loading ? '#9ca3af' : '#2563eb',
-                  cursor: state.loading ? 'not-allowed' : 'pointer'
-                }}
-                type="submit"
-                disabled={state.loading}
-              >
-                {state.loading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
-
-            <div style={styles.demo}>
-              <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 0.5rem 0' }}>Demo Accounts:</p>
-              <p style={styles.demoText}>Admin: admin@24x7teleh.com / admin123</p>
-              <p style={styles.demoText}>Patient: patient.demo@example.com / patient123</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (state.view === 'admin') {
     return (
