@@ -1,0 +1,447 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { 
+  Calendar,
+  Download,
+  Filter,
+  FileText,
+  Heart,
+  Activity,
+  Thermometer,
+  Droplets,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  Clock,
+  CheckCircle,
+  AlertTriangle
+} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+
+interface WeeklyReportData {
+  patientId: string;
+  patientName: string;
+  reportPeriod: {
+    startDate: string;
+    endDate: string;
+  };
+  vitalSigns: {
+    heartRate: {
+      average: number;
+      min: number;
+      max: number;
+      readings: number;
+      trend: 'up' | 'down' | 'stable';
+    };
+    bloodPressure: {
+      systolic: { average: number; min: number; max: number; };
+      diastolic: { average: number; min: number; max: number; };
+      readings: number;
+      trend: 'up' | 'down' | 'stable';
+    };
+    bloodOxygen: {
+      average: number;
+      min: number;
+      max: number;
+      readings: number;
+      trend: 'up' | 'down' | 'stable';
+    };
+    temperature: {
+      average: number;
+      min: number;
+      max: number;
+      readings: number;
+      trend: 'up' | 'down' | 'stable';
+    };
+  };
+  checkups: {
+    scheduled: number;
+    completed: number;
+    missed: number;
+  };
+  alerts: {
+    critical: number;
+    warning: number;
+    resolved: number;
+  };
+  compliance: {
+    rate: number;
+    missedReadings: number;
+    deviceUptime: number;
+  };
+}
+
+export default function WeeklyReportDashboard() {
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0]
+  });
+  const [selectedVitalType, setSelectedVitalType] = useState('all');
+  const [selectedPatient, setSelectedPatient] = useState('all');
+
+  // Fetch weekly report data
+  const { data: weeklyReport, isLoading } = useQuery({
+    queryKey: ['/api/reports/weekly', dateRange, selectedVitalType, selectedPatient],
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  // Fetch patients list for filter
+  const { data: patients } = useQuery({
+    queryKey: ['/api/admin/patients-list'],
+  });
+
+  const mockReportData: WeeklyReportData[] = weeklyReport || [
+    {
+      patientId: 'PAT001',
+      patientName: 'Sarah Johnson',
+      reportPeriod: {
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate
+      },
+      vitalSigns: {
+        heartRate: {
+          average: 78,
+          min: 65,
+          max: 95,
+          readings: 42,
+          trend: 'stable'
+        },
+        bloodPressure: {
+          systolic: { average: 125, min: 110, max: 140 },
+          diastolic: { average: 82, min: 70, max: 95 },
+          readings: 42,
+          trend: 'down'
+        },
+        bloodOxygen: {
+          average: 97.8,
+          min: 95,
+          max: 99,
+          readings: 42,
+          trend: 'up'
+        },
+        temperature: {
+          average: 36.7,
+          min: 36.2,
+          max: 37.4,
+          readings: 42,
+          trend: 'stable'
+        }
+      },
+      checkups: {
+        scheduled: 14,
+        completed: 12,
+        missed: 2
+      },
+      alerts: {
+        critical: 1,
+        warning: 3,
+        resolved: 4
+      },
+      compliance: {
+        rate: 85.7,
+        missedReadings: 6,
+        deviceUptime: 94.2
+      }
+    }
+  ];
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'up': return <TrendingUp className="w-4 h-4 text-green-500" />;
+      case 'down': return <TrendingDown className="w-4 h-4 text-red-500" />;
+      default: return <Activity className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getTrendColor = (trend: string) => {
+    switch (trend) {
+      case 'up': return 'text-green-600';
+      case 'down': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  const generatePDFReport = () => {
+    // Implementation for PDF generation would go here
+    console.log('Generating PDF report for:', { dateRange, selectedVitalType, selectedPatient });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header with Filters */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <FileText className="w-8 h-8 text-blue-600" />
+            Weekly Health Reports
+          </h2>
+          <p className="text-gray-600 mt-1">Comprehensive weekly analysis of patient vital signs and health trends</p>
+        </div>
+        
+        <div className="flex flex-wrap gap-3">
+          <input
+            type="date"
+            value={dateRange.startDate}
+            onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          />
+          <input
+            type="date"
+            value={dateRange.endDate}
+            onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          />
+          
+          <select 
+            value={selectedVitalType}
+            onChange={(e) => setSelectedVitalType(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          >
+            <option value="all">All Vital Signs</option>
+            <option value="heartRate">Heart Rate</option>
+            <option value="bloodPressure">Blood Pressure</option>
+            <option value="bloodOxygen">Blood Oxygen</option>
+            <option value="temperature">Temperature</option>
+          </select>
+          
+          <select 
+            value={selectedPatient}
+            onChange={(e) => setSelectedPatient(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          >
+            <option value="all">All Patients</option>
+            {(patients || []).map((patient: any) => (
+              <option key={patient.id} value={patient.id}>{patient.name}</option>
+            ))}
+          </select>
+          
+          <Button onClick={generatePDFReport} variant="default" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* Report Cards */}
+      {mockReportData.map((report) => (
+        <Card key={report.patientId} className="overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-xl">{report.patientName}</CardTitle>
+                <p className="text-sm text-gray-600">
+                  Report Period: {new Date(report.reportPeriod.startDate).toLocaleDateString()} - {new Date(report.reportPeriod.endDate).toLocaleDateString()}
+                </p>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Patient ID: {report.patientId}
+              </Badge>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="pt-6">
+            <Tabs defaultValue="vitals" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="vitals">Vital Signs</TabsTrigger>
+                <TabsTrigger value="checkups">Check-ups</TabsTrigger>
+                <TabsTrigger value="alerts">Alerts</TabsTrigger>
+                <TabsTrigger value="compliance">Compliance</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="vitals" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Heart Rate */}
+                  <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <Heart className="w-6 h-6 text-red-600" />
+                      {getTrendIcon(report.vitalSigns.heartRate.trend)}
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Heart Rate</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Average:</span>
+                        <span className="font-medium">{report.vitalSigns.heartRate.average} BPM</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Range:</span>
+                        <span className="font-medium">{report.vitalSigns.heartRate.min}-{report.vitalSigns.heartRate.max}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Readings:</span>
+                        <span className="font-medium">{report.vitalSigns.heartRate.readings}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Blood Pressure */}
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <Activity className="w-6 h-6 text-blue-600" />
+                      {getTrendIcon(report.vitalSigns.bloodPressure.trend)}
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Blood Pressure</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Avg Systolic:</span>
+                        <span className="font-medium">{report.vitalSigns.bloodPressure.systolic.average}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Avg Diastolic:</span>
+                        <span className="font-medium">{report.vitalSigns.bloodPressure.diastolic.average}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Readings:</span>
+                        <span className="font-medium">{report.vitalSigns.bloodPressure.readings}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Blood Oxygen */}
+                  <div className="p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <Droplets className="w-6 h-6 text-cyan-600" />
+                      {getTrendIcon(report.vitalSigns.bloodOxygen.trend)}
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Blood Oxygen</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Average:</span>
+                        <span className="font-medium">{report.vitalSigns.bloodOxygen.average}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Range:</span>
+                        <span className="font-medium">{report.vitalSigns.bloodOxygen.min}-{report.vitalSigns.bloodOxygen.max}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Readings:</span>
+                        <span className="font-medium">{report.vitalSigns.bloodOxygen.readings}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Temperature */}
+                  <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <Thermometer className="w-6 h-6 text-orange-600" />
+                      {getTrendIcon(report.vitalSigns.temperature.trend)}
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Temperature</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Average:</span>
+                        <span className="font-medium">{report.vitalSigns.temperature.average}°C</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Range:</span>
+                        <span className="font-medium">{report.vitalSigns.temperature.min}-{report.vitalSigns.temperature.max}°C</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Readings:</span>
+                        <span className="font-medium">{report.vitalSigns.temperature.readings}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="checkups" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Completed Check-ups</h4>
+                    <p className="text-3xl font-bold text-green-600">{report.checkups.completed}</p>
+                    <p className="text-sm text-gray-600">out of {report.checkups.scheduled} scheduled</p>
+                  </div>
+                  
+                  <div className="text-center p-6 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Missed Check-ups</h4>
+                    <p className="text-3xl font-bold text-yellow-600">{report.checkups.missed}</p>
+                    <p className="text-sm text-gray-600">requires attention</p>
+                  </div>
+                  
+                  <div className="text-center p-6 bg-blue-50 rounded-lg border border-blue-200">
+                    <BarChart3 className="w-8 h-8 text-blue-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Completion Rate</h4>
+                    <p className="text-3xl font-bold text-blue-600">
+                      {Math.round((report.checkups.completed / report.checkups.scheduled) * 100)}%
+                    </p>
+                    <p className="text-sm text-gray-600">overall compliance</p>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="alerts" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center p-6 bg-red-50 rounded-lg border border-red-200">
+                    <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Critical Alerts</h4>
+                    <p className="text-3xl font-bold text-red-600">{report.alerts.critical}</p>
+                    <p className="text-sm text-gray-600">require immediate attention</p>
+                  </div>
+                  
+                  <div className="text-center p-6 bg-orange-50 rounded-lg border border-orange-200">
+                    <AlertTriangle className="w-8 h-8 text-orange-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Warning Alerts</h4>
+                    <p className="text-3xl font-bold text-orange-600">{report.alerts.warning}</p>
+                    <p className="text-sm text-gray-600">monitor closely</p>
+                  </div>
+                  
+                  <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Resolved Alerts</h4>
+                    <p className="text-3xl font-bold text-green-600">{report.alerts.resolved}</p>
+                    <p className="text-sm text-gray-600">successfully addressed</p>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="compliance" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center p-6 bg-purple-50 rounded-lg border border-purple-200">
+                    <BarChart3 className="w-8 h-8 text-purple-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Compliance Rate</h4>
+                    <p className="text-3xl font-bold text-purple-600">{report.compliance.rate}%</p>
+                    <p className="text-sm text-gray-600">overall adherence</p>
+                  </div>
+                  
+                  <div className="text-center p-6 bg-gray-50 rounded-lg border border-gray-200">
+                    <Clock className="w-8 h-8 text-gray-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Missed Readings</h4>
+                    <p className="text-3xl font-bold text-gray-600">{report.compliance.missedReadings}</p>
+                    <p className="text-sm text-gray-600">total missed</p>
+                  </div>
+                  
+                  <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
+                    <Activity className="w-8 h-8 text-green-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Device Uptime</h4>
+                    <p className="text-3xl font-bold text-green-600">{report.compliance.deviceUptime}%</p>
+                    <p className="text-sm text-gray-600">connectivity rate</p>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}

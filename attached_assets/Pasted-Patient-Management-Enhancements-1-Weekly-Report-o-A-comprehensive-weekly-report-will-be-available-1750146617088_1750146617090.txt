@@ -1,0 +1,67 @@
+Patient Management Enhancements
+1.	Weekly Report
+o	A comprehensive weekly report will be available.
+o	Users can apply filters to view data within a specific date range and by vital sign type (e.g., blood pressure, heart rate).
+2.	Next Check-Up Scheduling
+o	Patients can select specific vital signs they wish to monitor (e.g., blood pressure, temperature, oxygen saturation).
+o	Users can configure automated check-up intervals (e.g., every 1, 2, 3, or 4 hours) based on their needs or physician recommendations.
+3.	Health History Overview
+o	The system will display a chronological history of all recorded vital signs.
+o	Data will be grouped by date and time, allowing users and healthcare providers to analyze trends and changes over time.
+4.	Vital Sign Recording
+o	Manual entry will be disabled to ensure data accuracy.
+o	The system will automatically retrieve vital sign readings from the connected HC03 device.
+o	Partial readings are supported: if only one or a subset of vital signs is measured (e.g., only blood pressure), the system will still record and display the available data.
+FAQ & Device Usage Instructions
+•	A dedicated FAQ section will be added to assist users with common questions related to the device and platform.
+•	This section will include:
+o	Step-by-step instructional videos demonstrating how to use the device effectively.
+o	Visual guides and text-based instructions for setup, troubleshooting, and interpreting vital sign readings.
+•	Content will be categorized for quick access (e.g., Device Setup, How to Measure Blood Pressure, Understanding Your Health Data).
+•	FAQs and videos will be updated periodically based on user feedback and new device features.
+Critical Alerts Notification
+•	The system will support automated critical alerts for abnormal or life-threatening vital signs.
+•	When a critical threshold is detected (e.g., dangerously high blood pressure or low oxygen levels), the system will:
+o	Automatically send an email notification to the assigned doctor.
+•	The doctor’s email address will be configured and managed via the Admin Dashboard, ensuring flexibility and control.
+•	The alert email will include:
+o	Patient name and ID
+o	Timestamp of the critical reading
+o	Type and value of the abnormal vital sign
+o	Link to the patient’s full health history for immediate review
+
+Admin Dashboard Functional Overview
+1.	Total Patients
+o	Displays the complete list of patients from the Patient Management module upon click.
+2.	Active Monitoring
+o	On click, shows all patients currently under active monitoring, pulled from Patient Management.
+3.	Critical Alerts
+o	Displays all critical alert records triggered within Patient Management, including patient ID, vital type, value, and timestamp.
+4.	Device Connections
+o	Displays a list of all active device connections, including device ID, assigned patient, and battery status, sourced from Patient Management.
+5.	Patient Management
+o	Shows real-time and historical vital readings for all patients.
+o	Includes advanced filters:
+	Patient Name
+	Date Range
+	Hospital Name
+	Patient ID
+o	Enables monitoring of all vitals in a structured view.
+6.	Active Patients
+o	Displays a filtered list of all patients currently marked as active in the system.
+7.	New Registrations
+o	Lists all patients registered during the current month.
+o	For example: “This Month: 12 New Patients”.
+8.	Analytics Dashboard
+o	Provides AI-powered visualizations of patient data.
+o	Users can select a specific patient to view:
+	Historical data trends
+	Vital sign graphs
+	Summary statistics and patterns
+9.	Device Monitoring
+o	Displays detailed insights for each connected device when clicked, including:
+	Last sync time
+	Vital types supported
+	Connection and battery status
+	Associated patient detail
+

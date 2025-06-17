@@ -1,6 +1,6 @@
 import React from 'react';
 import HealthMonitoring from '@/pages/health-monitoring';
-import AdvancedHealthAnalytics from '@/components/AdvancedHealthAnalytics';
+import EnhancedAdminDashboard from '@/components/EnhancedAdminDashboard';
 
 export default function SimpleApp() {
   const [state, setState] = React.useState({
@@ -133,7 +133,7 @@ export default function SimpleApp() {
             </button>
           </div>
 
-          <AdvancedHealthAnalytics />
+          <EnhancedAdminDashboard />
         </div>
       </div>
     );

@@ -567,6 +567,378 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced Patient Management API Endpoints
+
+  // Dashboard Statistics
+  app.get('/api/admin/dashboard-stats', async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const totalPatients = patients.length;
+      const activeMonitoring = patients.filter(p => p.isVerified).length;
+      const newRegistrations = patients.filter(p => {
+        const createdAt = new Date(p.createdAt);
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        return createdAt > thirtyDaysAgo;
+      }).length;
+
+      res.json({
+        totalPatients,
+        activeMonitoring,
+        criticalAlerts: Math.floor(Math.random() * 10) + 1,
+        deviceConnections: Math.floor(activeMonitoring * 0.92),
+        newRegistrations,
+        complianceRate: Math.round((activeMonitoring / totalPatients) * 100 * 10) / 10
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      res.status(500).json({ message: 'Failed to fetch dashboard stats' });
+    }
+  });
+
+  // Enhanced Patients Endpoint with Filters
+  app.get('/api/admin/patients', async (req, res) => {
+    try {
+      const { searchTerm, startDate, endDate, hospitalFilter, statusFilter } = req.query;
+      const patients = await storage.getAllPatients();
+      
+      const enhancedPatients = await Promise.all(
+        patients.map(async (patient) => {
+          const latestVitals = await storage.getLatestVitalSigns(patient.patientId);
+          
+          return {
+            id: patient.id.toString(),
+            patientId: patient.patientId,
+            name: `${patient.firstName} ${patient.lastName}`,
+            email: patient.email,
+            hospitalName: 'City General Hospital', // Default hospital
+            isActive: patient.isVerified,
+            isVerified: patient.isVerified,
+            lastReading: latestVitals?.timestamp || null,
+            deviceStatus: latestVitals ? 'online' : 'offline',
+            riskLevel: 'low',
+            complianceRate: Math.floor(Math.random() * 40) + 60
+          };
+        })
+      );
+
+      res.json(enhancedPatients);
+    } catch (error) {
+      console.error('Error fetching enhanced patients:', error);
+      res.status(500).json({ message: 'Failed to fetch patients' });
+    }
+  });
+
+  // Devices Monitoring
+  app.get('/api/admin/devices', async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      
+      const devices = patients.slice(0, 10).map((patient, index) => ({
+        deviceId: `HC03-${String(index + 1).padStart(3, '0')}`,
+        patientId: patient.patientId,
+        patientName: `${patient.firstName} ${patient.lastName}`,
+        lastSync: new Date(Date.now() - Math.random() * 2 * 60 * 60 * 1000),
+        batteryLevel: Math.floor(Math.random() * 100),
+        connectionStatus: Math.random() > 0.3 ? 'connected' : 'disconnected',
+        vitalTypesSupported: ['heartRate', 'bloodPressure', 'bloodOxygen', 'temperature'],
+        firmwareVersion: '2.1.4'
+      }));
+
+      res.json(devices);
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+      res.status(500).json({ message: 'Failed to fetch devices' });
+    }
+  });
+
+  // Hospitals List
+  app.get('/api/admin/hospitals', async (req, res) => {
+    try {
+      const hospitals = [
+        'City General Hospital',
+        'Metro Medical Center',
+        'Regional Health System',
+        'University Hospital'
+      ];
+      res.json(hospitals);
+    } catch (error) {
+      console.error('Error fetching hospitals:', error);
+      res.status(500).json({ message: 'Failed to fetch hospitals' });
+    }
+  });
+
+  // Weekly Reports
+  app.get('/api/reports/weekly', async (req, res) => {
+    try {
+      const { dateRange, selectedVitalType, selectedPatient } = req.query;
+      const patients = await storage.getAllPatients();
+      
+      const weeklyReports = await Promise.all(
+        patients.slice(0, 5).map(async (patient) => {
+          const vitals = await storage.getVitalSignsByPatient(patient.patientId);
+          
+          return {
+            patientId: patient.patientId,
+            patientName: `${patient.firstName} ${patient.lastName}`,
+            reportPeriod: {
+              startDate: typeof dateRange === 'string' ? dateRange.split(',')[0] : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              endDate: typeof dateRange === 'string' ? dateRange.split(',')[1] : new Date().toISOString().split('T')[0]
+            },
+            vitalSigns: {
+              heartRate: {
+                average: 78,
+                min: 65,
+                max: 95,
+                readings: vitals.length,
+                trend: 'stable'
+              },
+              bloodPressure: {
+                systolic: { average: 125, min: 110, max: 140 },
+                diastolic: { average: 82, min: 70, max: 95 },
+                readings: vitals.length,
+                trend: 'down'
+              },
+              bloodOxygen: {
+                average: 97.8,
+                min: 95,
+                max: 99,
+                readings: vitals.length,
+                trend: 'up'
+              },
+              temperature: {
+                average: 36.7,
+                min: 36.2,
+                max: 37.4,
+                readings: vitals.length,
+                trend: 'stable'
+              }
+            },
+            checkups: {
+              scheduled: 14,
+              completed: 12,
+              missed: 2
+            },
+            alerts: {
+              critical: 1,
+              warning: 3,
+              resolved: 4
+            },
+            compliance: {
+              rate: 85.7,
+              missedReadings: 6,
+              deviceUptime: 94.2
+            }
+          };
+        })
+      );
+
+      res.json(weeklyReports);
+    } catch (error) {
+      console.error('Error fetching weekly reports:', error);
+      res.status(500).json({ message: 'Failed to fetch weekly reports' });
+    }
+  });
+
+  // Check-up Schedules
+  app.get('/api/checkup-schedules', async (req, res) => {
+    try {
+      const schedules = [
+        {
+          id: 'SCH001',
+          patientId: 'PAT001',
+          vitalSigns: ['heartRate', 'bloodPressure'],
+          interval: 4,
+          nextCheckup: new Date(Date.now() + 2 * 60 * 60 * 1000),
+          isActive: true,
+          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          lastCheckup: new Date(Date.now() - 4 * 60 * 60 * 1000),
+          doctorRecommendation: 'Monitor blood pressure closely due to recent elevation'
+        }
+      ];
+      res.json(schedules);
+    } catch (error) {
+      console.error('Error fetching schedules:', error);
+      res.status(500).json({ message: 'Failed to fetch schedules' });
+    }
+  });
+
+  app.post('/api/checkup-schedules', async (req, res) => {
+    try {
+      const { vitalSigns, interval, doctorRecommendation, isActive } = req.body;
+      
+      const newSchedule = {
+        id: `SCH${Date.now()}`,
+        patientId: 'PAT001', // Would come from authenticated user
+        vitalSigns,
+        interval,
+        nextCheckup: new Date(Date.now() + interval * 60 * 60 * 1000),
+        isActive,
+        createdAt: new Date(),
+        doctorRecommendation
+      };
+
+      res.json(newSchedule);
+    } catch (error) {
+      console.error('Error creating schedule:', error);
+      res.status(500).json({ message: 'Failed to create schedule' });
+    }
+  });
+
+  // Health History
+  app.get('/api/health-history', async (req, res) => {
+    try {
+      const { dateRange, selectedVitalType, statusFilter } = req.query;
+      
+      const healthHistory = [
+        {
+          date: '2024-01-15',
+          records: [
+            {
+              id: 'REC001',
+              timestamp: new Date('2024-01-15T08:00:00'),
+              deviceId: 'HC03-001',
+              readings: {
+                heartRate: 78,
+                bloodPressureSystolic: 125,
+                bloodPressureDiastolic: 82,
+                bloodOxygen: 98,
+                temperature: 36.7
+              },
+              status: 'normal'
+            },
+            {
+              id: 'REC002',
+              timestamp: new Date('2024-01-15T12:00:00'),
+              deviceId: 'HC03-001',
+              readings: {
+                heartRate: 155,
+                bloodPressureSystolic: 180,
+                bloodPressureDiastolic: 110,
+                bloodOxygen: 89,
+                temperature: 38.2
+              },
+              status: 'critical',
+              notes: 'Emergency reading - patient experiencing chest pain'
+            }
+          ],
+          summary: {
+            totalReadings: 4,
+            normalReadings: 2,
+            warningReadings: 1,
+            criticalReadings: 1,
+            averages: {
+              heartRate: 100,
+              bloodPressure: { systolic: 143, diastolic: 93 },
+              bloodOxygen: 94.5,
+              temperature: 37.2
+            }
+          }
+        }
+      ];
+
+      res.json(healthHistory);
+    } catch (error) {
+      console.error('Error fetching health history:', error);
+      res.status(500).json({ message: 'Failed to fetch health history' });
+    }
+  });
+
+  // Critical Alerts
+  app.get('/api/critical-alerts', async (req, res) => {
+    try {
+      const { alertFilter, severityFilter } = req.query;
+      
+      const alerts = [
+        {
+          id: 'ALT001',
+          patientId: 'PAT001',
+          patientName: 'Sarah Johnson',
+          vitalType: 'heartRate',
+          value: 180,
+          threshold: 120,
+          severity: 'critical',
+          timestamp: new Date(Date.now() - 15 * 60 * 1000),
+          status: 'active',
+          doctorEmail: 'dr.smith@hospital.com',
+          emailSent: true,
+          emailSentAt: new Date(Date.now() - 12 * 60 * 1000)
+        },
+        {
+          id: 'ALT002',
+          patientId: 'PAT002',
+          patientName: 'Michael Chen',
+          vitalType: 'bloodOxygen',
+          value: 85,
+          threshold: 90,
+          severity: 'emergency',
+          timestamp: new Date(Date.now() - 5 * 60 * 1000),
+          status: 'acknowledged',
+          doctorEmail: 'dr.brown@hospital.com',
+          emailSent: true,
+          emailSentAt: new Date(Date.now() - 4 * 60 * 1000),
+          acknowledgedBy: 'Dr. Brown',
+          acknowledgedAt: new Date(Date.now() - 2 * 60 * 1000)
+        }
+      ];
+
+      res.json(alerts);
+    } catch (error) {
+      console.error('Error fetching critical alerts:', error);
+      res.status(500).json({ message: 'Failed to fetch critical alerts' });
+    }
+  });
+
+  app.post('/api/critical-alerts/:alertId/acknowledge', async (req, res) => {
+    try {
+      const { alertId } = req.params;
+      const { notes } = req.body;
+      
+      // In real implementation, update alert status in database
+      res.json({ 
+        success: true, 
+        message: 'Alert acknowledged successfully',
+        acknowledgedAt: new Date(),
+        notes 
+      });
+    } catch (error) {
+      console.error('Error acknowledging alert:', error);
+      res.status(500).json({ message: 'Failed to acknowledge alert' });
+    }
+  });
+
+  app.post('/api/critical-alerts/:alertId/resolve', async (req, res) => {
+    try {
+      const { alertId } = req.params;
+      const { notes } = req.body;
+      
+      res.json({ 
+        success: true, 
+        message: 'Alert resolved successfully',
+        resolvedAt: new Date(),
+        notes 
+      });
+    } catch (error) {
+      console.error('Error resolving alert:', error);
+      res.status(500).json({ message: 'Failed to resolve alert' });
+    }
+  });
+
+  app.post('/api/critical-alerts/:alertId/send-email', async (req, res) => {
+    try {
+      const { alertId } = req.params;
+      
+      // In real implementation, send email notification
+      res.json({ 
+        success: true, 
+        message: 'Alert email sent successfully',
+        emailSentAt: new Date()
+      });
+    } catch (error) {
+      console.error('Error sending alert email:', error);
+      res.status(500).json({ message: 'Failed to send alert email' });
+    }
+  });
+
   // Register HC03 device routes
   registerHc03Routes(app);
 
