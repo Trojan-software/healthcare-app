@@ -201,16 +201,18 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup }: L
 
               {/* Sign Up Link */}
               <div className="text-center pt-6 border-t border-gray-200">
-                <p className="text-sm text-gray-600">
-                  Don't have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={onShowSignup}
-                    className="text-blue-600 hover:underline font-medium"
-                  >
-                    Register as New Patient
-                  </button>
+                <p className="text-sm text-gray-600 mb-3">
+                  Don't have an account?
                 </p>
+                <button
+                  type="button"
+                  onClick={onShowSignup}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                >
+                  <User className="w-4 h-4" />
+                  Register as New Patient
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             </form>
           </CardContent>
