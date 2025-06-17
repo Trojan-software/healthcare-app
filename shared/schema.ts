@@ -4,13 +4,15 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+  username: text("username").unique(),
   password: text("password").notNull(),
   email: text("email").notNull().unique(),
   firstName: text("first_name").notNull(),
+  middleName: text("middle_name"),
   lastName: text("last_name").notNull(),
   mobileNumber: text("mobile_number").notNull(),
   patientId: text("patient_id").notNull().unique(),
+  hospitalId: text("hospital_id"),
   isVerified: boolean("is_verified").default(false).notNull(),
   role: text("role").default("patient").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

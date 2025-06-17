@@ -939,6 +939,307 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced Patient Registration & Authentication API Endpoints
+
+  // Abu Dhabi Hospitals List
+  app.get('/api/hospitals/abudhabi', async (req, res) => {
+    try {
+      const hospitals = [
+        {
+          id: 'sheikh-khalifa',
+          name: 'Sheikh Khalifa Medical City',
+          nameArabic: 'مدينة الشيخ خليفة الطبية',
+          location: 'Al Karamah, Abu Dhabi',
+          type: 'government',
+          departments: ['Emergency', 'Cardiology', 'Neurology', 'Oncology']
+        },
+        {
+          id: 'cleveland-clinic',
+          name: 'Cleveland Clinic Abu Dhabi',
+          nameArabic: 'كليفلاند كلينك أبوظبي',
+          location: 'Al Maryah Island, Abu Dhabi',
+          type: 'private',
+          departments: ['Heart & Vascular', 'Brain & Spine', 'Cancer']
+        },
+        {
+          id: 'zayed-military',
+          name: 'Zayed Military Hospital',
+          nameArabic: 'مستشفى زايد العسكري',
+          location: 'Al Wathba, Abu Dhabi',
+          type: 'government',
+          departments: ['Emergency', 'Surgery', 'Internal Medicine']
+        },
+        {
+          id: 'corniche-hospital',
+          name: 'Corniche Hospital',
+          nameArabic: 'مستشفى الكورنيش',
+          location: 'Corniche Road, Abu Dhabi',
+          type: 'government',
+          departments: ['Maternity', 'Pediatrics', 'Emergency']
+        },
+        {
+          id: 'mafraq-hospital',
+          name: 'Mafraq Hospital',
+          nameArabic: 'مستشفى المفرق',
+          location: 'Mafraq, Abu Dhabi',
+          type: 'government',
+          departments: ['Emergency', 'Trauma', 'Surgery']
+        },
+        {
+          id: 'nmc-hospital',
+          name: 'NMC Royal Hospital',
+          nameArabic: 'مستشفى إن إم سي الملكي',
+          location: 'Khalifa City, Abu Dhabi',
+          type: 'private',
+          departments: ['General Medicine', 'Surgery', 'Pediatrics']
+        },
+        {
+          id: 'mediclinic-airport',
+          name: 'Mediclinic Airport Road Hospital',
+          nameArabic: 'مستشفى ميديكلينك طريق المطار',
+          location: 'Airport Road, Abu Dhabi',
+          type: 'private',
+          departments: ['Emergency', 'Surgery', 'Maternity']
+        },
+        {
+          id: 'al-ain-hospital',
+          name: 'Al Ain Hospital',
+          nameArabic: 'مستشفى العين',
+          location: 'Al Ain, Abu Dhabi Emirate',
+          type: 'government',
+          departments: ['Emergency', 'Surgery', 'Internal Medicine']
+        },
+        {
+          id: 'tawam-hospital',
+          name: 'Tawam Hospital',
+          nameArabic: 'مستشفى توام',
+          location: 'Al Ain, Abu Dhabi Emirate',
+          type: 'government',
+          departments: ['Emergency', 'Cardiology', 'Nephrology']
+        },
+        {
+          id: 'danat-al-emarat',
+          name: 'Danat Al Emarat Hospital',
+          nameArabic: 'مستشفى دانة الإمارات',
+          location: 'Al Reem Island, Abu Dhabi',
+          type: 'private',
+          departments: ['Maternity', 'Pediatrics', 'Surgery']
+        }
+      ];
+      
+      res.json(hospitals);
+    } catch (error) {
+      console.error('Error fetching Abu Dhabi hospitals:', error);
+      res.status(500).json({ message: 'Failed to fetch hospitals' });
+    }
+  });
+
+  // Patient Registration
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { 
+        firstName, 
+        middleName, 
+        lastName, 
+        email, 
+        mobileNumber, 
+        patientId, 
+        hospitalId, 
+        password 
+      } = req.body;
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'An account with this email already exists' 
+        });
+      }
+
+      // Check if patient ID is already taken
+      const existingPatientId = await storage.getUserByPatientId(patientId);
+      if (existingPatientId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'This patient ID is already taken' 
+        });
+      }
+
+      // Hash password
+      const bcrypt = require('bcrypt');
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      // Create user
+      const newUser = await storage.createUser({
+        firstName,
+        middleName: middleName || null,
+        lastName,
+        email,
+        mobileNumber,
+        patientId,
+        hospitalId,
+        password: passwordHash,
+        username: email, // Use email as username
+        isVerified: false,
+        role: 'patient'
+      });
+
+      // Generate and send OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      await storage.createOtpCode({
+        email,
+        code: otpCode,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+      });
+
+      // In real implementation, send OTP via email
+      console.log(`OTP for ${email}: ${otpCode}`);
+
+      res.json({ 
+        success: true, 
+        message: 'Registration successful. Please check your email for verification code.',
+        userId: newUser.id
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Registration failed. Please try again.' 
+      });
+    }
+  });
+
+  // OTP Verification
+  app.post('/api/auth/verify-otp', async (req, res) => {
+    try {
+      const { email, otp } = req.body;
+
+      const isValid = await storage.verifyOtp(email, otp);
+      if (!isValid) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid or expired verification code' 
+        });
+      }
+
+      // Mark user as verified
+      await storage.markUserAsVerified(email);
+
+      res.json({ 
+        success: true, 
+        message: 'Email verified successfully. You can now log in.' 
+      });
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Verification failed. Please try again.' 
+      });
+    }
+  });
+
+  // Resend OTP
+  app.post('/api/auth/resend-otp', async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'User not found' 
+        });
+      }
+
+      // Generate new OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      await storage.createOtpCode({
+        email,
+        code: otpCode,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+      });
+
+      // In real implementation, send OTP via email
+      console.log(`New OTP for ${email}: ${otpCode}`);
+
+      res.json({ 
+        success: true, 
+        message: 'Verification code sent successfully' 
+      });
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to resend verification code' 
+      });
+    }
+  });
+
+  // Enhanced Patient Login
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { emailOrPatientId, password, rememberMe } = req.body;
+
+      // Find user by email or patient ID
+      let user = await storage.getUserByEmail(emailOrPatientId);
+      if (!user) {
+        user = await storage.getUserByPatientId(emailOrPatientId);
+      }
+
+      if (!user) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Invalid email/patient ID or password' 
+        });
+      }
+
+      // Check if user is verified
+      if (!user.isVerified) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Please verify your email before logging in' 
+        });
+      }
+
+      // Verify password
+      const bcrypt = require('bcrypt');
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Invalid email/patient ID or password' 
+        });
+      }
+
+      // Create session (simplified for demo)
+      const userSession = {
+        id: user.id,
+        patientId: user.patientId,
+        email: user.email,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        role: user.role,
+        hospitalId: user.hospitalId,
+        isVerified: user.isVerified
+      };
+
+      res.json({ 
+        success: true, 
+        message: 'Login successful',
+        user: userSession
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Login failed. Please try again.' 
+      });
+    }
+  });
+
   // Register HC03 device routes
   registerHc03Routes(app);
 

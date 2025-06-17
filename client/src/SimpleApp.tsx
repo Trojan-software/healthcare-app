@@ -1,5 +1,5 @@
 import React from 'react';
-import HealthMonitoring from '@/pages/health-monitoring';
+import PatientAuthSystem from '@/components/PatientAuthSystem';
 import EnhancedAdminDashboard from '@/components/EnhancedAdminDashboard';
 
 export default function SimpleApp() {
