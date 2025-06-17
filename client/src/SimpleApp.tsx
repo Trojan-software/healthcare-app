@@ -66,6 +66,10 @@ export default function SimpleApp() {
     demoText: { fontSize: '0.75rem', color: '#9ca3af', margin: '0.25rem 0' }
   };
 
+  if (state.view === 'auth') {
+    return <PatientAuthSystem onAuthSuccess={handleAuthSuccess} />;
+  }
+
   if (state.view === 'login') {
     return (
       <div style={styles.page}>

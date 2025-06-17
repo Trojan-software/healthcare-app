@@ -25,11 +25,15 @@ The system follows a modern full-stack architecture with React frontend, Express
 
 ## Key Components
 
-### User Management System
+### Enhanced Patient Registration System
+- Comprehensive signup with first name, middle name, last name fields
+- Mobile number validation for UAE phone numbers (+971 format)
+- Patient ID generation and validation system
+- Abu Dhabi hospital selection from complete hospital database
+- OTP email verification with resend functionality
+- Secure password requirements with confirmation
+- Terms and conditions acceptance
 - Role-based access control (Admin/Patient)
-- Secure user registration and authentication
-- OTP verification system for email confirmation
-- Patient profile management with unique patient IDs
 
 ### Health Monitoring Features
 - **Vital Signs Tracking**: Heart rate, blood pressure, temperature, oxygen levels, blood glucose
@@ -94,6 +98,17 @@ The system follows a modern full-stack architecture with React frontend, Express
 
 ```
 Changelog:
+- June 17, 2025. Enhanced Patient Registration System completed with:
+  * Comprehensive signup with first/middle/last names, mobile, email, patient ID
+  * Abu Dhabi hospitals database with 10 major healthcare facilities
+  * OTP email verification with resend functionality
+  * Enhanced login supporting email or patient ID authentication
+  * Weekly reports dashboard with comprehensive analytics
+  * Automated check-up scheduling with configurable intervals
+  * Health history overview with chronological timeline
+  * Critical alerts system with email notifications
+  * Enhanced admin dashboard with 7 comprehensive tabs
+  * Complete database schema supporting all registration fields
 - June 16, 2025. Initial setup
 ```
 

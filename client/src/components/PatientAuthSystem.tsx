@@ -15,13 +15,20 @@ interface User {
   isVerified: boolean;
 }
 
-export default function PatientAuthSystem() {
+interface PatientAuthSystemProps {
+  onAuthSuccess?: (user: any) => void;
+}
+
+export default function PatientAuthSystem({ onAuthSuccess }: PatientAuthSystemProps = {}) {
   const [currentView, setCurrentView] = useState('login'); // 'login', 'signup', 'dashboard'
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     setCurrentView('dashboard');
+    if (onAuthSuccess) {
+      onAuthSuccess(user);
+    }
   };
 
   const handleShowSignup = () => {
