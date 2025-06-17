@@ -4,48 +4,34 @@ import EnhancedAdminDashboard from '@/components/EnhancedAdminDashboard';
 
 export default function SimpleApp() {
   const [state, setState] = React.useState({
-    view: 'login',
+    view: 'auth', // 'auth', 'admin', 'patient'
     user: null,
-    email: '',
-    password: '',
     loading: false,
     error: ''
   });
 
-  const login = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setState(prev => ({ ...prev, loading: true, error: '' }));
-
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: state.email, password: state.password })
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || 'Login failed');
-      }
-
-      const data = await res.json();
-      setState(prev => ({
-        ...prev,
-        user: data.user,
-        view: data.user.role === 'admin' ? 'admin' : 'patient',
-        loading: false
+  const handleAuthSuccess = (user: any) => {
+    if (user.role === 'admin' || user.email === 'admin@24x7teleh.com') {
+      setState(prev => ({ 
+        ...prev, 
+        view: 'admin',
+        user: user,
+        loading: false 
       }));
-    } catch (err: any) {
-      setState(prev => ({ ...prev, error: err.message, loading: false }));
+    } else {
+      setState(prev => ({ 
+        ...prev, 
+        view: 'patient',
+        user: user,
+        loading: false 
+      }));
     }
   };
 
   const logout = () => {
     setState({
-      view: 'login',
+      view: 'auth',
       user: null,
-      email: '',
-      password: '',
       loading: false,
       error: ''
     });
