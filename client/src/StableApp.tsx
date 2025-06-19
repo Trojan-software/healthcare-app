@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import EnhancedAdminDashboard from './components/EnhancedAdminDashboard';
+import PatientHealthDashboard from './components/PatientHealthDashboard';
 
 interface User {
   id: number;
@@ -504,47 +504,7 @@ export default function StableApp() {
   }
 
   if (state.view === 'patient') {
-    return (
-      <div style={styles.page}>
-        <div style={{ padding: '1.5rem' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#111827', margin: '0 0 0.5rem 0' }}>
-                  Patient Dashboard
-                </h1>
-                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>
-                  Welcome, {state.user?.firstName} {state.user?.lastName}
-                </p>
-              </div>
-              <button onClick={logout} style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}>
-                Logout
-              </button>
-            </div>
-            
-            <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-              <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-                <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>🏥</div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' }}>
-                  Health Monitoring Dashboard
-                </h2>
-                <p style={{ color: '#6b7280', fontSize: '1rem', marginBottom: '1.5rem' }}>
-                  Connect your HC03 device to start monitoring your vital signs and health metrics.
-                </p>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                  <button style={{ padding: '0.75rem 1.5rem', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.875rem', cursor: 'pointer' }}>
-                    Connect Device
-                  </button>
-                  <button style={{ padding: '0.75rem 1.5rem', backgroundColor: 'transparent', color: '#3b82f6', border: '2px solid #3b82f6', borderRadius: '8px', fontSize: '0.875rem', cursor: 'pointer' }}>
-                    View Health History
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <PatientHealthDashboard user={state.user!} onLogout={logout} />;
   }
 
   return null;
