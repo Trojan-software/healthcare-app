@@ -36,18 +36,27 @@ interface PatientDashboardProps {
 export default function PatientDashboard({ user, onLogout }: PatientDashboardProps) {
   // Debug logging to verify this component is being rendered
   console.log('PatientDashboard component rendering for user:', user);
+  
   // Fetch patient dashboard data
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['/api/dashboard/patient', user.id],
     queryFn: async () => {
-      const response = await fetch(`/api/dashboard/patient/${user.id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch dashboard data');
+      try {
+        const response = await fetch(`/api/dashboard/patient/${user.id}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to fetch dashboard data`);
+        }
+        const data = await response.json();
+        console.log('PatientDashboard API response:', data);
+        return data;
+      } catch (err) {
+        console.error('PatientDashboard API error:', err);
+        throw err;
       }
-      return response.json();
     },
     staleTime: 30000, // 30 seconds
     retry: 2,
+    enabled: !!user?.id, // Only run query if user ID exists
   });
 
   // Local state for vital signs with real data
