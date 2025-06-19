@@ -1,6 +1,7 @@
 import React from 'react';
 import PatientAuthSystem from '@/components/PatientAuthSystem';
 import EnhancedAdminDashboard from '@/components/EnhancedAdminDashboard';
+import PatientDashboard from '@/components/PatientDashboard';
 
 export default function SimpleApp() {
   const [state, setState] = React.useState({
@@ -429,25 +430,5 @@ export default function SimpleApp() {
     );
   }
 
-  return (
-    <div style={{ ...styles.page, padding: '0' }}>
-      <div style={{ backgroundColor: 'white', padding: '1rem 1.5rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#111827', margin: '0' }}>
-            24/7 Tele H - Health Monitoring
-          </h1>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0' }}>
-            Welcome, {(state.user as any)?.firstName} {(state.user as any)?.lastName}
-          </p>
-        </div>
-        <button onClick={logout} style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}>
-          Logout
-        </button>
-      </div>
-      <div style={{ padding: '2rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' }}>Patient Dashboard</h2>
-        <p style={{ color: '#6b7280' }}>Health monitoring features coming soon...</p>
-      </div>
-    </div>
-  );
+  return <PatientDashboard user={state.user as any} onLogout={logout} />;
 }
