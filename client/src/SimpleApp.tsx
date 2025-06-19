@@ -374,35 +374,39 @@ export default function SimpleApp() {
             </button>
           </form>
 
-          <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
-            <p style={{ color: '#64748b', marginBottom: '1rem', fontSize: '0.875rem' }}>
-              Don't have an account?
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setState(prev => ({ ...prev, view: 'signup' }));
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                backgroundColor: '#059669',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer'
-              }}
-            >
-              👤 Register as New Patient
-            </button>
-          </div>
-
           <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>Demo Accounts:</p>
             <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: '0.25rem 0' }}>Admin: admin@24x7teleh.com / admin123</p>
             <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: '0.25rem 0' }}>Patient: patient.demo@example.com / patient123</p>
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
+            <p style={{ color: '#64748b', marginBottom: '1rem', fontSize: '0.875rem' }}>
+              Don't have an account?
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                type="button" 
+                onClick={() => {
+                  console.log('Registration button clicked!');
+                  setState(prev => ({ ...prev, view: 'signup' }));
+                }}
+                style={{
+                  flex: '1',
+                  padding: '0.75rem',
+                  backgroundColor: '#059669',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  minHeight: '48px'
+                }}
+              >
+                Register as New Patient
+              </button>
+            </div>
           </div>
         </div>
       </div>
