@@ -58,7 +58,7 @@ app.use((req, res, next) => {
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api')) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.sendFile(path.join(__dirname, 'public', 'app.html'));
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
     }
   });
 
