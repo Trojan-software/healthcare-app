@@ -199,7 +199,49 @@ export default function AdvancedHealthAnalytics() {
             <option value="90d">Last 90 Days</option>
           </select>
           
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              // Generate and download analytics report
+              const reportData = {
+                generatedAt: new Date().toISOString(),
+                timeframe: selectedTimeframe,
+                metrics: mockMetrics,
+                riskPatients: mockRiskPatients
+              };
+              
+              const csvContent = [
+                "Analytics Report - 24/7 Tele H",
+                `Generated: ${new Date().toLocaleString()}`,
+                `Timeframe: ${selectedTimeframe}`,
+                "",
+                "Key Metrics:",
+                `Total Patients: ${mockMetrics.totalPatients}`,
+                `Active Monitoring: ${mockMetrics.activeMonitoring}`,
+                `Critical Alerts: ${mockMetrics.criticalAlerts}`,
+                `Average Heart Rate: ${mockMetrics.averageHeartRate} bpm`,
+                `Average Blood Pressure: ${mockMetrics.averageBloodPressure.systolic}/${mockMetrics.averageBloodPressure.diastolic} mmHg`,
+                `Average Blood Oxygen: ${mockMetrics.averageBloodOxygen}%`,
+                `Average Temperature: ${mockMetrics.averageTemperature}°C`,
+                `Compliance Rate: ${mockMetrics.complianceRate}%`,
+                "",
+                "High-Risk Patients:",
+                "Patient ID,Name,Risk Level,Heart Rate,Blood Pressure,Blood Oxygen,Temperature,Alerts",
+                ...mockRiskPatients.map(patient => 
+                  `${patient.id},${patient.name},${patient.riskLevel},${patient.vitals.heartRate},${patient.vitals.bloodPressure.systolic}/${patient.vitals.bloodPressure.diastolic},${patient.vitals.bloodOxygen},${patient.vitals.temperature},${patient.alerts}`
+                )
+              ].join("\n");
+              
+              const blob = new Blob([csvContent], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `health-analytics-report-${new Date().toISOString().split('T')[0]}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
             <Download className="w-4 h-4 mr-2" />
             Export Report
           </Button>

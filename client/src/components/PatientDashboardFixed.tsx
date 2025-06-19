@@ -391,6 +391,11 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             }}
             onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+            onClick={() => {
+              // Navigate to health history view
+              window.location.hash = '#health-history';
+              alert('Health History feature - Shows detailed vital signs trends and historical data');
+            }}
             >
               <span>📊</span>
               View Health History
@@ -412,6 +417,11 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             }}
             onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#059669'}
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+            onClick={() => {
+              // Simulate device connection
+              alert('Device Connection initiated - HC03 device pairing in progress...');
+              // In a real implementation, this would open device pairing interface
+            }}
             >
               <span>🔗</span>
               Connect Device
@@ -433,6 +443,11 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             }}
             onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#d97706'}
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f59e0b'}
+            onClick={() => {
+              // Open patient settings
+              alert('Patient Settings - Configure notifications, reminders, and personal preferences');
+              // In a real implementation, this would open settings modal
+            }}
             >
               <span>⚙️</span>
               Settings

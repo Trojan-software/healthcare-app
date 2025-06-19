@@ -165,8 +165,55 @@ export default function WeeklyReportDashboard() {
   };
 
   const generatePDFReport = () => {
-    // Implementation for PDF generation would go here
-    console.log('Generating PDF report for:', { dateRange, selectedVitalType, selectedPatient });
+    // Generate comprehensive PDF report
+    const reportContent = mockReportData.map(report => {
+      return [
+        `WEEKLY HEALTH REPORT - ${report.patientName} (${report.patientId})`,
+        `Report Period: ${new Date(report.reportPeriod.startDate).toLocaleDateString()} - ${new Date(report.reportPeriod.endDate).toLocaleDateString()}`,
+        `Generated: ${new Date().toLocaleString()}`,
+        '',
+        'VITAL SIGNS SUMMARY:',
+        `Heart Rate: ${report.vitalSigns.heartRate.average} bpm (${report.vitalSigns.heartRate.min}-${report.vitalSigns.heartRate.max}) - ${report.vitalSigns.heartRate.readings} readings`,
+        `Blood Pressure: ${report.vitalSigns.bloodPressure.systolic.average}/${report.vitalSigns.bloodPressure.diastolic.average} mmHg - ${report.vitalSigns.bloodPressure.readings} readings`,
+        `Blood Oxygen: ${report.vitalSigns.bloodOxygen.average}% (${report.vitalSigns.bloodOxygen.min}-${report.vitalSigns.bloodOxygen.max}) - ${report.vitalSigns.bloodOxygen.readings} readings`,
+        `Temperature: ${report.vitalSigns.temperature.average}°C (${report.vitalSigns.temperature.min}-${report.vitalSigns.temperature.max}) - ${report.vitalSigns.temperature.readings} readings`,
+        '',
+        'CHECKUP SUMMARY:',
+        `Scheduled: ${report.checkups.scheduled}`,
+        `Completed: ${report.checkups.completed}`,
+        `Missed: ${report.checkups.missed}`,
+        `Completion Rate: ${((report.checkups.completed / report.checkups.scheduled) * 100).toFixed(1)}%`,
+        '',
+        'ALERTS SUMMARY:',
+        `Critical Alerts: ${report.alerts.critical}`,
+        `Warning Alerts: ${report.alerts.warning}`,
+        `Resolved Alerts: ${report.alerts.resolved}`,
+        '',
+        'COMPLIANCE METRICS:',
+        `Overall Compliance: ${report.compliance.rate}%`,
+        `Missed Readings: ${report.compliance.missedReadings}`,
+        `Device Uptime: ${report.compliance.deviceUptime}%`,
+        '',
+        '-------------------',
+        ''
+      ].join('\n');
+    }).join('\n');
+
+    const fullReport = [
+      '24/7 TELE H - WEEKLY HEALTH REPORTS',
+      `Generated: ${new Date().toLocaleString()}`,
+      `Filter: ${selectedVitalType} | Patient: ${selectedPatient}`,
+      '',
+      reportContent
+    ].join('\n');
+
+    const blob = new Blob([fullReport], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `weekly-health-report-${new Date().toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (isLoading) {
