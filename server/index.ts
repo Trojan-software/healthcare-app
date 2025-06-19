@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 app.use(express.json());
@@ -48,13 +50,15 @@ app.use((req, res, next) => {
   });
 
   // Serve static files from server/public directory
-  app.use(express.static('server/public'));
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  
+  app.use(express.static(path.join(__dirname, 'public')));
   
   // Catch-all route to serve the HTML app for non-API routes
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api')) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.sendFile(require('path').join(__dirname, 'public', 'app.html'));
+      res.sendFile(path.join(__dirname, 'public', 'app.html'));
     }
   });
 
