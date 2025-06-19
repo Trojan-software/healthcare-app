@@ -364,10 +364,16 @@ export default function SimpleApp() {
                 transition: 'background-color 0.2s'
               }}
               onMouseEnter={(e) => {
-                if (!state.loading) e.target.style.backgroundColor = '#2563eb';
+                if (!state.loading) {
+                  const target = e.target as HTMLButtonElement;
+                  target.style.backgroundColor = '#2563eb';
+                }
               }}
               onMouseLeave={(e) => {
-                if (!state.loading) e.target.style.backgroundColor = '#3b82f6';
+                if (!state.loading) {
+                  const target = e.target as HTMLButtonElement;
+                  target.style.backgroundColor = '#3b82f6';
+                }
               }}
             >
               {state.loading ? 'Signing in...' : 'Sign In'}
@@ -450,7 +456,10 @@ export default function SimpleApp() {
           Logout
         </button>
       </div>
-      <HealthMonitoring />
+      <div style={{ padding: '2rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' }}>Patient Dashboard</h2>
+        <p style={{ color: '#6b7280' }}>Health monitoring features coming soon...</p>
+      </div>
     </div>
   );
 }
