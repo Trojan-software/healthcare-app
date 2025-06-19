@@ -85,7 +85,16 @@ export default function App() {
         </div>
         
         <button
-          onClick={() => alert('Healthcare Management System Ready!\n\nDemo Credentials:\nadmin@24x7teleh.com / admin123\n\nSystem includes:\n✓ Patient Management\n✓ Vital Signs Monitoring\n✓ Weekly Health Reports\n✓ PDF Export\n✓ Real-time Analytics')}
+          onClick={() => {
+            const email = (document.querySelector('input[type="text"]') as HTMLInputElement)?.value;
+            const password = (document.querySelector('input[type="password"]') as HTMLInputElement)?.value;
+            
+            if (email === 'admin@24x7teleh.com' && password === 'admin123') {
+              window.location.href = '/admin-dashboard';
+            } else {
+              alert('Invalid credentials. Please use: admin@24x7teleh.com / admin123');
+            }
+          }}
           style={{
             width: '100%',
             padding: '14px',
