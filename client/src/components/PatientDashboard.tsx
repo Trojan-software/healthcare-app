@@ -37,7 +37,15 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
   // Fetch patient dashboard data
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['/api/dashboard/patient', user.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/dashboard/patient/${user.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+      return response.json();
+    },
     staleTime: 30000, // 30 seconds
+    retry: 2,
   });
 
   // Local state for vital signs with real data
@@ -59,7 +67,21 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
   // Update vitals from dashboard data if available
   useEffect(() => {
     if (dashboardData && typeof dashboardData === 'object') {
-      const data = dashboardData as any;
+      const data = dashboardData as {
+        vitals?: {
+          heartRate: number;
+          bloodPressure: { systolic: number; diastolic: number };
+          temperature: number;
+          bloodOxygen: number;
+          timestamp: string;
+        };
+        metrics?: {
+          lastCheckup: string;
+          nextAppointment: string;
+          medicationReminders: number;
+          healthScore: number;
+        };
+      };
       
       if (data.vitals) {
         setVitals({
