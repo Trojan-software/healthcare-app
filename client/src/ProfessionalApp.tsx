@@ -649,49 +649,289 @@ export default function ProfessionalApp() {
   // Patient Dashboard
   if (state.view === 'patient') {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-                  <User className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900">Patient Dashboard</h1>
-                  <p className="text-sm text-gray-500">Welcome, {state.user?.firstName} {state.user?.lastName}</p>
+      <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
+        
+        {/* Header */}
+        <header style={{ backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', borderBottom: '1px solid #e2e8f0' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
+                Patient Health Dashboard
+              </h1>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
+                Welcome back, {state.user?.firstName} {state.user?.lastName}
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1e293b', margin: 0 }}>
+                  Patient ID: {state.user?.patientId || 'N/A'}
+                </p>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500', 
+                  color: '#10b981' 
+                }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></div>
+                  Device Connected
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <Badge variant="outline" className="text-green-600 border-green-600">
-                  {state.user?.patientId}
-                </Badge>
-                <Button onClick={logout} variant="outline" size="sm">
-                  Logout
-                </Button>
-              </div>
+              <button 
+                onClick={logout}
+                style={{ 
+                  padding: '0.75rem 1.5rem', 
+                  backgroundColor: '#ef4444', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500', 
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                Logout
+              </button>
             </div>
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Health Monitoring Dashboard</CardTitle>
-              <CardDescription>
-                Your personal health monitoring and vital signs tracking system.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <Activity className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Health Monitoring Coming Soon</h3>
-                <p className="text-gray-500">
-                  Connect your HC03 device to start monitoring your vital signs and health metrics.
-                </p>
+        {/* Main Content */}
+        <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          {/* Vital Signs Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            {/* Heart Rate */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Heart Rate</h3>
+                <span style={{ fontSize: '1.5rem' }}>💓</span>
               </div>
-            </CardContent>
-          </Card>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0', color: '#10b981' }}>
+                72 <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>bpm</span>
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                backgroundColor: '#10b98120',
+                color: '#10b981'
+              }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }}></div>
+                Normal
+              </div>
+            </div>
+
+            {/* Blood Pressure */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Blood Pressure</h3>
+                <span style={{ fontSize: '1.5rem' }}>🩸</span>
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0', color: '#10b981' }}>
+                120/80 <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>mmHg</span>
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                backgroundColor: '#10b98120',
+                color: '#10b981'
+              }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }}></div>
+                Normal
+              </div>
+            </div>
+
+            {/* Temperature */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Temperature</h3>
+                <span style={{ fontSize: '1.5rem' }}>🌡️</span>
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0', color: '#10b981' }}>
+                36.6 <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>°C</span>
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                backgroundColor: '#10b98120',
+                color: '#10b981'
+              }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }}></div>
+                Normal
+              </div>
+            </div>
+
+            {/* Blood Oxygen */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Blood Oxygen</h3>
+                <span style={{ fontSize: '1.5rem' }}>🫁</span>
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0', color: '#10b981' }}>
+                98 <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>%</span>
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.75rem',
+                fontWeight: '500',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                backgroundColor: '#10b98120',
+                color: '#10b981'
+              }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }}></div>
+                Normal
+              </div>
+            </div>
+          </div>
+
+          {/* Health Overview and Actions */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: window.innerWidth > 768 ? '2fr 1fr' : '1fr', 
+            gap: '1.5rem' 
+          }}>
+            {/* Health Overview */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: '0 0 1.5rem 0' }}>Health Overview</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>Last Checkup</p>
+                  <p style={{ fontSize: '1rem', fontWeight: '500', color: '#1e293b', margin: 0 }}>
+                    {new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
+                      weekday: 'short', 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>Next Appointment</p>
+                  <p style={{ fontSize: '1rem', fontWeight: '500', color: '#1e293b', margin: 0 }}>
+                    {new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
+                      weekday: 'short', 
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>Health Score</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ width: '100px', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px' }}>
+                      <div style={{
+                        width: '85%',
+                        height: '100%',
+                        backgroundColor: '#10b981',
+                        borderRadius: '4px',
+                        transition: 'width 0.3s ease'
+                      }}></div>
+                    </div>
+                    <span style={{ fontSize: '1rem', fontWeight: '500', color: '#1e293b' }}>85%</span>
+                  </div>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>Medication Reminders</p>
+                  <p style={{ fontSize: '1rem', fontWeight: '500', color: '#f59e0b', margin: 0 }}>3 pending</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: '0 0 1.5rem 0' }}>Quick Actions</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <button style={{ 
+                  padding: '0.75rem 1.5rem', 
+                  backgroundColor: '#3b82f6', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500', 
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}>
+                  📊 View Health History
+                </button>
+                <button style={{ 
+                  padding: '0.75rem 1.5rem', 
+                  backgroundColor: 'transparent', 
+                  color: '#3b82f6', 
+                  border: '2px solid #3b82f6', 
+                  borderRadius: '8px', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500', 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}>
+                  💊 Medication Log
+                </button>
+                <button style={{ 
+                  padding: '0.75rem 1.5rem', 
+                  backgroundColor: 'transparent', 
+                  color: '#3b82f6', 
+                  border: '2px solid #3b82f6', 
+                  borderRadius: '8px', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500', 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}>
+                  📅 Schedule Checkup
+                </button>
+                <button style={{ 
+                  padding: '0.75rem 1.5rem', 
+                  backgroundColor: 'transparent', 
+                  color: '#3b82f6', 
+                  border: '2px solid #3b82f6', 
+                  borderRadius: '8px', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500', 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}>
+                  🔗 Connect HC03 Device
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Last Updated */}
+          <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
+              Last updated: {new Date().toLocaleString()}
+            </p>
+          </div>
         </main>
       </div>
     );
