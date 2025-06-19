@@ -49,18 +49,12 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Serve static files from server/public directory
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  
-  app.use(express.static(path.join(__dirname, 'public')));
-  
-  // Catch-all route to serve the HTML app for non-API routes
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    }
-  });
+  // Setup Vite development server or static file serving
+  if (process.env.NODE_ENV === "development") {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
+  }
 
   const port = 5000;
   server.listen({
