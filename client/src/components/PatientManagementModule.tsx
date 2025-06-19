@@ -69,7 +69,52 @@ export default function PatientManagementModule() {
     retry: false
   });
 
-  const hospitals: Hospital[] = (hospitalsData as any)?.hospitals || [];
+  const hospitals: Hospital[] = (hospitalsData as any)?.hospitals || [
+    // Major Government Hospitals
+    { id: "SEHA", name: "Sheikh Khalifa Medical City", location: "Abu Dhabi", type: "Government Hospital" },
+    { id: "MAFRAQ", name: "Mafraq Hospital", location: "Abu Dhabi", type: "Government Hospital" },
+    { id: "ALZAHRA", name: "Al Zahra Hospital", location: "Sharjah", type: "Private Hospital" },
+    { id: "CORNICHE", name: "Corniche Hospital", location: "Abu Dhabi", type: "Government Hospital" },
+    { id: "ALAIN", name: "Al Ain Hospital", location: "Al Ain", type: "Government Hospital" },
+    { id: "TAWAM", name: "Tawam Hospital", location: "Al Ain", type: "Government Hospital" },
+    
+    // Private Hospitals
+    { id: "CLEVELANAD", name: "Cleveland Clinic Abu Dhabi", location: "Abu Dhabi", type: "Private Hospital" },
+    { id: "BURJEEL", name: "Burjeel Hospital", location: "Abu Dhabi", type: "Private Hospital" },
+    { id: "MEDICLINIC", name: "Mediclinic City Hospital", location: "Dubai", type: "Private Hospital" },
+    { id: "NMC", name: "NMC Royal Hospital", location: "Abu Dhabi", type: "Private Hospital" },
+    { id: "ZAYED", name: "Zayed Military Hospital", location: "Abu Dhabi", type: "Military Hospital" },
+    { id: "DANAT", name: "Danat Al Emarat Hospital", location: "Abu Dhabi", type: "Private Hospital" },
+    
+    // Specialized Clinics
+    { id: "ALRAZI", name: "Al Razi Medical Complex", location: "Abu Dhabi", type: "Medical Complex" },
+    { id: "LIFECARE", name: "LifeCare Hospital", location: "Abu Dhabi", type: "Private Hospital" },
+    { id: "ABUDHABI_EYE", name: "Abu Dhabi Eye Hospital", location: "Abu Dhabi", type: "Specialized Hospital" },
+    { id: "ORTHOSPORTS", name: "Orthosports Medical Center", location: "Abu Dhabi", type: "Sports Medicine Clinic" },
+    { id: "ALWAHDA", name: "Al Wahda Medical Center", location: "Abu Dhabi", type: "Medical Center" },
+    { id: "MEDEOR", name: "Medeor Hospital", location: "Abu Dhabi", type: "Private Hospital" },
+    
+    // Primary Healthcare Centers
+    { id: "KHALIFA_CITY", name: "Khalifa City Health Center", location: "Abu Dhabi", type: "Primary Healthcare" },
+    { id: "MUSAFFAH", name: "Musaffah Health Center", location: "Abu Dhabi", type: "Primary Healthcare" },
+    { id: "AIRPORT_ROAD", name: "Airport Road Health Center", location: "Abu Dhabi", type: "Primary Healthcare" },
+    { id: "ALBATEEN", name: "Al Bateen Health Center", location: "Abu Dhabi", type: "Primary Healthcare" },
+    { id: "SHAKHBOUT", name: "Shakhbout Medical City", location: "Abu Dhabi", type: "Academic Medical Center" },
+    
+    // Women's & Children's Hospitals
+    { id: "LATIFA", name: "Latifa Women and Children Hospital", location: "Dubai", type: "Specialized Hospital" },
+    { id: "SANDY", name: "Sandy Medical Center", location: "Abu Dhabi", type: "Women's Health Clinic" },
+    { id: "MOTHERS", name: "Mothers & Children Hospital", location: "Abu Dhabi", type: "Specialized Hospital" },
+    
+    // Rehabilitation Centers
+    { id: "REHAB_ABD", name: "Abu Dhabi Rehabilitation Hospital", location: "Abu Dhabi", type: "Rehabilitation Center" },
+    { id: "PHYSIO_PLUS", name: "Physio Plus Rehabilitation", location: "Abu Dhabi", type: "Physiotherapy Clinic" },
+    
+    // Dental & Aesthetic Clinics
+    { id: "AMERICAN_DENTAL", name: "American Dental Center", location: "Abu Dhabi", type: "Dental Clinic" },
+    { id: "ASTER_CLINIC", name: "Aster Clinic", location: "Abu Dhabi", type: "Multi-specialty Clinic" },
+    { id: "BLISS_CLINIC", name: "Bliss Medical Center", location: "Abu Dhabi", type: "Aesthetic Clinic" }
+  ];
 
   // Fetch patients with filters
   const { data: patientsData, isLoading: loadingPatients, error: patientsError } = useQuery({
@@ -472,7 +517,7 @@ function CreatePatientForm({
           <SelectContent>
             {hospitals.map((hospital) => (
               <SelectItem key={hospital.id} value={hospital.id}>
-                {hospital.name}
+                {hospital.name} - {hospital.type}
               </SelectItem>
             ))}
           </SelectContent>

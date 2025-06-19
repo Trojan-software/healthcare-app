@@ -98,6 +98,14 @@ The system follows a modern full-stack architecture with React frontend, Express
 
 ```
 Changelog:
+- June 19, 2025. ENHANCED PATIENT REGISTRATION & CHECKUP SCHEDULING:
+  * Added date of birth field to patient registration form with proper validation
+  * Expanded hospital/clinic list to include 30+ Abu Dhabi healthcare facilities
+  * Categorized facilities: Government, Private, Specialized, Primary Healthcare, Women's & Children's
+  * Enhanced CheckupScheduling with working Create Schedule, pause/resume, delete functionality
+  * Added comprehensive toast notifications for all scheduling operations
+  * Hospital selection now shows facility type for better user experience
+  * All patient management forms now include complete demographic data collection
 - June 19, 2025. COMPREHENSIVE END-TO-END FIX COMPLETED - All issues resolved:
   * Fixed critical patient dashboard rendering issue - replaced broken component with PatientDashboardFixed
   * Resolved "date.getTime is not a function" error in EnhancedAdminDashboard with proper date validation
