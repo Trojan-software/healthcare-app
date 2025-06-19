@@ -56,7 +56,7 @@ interface PatientStats {
 
 export default function PatientManagementModule() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedHospital, setSelectedHospital] = useState('');
+  const [selectedHospital, setSelectedHospital] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -237,7 +237,7 @@ export default function PatientManagementModule() {
                 <SelectValue placeholder="All Hospitals" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Hospitals</SelectItem>
+                <SelectItem value="all">All Hospitals</SelectItem>
                 {hospitals.map((hospital) => (
                   <SelectItem key={hospital.id} value={hospital.id}>
                     {hospital.name}
