@@ -34,6 +34,8 @@ interface PatientDashboardProps {
 }
 
 export default function PatientDashboard({ user, onLogout }: PatientDashboardProps) {
+  // Debug logging to verify this component is being rendered
+  console.log('PatientDashboard component rendering for user:', user);
   // Fetch patient dashboard data
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['/api/dashboard/patient', user.id],
@@ -240,10 +242,10 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
-              Patient Health Dashboard
+              🏥 24/7 Tele H - Health Monitoring Dashboard
             </h1>
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
-              Welcome back, {user.firstName} {user.lastName}
+              Welcome back, {user.firstName} {user.lastName} - Real-time health monitoring is active
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

@@ -430,5 +430,6 @@ export default function SimpleApp() {
     );
   }
 
-  return <PatientDashboard user={state.user as any} onLogout={logout} />;
+  // Force re-render by adding a key prop to bust any potential caching
+  return <PatientDashboard key={(state.user as any)?.id || 'patient'} user={state.user as any} onLogout={logout} />;
 }
