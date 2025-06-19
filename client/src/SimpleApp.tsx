@@ -1,10 +1,10 @@
-import React from 'react';
+import { useState } from 'react';
 import PatientAuthSystem from '@/components/PatientAuthSystem';
 import EnhancedAdminDashboard from '@/components/EnhancedAdminDashboard';
 import PatientDashboardFixed from '@/components/PatientDashboardFixed';
 
 export default function SimpleApp() {
-  const [state, setState] = React.useState({
+  const [state, setState] = useState({
     view: 'auth', // 'auth', 'admin', 'patient'
     user: null,
     loading: false,
