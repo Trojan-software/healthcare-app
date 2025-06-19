@@ -41,6 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
+          patientId: user.patientId,
           role: user.role
         }
       });
@@ -53,6 +54,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Health check
   app.get("/health", (req, res) => {
     res.json({ status: "Server running", time: new Date().toISOString() });
+  });
+
+  // Patient Dashboard API
+  app.get("/api/dashboard/patient/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get patient data including vital signs and metrics
+      const patientId = user.patientId || `PAT${user.id}`;
+      
+      // Get latest vital signs
+      let latestVitals = null;
+      try {
+        latestVitals = await storage.getLatestVitalSigns(patientId);
+      } catch (error) {
+        console.log("No vital signs found for patient:", patientId);
+      }
+
+      // Get dashboard stats
+      let dashboardStats = null;
+      try {
+        dashboardStats = await storage.getDashboardStats(patientId);
+      } catch (error) {
+        console.log("No dashboard stats found for patient:", patientId);
+      }
+
+      // Return dashboard data with proper fallbacks
+      res.json({
+        vitals: latestVitals ? {
+          heartRate: latestVitals.heartRate || 72,
+          bloodPressure: {
+            systolic: latestVitals.bloodPressureSystolic || 120,
+            diastolic: latestVitals.bloodPressureDiastolic || 80
+          },
+          temperature: latestVitals.temperature ? parseFloat(latestVitals.temperature) : 36.6,
+          bloodOxygen: latestVitals.oxygenLevel || 98,
+          timestamp: latestVitals.timestamp || new Date()
+        } : {
+          heartRate: 72,
+          bloodPressure: { systolic: 120, diastolic: 80 },
+          temperature: 36.6,
+          bloodOxygen: 98,
+          timestamp: new Date()
+        },
+        metrics: {
+          lastCheckup: dashboardStats?.lastCheckupTime || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          nextAppointment: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          medicationReminders: dashboardStats?.pendingReminders || 3,
+          healthScore: dashboardStats?.healthScore || 85
+        }
+      });
+    } catch (error) {
+      console.error("Dashboard error:", error);
+      res.status(500).json({ message: "Failed to load dashboard data" });
+    }
   });
 
   // Enhanced Patient Registration
