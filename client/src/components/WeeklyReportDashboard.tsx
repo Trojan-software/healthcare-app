@@ -18,8 +18,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// Removed PDF imports - using text export instead
 
 interface WeeklyReportData {
   patientId: string;
