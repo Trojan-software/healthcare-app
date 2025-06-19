@@ -20,6 +20,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface WeeklyReportData {
   patientId: string;
@@ -93,7 +95,7 @@ export default function WeeklyReportDashboard() {
     queryKey: ['/api/admin/patients-list'],
   });
 
-  const mockReportData: WeeklyReportData[] = (weeklyReport as WeeklyReportData[]) || [
+  const allReportData: WeeklyReportData[] = (weeklyReport as WeeklyReportData[]) || [
     {
       patientId: 'PAT001',
       patientName: 'Sarah Johnson',
@@ -148,6 +150,60 @@ export default function WeeklyReportDashboard() {
     }
   ];
 
+  // Filter report data based on selected patient
+  const filteredReportData = allReportData.filter(report => {
+    if (selectedPatient === 'all') return true;
+    return report.patientId === selectedPatient;
+  });
+
+  // Helper function to get vital sign data based on selected type
+  const getVitalSignData = (report: WeeklyReportData) => {
+    switch (selectedVitalType) {
+      case 'heartRate':
+        return {
+          name: 'Heart Rate',
+          data: report.vitalSigns.heartRate,
+          unit: 'BPM',
+          icon: '❤️',
+          average: report.vitalSigns.heartRate.average,
+          range: `${report.vitalSigns.heartRate.min}-${report.vitalSigns.heartRate.max}`,
+          readings: report.vitalSigns.heartRate.readings
+        };
+      case 'bloodPressure':
+        return {
+          name: 'Blood Pressure',
+          data: report.vitalSigns.bloodPressure,
+          unit: 'mmHg',
+          icon: '🩸',
+          average: `${report.vitalSigns.bloodPressure.systolic.average}/${report.vitalSigns.bloodPressure.diastolic.average}`,
+          range: `${report.vitalSigns.bloodPressure.systolic.min}-${report.vitalSigns.bloodPressure.systolic.max}/${report.vitalSigns.bloodPressure.diastolic.min}-${report.vitalSigns.bloodPressure.diastolic.max}`,
+          readings: report.vitalSigns.bloodPressure.readings
+        };
+      case 'bloodOxygen':
+        return {
+          name: 'Blood Oxygen',
+          data: report.vitalSigns.bloodOxygen,
+          unit: '%',
+          icon: '🫁',
+          average: report.vitalSigns.bloodOxygen.average,
+          range: `${report.vitalSigns.bloodOxygen.min}-${report.vitalSigns.bloodOxygen.max}`,
+          readings: report.vitalSigns.bloodOxygen.readings
+        };
+      case 'temperature':
+        return {
+          name: 'Temperature',
+          data: report.vitalSigns.temperature,
+          unit: '°C',
+          icon: '🌡️',
+          average: report.vitalSigns.temperature.average,
+          range: `${report.vitalSigns.temperature.min}-${report.vitalSigns.temperature.max}`,
+          readings: report.vitalSigns.temperature.readings
+        };
+      default:
+        return null;
+    }
+  };
+
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'up': return <TrendingUp className="w-4 h-4 text-green-500" />;
@@ -165,11 +221,100 @@ export default function WeeklyReportDashboard() {
   };
 
   const generatePDFReport = () => {
-    // Generate comprehensive PDF-formatted report
+    const doc = new jsPDF();
     const currentDate = new Date().toLocaleString();
     const exportDate = new Date().toISOString().split('T')[0];
     
-    const reportContent = mockReportData.map(report => {
+    // PDF Header
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('24/7 TELE H TECHNOLOGY SERVICES', 20, 20);
+    doc.setFontSize(14);
+    doc.text('Weekly Health Reports', 20, 30);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Export Date: ${currentDate}`, 20, 40);
+    doc.text(`Filters: ${selectedVitalType.toUpperCase()} | ${selectedPatient.toUpperCase()}`, 20, 50);
+    
+    let yPosition = 70;
+    
+    filteredReportData.forEach((report: WeeklyReportData, index: number) => {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      
+      // Patient Header
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Patient: ${report.patientName} (${report.patientId})`, 20, yPosition);
+      yPosition += 10;
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      
+      // Show filtered vital signs or all vital signs
+      if (selectedVitalType !== 'all') {
+        const vitalData = getVitalSignData(report);
+        if (vitalData) {
+          const tableData = [
+            ['Vital Sign', 'Average', 'Range', 'Readings', 'Trend']
+          ];
+          
+          const trendText = vitalData.data?.trend || 'stable';
+          tableData.push([
+            vitalData.name,
+            `${vitalData.average} ${vitalData.unit}`,
+            `${vitalData.range} ${vitalData.unit}`,
+            vitalData.readings.toString(),
+            trendText.toUpperCase()
+          ]);
+          
+          autoTable(doc, {
+            head: [tableData[0]],
+            body: tableData.slice(1),
+            startY: yPosition,
+            theme: 'striped',
+            headStyles: { fillColor: [66, 139, 202] },
+            margin: { left: 20 }
+          });
+          
+          yPosition = (doc as any).lastAutoTable.finalY + 10;
+        }
+      } else {
+        // Show all vital signs
+        const tableData = [
+          ['Vital Sign', 'Average', 'Range', 'Readings', 'Trend'],
+          ['Heart Rate', `${report.vitalSigns.heartRate.average} BPM`, `${report.vitalSigns.heartRate.min}-${report.vitalSigns.heartRate.max} BPM`, report.vitalSigns.heartRate.readings.toString(), report.vitalSigns.heartRate.trend.toUpperCase()],
+          ['Blood Pressure', `${report.vitalSigns.bloodPressure.systolic.average}/${report.vitalSigns.bloodPressure.diastolic.average} mmHg`, `${report.vitalSigns.bloodPressure.systolic.min}-${report.vitalSigns.bloodPressure.systolic.max}/${report.vitalSigns.bloodPressure.diastolic.min}-${report.vitalSigns.bloodPressure.diastolic.max} mmHg`, report.vitalSigns.bloodPressure.readings.toString(), report.vitalSigns.bloodPressure.trend.toUpperCase()],
+          ['Blood Oxygen', `${report.vitalSigns.bloodOxygen.average}%`, `${report.vitalSigns.bloodOxygen.min}-${report.vitalSigns.bloodOxygen.max}%`, report.vitalSigns.bloodOxygen.readings.toString(), report.vitalSigns.bloodOxygen.trend.toUpperCase()],
+          ['Temperature', `${report.vitalSigns.temperature.average}°C`, `${report.vitalSigns.temperature.min}-${report.vitalSigns.temperature.max}°C`, report.vitalSigns.temperature.readings.toString(), report.vitalSigns.temperature.trend.toUpperCase()]
+        ];
+        
+        autoTable(doc, {
+          head: [tableData[0]],
+          body: tableData.slice(1),
+          startY: yPosition,
+          theme: 'striped',
+          headStyles: { fillColor: [66, 139, 202] },
+          margin: { left: 20 }
+        });
+        
+        yPosition = (doc as any).lastAutoTable.finalY + 15;
+      }
+    });
+    
+    // Save the PDF
+    doc.save(`24x7TeleH-Weekly-Health-Report-${exportDate}.pdf`);
+  };
+
+  const oldGeneratePDFReport = () => {
+    // Legacy text-based export (kept for reference)
+    const currentDate = new Date().toLocaleString();
+    const exportDate = new Date().toISOString().split('T')[0];
+    
+    const reportContent = filteredReportData.map((report: WeeklyReportData) => {
       const completionRate = ((report.checkups.completed / report.checkups.scheduled) * 100).toFixed(1);
       
       return [
