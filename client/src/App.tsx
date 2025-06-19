@@ -1,5 +1,5 @@
-import StableApp from './StableApp';
+import WorkingHealthApp from './WorkingHealthApp';
 
 export default function App() {
-  return <StableApp />;
+  return <WorkingHealthApp />;
 }
