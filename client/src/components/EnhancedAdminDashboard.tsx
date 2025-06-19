@@ -153,17 +153,29 @@ export default function EnhancedAdminDashboard() {
     return <Battery className="w-4 h-4 text-red-500" />;
   };
 
-  const getTimeAgo = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+  const getTimeAgo = (date: Date | string) => {
+    try {
+      const now = new Date();
+      const targetDate = date instanceof Date ? date : new Date(date);
+      
+      // Check if the date is valid
+      if (isNaN(targetDate.getTime())) {
+        return 'Unknown';
+      }
+      
+      const diff = now.getTime() - targetDate.getTime();
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      return `${days}d ago`;
+    } catch (error) {
+      console.error('Error parsing date:', date, error);
+      return 'Unknown';
+    }
   };
 
   const filteredPatients = mockPatients.filter(patient => {

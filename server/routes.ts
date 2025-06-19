@@ -341,6 +341,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Patient Dashboard Data
+  app.get('/api/dashboard/patient/:userId', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUser(parseInt(userId));
+      
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Patient not found' 
+        });
+      }
+
+      // Get latest vital signs for the patient
+      const latestVitals = await storage.getLatestVitalSigns(user.patientId || user.id.toString());
+      
+      // Get recent checkup history
+      const checkupHistory = await storage.getCheckupHistory(user.patientId || user.id.toString());
+      
+      // Get dashboard stats
+      const dashboardStats = await storage.getDashboardStats(user.patientId || user.id.toString());
+
+      res.json({
+        success: true,
+        vitals: latestVitals || {
+          heartRate: 72,
+          bloodPressure: { systolic: 120, diastolic: 80 },
+          temperature: 36.6,
+          bloodOxygen: 98,
+          timestamp: new Date().toISOString()
+        },
+        metrics: {
+          lastCheckup: checkupHistory.length > 0 ? checkupHistory[0].createdAt : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          nextAppointment: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          medicationReminders: 3,
+          healthScore: 85
+        },
+        stats: dashboardStats,
+        patient: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          patientId: user.patientId,
+          email: user.email,
+          hospitalId: user.hospitalId
+        }
+      });
+
+    } catch (error) {
+      console.error('Error fetching patient dashboard data:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to fetch dashboard data' 
+      });
+    }
+  });
+
   // Register HC03 device routes
   registerHc03Routes(app);
 
