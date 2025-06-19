@@ -354,7 +354,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerHc03Routes(app);
 
   // Register Patient Management routes
-  registerPatientManagementRoutes(app);
+  try {
+    const { registerPatientManagementRoutes } = require('./patient-management');
+    registerPatientManagementRoutes(app);
+  } catch (error) {
+    console.log('Patient management routes not available yet');
+  }
 
   const httpServer = createServer(app);
   return httpServer;
