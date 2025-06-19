@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes-clean";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
@@ -50,15 +50,10 @@ app.use((req, res, next) => {
   // Bypass all Vite and React - serve HTML directly from Express
   // Do not use serveStatic or setupVite at all
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  // Serve everything on port 5000 as expected by Replit workflow
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+  server.listen(port, "0.0.0.0", () => {
+    log(`Healthcare system serving on port ${port}`);
+    console.log(`24/7 Tele H System ready at http://localhost:${port}`);
   });
 })();

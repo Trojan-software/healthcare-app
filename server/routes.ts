@@ -8,8 +8,107 @@ import jwt from "jsonwebtoken";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Direct route to serve login page
-  app.get("/", (req, res) => {
+  // API Routes first (before catch-all)
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET || "your-secret-key",
+        { expiresIn: "24h" }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          patientId: user.patientId,
+          role: user.role
+        }
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin Dashboard Route
+  app.get("/admin-dashboard", (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Admin Dashboard - 24/7 Tele H</title>
+        <style>
+          body { font-family: system-ui; margin: 0; padding: 20px; background: #f5f5f5; }
+          .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+          h1 { color: #1f2937; margin-bottom: 30px; }
+          .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px; }
+          .feature { padding: 20px; background: #f9fafb; border-radius: 8px; border-left: 4px solid #3b82f6; }
+          .feature h3 { color: #374151; margin-bottom: 10px; }
+          .feature p { color: #6b7280; margin: 0; }
+          .back-btn { display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>24/7 Tele H Technology Services - Admin Dashboard</h1>
+          <p>Welcome to the comprehensive healthcare management system.</p>
+          
+          <div class="features">
+            <div class="feature">
+              <h3>Patient Management</h3>
+              <p>Complete patient database with search, filtering, and profile management capabilities.</p>
+            </div>
+            <div class="feature">
+              <h3>Vital Signs Monitoring</h3>
+              <p>Real-time tracking of heart rate, blood pressure, temperature, oxygen levels, and blood glucose.</p>
+            </div>
+            <div class="feature">
+              <h3>Weekly Health Reports</h3>
+              <p>Comprehensive analytics with vital signs filtering and professional PDF export functionality.</p>
+            </div>
+            <div class="feature">
+              <h3>HC03 Device Integration</h3>
+              <p>Bluetooth connectivity for medical devices with ECG, blood oxygen, and blood pressure monitoring.</p>
+            </div>
+            <div class="feature">
+              <h3>Alert System</h3>
+              <p>Critical health event notifications and automated patient compliance monitoring.</p>
+            </div>
+            <div class="feature">
+              <h3>Analytics Dashboard</h3>
+              <p>Advanced health trends analysis, compliance reports, and real-time patient status tracking.</p>
+            </div>
+          </div>
+          
+          <a href="/" class="back-btn">← Back to Login</a>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+
+  // Catch ALL other routes and serve login page
+  app.get("*", (req, res) => {
     res.send(`
       <!DOCTYPE html>
       <html lang="en">
