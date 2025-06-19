@@ -353,6 +353,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register HC03 device routes
   registerHc03Routes(app);
 
+  // Register Patient Management routes
+  registerPatientManagementRoutes(app);
+
   const httpServer = createServer(app);
   return httpServer;
 }

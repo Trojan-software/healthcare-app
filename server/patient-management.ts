@@ -167,7 +167,7 @@ export function registerPatientManagementRoutes(app: Express) {
           checkupHistory: checkupHistory.length,
           lastCheckup: checkupHistory[0] || null,
           reminderSettings,
-          activeAlerts: alerts.filter(alert => !alert.isNotified).length,
+          activeAlerts: alerts.filter(alert => !alert.isResolved).length,
           totalAlerts: alerts.length
         }
       };
@@ -466,8 +466,8 @@ export function registerPatientManagementRoutes(app: Express) {
         },
         alerts: {
           total: alerts.length,
-          active: alerts.filter(a => !a.isNotified).length,
-          critical: alerts.filter(a => a.severity === 'critical').length
+          active: alerts.filter(a => !a.isResolved).length,
+          critical: alerts.filter(a => a.type === 'critical').length
         },
         dashboardStats
       };
