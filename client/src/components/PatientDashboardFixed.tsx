@@ -137,6 +137,8 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+
+      
       <style>
         {`
           @keyframes spin {
