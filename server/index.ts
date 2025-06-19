@@ -52,7 +52,10 @@ app.use((req, res, next) => {
 
   // Serve everything on port 5000 as expected by Replit workflow
   const port = 5000;
-  server.listen(port, "0.0.0.0", () => {
+  server.listen({
+    port: port,
+    host: "0.0.0.0",
+  }, () => {
     log(`Healthcare system serving on port ${port}`);
     console.log(`24/7 Tele H System ready at http://localhost:${port}`);
   });

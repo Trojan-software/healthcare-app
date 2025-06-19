@@ -52,6 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin Dashboard Route
   app.get("/admin-dashboard", (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -109,6 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Login page for ALL other routes
   app.get("*", (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`
       <!DOCTYPE html>
       <html lang="en">
