@@ -93,7 +93,7 @@ export default function WeeklyReportDashboard() {
     queryKey: ['/api/admin/patients-list'],
   });
 
-  const mockReportData: WeeklyReportData[] = weeklyReport || [
+  const mockReportData: WeeklyReportData[] = (weeklyReport as WeeklyReportData[]) || [
     {
       patientId: 'PAT001',
       patientName: 'Sarah Johnson',
@@ -342,7 +342,7 @@ export default function WeeklyReportDashboard() {
             className="px-3 py-2 border border-gray-300 rounded-md text-sm"
           >
             <option value="all">All Patients</option>
-            {(patients || []).map((patient: any) => (
+            {((patients as any[]) || []).map((patient: any) => (
               <option key={patient.id} value={patient.id}>{patient.name}</option>
             ))}
           </select>
