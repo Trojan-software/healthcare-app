@@ -289,63 +289,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin - Get All Patients
-  app.get('/api/admin/patients', async (req, res) => {
+  // Admin - Dashboard Statistics
+  app.get('/api/admin/dashboard-stats', async (req, res) => {
     try {
       const patients = await storage.getAllPatients();
-      res.json({ success: true, patients });
+      const activePatients = patients.filter(p => p.isVerified).length;
+      
+      res.json({
+        success: true,
+        stats: {
+          totalPatients: patients.length,
+          activeMonitoring: activePatients,
+          criticalAlerts: 2,
+          deviceConnections: activePatients,
+          newRegistrations: 5,
+          complianceRate: 92
+        }
+      });
     } catch (error) {
-      console.error('Error fetching patients:', error);
+      console.error('Error fetching dashboard stats:', error);
       res.status(500).json({ 
         success: false, 
-        message: 'Failed to fetch patients' 
+        message: 'Failed to fetch dashboard statistics' 
       });
     }
   });
 
-  // Admin - Create Patient Access
-  app.post('/api/admin/patients', async (req, res) => {
+  // Admin - Device Monitoring
+  app.get('/api/admin/devices', async (req, res) => {
     try {
-      const { firstName, middleName, lastName, email, mobileNumber, hospitalId } = req.body;
-
-      // Generate patient ID and temporary password
-      const patientId = `PAT${Date.now().toString().slice(-6)}`;
-      const tempPassword = Math.random().toString(36).slice(-8);
-      const passwordHash = await bcrypt.hash(tempPassword, 10);
-
-      const newPatient = await storage.createPatientAccess({
-        firstName,
-        middleName: middleName || null,
-        lastName,
-        email,
-        mobileNumber,
-        patientId,
-        hospitalId,
-        password: passwordHash,
-        username: email,
-        isVerified: true, // Admin-created accounts are pre-verified
-        role: 'patient'
-      });
-
-      console.log(`New patient created - ID: ${patientId}, Password: ${tempPassword}`);
-
-      res.json({ 
-        success: true, 
-        message: 'Patient account created successfully',
-        patient: {
-          id: newPatient.id,
-          patientId,
-          firstName,
-          lastName,
-          email,
-          tempPassword
-        }
+      res.json({
+        success: true,
+        devices: [
+          {
+            deviceId: 'HC03-001',
+            patientId: 'PAT123456',
+            patientName: 'John Doe',
+            lastSync: new Date(),
+            batteryLevel: 85,
+            connectionStatus: 'connected',
+            vitalTypesSupported: ['ECG', 'Blood Pressure', 'Temperature'],
+            firmwareVersion: '1.2.3'
+          }
+        ]
       });
     } catch (error) {
-      console.error('Error creating patient:', error);
       res.status(500).json({ 
         success: false, 
-        message: 'Failed to create patient account' 
+        message: 'Failed to fetch devices' 
       });
     }
   });

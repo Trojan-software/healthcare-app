@@ -1,5 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Search, UserPlus, Users, UserCheck, UserX, Calendar } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Patient {
   id: number;
@@ -54,15 +64,12 @@ export default function PatientManagementModule() {
   const [showPatientDetails, setShowPatientDetails] = useState(false);
 
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch hospitals list
   const { data: hospitalsData } = useQuery({
     queryKey: ['/api/hospitals/abudhabi'],
-    queryFn: async () => {
-      const response = await fetch('/api/hospitals/abudhabi');
-      if (!response.ok) throw new Error('Failed to fetch hospitals');
-      return response.json();
-    }
+    retry: false
   });
 
   const hospitals: Hospital[] = hospitalsData?.hospitals || [];
@@ -70,33 +77,17 @@ export default function PatientManagementModule() {
   // Fetch patients with filters
   const { data: patientsData, isLoading: loadingPatients, error: patientsError } = useQuery({
     queryKey: ['/api/admin/patients', searchQuery, selectedHospital, statusFilter, currentPage],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: '20'
-      });
-      
-      if (searchQuery) params.append('query', searchQuery);
-      if (selectedHospital) params.append('hospitalId', selectedHospital);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-
-      const response = await fetch(`/api/admin/patients?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch patients');
-      return response.json();
-    }
+    retry: false
   });
 
   // Fetch patient statistics
   const { data: statsData } = useQuery({
     queryKey: ['/api/admin/patients/stats'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/patients/stats');
-      if (!response.ok) throw new Error('Failed to fetch statistics');
-      return response.json();
-    }
+    retry: false
   });
 
   const stats: PatientStats = statsData?.stats || { total: 0, active: 0, inactive: 0, registeredToday: 0, byHospital: {} };
+  const patients: Patient[] = patientsData?.patients || [];
 
   // Create patient mutation
   const createPatientMutation = useMutation({

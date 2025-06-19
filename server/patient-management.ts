@@ -41,6 +41,39 @@ const patientSearchSchema = z.object({
 
 export function registerPatientManagementRoutes(app: Express) {
   
+  // Get patient statistics
+  app.get('/api/admin/patients/stats', async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const activePatients = patients.filter(p => p.isVerified);
+      const today = new Date().toDateString();
+      const registeredToday = patients.filter(p => new Date(p.createdAt).toDateString() === today);
+      
+      const byHospital = patients.reduce((acc, patient) => {
+        const hospitalId = patient.hospitalId || 'Unknown';
+        acc[hospitalId] = (acc[hospitalId] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      res.json({
+        success: true,
+        stats: {
+          total: patients.length,
+          active: activePatients.length,
+          inactive: patients.length - activePatients.length,
+          registeredToday: registeredToday.length,
+          byHospital
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching patient stats:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch patient statistics'
+      });
+    }
+  });
+
   // Get all patients with filtering and pagination
   app.get('/api/admin/patients', async (req, res) => {
     try {
