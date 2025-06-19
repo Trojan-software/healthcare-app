@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
-  Calendar,
   Download,
-  Filter,
   FileText,
   Heart,
   Activity,
@@ -87,7 +85,7 @@ export default function WeeklyReportDashboard() {
   // Fetch weekly report data
   const { data: weeklyReport, isLoading } = useQuery({
     queryKey: ['/api/reports/weekly', dateRange, selectedVitalType, selectedPatient],
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 60000,
   });
 
   // Fetch patients list for filter
@@ -100,53 +98,23 @@ export default function WeeklyReportDashboard() {
       patientId: 'PAT001',
       patientName: 'Sarah Johnson',
       reportPeriod: {
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate
+        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date().toISOString()
       },
       vitalSigns: {
-        heartRate: {
-          average: 78,
-          min: 65,
-          max: 95,
-          readings: 42,
-          trend: 'stable'
-        },
-        bloodPressure: {
+        heartRate: { average: 78, min: 65, max: 95, readings: 42, trend: 'stable' },
+        bloodPressure: { 
           systolic: { average: 125, min: 110, max: 140 },
           diastolic: { average: 82, min: 70, max: 95 },
-          readings: 42,
-          trend: 'down'
+          readings: 42, 
+          trend: 'stable' 
         },
-        bloodOxygen: {
-          average: 97.8,
-          min: 95,
-          max: 99,
-          readings: 42,
-          trend: 'up'
-        },
-        temperature: {
-          average: 36.7,
-          min: 36.2,
-          max: 37.4,
-          readings: 42,
-          trend: 'stable'
-        }
+        bloodOxygen: { average: 97.8, min: 95, max: 99, readings: 42, trend: 'stable' },
+        temperature: { average: 36.7, min: 36.2, max: 37.4, readings: 42, trend: 'stable' }
       },
-      checkups: {
-        scheduled: 14,
-        completed: 12,
-        missed: 2
-      },
-      alerts: {
-        critical: 1,
-        warning: 3,
-        resolved: 4
-      },
-      compliance: {
-        rate: 85.7,
-        missedReadings: 6,
-        deviceUptime: 94.2
-      }
+      checkups: { scheduled: 7, completed: 6, missed: 1 },
+      alerts: { critical: 0, warning: 2, resolved: 5 },
+      compliance: { rate: 92.3, missedReadings: 6, deviceUptime: 94.2 }
     }
   ];
 
@@ -212,14 +180,6 @@ export default function WeeklyReportDashboard() {
     }
   };
 
-  const getTrendColor = (trend: string) => {
-    switch (trend) {
-      case 'up': return 'text-green-600';
-      case 'down': return 'text-red-600';
-      default: return 'text-gray-600';
-    }
-  };
-
   const generatePDFReport = () => {
     const doc = new jsPDF();
     const currentDate = new Date().toLocaleString();
@@ -239,7 +199,7 @@ export default function WeeklyReportDashboard() {
     
     let yPosition = 70;
     
-    filteredReportData.forEach((report: WeeklyReportData, index: number) => {
+    filteredReportData.forEach((report: WeeklyReportData) => {
       if (yPosition > 250) {
         doc.addPage();
         yPosition = 20;
@@ -307,125 +267,6 @@ export default function WeeklyReportDashboard() {
     
     // Save the PDF
     doc.save(`24x7TeleH-Weekly-Health-Report-${exportDate}.pdf`);
-  };
-
-  const oldGeneratePDFReport = () => {
-    // Legacy text-based export (kept for reference)
-    const currentDate = new Date().toLocaleString();
-    const exportDate = new Date().toISOString().split('T')[0];
-    
-    const reportContent = filteredReportData.map((report: WeeklyReportData) => {
-      const completionRate = ((report.checkups.completed / report.checkups.scheduled) * 100).toFixed(1);
-      
-      return [
-        '═══════════════════════════════════════════════════════════════',
-        '                    24/7 TELE H TECHNOLOGY SERVICES',
-        '                      WEEKLY HEALTH REPORT',
-        '═══════════════════════════════════════════════════════════════',
-        '',
-        `PATIENT INFORMATION:`,
-        `Name: ${report.patientName}`,
-        `Patient ID: ${report.patientId}`,
-        `Report Period: ${new Date(report.reportPeriod.startDate).toLocaleDateString()} - ${new Date(report.reportPeriod.endDate).toLocaleDateString()}`,
-        `Generated: ${currentDate}`,
-        '',
-        '───────────────────────────────────────────────────────────────',
-        '                        VITAL SIGNS SUMMARY',
-        '───────────────────────────────────────────────────────────────',
-        '',
-        `❤️  HEART RATE:`,
-        `    Average: ${report.vitalSigns.heartRate.average} bpm`,
-        `    Range: ${report.vitalSigns.heartRate.min} - ${report.vitalSigns.heartRate.max} bpm`,
-        `    Total Readings: ${report.vitalSigns.heartRate.readings}`,
-        `    Trend: ${report.vitalSigns.heartRate.trend.toUpperCase()}`,
-        '',
-        `🩺 BLOOD PRESSURE:`,
-        `    Average: ${report.vitalSigns.bloodPressure.systolic.average}/${report.vitalSigns.bloodPressure.diastolic.average} mmHg`,
-        `    Systolic Range: ${report.vitalSigns.bloodPressure.systolic.min} - ${report.vitalSigns.bloodPressure.systolic.max} mmHg`,
-        `    Diastolic Range: ${report.vitalSigns.bloodPressure.diastolic.min} - ${report.vitalSigns.bloodPressure.diastolic.max} mmHg`,
-        `    Total Readings: ${report.vitalSigns.bloodPressure.readings}`,
-        `    Trend: ${report.vitalSigns.bloodPressure.trend.toUpperCase()}`,
-        '',
-        `🫁 BLOOD OXYGEN:`,
-        `    Average: ${report.vitalSigns.bloodOxygen.average}%`,
-        `    Range: ${report.vitalSigns.bloodOxygen.min}% - ${report.vitalSigns.bloodOxygen.max}%`,
-        `    Total Readings: ${report.vitalSigns.bloodOxygen.readings}`,
-        `    Trend: ${report.vitalSigns.bloodOxygen.trend.toUpperCase()}`,
-        '',
-        `🌡️ TEMPERATURE:`,
-        `    Average: ${report.vitalSigns.temperature.average}°C`,
-        `    Range: ${report.vitalSigns.temperature.min}°C - ${report.vitalSigns.temperature.max}°C`,
-        `    Total Readings: ${report.vitalSigns.temperature.readings}`,
-        `    Trend: ${report.vitalSigns.temperature.trend.toUpperCase()}`,
-        '',
-        '───────────────────────────────────────────────────────────────',
-        '                       CHECKUP SUMMARY',
-        '───────────────────────────────────────────────────────────────',
-        '',
-        `📅 Scheduled Checkups: ${report.checkups.scheduled}`,
-        `✅ Completed Checkups: ${report.checkups.completed}`,
-        `❌ Missed Checkups: ${report.checkups.missed}`,
-        `📊 Completion Rate: ${completionRate}%`,
-        '',
-        '───────────────────────────────────────────────────────────────',
-        '                        ALERTS SUMMARY',
-        '───────────────────────────────────────────────────────────────',
-        '',
-        `🚨 Critical Alerts: ${report.alerts.critical}`,
-        `⚠️  Warning Alerts: ${report.alerts.warning}`,
-        `✅ Resolved Alerts: ${report.alerts.resolved}`,
-        `📈 Total Alert Activity: ${report.alerts.critical + report.alerts.warning + report.alerts.resolved}`,
-        '',
-        '───────────────────────────────────────────────────────────────',
-        '                      COMPLIANCE METRICS',
-        '───────────────────────────────────────────────────────────────',
-        '',
-        `📊 Overall Compliance Rate: ${report.compliance.rate}%`,
-        `❌ Missed Readings: ${report.compliance.missedReadings}`,
-        `🔋 Device Uptime: ${report.compliance.deviceUptime}%`,
-        `📱 Monitoring Consistency: ${report.compliance.rate >= 80 ? 'EXCELLENT' : report.compliance.rate >= 60 ? 'GOOD' : 'NEEDS IMPROVEMENT'}`,
-        '',
-        '═══════════════════════════════════════════════════════════════',
-        '',
-        ''
-      ].join('\n');
-    }).join('\n');
-
-    const header = [
-      '24/7 TELE H TECHNOLOGY SERVICES',
-      'COMPREHENSIVE WEEKLY HEALTH REPORTS',
-      `Export Date: ${currentDate}`,
-      `Report Filters: Vital Type: ${selectedVitalType.toUpperCase()} | Patient: ${selectedPatient.toUpperCase()}`,
-      `Total Reports Generated: ${mockReportData.length}`,
-      '',
-      ''
-    ].join('\n');
-
-    const footer = [
-      '',
-      '═══════════════════════════════════════════════════════════════',
-      '                    END OF HEALTH REPORT',
-      '═══════════════════════════════════════════════════════════════',
-      '',
-      'This report is confidential and intended for healthcare professionals only.',
-      'Generated by 24/7 Tele H Technology Services - Advanced Health Monitoring System',
-      `Report ID: WHR-${Date.now()}`,
-      `Export Timestamp: ${new Date().toISOString()}`
-    ].join('\n');
-
-    const fullReport = header + reportContent + footer;
-
-    // Create and download the formatted report
-    const blob = new Blob([fullReport], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `24x7TeleH-Weekly-Health-Report-${exportDate}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    // Show success notification
-    console.log(`PDF Report Generated: ${mockReportData.length} patient reports exported successfully`);
   };
 
   if (isLoading) {
@@ -500,7 +341,7 @@ export default function WeeklyReportDashboard() {
       </div>
 
       {/* Report Cards */}
-      {mockReportData.map((report) => (
+      {filteredReportData.map((report: WeeklyReportData) => (
         <Card key={report.patientId} className="overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
             <div className="flex justify-between items-start">
@@ -525,115 +366,160 @@ export default function WeeklyReportDashboard() {
                 <TabsTrigger value="compliance">Compliance</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="vitals" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Heart Rate */}
-                  <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <Heart className="w-6 h-6 text-red-600" />
-                      {getTrendIcon(report.vitalSigns.heartRate.trend)}
+              <TabsContent value="vitals" className="space-y-4">
+                {/* Show filtered vital signs or all vital signs */}
+                {selectedVitalType !== 'all' ? (
+                  // Show only selected vital sign
+                  (() => {
+                    const vitalData = getVitalSignData(report);
+                    if (!vitalData) return null;
+                    
+                    return (
+                      <div className="grid grid-cols-1">
+                        <div className="p-6 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{vitalData.icon}</span>
+                              <h3 className="text-lg font-semibold text-gray-900">{vitalData.name}</h3>
+                            </div>
+                            {getTrendIcon(vitalData.data?.trend || 'stable')}
+                          </div>
+                          <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div className="text-center">
+                              <p className="text-gray-600">Average</p>
+                              <p className="text-xl font-bold text-blue-600">{vitalData.average} {vitalData.unit}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-gray-600">Range</p>
+                              <p className="text-xl font-bold text-blue-600">{vitalData.range} {vitalData.unit}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-gray-600">Readings</p>
+                              <p className="text-xl font-bold text-blue-600">{vitalData.readings}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  // Show all vital signs
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Heart Rate */}
+                    <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <Heart className="w-6 h-6 text-red-600" />
+                        {getTrendIcon(report.vitalSigns.heartRate.trend)}
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Heart Rate</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Average:</span>
+                          <span className="font-medium">{report.vitalSigns.heartRate.average} BPM</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Range:</span>
+                          <span className="font-medium">{report.vitalSigns.heartRate.min}-{report.vitalSigns.heartRate.max}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Readings:</span>
+                          <span className="font-medium">{report.vitalSigns.heartRate.readings}</span>
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Heart Rate</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Average:</span>
-                        <span className="font-medium">{report.vitalSigns.heartRate.average} BPM</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Range:</span>
-                        <span className="font-medium">{report.vitalSigns.heartRate.min}-{report.vitalSigns.heartRate.max}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Readings:</span>
-                        <span className="font-medium">{report.vitalSigns.heartRate.readings}</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Blood Pressure */}
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <Activity className="w-6 h-6 text-blue-600" />
-                      {getTrendIcon(report.vitalSigns.bloodPressure.trend)}
+                    {/* Blood Pressure */}
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <Activity className="w-6 h-6 text-blue-600" />
+                        {getTrendIcon(report.vitalSigns.bloodPressure.trend)}
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Blood Pressure</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Avg Systolic:</span>
+                          <span className="font-medium">{report.vitalSigns.bloodPressure.systolic.average}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Avg Diastolic:</span>
+                          <span className="font-medium">{report.vitalSigns.bloodPressure.diastolic.average}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Readings:</span>
+                          <span className="font-medium">{report.vitalSigns.bloodPressure.readings}</span>
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Blood Pressure</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Avg Systolic:</span>
-                        <span className="font-medium">{report.vitalSigns.bloodPressure.systolic.average}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Avg Diastolic:</span>
-                        <span className="font-medium">{report.vitalSigns.bloodPressure.diastolic.average}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Readings:</span>
-                        <span className="font-medium">{report.vitalSigns.bloodPressure.readings}</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Blood Oxygen */}
-                  <div className="p-4 bg-cyan-50 rounded-lg border border-cyan-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <Droplets className="w-6 h-6 text-cyan-600" />
-                      {getTrendIcon(report.vitalSigns.bloodOxygen.trend)}
+                    {/* Blood Oxygen */}
+                    <div className="p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <Droplets className="w-6 h-6 text-cyan-600" />
+                        {getTrendIcon(report.vitalSigns.bloodOxygen.trend)}
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Blood Oxygen</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Average:</span>
+                          <span className="font-medium">{report.vitalSigns.bloodOxygen.average}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Range:</span>
+                          <span className="font-medium">{report.vitalSigns.bloodOxygen.min}-{report.vitalSigns.bloodOxygen.max}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Readings:</span>
+                          <span className="font-medium">{report.vitalSigns.bloodOxygen.readings}</span>
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Blood Oxygen</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Average:</span>
-                        <span className="font-medium">{report.vitalSigns.bloodOxygen.average}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Range:</span>
-                        <span className="font-medium">{report.vitalSigns.bloodOxygen.min}-{report.vitalSigns.bloodOxygen.max}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Readings:</span>
-                        <span className="font-medium">{report.vitalSigns.bloodOxygen.readings}</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Temperature */}
-                  <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <Thermometer className="w-6 h-6 text-orange-600" />
-                      {getTrendIcon(report.vitalSigns.temperature.trend)}
-                    </div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Temperature</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Average:</span>
-                        <span className="font-medium">{report.vitalSigns.temperature.average}°C</span>
+                    {/* Temperature */}
+                    <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <Thermometer className="w-6 h-6 text-orange-600" />
+                        {getTrendIcon(report.vitalSigns.temperature.trend)}
                       </div>
-                      <div className="flex justify-between">
-                        <span>Range:</span>
-                        <span className="font-medium">{report.vitalSigns.temperature.min}-{report.vitalSigns.temperature.max}°C</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Readings:</span>
-                        <span className="font-medium">{report.vitalSigns.temperature.readings}</span>
+                      <h4 className="font-semibold text-gray-900 mb-2">Temperature</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Average:</span>
+                          <span className="font-medium">{report.vitalSigns.temperature.average}°C</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Range:</span>
+                          <span className="font-medium">{report.vitalSigns.temperature.min}-{report.vitalSigns.temperature.max}°C</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Readings:</span>
+                          <span className="font-medium">{report.vitalSigns.temperature.readings}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="checkups" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-3" />
-                    <h4 className="font-semibold text-gray-900 mb-2">Completed Check-ups</h4>
-                    <p className="text-3xl font-bold text-green-600">{report.checkups.completed}</p>
-                    <p className="text-sm text-gray-600">out of {report.checkups.scheduled} scheduled</p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="text-center p-6 bg-blue-50 rounded-lg border border-blue-200">
+                    <Clock className="w-8 h-8 text-blue-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Scheduled</h4>
+                    <p className="text-3xl font-bold text-blue-600">{report.checkups.scheduled}</p>
+                    <p className="text-sm text-gray-600">total planned</p>
                   </div>
                   
-                  <div className="text-center p-6 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
-                    <h4 className="font-semibold text-gray-900 mb-2">Missed Check-ups</h4>
-                    <p className="text-3xl font-bold text-yellow-600">{report.checkups.missed}</p>
+                  <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Completed</h4>
+                    <p className="text-3xl font-bold text-green-600">{report.checkups.completed}</p>
+                    <p className="text-sm text-gray-600">successfully done</p>
+                  </div>
+                  
+                  <div className="text-center p-6 bg-red-50 rounded-lg border border-red-200">
+                    <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-3" />
+                    <h4 className="font-semibold text-gray-900 mb-2">Missed</h4>
+                    <p className="text-3xl font-bold text-red-600">{report.checkups.missed}</p>
                     <p className="text-sm text-gray-600">requires attention</p>
                   </div>
                   
