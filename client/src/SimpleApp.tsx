@@ -53,7 +53,161 @@ export default function SimpleApp() {
   };
 
   if (state.view === 'auth') {
-    return <PatientAuthSystem onAuthSuccess={handleAuthSuccess} />;
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <div style={{ maxWidth: '400px', width: '100%', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', padding: '2rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '0.5rem' }}>24/7 Tele H</h1>
+            <p style={{ color: '#64748b', fontSize: '1rem' }}>Health Monitoring System</p>
+          </div>
+
+          {state.error && (
+            <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', color: '#dc2626' }}>
+              {state.error}
+            </div>
+          )}
+
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target as HTMLFormElement);
+            const email = formData.get('email') as string;
+            const password = formData.get('password') as string;
+            
+            setState(prev => ({ ...prev, loading: true, error: '' }));
+            
+            fetch('/api/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+            })
+            .then(async res => {
+              if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Login failed');
+              }
+              return res.json();
+            })
+            .then(data => {
+              handleAuthSuccess(data.user);
+            })
+            .catch(err => {
+              setState(prev => ({ ...prev, error: err.message, loading: false }));
+            });
+          }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <input
+                name="email"
+                type="email"
+                placeholder="Email Address"
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+              />
+            </div>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <input
+                name="password"
+                type="password"
+                placeholder="Password"
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+              />
+            </div>
+            
+            <button
+              type="submit"
+              disabled={state.loading}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: state.loading ? '#9ca3af' : '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: state.loading ? 'not-allowed' : 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                if (!state.loading) e.target.style.backgroundColor = '#2563eb';
+              }}
+              onMouseLeave={(e) => {
+                if (!state.loading) e.target.style.backgroundColor = '#3b82f6';
+              }}
+            >
+              {state.loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
+            <p style={{ color: '#64748b', marginBottom: '1rem', fontSize: '0.875rem' }}>
+              Don't have an account?
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                // For now, show signup option in console
+                console.log('Sign up clicked - Enhanced registration coming soon');
+                alert('Enhanced patient registration system available. Please contact admin for account setup.');
+              }}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: 'transparent',
+                color: '#3b82f6',
+                border: '2px solid #3b82f6',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#3b82f6';
+                e.target.style.color = 'white';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = '#3b82f6';
+              }}
+            >
+              👤 Register as New Patient →
+            </button>
+          </div>
+
+          <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+            <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>Demo Accounts:</p>
+            <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: '0.25rem 0' }}>Admin: admin@24x7teleh.com / admin123</p>
+            <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: '0.25rem 0' }}>Patient: patient.demo@example.com / patient123</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
 
