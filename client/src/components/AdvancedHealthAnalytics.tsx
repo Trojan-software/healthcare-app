@@ -120,38 +120,8 @@ export default function AdvancedHealthAnalytics() {
     return `${days}d ago`;
   };
 
-  const filteredPatients = riskPatients?.filter((patient: PatientRisk) =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.id.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
-
-  if (metricsLoading || patientsLoading || trendsLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const mockMetrics: HealthMetrics = healthMetrics || {
-    totalPatients: 156,
-    activeMonitoring: 89,
-    criticalAlerts: 3,
-    averageHeartRate: 78,
-    averageBloodPressure: { systolic: 125, diastolic: 82 },
-    averageBloodOxygen: 97.2,
-    averageTemperature: 36.8,
-    complianceRate: 85.4
-  };
-
-  const mockRiskPatients: PatientRisk[] = riskPatients || [
+  // Define mock data first
+  const defaultRiskPatients: PatientRisk[] = [
     {
       id: 'PAT001',
       name: 'Sarah Johnson',
@@ -177,6 +147,41 @@ export default function AdvancedHealthAnalytics() {
       alerts: 1
     }
   ];
+
+  const currentRiskPatients = (riskPatients as PatientRisk[]) || defaultRiskPatients;
+  
+  const filteredPatients = currentRiskPatients.filter((patient: PatientRisk) =>
+    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (metricsLoading || patientsLoading || trendsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const mockMetrics: HealthMetrics = (healthMetrics as HealthMetrics) || {
+    totalPatients: 156,
+    activeMonitoring: 89,
+    criticalAlerts: 3,
+    averageHeartRate: 78,
+    averageBloodPressure: { systolic: 125, diastolic: 82 },
+    averageBloodOxygen: 97.2,
+    averageTemperature: 36.8,
+    complianceRate: 85.4
+  };
+
+  const mockRiskPatients: PatientRisk[] = currentRiskPatients;
 
   return (
     <div className="space-y-8">

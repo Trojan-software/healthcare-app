@@ -165,55 +165,122 @@ export default function WeeklyReportDashboard() {
   };
 
   const generatePDFReport = () => {
-    // Generate comprehensive PDF report
+    // Generate comprehensive PDF-formatted report
+    const currentDate = new Date().toLocaleString();
+    const exportDate = new Date().toISOString().split('T')[0];
+    
     const reportContent = mockReportData.map(report => {
+      const completionRate = ((report.checkups.completed / report.checkups.scheduled) * 100).toFixed(1);
+      
       return [
-        `WEEKLY HEALTH REPORT - ${report.patientName} (${report.patientId})`,
+        '═══════════════════════════════════════════════════════════════',
+        '                    24/7 TELE H TECHNOLOGY SERVICES',
+        '                      WEEKLY HEALTH REPORT',
+        '═══════════════════════════════════════════════════════════════',
+        '',
+        `PATIENT INFORMATION:`,
+        `Name: ${report.patientName}`,
+        `Patient ID: ${report.patientId}`,
         `Report Period: ${new Date(report.reportPeriod.startDate).toLocaleDateString()} - ${new Date(report.reportPeriod.endDate).toLocaleDateString()}`,
-        `Generated: ${new Date().toLocaleString()}`,
+        `Generated: ${currentDate}`,
         '',
-        'VITAL SIGNS SUMMARY:',
-        `Heart Rate: ${report.vitalSigns.heartRate.average} bpm (${report.vitalSigns.heartRate.min}-${report.vitalSigns.heartRate.max}) - ${report.vitalSigns.heartRate.readings} readings`,
-        `Blood Pressure: ${report.vitalSigns.bloodPressure.systolic.average}/${report.vitalSigns.bloodPressure.diastolic.average} mmHg - ${report.vitalSigns.bloodPressure.readings} readings`,
-        `Blood Oxygen: ${report.vitalSigns.bloodOxygen.average}% (${report.vitalSigns.bloodOxygen.min}-${report.vitalSigns.bloodOxygen.max}) - ${report.vitalSigns.bloodOxygen.readings} readings`,
-        `Temperature: ${report.vitalSigns.temperature.average}°C (${report.vitalSigns.temperature.min}-${report.vitalSigns.temperature.max}) - ${report.vitalSigns.temperature.readings} readings`,
+        '───────────────────────────────────────────────────────────────',
+        '                        VITAL SIGNS SUMMARY',
+        '───────────────────────────────────────────────────────────────',
         '',
-        'CHECKUP SUMMARY:',
-        `Scheduled: ${report.checkups.scheduled}`,
-        `Completed: ${report.checkups.completed}`,
-        `Missed: ${report.checkups.missed}`,
-        `Completion Rate: ${((report.checkups.completed / report.checkups.scheduled) * 100).toFixed(1)}%`,
+        `❤️  HEART RATE:`,
+        `    Average: ${report.vitalSigns.heartRate.average} bpm`,
+        `    Range: ${report.vitalSigns.heartRate.min} - ${report.vitalSigns.heartRate.max} bpm`,
+        `    Total Readings: ${report.vitalSigns.heartRate.readings}`,
+        `    Trend: ${report.vitalSigns.heartRate.trend.toUpperCase()}`,
         '',
-        'ALERTS SUMMARY:',
-        `Critical Alerts: ${report.alerts.critical}`,
-        `Warning Alerts: ${report.alerts.warning}`,
-        `Resolved Alerts: ${report.alerts.resolved}`,
+        `🩺 BLOOD PRESSURE:`,
+        `    Average: ${report.vitalSigns.bloodPressure.systolic.average}/${report.vitalSigns.bloodPressure.diastolic.average} mmHg`,
+        `    Systolic Range: ${report.vitalSigns.bloodPressure.systolic.min} - ${report.vitalSigns.bloodPressure.systolic.max} mmHg`,
+        `    Diastolic Range: ${report.vitalSigns.bloodPressure.diastolic.min} - ${report.vitalSigns.bloodPressure.diastolic.max} mmHg`,
+        `    Total Readings: ${report.vitalSigns.bloodPressure.readings}`,
+        `    Trend: ${report.vitalSigns.bloodPressure.trend.toUpperCase()}`,
         '',
-        'COMPLIANCE METRICS:',
-        `Overall Compliance: ${report.compliance.rate}%`,
-        `Missed Readings: ${report.compliance.missedReadings}`,
-        `Device Uptime: ${report.compliance.deviceUptime}%`,
+        `🫁 BLOOD OXYGEN:`,
+        `    Average: ${report.vitalSigns.bloodOxygen.average}%`,
+        `    Range: ${report.vitalSigns.bloodOxygen.min}% - ${report.vitalSigns.bloodOxygen.max}%`,
+        `    Total Readings: ${report.vitalSigns.bloodOxygen.readings}`,
+        `    Trend: ${report.vitalSigns.bloodOxygen.trend.toUpperCase()}`,
         '',
-        '-------------------',
+        `🌡️ TEMPERATURE:`,
+        `    Average: ${report.vitalSigns.temperature.average}°C`,
+        `    Range: ${report.vitalSigns.temperature.min}°C - ${report.vitalSigns.temperature.max}°C`,
+        `    Total Readings: ${report.vitalSigns.temperature.readings}`,
+        `    Trend: ${report.vitalSigns.temperature.trend.toUpperCase()}`,
+        '',
+        '───────────────────────────────────────────────────────────────',
+        '                       CHECKUP SUMMARY',
+        '───────────────────────────────────────────────────────────────',
+        '',
+        `📅 Scheduled Checkups: ${report.checkups.scheduled}`,
+        `✅ Completed Checkups: ${report.checkups.completed}`,
+        `❌ Missed Checkups: ${report.checkups.missed}`,
+        `📊 Completion Rate: ${completionRate}%`,
+        '',
+        '───────────────────────────────────────────────────────────────',
+        '                        ALERTS SUMMARY',
+        '───────────────────────────────────────────────────────────────',
+        '',
+        `🚨 Critical Alerts: ${report.alerts.critical}`,
+        `⚠️  Warning Alerts: ${report.alerts.warning}`,
+        `✅ Resolved Alerts: ${report.alerts.resolved}`,
+        `📈 Total Alert Activity: ${report.alerts.critical + report.alerts.warning + report.alerts.resolved}`,
+        '',
+        '───────────────────────────────────────────────────────────────',
+        '                      COMPLIANCE METRICS',
+        '───────────────────────────────────────────────────────────────',
+        '',
+        `📊 Overall Compliance Rate: ${report.compliance.rate}%`,
+        `❌ Missed Readings: ${report.compliance.missedReadings}`,
+        `🔋 Device Uptime: ${report.compliance.deviceUptime}%`,
+        `📱 Monitoring Consistency: ${report.compliance.rate >= 80 ? 'EXCELLENT' : report.compliance.rate >= 60 ? 'GOOD' : 'NEEDS IMPROVEMENT'}`,
+        '',
+        '═══════════════════════════════════════════════════════════════',
+        '',
         ''
       ].join('\n');
     }).join('\n');
 
-    const fullReport = [
-      '24/7 TELE H - WEEKLY HEALTH REPORTS',
-      `Generated: ${new Date().toLocaleString()}`,
-      `Filter: ${selectedVitalType} | Patient: ${selectedPatient}`,
+    const header = [
+      '24/7 TELE H TECHNOLOGY SERVICES',
+      'COMPREHENSIVE WEEKLY HEALTH REPORTS',
+      `Export Date: ${currentDate}`,
+      `Report Filters: Vital Type: ${selectedVitalType.toUpperCase()} | Patient: ${selectedPatient.toUpperCase()}`,
+      `Total Reports Generated: ${mockReportData.length}`,
       '',
-      reportContent
+      ''
     ].join('\n');
 
-    const blob = new Blob([fullReport], { type: "text/plain" });
+    const footer = [
+      '',
+      '═══════════════════════════════════════════════════════════════',
+      '                    END OF HEALTH REPORT',
+      '═══════════════════════════════════════════════════════════════',
+      '',
+      'This report is confidential and intended for healthcare professionals only.',
+      'Generated by 24/7 Tele H Technology Services - Advanced Health Monitoring System',
+      `Report ID: WHR-${Date.now()}`,
+      `Export Timestamp: ${new Date().toISOString()}`
+    ].join('\n');
+
+    const fullReport = header + reportContent + footer;
+
+    // Create and download the formatted report
+    const blob = new Blob([fullReport], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `weekly-health-report-${new Date().toISOString().split('T')[0]}.txt`;
+    a.download = `24x7TeleH-Weekly-Health-Report-${exportDate}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+    
+    // Show success notification
+    console.log(`PDF Report Generated: ${mockReportData.length} patient reports exported successfully`);
   };
 
   if (isLoading) {

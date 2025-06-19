@@ -304,9 +304,50 @@ export default function PatientManagementModule() {
                       </p>
                     </td>
                     <td className="p-3">
-                      <Button size="sm" variant="outline">
-                        View Details
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            toast({
+                              title: "Patient Details",
+                              description: `Viewing details for ${patient.firstName} ${patient.lastName} (${patient.patientId})`,
+                            });
+                          }}
+                        >
+                          View Details
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            const patientData = `Patient Information:
+Name: ${patient.firstName} ${patient.middleName || ''} ${patient.lastName}
+Patient ID: ${patient.patientId}
+Email: ${patient.email}
+Mobile: ${patient.mobileNumber}
+Hospital: ${hospitals.find(h => h.id === patient.hospitalId)?.name || patient.hospitalId}
+Status: ${patient.isActive ? 'Active' : 'Inactive'}
+Created: ${new Date(patient.createdAt).toLocaleString()}
+Last Activity: ${new Date(patient.lastActivity).toLocaleString()}`;
+
+                            const blob = new Blob([patientData], { type: "text/plain" });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `patient-${patient.patientId}-details.txt`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            
+                            toast({
+                              title: "Export Complete",
+                              description: `Patient details exported for ${patient.firstName} ${patient.lastName}`,
+                            });
+                          }}
+                        >
+                          Export
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
