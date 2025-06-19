@@ -129,7 +129,31 @@ export default function PatientManagementModule() {
   });
 
   const stats: PatientStats = (statsData as any)?.stats || { total: 0, active: 0, inactive: 0, registeredToday: 0, byHospital: {} };
-  const patients: Patient[] = (patientsData as any)?.patients || [];
+  const allPatients: Patient[] = (patientsData as any)?.patients || [];
+
+  // Filter patients based on search query, hospital, and status
+  const filteredPatients = allPatients.filter(patient => {
+    const fullName = `${patient.firstName} ${patient.middleName || ''} ${patient.lastName}`.toLowerCase().trim();
+    const searchLower = searchQuery.toLowerCase().trim();
+    
+    // Search filter
+    const matchesSearch = searchQuery === '' || 
+      fullName.includes(searchLower) ||
+      patient.email.toLowerCase().includes(searchLower) ||
+      patient.patientId.toLowerCase().includes(searchLower);
+    
+    // Hospital filter
+    const matchesHospital = selectedHospital === 'all' || patient.hospitalId === selectedHospital;
+    
+    // Status filter
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && patient.isActive) ||
+      (statusFilter === 'inactive' && !patient.isActive);
+    
+    return matchesSearch && matchesHospital && matchesStatus;
+  });
+
+  const patients = filteredPatients;
 
   // Create patient mutation
   const createPatientMutation = useMutation({
@@ -156,6 +180,22 @@ export default function PatientManagementModule() {
 
   const handleCreatePatient = (formData: PatientFormData) => {
     createPatientMutation.mutate(formData);
+  };
+
+  // Helper function to highlight search text
+  const highlightText = (text: string, searchTerm: string) => {
+    if (!searchTerm.trim()) return text;
+    
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <span key={index} className="bg-yellow-200 font-semibold">
+          {part}
+        </span>
+      ) : part
+    );
   };
 
   if (loadingPatients) {
@@ -322,14 +362,21 @@ export default function PatientManagementModule() {
                     <td className="p-3">
                       <div>
                         <p className="font-medium text-gray-900">
-                          {patient.firstName} {patient.middleName && `${patient.middleName} `}{patient.lastName}
+                          {highlightText(
+                            `${patient.firstName} ${patient.middleName ? `${patient.middleName} ` : ''}${patient.lastName}`,
+                            searchQuery
+                          )}
                         </p>
-                        <p className="text-sm text-gray-600">ID: {patient.patientId}</p>
+                        <p className="text-sm text-gray-600">
+                          ID: {highlightText(patient.patientId, searchQuery)}
+                        </p>
                       </div>
                     </td>
                     <td className="p-3">
                       <div>
-                        <p className="text-sm text-gray-900">{patient.email}</p>
+                        <p className="text-sm text-gray-900">
+                          {highlightText(patient.email, searchQuery)}
+                        </p>
                         <p className="text-sm text-gray-600">{patient.mobileNumber}</p>
                       </div>
                     </td>
