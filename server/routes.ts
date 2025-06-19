@@ -56,21 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "Server running", time: new Date().toISOString() });
   });
 
-  // Main app route  
-  app.get("/app", (req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    
-    const fs = require('fs');
-    const path = require('path');
-    const htmlContent = fs.readFileSync(path.join(__dirname, 'simple-app.html'), 'utf8');
-    res.send(htmlContent);
-  });
-      
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Signing in...';
-      errorDiv.style.display = 'none';
+  // Removed static HTML route to allow React app to load properly
       
       try {
         const response = await fetch('/api/login', {
@@ -1243,13 +1229,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register HC03 device routes
   registerHc03Routes(app);
 
-  // Catch all other routes
-  app.get("*", (req, res) => {
-    if (req.path.startsWith("/api/")) {
-      return res.status(404).json({ message: "API endpoint not found" });
-    }
-    res.redirect("/app");
-  });
+  // Let Vite handle all non-API routes for React app
+  // The catch-all is handled by Vite in development
 
   const httpServer = createServer(app);
   return httpServer;
