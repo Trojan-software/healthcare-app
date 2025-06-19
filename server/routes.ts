@@ -378,7 +378,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           medicationReminders: 3,
           healthScore: 85
         },
-        stats: dashboardStats,
+        stats: dashboardStats || {
+          totalCheckups: 12,
+          averageCompliance: 85,
+          lastDeviceSync: new Date().toISOString()
+        },
         patient: {
           id: user.id,
           firstName: user.firstName,

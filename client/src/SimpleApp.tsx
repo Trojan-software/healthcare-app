@@ -1,7 +1,7 @@
 import React from 'react';
 import PatientAuthSystem from '@/components/PatientAuthSystem';
 import EnhancedAdminDashboard from '@/components/EnhancedAdminDashboard';
-import PatientDashboard from '@/components/PatientDashboard';
+import PatientDashboardFixed from '@/components/PatientDashboardFixed';
 
 export default function SimpleApp() {
   const [state, setState] = React.useState({
@@ -431,5 +431,5 @@ export default function SimpleApp() {
   }
 
   // Force re-render by adding a key prop to bust any potential caching
-  return <PatientDashboard key={(state.user as any)?.id || 'patient'} user={state.user as any} onLogout={logout} />;
+  return <PatientDashboardFixed key={(state.user as any)?.id || 'patient'} user={state.user as any} onLogout={logout} />;
 }
