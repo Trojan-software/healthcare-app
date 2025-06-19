@@ -33,7 +33,7 @@ interface PatientFormData {
   email: string;
   mobileNumber: string;
   hospitalId: string;
-  dateOfBirth?: string;
+  dateOfBirth: string;
   gender?: 'male' | 'female' | 'other';
   emergencyContact?: string;
   medicalHistory?: string;
@@ -450,7 +450,18 @@ function CreatePatientForm({
       </div>
 
       <div>
-        <Label htmlFor="hospitalId">Hospital *</Label>
+        <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+        <Input
+          id="dateOfBirth"
+          type="date"
+          value={formData.dateOfBirth}
+          onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="hospitalId">Hospital / Clinic *</Label>
         <Select 
           value={formData.hospitalId} 
           onValueChange={(value) => setFormData(prev => ({ ...prev, hospitalId: value }))}
