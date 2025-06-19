@@ -47,20 +47,19 @@ export default function ProfessionalApp() {
   });
 
   // Fetch hospitals for registration
-  const { data: hospitals = [] } = useQuery({
+  const { data: hospitalsData } = useQuery({
     queryKey: ['/api/hospitals/abudhabi'],
     enabled: state.view === 'register'
   });
+  
+  const hospitals = (hospitalsData as any)?.hospitals || [];
 
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
-      return await apiRequest('/api/login', {
-        method: 'POST',
-        body: JSON.stringify(credentials)
-      });
+      return await apiRequest('/api/login', 'POST', credentials);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setState(prev => ({
         ...prev,
         user: data.user,
@@ -79,10 +78,7 @@ export default function ProfessionalApp() {
   // Registration mutation
   const registerMutation = useMutation({
     mutationFn: async (userData: any) => {
-      return await apiRequest('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(userData)
-      });
+      return await apiRequest('/api/auth/register', 'POST', userData);
     },
     onSuccess: (data, variables) => {
       setState(prev => ({
@@ -103,10 +99,7 @@ export default function ProfessionalApp() {
   // OTP verification mutation
   const verifyOtpMutation = useMutation({
     mutationFn: async (otpData: { email: string; otp: string }) => {
-      return await apiRequest('/api/auth/verify-otp', {
-        method: 'POST',
-        body: JSON.stringify(otpData)
-      });
+      return await apiRequest('/api/auth/verify-otp', 'POST', otpData);
     },
     onSuccess: () => {
       setState(prev => ({
@@ -368,7 +361,7 @@ export default function ProfessionalApp() {
                     <SelectValue placeholder="Select your affiliated hospital" />
                   </SelectTrigger>
                   <SelectContent>
-                    {hospitals.map((hospital: Hospital) => (
+                    {(hospitals as Hospital[]).map((hospital: Hospital) => (
                       <SelectItem key={hospital.id} value={hospital.id}>
                         <div className="flex items-center space-x-2">
                           <Hospital className="h-4 w-4" />
