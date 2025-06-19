@@ -386,29 +386,16 @@ export default function SimpleApp() {
               style={{
                 width: '100%',
                 padding: '0.75rem',
-                backgroundColor: 'transparent',
-                color: '#3b82f6',
-                border: '2px solid #3b82f6',
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#3b82f6';
-                e.target.style.color = 'white';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'transparent';
-                e.target.style.color = '#3b82f6';
+                cursor: 'pointer'
               }}
             >
-              👤 Register as New Patient →
+              👤 Register as New Patient
             </button>
           </div>
 
