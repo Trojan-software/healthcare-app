@@ -1,23 +1,4 @@
-import { useState } from 'react';
-import EnhancedAdminDashboard from '@/components/EnhancedAdminDashboard';
-
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [email, setEmail] = useState('admin@24x7teleh.com');
-  const [password, setPassword] = useState('admin123');
-
-  const handleLogin = () => {
-    if (email === 'admin@24x7teleh.com' && password === 'admin123') {
-      setIsLoggedIn(true);
-    } else {
-      alert('Invalid credentials. Use: admin@24x7teleh.com / admin123');
-    }
-  };
-
-  if (isLoggedIn) {
-    return <EnhancedAdminDashboard />;
-  }
-
+export default function MinimalApp() {
   return (
     <div style={{
       minHeight: '100vh',
@@ -25,8 +6,7 @@ function App() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      padding: '20px'
+      fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
       <div style={{
         background: 'white',
@@ -66,16 +46,14 @@ function App() {
           </label>
           <input
             type="text"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="admin@24x7teleh.com"
             style={{
               width: '100%',
               padding: '12px',
               border: '1px solid #d1d5db',
               borderRadius: '8px',
               fontSize: '14px',
-              outline: 'none',
-              boxSizing: 'border-box'
+              outline: 'none'
             }}
           />
         </div>
@@ -92,22 +70,22 @@ function App() {
           </label>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            placeholder="admin123"
             style={{
               width: '100%',
               padding: '12px',
               border: '1px solid #d1d5db',
               borderRadius: '8px',
               fontSize: '14px',
-              outline: 'none',
-              boxSizing: 'border-box'
+              outline: 'none'
             }}
           />
         </div>
 
         <button
-          onClick={handleLogin}
+          onClick={() => {
+            alert('Login functionality will be available once the backend is connected. Demo credentials: admin@24x7teleh.com / admin123');
+          }}
           style={{
             width: '100%',
             padding: '12px',
@@ -137,17 +115,8 @@ function App() {
           }}>
             Demo: admin@24x7teleh.com / admin123
           </p>
-          <p style={{
-            fontSize: '11px',
-            color: '#94a3b8',
-            margin: '4px 0 0 0'
-          }}>
-            Healthcare Management System Ready
-          </p>
         </div>
       </div>
     </div>
   );
 }
-
-export default App;
