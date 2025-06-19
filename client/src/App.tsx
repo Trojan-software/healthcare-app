@@ -1,7 +1,7 @@
-import StableApp from './StableApp';
+import SimpleApp from './SimpleApp';
 
 function App() {
-  return <StableApp />;
+  return <SimpleApp />;
 }
 
 export default App;
