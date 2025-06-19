@@ -485,5 +485,3 @@ export function registerPatientManagementRoutes(app: Express) {
     }
   });
 }
-
-export { registerPatientManagementRoutes };

@@ -45,17 +45,22 @@ interface DashboardStats {
 }
 
 interface PatientRecord {
-  id: string;
+  id: number;
   patientId: string;
-  name: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
   email: string;
-  hospitalName?: string;
+  mobileNumber: string;
+  hospitalId: string;
   isActive: boolean;
   isVerified: boolean;
+  role: string;
+  createdAt: string;
   lastReading?: Date;
-  deviceStatus: 'online' | 'offline' | 'low_battery';
-  riskLevel: 'low' | 'moderate' | 'high' | 'critical';
-  complianceRate: number;
+  deviceStatus?: 'online' | 'offline' | 'low_battery';
+  riskLevel?: 'low' | 'moderate' | 'high' | 'critical';
+  complianceRate?: number;
 }
 
 interface DeviceInfo {
@@ -162,10 +167,11 @@ export default function EnhancedAdminDashboard() {
   };
 
   const filteredPatients = mockPatients.filter(patient => {
-    const nameMatch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                     patient.patientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                     patient.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const hospitalMatch = hospitalFilter === 'all' || patient.hospitalName === hospitalFilter;
+    const fullName = `${patient.firstName || ''} ${patient.middleName || ''} ${patient.lastName || ''}`.trim();
+    const nameMatch = fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                     (patient.patientId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                     (patient.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const hospitalMatch = hospitalFilter === 'all' || patient.hospitalId === hospitalFilter;
     const statusMatch = statusFilter === 'all' || 
                        (statusFilter === 'active' && patient.isActive) ||
                        (statusFilter === 'inactive' && !patient.isActive);
