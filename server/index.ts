@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes-clean";
+import { registerRoutes } from "./routes-complete";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
@@ -47,8 +47,12 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Bypass all Vite and React - serve HTML directly from Express
-  // Do not use serveStatic or setupVite at all
+  // Setup Vite for development or serve static files for production
+  if (process.env.NODE_ENV === "development") {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
+  }
 
   const port = 5000;
   server.listen({
