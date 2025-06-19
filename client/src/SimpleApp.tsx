@@ -363,18 +363,6 @@ export default function SimpleApp() {
                 cursor: state.loading ? 'not-allowed' : 'pointer',
                 transition: 'background-color 0.2s'
               }}
-              onMouseEnter={(e) => {
-                if (!state.loading) {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.backgroundColor = '#2563eb';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!state.loading) {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.backgroundColor = '#3b82f6';
-                }
-              }}
             >
               {state.loading ? 'Signing in...' : 'Sign In'}
             </button>
