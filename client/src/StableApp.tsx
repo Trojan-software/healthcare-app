@@ -384,7 +384,123 @@ export default function StableApp() {
   }
 
   if (state.view === 'admin') {
-    return <EnhancedAdminDashboard user={state.user} onLogout={logout} />;
+    return (
+      <div style={styles.page}>
+        <div style={{ padding: '1.5rem' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#111827', margin: '0 0 0.5rem 0' }}>
+                  24/7 Tele H Admin Dashboard
+                </h1>
+                <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>
+                  Healthcare Management System
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#111827', margin: 0 }}>
+                    {state.user?.firstName} {state.user?.lastName}
+                  </p>
+                  <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>Administrator</p>
+                </div>
+                <button onClick={logout} style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.875rem', cursor: 'pointer' }}>
+                  Logout
+                </button>
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+              <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderLeft: '4px solid #3b82f6' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div>
+                    <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0, fontWeight: '500' }}>Total Patients</p>
+                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827', margin: '0.5rem 0' }}>156</p>
+                  </div>
+                  <div style={{ backgroundColor: '#dbeafe', color: '#3b82f6', padding: '0.75rem', borderRadius: '8px', fontSize: '1.5rem' }}>👥</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '600' }}>↗ +12.5%</span>
+                  <span style={{ color: '#6b7280', fontSize: '0.75rem' }}>vs last month</span>
+                </div>
+              </div>
+              
+              <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderLeft: '4px solid #10b981' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div>
+                    <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0, fontWeight: '500' }}>Active Monitoring</p>
+                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827', margin: '0.5rem 0' }}>89</p>
+                  </div>
+                  <div style={{ backgroundColor: '#d1fae5', color: '#10b981', padding: '0.75rem', borderRadius: '8px', fontSize: '1.5rem' }}>📊</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '600' }}>↗ +8.2%</span>
+                  <span style={{ color: '#6b7280', fontSize: '0.75rem' }}>vs last week</span>
+                </div>
+              </div>
+              
+              <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderLeft: '4px solid #f59e0b' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div>
+                    <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0, fontWeight: '500' }}>Critical Alerts</p>
+                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827', margin: '0.5rem 0' }}>7</p>
+                  </div>
+                  <div style={{ backgroundColor: '#fef3c7', color: '#f59e0b', padding: '0.75rem', borderRadius: '8px', fontSize: '1.5rem' }}>⚠️</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: '600' }}>↗ +2</span>
+                  <span style={{ color: '#6b7280', fontSize: '0.75rem' }}>since yesterday</span>
+                </div>
+              </div>
+              
+              <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderLeft: '4px solid #8b5cf6' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div>
+                    <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0, fontWeight: '500' }}>Device Connections</p>
+                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827', margin: '0.5rem 0' }}>142</p>
+                  </div>
+                  <div style={{ backgroundColor: '#ede9fe', color: '#8b5cf6', padding: '0.75rem', borderRadius: '8px', fontSize: '1.5rem' }}>🔗</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '600' }}>98.6%</span>
+                  <span style={{ color: '#6b7280', fontSize: '0.75rem' }}>connection rate</span>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '2rem' }}>
+              <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>🏥</div>
+                <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' }}>
+                  Healthcare Management Dashboard
+                </h2>
+                <p style={{ color: '#6b7280', fontSize: '1rem', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem' }}>
+                  Comprehensive patient monitoring system with real-time health analytics, device management, and clinical oversight capabilities.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', maxWidth: '800px', margin: '0 auto' }}>
+                  <button style={{ padding: '1rem', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '500', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>👥</span>
+                    Patient Management
+                  </button>
+                  <button style={{ padding: '1rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '500', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>📊</span>
+                    Analytics Dashboard
+                  </button>
+                  <button style={{ padding: '1rem', backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '500', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>🔗</span>
+                    Device Monitoring
+                  </button>
+                  <button style={{ padding: '1rem', backgroundColor: '#f59e0b', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '500', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>⚙️</span>
+                    System Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (state.view === 'patient') {
