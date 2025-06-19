@@ -20,6 +20,7 @@ interface PatientDashboardProps {
 
 export default function PatientDashboardFixed({ user, onLogout }: PatientDashboardProps) {
   console.log('PatientDashboardFixed rendering for user:', user?.id);
+  console.log('COMPONENT VERIFICATION: This is PatientDashboardFixed, not placeholder text');
 
   // Local state for vital signs with default values
   const [vitals, setVitals] = useState({

@@ -430,6 +430,17 @@ export default function SimpleApp() {
     );
   }
 
+  // DEBUG: Log patient dashboard rendering
+  console.log('SimpleApp rendering patient view for user:', state.user);
+  console.log('User role:', state.user?.role);
+  
   // Force re-render by adding a key prop to bust any potential caching
-  return <PatientDashboardFixed key={(state.user as any)?.id || 'patient'} user={state.user as any} onLogout={logout} />;
+  return (
+    <div>
+      <div style={{ position: 'fixed', top: 0, left: 0, background: 'red', color: 'white', padding: '5px', zIndex: 9999 }}>
+        DEBUG: PatientDashboardFixed Loading - User: {state.user?.firstName}
+      </div>
+      <PatientDashboardFixed key={(state.user as any)?.id || 'patient'} user={state.user as any} onLogout={logout} />
+    </div>
+  );
 }
