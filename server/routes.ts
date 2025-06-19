@@ -355,10 +355,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Patient Management routes
   try {
-    const { registerPatientManagementRoutes } = require('./patient-management');
-    registerPatientManagementRoutes(app);
+    const patientManagement = await import('./patient-management');
+    if (patientManagement.registerPatientManagementRoutes) {
+      patientManagement.registerPatientManagementRoutes(app);
+      console.log('Patient management routes registered successfully');
+    }
   } catch (error) {
-    console.log('Patient management routes not available yet');
+    console.error('Failed to register patient management routes:', error);
   }
 
   const httpServer = createServer(app);
