@@ -179,93 +179,70 @@ export default function WeeklyReportDashboard() {
     }
   };
 
-  const generatePDFReport = () => {
-    const doc = new jsPDF();
+  const generateTextReport = () => {
     const currentDate = new Date().toLocaleString();
     const exportDate = new Date().toISOString().split('T')[0];
     
-    // PDF Header
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('24/7 TELE H TECHNOLOGY SERVICES', 20, 20);
-    doc.setFontSize(14);
-    doc.text('Weekly Health Reports', 20, 30);
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Export Date: ${currentDate}`, 20, 40);
-    doc.text(`Filters: ${selectedVitalType.toUpperCase()} | ${selectedPatient.toUpperCase()}`, 20, 50);
-    
-    let yPosition = 70;
+    let reportText = '';
+    reportText += '24/7 TELE H TECHNOLOGY SERVICES\n';
+    reportText += 'Weekly Health Reports\n';
+    reportText += '='.repeat(50) + '\n\n';
+    reportText += `Export Date: ${currentDate}\n`;
+    reportText += `Filters: ${selectedVitalType.toUpperCase()} | ${selectedPatient.toUpperCase()}\n\n`;
     
     filteredReportData.forEach((report: WeeklyReportData) => {
-      if (yPosition > 250) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      // Patient Header
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Patient: ${report.patientName} (${report.patientId})`, 20, yPosition);
-      yPosition += 10;
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
+      reportText += '-'.repeat(40) + '\n';
+      reportText += `Patient: ${report.patientName} (${report.patientId})\n`;
+      reportText += '-'.repeat(40) + '\n';
       
       // Show filtered vital signs or all vital signs
       if (selectedVitalType !== 'all') {
         const vitalData = getVitalSignData(report);
         if (vitalData) {
-          const tableData = [
-            ['Vital Sign', 'Average', 'Range', 'Readings', 'Trend']
-          ];
-          
-          const trendText = vitalData.data?.trend || 'stable';
-          tableData.push([
-            vitalData.name,
-            `${vitalData.average} ${vitalData.unit}`,
-            `${vitalData.range} ${vitalData.unit}`,
-            vitalData.readings.toString(),
-            trendText.toUpperCase()
-          ]);
-          
-          autoTable(doc, {
-            head: [tableData[0]],
-            body: tableData.slice(1),
-            startY: yPosition,
-            theme: 'striped',
-            headStyles: { fillColor: [66, 139, 202] },
-            margin: { left: 20 }
-          });
-          
-          yPosition = (doc as any).lastAutoTable.finalY + 10;
+          reportText += `${vitalData.name}:\n`;
+          reportText += `  Average: ${vitalData.average} ${vitalData.unit}\n`;
+          reportText += `  Range: ${vitalData.range} ${vitalData.unit}\n`;
+          reportText += `  Readings: ${vitalData.readings}\n`;
+          reportText += `  Trend: ${vitalData.data?.trend || 'stable'}\n\n`;
         }
       } else {
         // Show all vital signs
-        const tableData = [
-          ['Vital Sign', 'Average', 'Range', 'Readings', 'Trend'],
-          ['Heart Rate', `${report.vitalSigns.heartRate.average} BPM`, `${report.vitalSigns.heartRate.min}-${report.vitalSigns.heartRate.max} BPM`, report.vitalSigns.heartRate.readings.toString(), report.vitalSigns.heartRate.trend.toUpperCase()],
-          ['Blood Pressure', `${report.vitalSigns.bloodPressure.systolic.average}/${report.vitalSigns.bloodPressure.diastolic.average} mmHg`, `${report.vitalSigns.bloodPressure.systolic.min}-${report.vitalSigns.bloodPressure.systolic.max}/${report.vitalSigns.bloodPressure.diastolic.min}-${report.vitalSigns.bloodPressure.diastolic.max} mmHg`, report.vitalSigns.bloodPressure.readings.toString(), report.vitalSigns.bloodPressure.trend.toUpperCase()],
-          ['Blood Oxygen', `${report.vitalSigns.bloodOxygen.average}%`, `${report.vitalSigns.bloodOxygen.min}-${report.vitalSigns.bloodOxygen.max}%`, report.vitalSigns.bloodOxygen.readings.toString(), report.vitalSigns.bloodOxygen.trend.toUpperCase()],
-          ['Temperature', `${report.vitalSigns.temperature.average}°C`, `${report.vitalSigns.temperature.min}-${report.vitalSigns.temperature.max}°C`, report.vitalSigns.temperature.readings.toString(), report.vitalSigns.temperature.trend.toUpperCase()]
-        ];
+        reportText += `Heart Rate:\n`;
+        reportText += `  Average: ${report.vitalSigns.heartRate.average} BPM\n`;
+        reportText += `  Range: ${report.vitalSigns.heartRate.min}-${report.vitalSigns.heartRate.max} BPM\n`;
+        reportText += `  Readings: ${report.vitalSigns.heartRate.readings}\n`;
+        reportText += `  Trend: ${report.vitalSigns.heartRate.trend}\n\n`;
         
-        autoTable(doc, {
-          head: [tableData[0]],
-          body: tableData.slice(1),
-          startY: yPosition,
-          theme: 'striped',
-          headStyles: { fillColor: [66, 139, 202] },
-          margin: { left: 20 }
-        });
+        reportText += `Blood Pressure:\n`;
+        reportText += `  Average: ${report.vitalSigns.bloodPressure.systolic.average}/${report.vitalSigns.bloodPressure.diastolic.average} mmHg\n`;
+        reportText += `  Range: ${report.vitalSigns.bloodPressure.systolic.min}-${report.vitalSigns.bloodPressure.systolic.max}/${report.vitalSigns.bloodPressure.diastolic.min}-${report.vitalSigns.bloodPressure.diastolic.max} mmHg\n`;
+        reportText += `  Readings: ${report.vitalSigns.bloodPressure.readings}\n`;
+        reportText += `  Trend: ${report.vitalSigns.bloodPressure.trend}\n\n`;
         
-        yPosition = (doc as any).lastAutoTable.finalY + 15;
+        reportText += `Blood Oxygen:\n`;
+        reportText += `  Average: ${report.vitalSigns.bloodOxygen.average}%\n`;
+        reportText += `  Range: ${report.vitalSigns.bloodOxygen.min}-${report.vitalSigns.bloodOxygen.max}%\n`;
+        reportText += `  Readings: ${report.vitalSigns.bloodOxygen.readings}\n`;
+        reportText += `  Trend: ${report.vitalSigns.bloodOxygen.trend}\n\n`;
+        
+        reportText += `Temperature:\n`;
+        reportText += `  Average: ${report.vitalSigns.temperature.average}°C\n`;
+        reportText += `  Range: ${report.vitalSigns.temperature.min}-${report.vitalSigns.temperature.max}°C\n`;
+        reportText += `  Readings: ${report.vitalSigns.temperature.readings}\n`;
+        reportText += `  Trend: ${report.vitalSigns.temperature.trend}\n\n`;
       }
     });
     
-    // Save the PDF
-    doc.save(`24x7TeleH-Weekly-Health-Report-${exportDate}.pdf`);
+    // Create and download the text file
+    const blob = new Blob([reportText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `24x7TeleH-Weekly-Health-Report-${exportDate}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   if (isLoading) {
@@ -332,9 +309,9 @@ export default function WeeklyReportDashboard() {
             ))}
           </select>
           
-          <Button onClick={generatePDFReport} variant="default" size="sm">
+          <Button onClick={generateTextReport} variant="default" size="sm">
             <Download className="w-4 h-4 mr-2" />
-            Export PDF
+            Export Text
           </Button>
         </div>
       </div>

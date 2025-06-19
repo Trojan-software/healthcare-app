@@ -98,6 +98,12 @@ The system follows a modern full-stack architecture with React frontend, Express
 
 ```
 Changelog:
+- June 19, 2025. USER REQUEST: Changed PDF report generation back to text format:
+  * Removed jsPDF and autoTable dependencies from WeeklyReportDashboard component
+  * Replaced generatePDFReport function with generateTextReport function
+  * Updated export button text from "Export PDF" to "Export Text"
+  * Text reports now download as .txt files with same comprehensive health data
+  * All vital signs, patient information, and analytics preserved in readable text format
 - June 19, 2025. DEFINITIVE SOLUTION: STATIC HTML LOGIN INTERFACE DEPLOYED:
   * Completely resolved persistent blank page issues by serving direct HTML instead of React
   * Implemented professional static HTML login with 24/7 Tele H Technology Services branding

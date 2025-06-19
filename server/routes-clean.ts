@@ -108,10 +108,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     `);
   });
 
-  // Login page for ALL other routes
+  // Serve the complete HTML application
+  app.use(express.static('server/public'));
+  
+  // Login page for ALL other routes  
   app.get("*", (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(`
+    res.sendFile(require('path').join(__dirname, 'public', 'app.html'));
+  });
       <!DOCTYPE html>
       <html lang="en">
       <head>
