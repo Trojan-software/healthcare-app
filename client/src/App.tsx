@@ -1,7 +1,7 @@
-import StableApp from './StableApp';
+import ProfessionalApp from './ProfessionalApp';
 
 function App() {
-  return <StableApp />;
+  return <ProfessionalApp />;
 }
 
 export default App;
