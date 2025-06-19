@@ -203,13 +203,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const vitalSigns = await storage.createVitalSigns({
-        patientId,
-        heartRate: parseFloat(heartRate),
-        bloodPressure,
-        temperature: parseFloat(temperature),
-        oxygenLevel: parseFloat(oxygenLevel),
-        bloodGlucose: bloodGlucose ? parseFloat(bloodGlucose) : null,
-        timestamp: new Date()
+        patientId: String(patientId),
+        heartRate: parseInt(heartRate),
+        bloodPressureSystolic: parseInt(bloodPressure.split('/')[0]),
+        bloodPressureDiastolic: parseInt(bloodPressure.split('/')[1]),
+        temperature: temperature.toString(),
+        oxygenLevel: parseInt(oxygenLevel),
+        bloodGlucose: bloodGlucose ? parseInt(bloodGlucose) : null
       });
 
       // Check for critical vitals and create alerts
@@ -306,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         complianceRate: 92,
         nextAppointment: "2025-06-25",
         lastCheckup: checkupHistory.length > 0 ? 
-          new Date(checkupHistory[checkupHistory.length - 1].timestamp).toLocaleDateString() : 
+          new Date(checkupHistory[checkupHistory.length - 1].date).toLocaleDateString() : 
           "Never"
       };
       
@@ -347,10 +347,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const checkupLog = await storage.createCheckupLog({
         patientId,
-        type: type || "routine",
+        status: type || "routine",
         notes: notes || "",
-        timestamp: new Date(),
-        nextScheduledDate: nextScheduledDate ? new Date(nextScheduledDate) : null
+        date: new Date(),
+        vitalSignsId: null
       });
 
       res.status(201).json(checkupLog);
@@ -378,11 +378,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const settings = await storage.upsertReminderSettings({
         patientId,
-        vitalsReminder: vitalsReminder || false,
-        medicationReminder: medicationReminder || false,
-        appointmentReminder: appointmentReminder || false,
-        frequency: frequency || "daily",
-        isActive: true
+        frequency: 1,
+        isActive: true,
+        pushNotifications: vitalsReminder || false,
+        emailAlerts: medicationReminder || false,
+        smsReminders: appointmentReminder || false
       });
 
       res.json(settings);

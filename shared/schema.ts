@@ -183,6 +183,7 @@ export const insertVitalSignsSchema = createInsertSchema(vitalSigns).pick({
   bloodPressureDiastolic: true,
   temperature: true,
   oxygenLevel: true,
+  bloodGlucose: true,
 });
 
 export const insertCheckupLogSchema = createInsertSchema(checkupLogs).pick({
