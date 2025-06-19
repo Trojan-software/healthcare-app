@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes-complete";
+import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
@@ -47,12 +47,16 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Setup Vite for development or serve static files for production
-  if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  // Serve static files from server/public directory
+  app.use(express.static('server/public'));
+  
+  // Catch-all route to serve the HTML app for non-API routes
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.sendFile(require('path').join(__dirname, 'public', 'app.html'));
+    }
+  });
 
   const port = 5000;
   server.listen({
