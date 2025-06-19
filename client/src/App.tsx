@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import EnhancedAdminDashboard from '@/components/EnhancedAdminDashboard';
 
-export default function App() {
+function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState('admin@24x7teleh.com');
   const [password, setPassword] = useState('admin123');
@@ -19,98 +19,59 @@ export default function App() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f0f9ff',
-      padding: '20px',
-      fontFamily: 'Arial, sans-serif',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        padding: '40px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        maxWidth: '400px',
-        width: '100%'
-      }}>
-        <h1 style={{
-          textAlign: 'center',
-          color: '#1f2937',
-          marginBottom: '8px'
-        }}>
-          24/7 Tele H Technology Services
-        </h1>
-        <p style={{
-          textAlign: 'center',
-          color: '#6b7280',
-          marginBottom: '30px'
-        }}>
-          Healthcare Management System
-        </p>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', color: '#374151' }}>
-            Email:
-          </label>
-          <input 
-            type="text" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #d1d5db',
-              borderRadius: '4px',
-              boxSizing: 'border-box'
-            }} 
-          />
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center p-5">
+      <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            24/7 Tele H Technology Services
+          </h1>
+          <p className="text-gray-600 text-sm">
+            Advanced Health Monitoring System
+          </p>
         </div>
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', color: '#374151' }}>
-            Password:
-          </label>
-          <input 
-            type="password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #d1d5db',
-              borderRadius: '4px',
-              boxSizing: 'border-box'
-            }} 
-          />
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email or Patient ID
+            </label>
+            <input
+              type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+          
+          <button 
+            onClick={handleLogin}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
+          >
+            Sign In
+          </button>
         </div>
-        <button 
-          onClick={handleLogin}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            cursor: 'pointer'
-          }}
-        >
-          Sign In
-        </button>
-        <div style={{
-          marginTop: '20px',
-          textAlign: 'center',
-          padding: '15px',
-          backgroundColor: '#f9fafb',
-          borderRadius: '4px'
-        }}>
-          <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>
-            Demo Login: admin@24x7teleh.com / admin123
+        
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg text-center">
+          <p className="text-xs text-gray-500 mb-1">Demo Account</p>
+          <p className="text-sm font-medium text-gray-700">
+            admin@24x7teleh.com / admin123
           </p>
         </div>
       </div>
     </div>
   );
 }
+
+export default App;
