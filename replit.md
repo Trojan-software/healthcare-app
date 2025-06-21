@@ -98,6 +98,15 @@ The system follows a modern full-stack architecture with React frontend, Express
 
 ```
 Changelog:
+- June 21, 2025. ENHANCED PATIENT REGISTRATION WITH DATE OF BIRTH AND PATIENT ID FIELDS:
+  * Added Date of Birth field to registration form with HTML5 date picker validation (required field)
+  * Enhanced Patient ID field with alphanumeric input and auto-generation button functionality  
+  * Updated database schema to include dateOfBirth timestamp field with proper data handling
+  * Fixed date parsing in backend storage layer to handle ISO date strings correctly
+  * Both fields now properly stored in database and displayed in patient profiles and management lists
+  * Tested registration flow - new patient Sarah Al Mansouri (PT789123, DOB: 1995-03-15) successfully created
+  * Patient dashboard and admin management interfaces display both fields accurately
+  * All existing patients updated with default date of birth values to maintain data integrity
 - June 21, 2025. COMPLETE PATIENT MODULE REPAIR AND ADVANCED FEATURES IMPLEMENTATION:
   * Fixed critical patient registration system - mobile number field mapping issue resolved
   * Corrected database schema insertUserSchema to include all required fields (middleName, patientId, hospitalId, role, isVerified)
