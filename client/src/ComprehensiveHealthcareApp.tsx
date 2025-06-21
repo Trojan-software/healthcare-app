@@ -766,41 +766,61 @@ For questions, contact: support@24x7teleh.com
                 </div>
               </button>
 
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+              <button 
+                onClick={() => {
+                  document.getElementById('patient-management-section')?.scrollIntoView({ behavior: 'smooth' });
+                  setAdminData(prev => ({ ...prev, searchTerm: '', filterStatus: 'Normal', filterHospital: 'all' }));
+                }}
+                className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 hover:shadow-lg transition-all cursor-pointer w-full text-left"
+              >
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-gray-600 text-sm font-medium">Active Monitoring</p>
                     <p className="text-3xl font-bold text-gray-800 mt-2">{adminData.dashboardStats.activePatients}</p>
+                    <p className="text-green-600 text-xs mt-1">Click to view active patients</p>
                   </div>
                   <div className="p-2 bg-green-100 rounded-lg">
                     📊
                   </div>
                 </div>
-              </div>
+              </button>
 
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+              <button 
+                onClick={() => {
+                  document.getElementById('patient-management-section')?.scrollIntoView({ behavior: 'smooth' });
+                  setAdminData(prev => ({ ...prev, searchTerm: '', filterStatus: 'Critical', filterHospital: 'all' }));
+                }}
+                className="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500 hover:shadow-lg transition-all cursor-pointer w-full text-left"
+              >
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-gray-600 text-sm font-medium">Critical Alerts</p>
                     <p className="text-3xl font-bold text-gray-800 mt-2">{adminData.dashboardStats.criticalAlerts}</p>
+                    <p className="text-yellow-600 text-xs mt-1">Click to view critical patients</p>
                   </div>
                   <div className="p-2 bg-yellow-100 rounded-lg">
                     ⚠️
                   </div>
                 </div>
-              </div>
+              </button>
 
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+              <button 
+                onClick={() => {
+                  setModalState(prev => ({ ...prev, showAdvancedAnalytics: true }));
+                }}
+                className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 hover:shadow-lg transition-all cursor-pointer w-full text-left"
+              >
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-gray-600 text-sm font-medium">Compliance Rate</p>
                     <p className="text-3xl font-bold text-gray-800 mt-2">{adminData.dashboardStats.complianceRate}%</p>
+                    <p className="text-purple-600 text-xs mt-1">Click to view analytics</p>
                   </div>
                   <div className="p-2 bg-purple-100 rounded-lg">
                     📈
                   </div>
                 </div>
-              </div>
+              </button>
             </div>
           )}
 
@@ -844,7 +864,7 @@ For questions, contact: support@24x7teleh.com
           </div>
 
           {/* Patient Management */}
-          <div className="bg-white rounded-xl shadow-md p-6">
+          <div id="patient-management-section" className="bg-white rounded-xl shadow-md p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Patient Management</h2>
               <div className="flex space-x-4">
