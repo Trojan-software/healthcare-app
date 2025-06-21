@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   middleName: text("middle_name"),
   lastName: text("last_name").notNull(),
+  dateOfBirth: timestamp("date_of_birth"),
   mobileNumber: text("mobile_number").notNull(),
   patientId: text("patient_id").notNull().unique(),
   hospitalId: text("hospital_id"),
@@ -157,14 +158,13 @@ export const insertUserSchema = createInsertSchema(users).pick({
   firstName: true,
   middleName: true,
   lastName: true,
+  dateOfBirth: true,
   mobileNumber: true,
   patientId: true,
   hospitalId: true,
   role: true,
   isVerified: true,
   password: true,
-}).extend({
-  dateOfBirth: z.string().optional(),
 });
 
 export const adminCreatePatientSchema = createInsertSchema(users).pick({
@@ -172,6 +172,7 @@ export const adminCreatePatientSchema = createInsertSchema(users).pick({
   email: true,
   firstName: true,
   lastName: true,
+  dateOfBirth: true,
   mobileNumber: true,
   password: true,
   patientId: true,
