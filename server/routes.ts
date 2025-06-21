@@ -130,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: determinePatientStatus({ ...patient, latestVitals }),
           vitals: latestVitals,
           lastCheckup: lastCheckup ? new Date(lastCheckup).toLocaleDateString() : 'Never',
-          age: patient.createdAt ? calculateAge(patient.createdAt) : 'Unknown'
+          age: patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : 'Unknown'
         };
       }));
       
@@ -486,8 +486,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
   }
 
-  function calculateAge(createdAt: any) {
-    const birthDate = new Date(createdAt);
+  function calculateAge(dateOfBirth: any) {
+    if (!dateOfBirth) return 'Unknown';
+    const birthDate = new Date(dateOfBirth);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
