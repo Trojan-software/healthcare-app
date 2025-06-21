@@ -278,7 +278,7 @@ export default function ComprehensiveHealthcareApp() {
   };
 
   const filteredPatients = adminData.patients.filter(patient => {
-    const fullName = `${patient.firstName} ${patient.middleName || ''} ${patient.lastName}`.toLowerCase();
+    const fullName = `${patient.firstName} ${(patient as any).middleName || ''} ${patient.lastName}`.toLowerCase();
     const searchLower = adminData.searchTerm.toLowerCase();
     
     const matchesSearch = adminData.searchTerm === '' || 
