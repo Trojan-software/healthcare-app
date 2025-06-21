@@ -96,9 +96,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: any): Promise<User> {
+    // Convert dateOfBirth string to Date object if provided
+    const userData = {
+      ...insertUser,
+      dateOfBirth: insertUser.dateOfBirth ? new Date(insertUser.dateOfBirth) : null
+    };
+    
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values(userData)
       .returning();
     return user;
   }
