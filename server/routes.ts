@@ -86,19 +86,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      const user = await storage.createUser({
+      console.log('Registration data received:', { firstName, middleName, lastName, email, mobile, patientId, hospitalId, dateOfBirth });
+      
+      const userObject = {
         firstName,
         middleName,
         lastName,
         email,
         password: hashedPassword,
-        mobile,
+        mobileNumber: mobile,
         patientId,
         hospitalId,
         dateOfBirth,
         role: "patient",
         isVerified: false
-      });
+      };
+      
+      console.log('User object to be created:', userObject);
+      
+      const user = await storage.createUser(userObject);
 
       const userResponse = {
         id: user.id,

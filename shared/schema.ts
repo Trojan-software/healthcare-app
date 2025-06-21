@@ -155,9 +155,16 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   email: true,
   firstName: true,
+  middleName: true,
   lastName: true,
   mobileNumber: true,
+  patientId: true,
+  hospitalId: true,
+  role: true,
+  isVerified: true,
   password: true,
+}).extend({
+  dateOfBirth: z.string().optional(),
 });
 
 export const adminCreatePatientSchema = createInsertSchema(users).pick({
