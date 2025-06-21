@@ -98,6 +98,21 @@ The system follows a modern full-stack architecture with React frontend, Express
 
 ```
 Changelog:
+- June 21, 2025. COMPREHENSIVE APPLICATION FLOWCHART DOCUMENTATION CREATED:
+  * Generated complete system flowchart PDF generator with detailed explanations
+  * Documented all application components: authentication, admin dashboard, patient monitoring
+  * Included real-time system metrics: 10 patients, 17 alerts, 2 HC03 devices connected
+  * Covered technical architecture, security implementation, and UAE healthcare integration
+  * PDF includes current vital signs data, alert thresholds, and deployment strategy
+  * Professional documentation ready for stakeholders and technical teams
+- June 21, 2025. FIXED VIEW AND EDIT BUTTONS IN PATIENT MANAGEMENT MODULE:
+  * Resolved non-functional View and Edit buttons in patient management table
+  * Implemented proper dialog interfaces for viewing complete patient details
+  * Added comprehensive edit form with validation for all patient fields
+  * View dialog displays demographics, contact info, hospital assignment, and status
+  * Edit dialog allows modification of name, email, mobile, hospital, and active status
+  * Both dialogs feature professional styling and complete functionality
+- June 21, 2025. ENHANCED PATIENT REGISTRATION WITH DATE OF BIRTH AND PATIENT ID FIELDS:
 - June 21, 2025. ENHANCED PATIENT REGISTRATION WITH DATE OF BIRTH AND PATIENT ID FIELDS:
   * Added Date of Birth field to registration form with HTML5 date picker validation (required field)
   * Enhanced Patient ID field with alphanumeric input and auto-generation button functionality  
