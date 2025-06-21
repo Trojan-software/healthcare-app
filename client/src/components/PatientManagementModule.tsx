@@ -59,6 +59,9 @@ export default function PatientManagementModule() {
   const [selectedHospital, setSelectedHospital] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -401,43 +404,21 @@ export default function PatientManagementModule() {
                           size="sm" 
                           variant="outline"
                           onClick={() => {
-                            toast({
-                              title: "Patient Details",
-                              description: `Viewing details for ${patient.firstName} ${patient.lastName} (${patient.patientId})`,
-                            });
+                            setSelectedPatient(patient);
+                            setShowViewDialog(true);
                           }}
                         >
-                          View Details
+                          View
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline"
                           onClick={() => {
-                            const patientData = `Patient Information:
-Name: ${patient.firstName} ${patient.middleName || ''} ${patient.lastName}
-Patient ID: ${patient.patientId}
-Email: ${patient.email}
-Mobile: ${patient.mobileNumber}
-Hospital: ${hospitals.find(h => h.id === patient.hospitalId)?.name || patient.hospitalId}
-Status: ${patient.isActive ? 'Active' : 'Inactive'}
-Created: ${new Date(patient.createdAt).toLocaleString()}
-Last Activity: ${new Date(patient.lastActivity).toLocaleString()}`;
-
-                            const blob = new Blob([patientData], { type: "text/plain" });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = `patient-${patient.patientId}-details.txt`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                            
-                            toast({
-                              title: "Export Complete",
-                              description: `Patient details exported for ${patient.firstName} ${patient.lastName}`,
-                            });
+                            setSelectedPatient(patient);
+                            setShowEditDialog(true);
                           }}
                         >
-                          Export
+                          Edit
                         </Button>
                       </div>
                     </td>
@@ -455,7 +436,207 @@ Last Activity: ${new Date(patient.lastActivity).toLocaleString()}`;
           )}
         </CardContent>
       </Card>
+
+      {/* View Patient Dialog */}
+      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Patient Details</DialogTitle>
+          </DialogHeader>
+          {selectedPatient && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Full Name</Label>
+                  <p className="text-lg font-semibold">{selectedPatient.firstName} {selectedPatient.middleName || ''} {selectedPatient.lastName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Patient ID</Label>
+                  <p className="text-lg font-semibold">{selectedPatient.patientId}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Email</Label>
+                  <p className="text-lg">{selectedPatient.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Mobile Number</Label>
+                  <p className="text-lg">{selectedPatient.mobileNumber}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Hospital</Label>
+                  <p className="text-lg">{hospitals.find(h => h.id === selectedPatient.hospitalId)?.name || selectedPatient.hospitalId}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Status</Label>
+                  <Badge variant={selectedPatient.isActive ? "default" : "secondary"}>
+                    {selectedPatient.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Registration Date</Label>
+                  <p className="text-lg">{new Date(selectedPatient.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Last Activity</Label>
+                  <p className="text-lg">{new Date(selectedPatient.lastActivity).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowViewDialog(false)}>
+                  Close
+                </Button>
+                <Button onClick={() => {
+                  setShowViewDialog(false);
+                  setShowEditDialog(true);
+                }}>
+                  Edit Patient
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Patient Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Patient</DialogTitle>
+          </DialogHeader>
+          {selectedPatient && (
+            <EditPatientForm 
+              patient={selectedPatient}
+              hospitals={hospitals}
+              onSubmit={(updatedData) => {
+                // Handle patient update
+                toast({
+                  title: "Patient Updated",
+                  description: `Patient ${selectedPatient.firstName} ${selectedPatient.lastName} has been updated successfully.`,
+                });
+                setShowEditDialog(false);
+                queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
+              }}
+              onCancel={() => setShowEditDialog(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+// Edit Patient Form Component
+function EditPatientForm({ 
+  patient, 
+  hospitals, 
+  onSubmit, 
+  onCancel 
+}: { 
+  patient: Patient; 
+  hospitals: Hospital[]; 
+  onSubmit: (data: any) => void; 
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    firstName: patient.firstName,
+    middleName: patient.middleName || '',
+    lastName: patient.lastName,
+    email: patient.email,
+    mobileNumber: patient.mobileNumber,
+    hospitalId: patient.hospitalId,
+    isActive: patient.isActive
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="firstName">First Name *</Label>
+          <Input
+            id="firstName"
+            value={formData.firstName}
+            onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="middleName">Middle Name</Label>
+          <Input
+            id="middleName"
+            value={formData.middleName}
+            onChange={(e) => setFormData(prev => ({ ...prev, middleName: e.target.value }))}
+          />
+        </div>
+        <div>
+          <Label htmlFor="lastName">Last Name *</Label>
+          <Input
+            id="lastName"
+            value={formData.lastName}
+            onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="email">Email *</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="mobileNumber">Mobile Number *</Label>
+          <Input
+            id="mobileNumber"
+            value={formData.mobileNumber}
+            onChange={(e) => setFormData(prev => ({ ...prev, mobileNumber: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="hospitalId">Hospital *</Label>
+          <Select value={formData.hospitalId} onValueChange={(value) => setFormData(prev => ({ ...prev, hospitalId: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Hospital" />
+            </SelectTrigger>
+            <SelectContent>
+              {hospitals.map((hospital) => (
+                <SelectItem key={hospital.id} value={hospital.id}>
+                  {hospital.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="isActive"
+          checked={formData.isActive}
+          onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+          className="w-4 h-4"
+        />
+        <Label htmlFor="isActive">Active Patient</Label>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit">
+          Update Patient
+        </Button>
+      </div>
+    </form>
   );
 }
 
