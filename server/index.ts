@@ -49,12 +49,7 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Setup Vite development server or static file serving
-  if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  // Note: Vite setup is handled in registerRoutes to avoid double configuration
 
   const port = 5000;
   server.listen({
