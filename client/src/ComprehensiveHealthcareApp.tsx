@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import FAQSection from './components/FAQSection';
+import DeviceMonitoring from './components/DeviceMonitoring';
+import AdvancedAnalytics from './components/AdvancedAnalytics';
+import CheckupScheduling from './components/CheckupScheduling';
 
 interface User {
   id: number;
@@ -77,6 +81,13 @@ export default function ComprehensiveHealthcareApp() {
     searchTerm: '',
     filterStatus: 'all',
     filterHospital: 'all'
+  });
+
+  const [modalState, setModalState] = useState({
+    showFAQ: false,
+    showDeviceMonitoring: false,
+    showAdvancedAnalytics: false,
+    showCheckupScheduling: false
   });
 
   const [patientData, setPatientData] = useState({

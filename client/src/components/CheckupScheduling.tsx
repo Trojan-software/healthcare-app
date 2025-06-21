@@ -1,543 +1,381 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { 
-  Calendar,
-  Clock,
-  Heart,
-  Activity,
-  Thermometer,
-  Droplets,
-  CheckCircle,
-  Settings,
-  Bell,
-  Plus,
-  Edit,
-  Trash2,
-  Play,
-  Pause
-} from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
 
-interface CheckupSchedule {
-  id: string;
+interface ScheduleSettings {
   patientId: string;
-  vitalSigns: string[];
-  interval: number; // hours
-  nextCheckup: Date;
+  vitalsToMonitor: string[];
+  checkupInterval: number; // in hours
   isActive: boolean;
-  createdAt: Date;
-  lastCheckup?: Date;
-  doctorRecommendation?: string;
+  nextCheckup: string;
+  reminderPreference: 'email' | 'sms' | 'both';
 }
 
-interface VitalSignOption {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  description: string;
-  normalRange: string;
+interface CheckupSchedulingProps {
+  patientId?: string;
+  onClose?: () => void;
 }
 
-export default function CheckupScheduling() {
-  const [selectedVitals, setSelectedVitals] = useState<string[]>([]);
-  const [selectedInterval, setSelectedInterval] = useState(4);
-  const [doctorNote, setDoctorNote] = useState('');
-  const [editingSchedule, setEditingSchedule] = useState<string | null>(null);
+export default function CheckupScheduling({ patientId, onClose }: CheckupSchedulingProps) {
+  const [schedules, setSchedules] = useState<ScheduleSettings[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState(patientId || '');
+  const [newSchedule, setNewSchedule] = useState<Partial<ScheduleSettings>>({
+    vitalsToMonitor: ['heartRate'],
+    checkupInterval: 4,
+    isActive: true,
+    reminderPreference: 'email'
+  });
+  const [patients, setPatients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const vitalSignOptions: VitalSignOption[] = [
-    {
-      id: 'heartRate',
-      name: 'Heart Rate',
-      icon: <Heart className="w-5 h-5 text-red-500" />,
-      description: 'Monitor heart rhythm and rate',
-      normalRange: '60-100 BPM'
-    },
-    {
-      id: 'bloodPressure',
-      name: 'Blood Pressure',
-      icon: <Activity className="w-5 h-5 text-blue-500" />,
-      description: 'Systolic and diastolic pressure',
-      normalRange: '120/80 mmHg'
-    },
-    {
-      id: 'bloodOxygen',
-      name: 'Blood Oxygen',
-      icon: <Droplets className="w-5 h-5 text-cyan-500" />,
-      description: 'Oxygen saturation levels',
-      normalRange: '95-100%'
-    },
-    {
-      id: 'temperature',
-      name: 'Body Temperature',
-      icon: <Thermometer className="w-5 h-5 text-orange-500" />,
-      description: 'Core body temperature',
-      normalRange: '36.1-37.2°C'
-    }
+  const availableVitals = [
+    { id: 'heartRate', name: 'Heart Rate', icon: '❤️' },
+    { id: 'bloodPressure', name: 'Blood Pressure', icon: '🩺' },
+    { id: 'temperature', name: 'Temperature', icon: '🌡️' },
+    { id: 'oxygenLevel', name: 'Oxygen Level', icon: '🫁' },
+    { id: 'bloodGlucose', name: 'Blood Glucose', icon: '🩸' }
   ];
 
-  // Fetch existing schedules
-  const { data: schedules, isLoading } = useQuery({
-    queryKey: ['/api/checkup-schedules'],
-    refetchInterval: 30000,
-  });
-
-  // Create new schedule mutation
-  const createScheduleMutation = useMutation({
-    mutationFn: async (scheduleData: Partial<CheckupSchedule>) => {
-      // For now, simulate API call with mock response
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ success: true, id: `SCH${Date.now()}` });
-        }, 1000);
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/checkup-schedules'] });
-      resetForm();
-      toast({
-        title: "Schedule Created",
-        description: `New checkup schedule created successfully for ${selectedVitals.length} vital signs every ${selectedInterval} hours.`,
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create schedule. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Update schedule mutation
-  const updateScheduleMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string } & Partial<CheckupSchedule>) => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ success: true });
-        }, 1000);
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/checkup-schedules'] });
-      setEditingSchedule(null);
-      toast({
-        title: "Schedule Updated",
-        description: "Checkup schedule updated successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update schedule. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Delete schedule mutation
-  const deleteScheduleMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ success: true });
-        }, 500);
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/checkup-schedules'] });
-      toast({
-        title: "Schedule Deleted",
-        description: "Checkup schedule deleted successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete schedule. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Toggle schedule active status
-  const toggleScheduleMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ success: true });
-        }, 500);
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/checkup-schedules'] });
-      toast({
-        title: variables.isActive ? "Schedule Resumed" : "Schedule Paused",
-        description: `Checkup schedule ${variables.isActive ? 'activated' : 'paused'} successfully.`,
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update schedule status. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const mockSchedules: CheckupSchedule[] = (schedules as CheckupSchedule[]) || [
-    {
-      id: 'SCH001',
-      patientId: 'PAT001',
-      vitalSigns: ['heartRate', 'bloodPressure'],
-      interval: 4,
-      nextCheckup: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-      isActive: true,
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      lastCheckup: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      doctorRecommendation: 'Monitor blood pressure closely due to recent elevation'
-    },
-    {
-      id: 'SCH002',
-      patientId: 'PAT001',
-      vitalSigns: ['temperature', 'bloodOxygen'],
-      interval: 2,
-      nextCheckup: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
-      isActive: true,
-      createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
-      lastCheckup: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      doctorRecommendation: 'Respiratory monitoring post-surgery'
-    }
+  const intervalOptions = [
+    { value: 1, label: '1 Hour' },
+    { value: 2, label: '2 Hours' },
+    { value: 3, label: '3 Hours' },
+    { value: 4, label: '4 Hours' },
+    { value: 6, label: '6 Hours' },
+    { value: 8, label: '8 Hours' },
+    { value: 12, label: '12 Hours' },
+    { value: 24, label: '24 Hours' }
   ];
 
-  const resetForm = () => {
-    setSelectedVitals([]);
-    setSelectedInterval(4);
-    setDoctorNote('');
-    setEditingSchedule(null);
+  useEffect(() => {
+    loadPatients();
+    loadSchedules();
+  }, []);
+
+  const loadPatients = async () => {
+    try {
+      const response = await fetch('/api/patients');
+      if (response.ok) {
+        const data = await response.json();
+        setPatients(data);
+      }
+    } catch (error) {
+      console.error('Error loading patients:', error);
+    }
   };
 
-  const handleVitalToggle = (vitalId: string) => {
-    setSelectedVitals(prev => 
-      prev.includes(vitalId) 
-        ? prev.filter(v => v !== vitalId)
-        : [...prev, vitalId]
-    );
+  const loadSchedules = async () => {
+    try {
+      // In production, this would load existing schedules from API
+      const mockSchedules: ScheduleSettings[] = [
+        {
+          patientId: 'PT001',
+          vitalsToMonitor: ['heartRate', 'bloodPressure'],
+          checkupInterval: 4,
+          isActive: true,
+          nextCheckup: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+          reminderPreference: 'email'
+        },
+        {
+          patientId: 'PT149898',
+          vitalsToMonitor: ['heartRate', 'temperature', 'oxygenLevel'],
+          checkupInterval: 2,
+          isActive: false,
+          nextCheckup: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          reminderPreference: 'both'
+        }
+      ];
+      setSchedules(mockSchedules);
+    } catch (error) {
+      console.error('Error loading schedules:', error);
+    }
   };
 
-  const handleCreateSchedule = () => {
-    if (selectedVitals.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please select at least one vital sign to monitor.",
-        variant: "destructive",
-      });
+  const createSchedule = async () => {
+    if (!selectedPatient || !newSchedule.vitalsToMonitor?.length) {
+      alert('Please select a patient and at least one vital sign to monitor');
       return;
     }
 
-    const scheduleData = {
-      vitalSigns: selectedVitals,
-      interval: selectedInterval,
-      doctorRecommendation: doctorNote,
-      isActive: true,
-      nextCheckup: new Date(Date.now() + selectedInterval * 60 * 60 * 1000),
-      createdAt: new Date(),
-    };
+    setLoading(true);
+    try {
+      const schedule: ScheduleSettings = {
+        patientId: selectedPatient,
+        vitalsToMonitor: newSchedule.vitalsToMonitor || [],
+        checkupInterval: newSchedule.checkupInterval || 4,
+        isActive: true,
+        nextCheckup: new Date(Date.now() + (newSchedule.checkupInterval || 4) * 60 * 60 * 1000).toISOString(),
+        reminderPreference: newSchedule.reminderPreference || 'email'
+      };
 
-    createScheduleMutation.mutate(scheduleData);
+      // In production, this would be sent to API
+      setSchedules(prev => [...prev, schedule]);
+      
+      // Reset form
+      setNewSchedule({
+        vitalsToMonitor: ['heartRate'],
+        checkupInterval: 4,
+        isActive: true,
+        reminderPreference: 'email'
+      });
+      setSelectedPatient('');
+
+      alert('Checkup schedule created successfully!');
+    } catch (error) {
+      console.error('Error creating schedule:', error);
+      alert('Failed to create schedule');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditSchedule = (schedule: CheckupSchedule) => {
-    setEditingSchedule(schedule.id);
-    setSelectedVitals(schedule.vitalSigns);
-    setSelectedInterval(schedule.interval);
-    setDoctorNote(schedule.doctorRecommendation || '');
+  const toggleSchedule = async (patientId: string) => {
+    setSchedules(prev => prev.map(schedule => 
+      schedule.patientId === patientId 
+        ? { ...schedule, isActive: !schedule.isActive }
+        : schedule
+    ));
   };
 
-  const handleUpdateSchedule = () => {
-    if (!editingSchedule || selectedVitals.length === 0) return;
-
-    updateScheduleMutation.mutate({
-      id: editingSchedule,
-      vitalSigns: selectedVitals,
-      interval: selectedInterval,
-      doctorRecommendation: doctorNote,
-    });
+  const deleteSchedule = async (patientId: string) => {
+    if (confirm('Are you sure you want to delete this schedule?')) {
+      setSchedules(prev => prev.filter(schedule => schedule.patientId !== patientId));
+    }
   };
 
-  const getTimeUntilNextCheckup = (nextCheckup: Date) => {
+  const getPatientName = (patientId: string) => {
+    const patient = patients.find(p => p.patientId === patientId);
+    return patient ? `${patient.firstName} ${patient.lastName}` : patientId;
+  };
+
+  const formatNextCheckup = (nextCheckup: string) => {
+    const date = new Date(nextCheckup);
     const now = new Date();
-    const diff = nextCheckup.getTime() - now.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const diffHours = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60));
     
-    if (diff < 0) return 'Overdue';
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
+    if (diffHours < 1) return 'Due now';
+    if (diffHours < 24) return `In ${diffHours} hours`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `In ${diffDays} days`;
   };
 
-  const getVitalIcon = (vitalId: string) => {
-    const vital = vitalSignOptions.find(v => v.id === vitalId);
-    return vital?.icon || <Activity className="w-4 h-4" />;
-  };
+  const renderContent = () => (
+    <div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Create New Schedule */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Create Checkup Schedule</h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Patient
+              </label>
+              <select
+                value={selectedPatient}
+                onChange={(e) => setSelectedPatient(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Choose a patient...</option>
+                {patients.map((patient) => (
+                  <option key={patient.patientId} value={patient.patientId}>
+                    {patient.firstName} {patient.lastName} ({patient.patientId})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-  if (isLoading) {
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Vitals to Monitor
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {availableVitals.map((vital) => (
+                  <label key={vital.id} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newSchedule.vitalsToMonitor?.includes(vital.id) || false}
+                      onChange={(e) => {
+                        const vitals = newSchedule.vitalsToMonitor || [];
+                        if (e.target.checked) {
+                          setNewSchedule(prev => ({
+                            ...prev,
+                            vitalsToMonitor: [...vitals, vital.id]
+                          }));
+                        } else {
+                          setNewSchedule(prev => ({
+                            ...prev,
+                            vitalsToMonitor: vitals.filter(v => v !== vital.id)
+                          }));
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm">{vital.icon} {vital.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Checkup Interval
+              </label>
+              <select
+                value={newSchedule.checkupInterval}
+                onChange={(e) => setNewSchedule(prev => ({ 
+                  ...prev, 
+                  checkupInterval: parseInt(e.target.value) 
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {intervalOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    Every {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reminder Preference
+              </label>
+              <select
+                value={newSchedule.reminderPreference}
+                onChange={(e) => setNewSchedule(prev => ({ 
+                  ...prev, 
+                  reminderPreference: e.target.value as 'email' | 'sms' | 'both'
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="email">Email Only</option>
+                <option value="sms">SMS Only</option>
+                <option value="both">Email & SMS</option>
+              </select>
+            </div>
+
+            <button
+              onClick={createSchedule}
+              disabled={loading || !selectedPatient}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-2 px-4 rounded-lg font-medium transition-all"
+            >
+              {loading ? 'Creating...' : 'Create Schedule'}
+            </button>
+          </div>
+        </div>
+
+        {/* Existing Schedules */}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">Active Schedules ({schedules.length})</h3>
+          
+          <div className="space-y-4">
+            {schedules.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <div className="text-4xl mb-2">📅</div>
+                <p>No schedules created yet</p>
+              </div>
+            ) : (
+              schedules.map((schedule) => (
+                <div
+                  key={schedule.patientId}
+                  className={`border rounded-lg p-4 ${
+                    schedule.isActive ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="font-medium text-gray-800">
+                        {getPatientName(schedule.patientId)}
+                      </h4>
+                      <p className="text-sm text-gray-600">ID: {schedule.patientId}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => toggleSchedule(schedule.patientId)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          schedule.isActive
+                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        }`}
+                      >
+                        {schedule.isActive ? 'Active' : 'Paused'}
+                      </button>
+                      <button
+                        onClick={() => deleteSchedule(schedule.patientId)}
+                        className="text-red-600 hover:text-red-800 p-1"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Interval:</span>
+                      <p className="font-medium">Every {schedule.checkupInterval} hours</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Next Checkup:</span>
+                      <p className="font-medium">{formatNextCheckup(schedule.nextCheckup)}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3">
+                    <span className="text-gray-500 text-sm">Monitoring:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {schedule.vitalsToMonitor.map((vitalId) => {
+                        const vital = availableVitals.find(v => v.id === vitalId);
+                        return (
+                          <span
+                            key={vitalId}
+                            className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
+                          >
+                            {vital?.icon} {vital?.name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-sm">
+                    <span className="text-gray-500">Reminders:</span>
+                    <span className="ml-1 font-medium capitalize">{schedule.reminderPreference}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (onClose) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[1, 2].map(i => (
-              <div key={i} className="h-64 bg-gray-200 rounded"></div>
-            ))}
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-3xl font-bold mb-2">Checkup Scheduling</h2>
+                <p className="text-green-100">Manage patient monitoring schedules</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            {renderContent()}
           </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-          <Calendar className="w-8 h-8 text-blue-600" />
-          Check-up Scheduling
-        </h2>
-        <p className="text-gray-600 mt-1">Configure automated vital sign monitoring intervals</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Schedule Configuration */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              {editingSchedule ? 'Edit Schedule' : 'Create New Schedule'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Vital Signs Selection */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Select Vital Signs to Monitor</h4>
-              <div className="grid grid-cols-1 gap-3">
-                {vitalSignOptions.map((vital) => (
-                  <div
-                    key={vital.id}
-                    onClick={() => handleVitalToggle(vital.id)}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                      selectedVitals.includes(vital.id)
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {vital.icon}
-                      <div className="flex-1">
-                        <h5 className="font-medium text-gray-900">{vital.name}</h5>
-                        <p className="text-sm text-gray-600">{vital.description}</p>
-                        <p className="text-xs text-gray-500">Normal: {vital.normalRange}</p>
-                      </div>
-                      {selectedVitals.includes(vital.id) && (
-                        <CheckCircle className="w-5 h-5 text-blue-500" />
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Interval Selection */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Check-up Interval</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[1, 2, 3, 4].map((hours) => (
-                  <button
-                    key={hours}
-                    onClick={() => setSelectedInterval(hours)}
-                    className={`p-3 border-2 rounded-lg text-center transition-all duration-200 ${
-                      selectedInterval === hours
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <Clock className="w-5 h-5 mx-auto mb-1" />
-                    <span className="text-sm font-medium">Every {hours}h</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Doctor's Note */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Doctor's Recommendation (Optional)</h4>
-              <textarea
-                value={doctorNote}
-                onChange={(e) => setDoctorNote(e.target.value)}
-                placeholder="Add any specific instructions or notes for this monitoring schedule..."
-                className="w-full p-3 border border-gray-300 rounded-lg text-sm resize-none"
-                rows={3}
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              {editingSchedule ? (
-                <>
-                  <Button
-                    onClick={handleUpdateSchedule}
-                    disabled={selectedVitals.length === 0 || updateScheduleMutation.isPending}
-                    className="flex-1"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Update Schedule
-                  </Button>
-                  <Button
-                    onClick={resetForm}
-                    variant="outline"
-                  >
-                    Cancel
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  onClick={handleCreateSchedule}
-                  disabled={selectedVitals.length === 0 || createScheduleMutation.isPending}
-                  className="w-full"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Schedule
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Active Schedules */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              Active Schedules
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockSchedules.map((schedule) => (
-                <div
-                  key={schedule.id}
-                  className={`p-4 border rounded-lg transition-all duration-200 ${
-                    schedule.isActive
-                      ? 'border-green-200 bg-green-50'
-                      : 'border-gray-200 bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Badge variant={schedule.isActive ? 'default' : 'secondary'}>
-                        Every {schedule.interval}h
-                      </Badge>
-                      <Badge variant="outline">
-                        {schedule.isActive ? 'Active' : 'Paused'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => toggleScheduleMutation.mutate({
-                          id: schedule.id,
-                          isActive: !schedule.isActive
-                        })}
-                        disabled={toggleScheduleMutation.isPending}
-                        className="p-2"
-                      >
-                        {schedule.isActive ? (
-                          <Pause className="w-4 h-4 text-gray-600" />
-                        ) : (
-                          <Play className="w-4 h-4 text-green-600" />
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditSchedule(schedule)}
-                        className="p-2"
-                      >
-                        <Edit className="w-4 h-4 text-blue-600" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to delete this schedule? This action cannot be undone.`)) {
-                            deleteScheduleMutation.mutate(schedule.id);
-                          }
-                        }}
-                        disabled={deleteScheduleMutation.isPending}
-                        className="p-2"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">Monitoring:</span>
-                      <div className="flex items-center gap-1">
-                        {schedule.vitalSigns.map((vitalId) => (
-                          <span key={vitalId} className="flex items-center gap-1">
-                            {getVitalIcon(vitalId)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="text-sm text-gray-600">
-                      <span>Next check-up: </span>
-                      <span className="font-medium">
-                        {getTimeUntilNextCheckup(schedule.nextCheckup)}
-                      </span>
-                    </div>
-
-                    {schedule.lastCheckup && (
-                      <div className="text-sm text-gray-600">
-                        <span>Last check-up: </span>
-                        <span className="font-medium">
-                          {schedule.lastCheckup.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-
-                    {schedule.doctorRecommendation && (
-                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                        <p className="text-sm text-blue-800">
-                          <strong>Doctor's Note:</strong> {schedule.doctorRecommendation}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {mockSchedules.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>No active schedules</p>
-                  <p className="text-sm">Create your first check-up schedule to get started</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+  return renderContent();
 }
