@@ -278,14 +278,21 @@ export default function ComprehensiveHealthcareApp() {
   };
 
   const filteredPatients = adminData.patients.filter(patient => {
-    const matchesSearch = patient.firstName.toLowerCase().includes(adminData.searchTerm.toLowerCase()) ||
-                         patient.lastName.toLowerCase().includes(adminData.searchTerm.toLowerCase()) ||
-                         patient.email.toLowerCase().includes(adminData.searchTerm.toLowerCase()) ||
-                         patient.patientId.toLowerCase().includes(adminData.searchTerm.toLowerCase());
+    const fullName = `${patient.firstName} ${patient.middleName || ''} ${patient.lastName}`.toLowerCase();
+    const searchLower = adminData.searchTerm.toLowerCase();
     
-    const matchesStatus = adminData.filterStatus === 'all' || patient.status.toLowerCase() === adminData.filterStatus.toLowerCase();
+    const matchesSearch = adminData.searchTerm === '' || 
+      fullName.includes(searchLower) ||
+      patient.email.toLowerCase().includes(searchLower) ||
+      patient.patientId.toLowerCase().includes(searchLower);
     
-    return matchesSearch && matchesStatus;
+    const matchesStatus = adminData.filterStatus === 'all' || 
+      patient.status.toLowerCase() === adminData.filterStatus.toLowerCase();
+    
+    const matchesHospital = adminData.filterHospital === 'all' || 
+      (patient as any).hospitalId === adminData.filterHospital;
+    
+    return matchesSearch && matchesStatus && matchesHospital;
   });
 
   const exportPatientData = () => {
@@ -1037,7 +1044,7 @@ For questions, contact: support@24x7teleh.com
     );
   }
 
-  if (state.view === 'patient_old' && state.user) {
+  if (false) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
