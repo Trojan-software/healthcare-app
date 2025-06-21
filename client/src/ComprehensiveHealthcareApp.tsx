@@ -1030,6 +1030,15 @@ For questions, contact: support@24x7teleh.com
 
   if (state.view === 'patient' && state.user) {
     return (
+      <EnhancedPatientDashboard 
+        userId={state.user.id} 
+        onLogout={() => setState({ view: 'login', user: null, loading: false, error: '' })}
+      />
+    );
+  }
+
+  if (state.view === 'patient_old' && state.user) {
+    return (
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg">
