@@ -797,6 +797,45 @@ For questions, contact: support@24x7teleh.com
             </div>
           )}
 
+          {/* Advanced Features */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <button
+              onClick={() => setModalState(prev => ({ ...prev, showFAQ: true }))}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-xl font-semibold transition-all hover:from-indigo-700 hover:to-purple-700 shadow-lg"
+            >
+              <div className="text-3xl mb-2">❓</div>
+              <div>FAQ & Support</div>
+              <div className="text-sm text-indigo-100 mt-1">Device guides & help</div>
+            </button>
+
+            <button
+              onClick={() => setModalState(prev => ({ ...prev, showDeviceMonitoring: true }))}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-xl font-semibold transition-all hover:from-purple-700 hover:to-pink-700 shadow-lg"
+            >
+              <div className="text-3xl mb-2">📱</div>
+              <div>Device Monitoring</div>
+              <div className="text-sm text-purple-100 mt-1">HC03 status & battery</div>
+            </button>
+
+            <button
+              onClick={() => setModalState(prev => ({ ...prev, showAdvancedAnalytics: true }))}
+              className="bg-gradient-to-r from-green-600 to-teal-600 text-white p-6 rounded-xl font-semibold transition-all hover:from-green-700 hover:to-teal-700 shadow-lg"
+            >
+              <div className="text-3xl mb-2">📊</div>
+              <div>Advanced Analytics</div>
+              <div className="text-sm text-green-100 mt-1">AI insights & trends</div>
+            </button>
+
+            <button
+              onClick={() => setModalState(prev => ({ ...prev, showCheckupScheduling: true }))}
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6 rounded-xl font-semibold transition-all hover:from-blue-700 hover:to-cyan-700 shadow-lg"
+            >
+              <div className="text-3xl mb-2">⏰</div>
+              <div>Enhanced Scheduling</div>
+              <div className="text-sm text-blue-100 mt-1">1-4 hour intervals</div>
+            </button>
+          </div>
+
           {/* Patient Management */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex justify-between items-center mb-6">
@@ -940,6 +979,23 @@ For questions, contact: support@24x7teleh.com
             </div>
           </div>
         </main>
+
+        {/* Modal Components */}
+        {modalState.showFAQ && (
+          <FAQSection onClose={() => setModalState(prev => ({ ...prev, showFAQ: false }))} />
+        )}
+        
+        {modalState.showDeviceMonitoring && (
+          <DeviceMonitoring onClose={() => setModalState(prev => ({ ...prev, showDeviceMonitoring: false }))} />
+        )}
+        
+        {modalState.showAdvancedAnalytics && (
+          <AdvancedAnalytics onClose={() => setModalState(prev => ({ ...prev, showAdvancedAnalytics: false }))} />
+        )}
+        
+        {modalState.showCheckupScheduling && (
+          <CheckupScheduling onClose={() => setModalState(prev => ({ ...prev, showCheckupScheduling: false }))} />
+        )}
       </div>
     );
   }

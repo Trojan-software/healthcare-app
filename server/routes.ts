@@ -4,6 +4,7 @@ import { setupVite, serveStatic } from "./vite";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { emailNotificationService } from "./email-notifications";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
@@ -212,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bloodGlucose: bloodGlucose ? parseInt(bloodGlucose) : null
       });
 
-      // Check for critical vitals and create alerts
+      // Check for critical vitals and send email notifications
       if (isVitalsCritical(vitalSigns)) {
         await storage.createAlert({
           patientId,
@@ -220,6 +221,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: "Critical Vital Signs Alert",
           description: `Critical vital signs detected: ${getCriticalValue(vitalSigns)}`
         });
+
+        // Send email notification to assigned doctor
+        await emailNotificationService.checkCriticalVitals(patientId, vitalSigns);
       }
 
       res.status(201).json(vitalSigns);
