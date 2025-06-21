@@ -747,17 +747,24 @@ For questions, contact: support@24x7teleh.com
           {/* Dashboard Stats */}
           {adminData.dashboardStats && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+              <button 
+                onClick={() => {
+                  document.getElementById('patient-management-section')?.scrollIntoView({ behavior: 'smooth' });
+                  setAdminData(prev => ({ ...prev, searchTerm: '', filterStatus: 'all', filterHospital: 'all' }));
+                }}
+                className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 hover:shadow-lg transition-all cursor-pointer w-full text-left"
+              >
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-gray-600 text-sm font-medium">Total Patients</p>
                     <p className="text-3xl font-bold text-gray-800 mt-2">{adminData.dashboardStats.totalPatients}</p>
+                    <p className="text-blue-600 text-xs mt-1">Click to view all patients</p>
                   </div>
                   <div className="p-2 bg-blue-100 rounded-lg">
                     👥
                   </div>
                 </div>
-              </div>
+              </button>
 
               <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
                 <div className="flex justify-between items-start">
