@@ -3,6 +3,7 @@ import FAQSection from './components/FAQSection';
 import DeviceMonitoring from './components/DeviceMonitoring';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
 import CheckupScheduling from './components/CheckupScheduling';
+import EnhancedPatientDashboard from './components/EnhancedPatientDashboard';
 
 interface User {
   id: number;
