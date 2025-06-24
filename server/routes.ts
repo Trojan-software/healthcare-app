@@ -437,6 +437,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Patient update endpoint for edit functionality
+  app.put("/api/patients/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      // Validate required fields
+      if (!updateData.firstName || !updateData.lastName || !updateData.email) {
+        return res.status(400).json({ message: "First name, last name, and email are required" });
+      }
+      
+      const updatedPatient = await storage.updatePatient(parseInt(id), updateData);
+      if (!updatedPatient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      res.json({ message: "Patient updated successfully", patient: updatedPatient });
+    } catch (error) {
+      console.error("Error updating patient:", error);
+      res.status(500).json({ message: "Failed to update patient" });
+    }
+  });
+
   // Dashboard endpoints
   app.get("/api/dashboard/admin", async (req, res) => {
     try {

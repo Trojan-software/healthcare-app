@@ -58,6 +58,7 @@ export default function PatientManagementModule() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHospital, setSelectedHospital] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [hospitalFilter, setHospitalFilter] = useState('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
@@ -507,14 +508,27 @@ export default function PatientManagementModule() {
             <EditPatientForm 
               patient={selectedPatient}
               hospitals={hospitals}
-              onSubmit={(updatedData) => {
-                // Handle patient update
-                toast({
-                  title: "Patient Updated",
-                  description: `Patient ${selectedPatient.firstName} ${selectedPatient.lastName} has been updated successfully.`,
-                });
-                setShowEditDialog(false);
-                queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
+              onSubmit={async (updatedData) => {
+                try {
+                  await apiRequest(`/api/patients/${selectedPatient.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData)
+                  });
+                  
+                  toast({
+                    title: "Patient Updated",
+                    description: `Patient ${selectedPatient.firstName} ${selectedPatient.lastName} has been updated successfully.`,
+                  });
+                  setShowEditDialog(false);
+                  queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
+                } catch (error) {
+                  toast({
+                    title: "Update Failed",
+                    description: "Failed to update patient information.",
+                    variant: "destructive"
+                  });
+                }
               }}
               onCancel={() => setShowEditDialog(false)}
             />

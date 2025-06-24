@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Heart, Play, Square, Fingerprint, Zap, Wind, TrendingUp } from 'lucide-react';
+import { Activity, Heart, Play, Square, Fingerprint, Zap, Wind, TrendingUp, AlertTriangle, Download, Share, History } from 'lucide-react';
 
 interface EcgWavePoint {
   timestamp: number;
@@ -30,6 +30,15 @@ interface EcgStats {
   isContactDetected: boolean;
   contactQuality: string;
   signalStrength: number;
+  arrhythmiaDetected: boolean;
+  qrsWidth: number;
+  qtInterval: number;
+  prInterval: number;
+  stSegmentElevation: number;
+  rhythm: 'normal' | 'bradycardia' | 'tachycardia' | 'irregular' | 'afib';
+  averageRR: number;
+  maxHeartRate: number;
+  minHeartRate: number;
 }
 
 interface EcgWidgetProps {
@@ -54,7 +63,16 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
     respiratoryRate: 16,
     isContactDetected: false,
     contactQuality: 'poor',
-    signalStrength: 0
+    signalStrength: 0,
+    arrhythmiaDetected: false,
+    qrsWidth: 95,
+    qtInterval: 405,
+    prInterval: 165,
+    stSegmentElevation: 0.5,
+    rhythm: 'normal',
+    averageRR: 857,
+    maxHeartRate: 0,
+    minHeartRate: 0
   });
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -125,11 +143,15 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
         });
         
         // Update stats with simulated data
+        const newHeartRate = 65 + Math.floor(Math.random() * 30);
+        const newMoodIndex = Math.floor(Math.random() * 100) + 1;
+        const newRRInterval = 800 + Math.floor(Math.random() * 200);
+        
         setStats({
-          heartRate: 65 + Math.floor(Math.random() * 30),
-          moodIndex: Math.floor(Math.random() * 100) + 1,
-          moodCategory: getMoodCategory(Math.floor(Math.random() * 100) + 1),
-          rrInterval: 800 + Math.floor(Math.random() * 200),
+          heartRate: newHeartRate,
+          moodIndex: newMoodIndex,
+          moodCategory: getMoodCategory(newMoodIndex),
+          rrInterval: newRRInterval,
           rrVariability: 20 + Math.floor(Math.random() * 50),
           rmssd: 20 + Math.floor(Math.random() * 40),
           pnn50: 10 + Math.floor(Math.random() * 30),
@@ -138,7 +160,16 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
           respiratoryRate: 12 + Math.floor(Math.random() * 8),
           isContactDetected: true,
           contactQuality: 'excellent',
-          signalStrength: 90 + Math.floor(Math.random() * 10)
+          signalStrength: 90 + Math.floor(Math.random() * 10),
+          arrhythmiaDetected: Math.random() > 0.85,
+          qrsWidth: 85 + Math.floor(Math.random() * 25),
+          qtInterval: 380 + Math.floor(Math.random() * 50),
+          prInterval: 150 + Math.floor(Math.random() * 30),
+          stSegmentElevation: (Math.random() - 0.5) * 2,
+          rhythm: getCardiacRhythm(newHeartRate, newRRInterval),
+          averageRR: newRRInterval,
+          maxHeartRate: newHeartRate + Math.floor(Math.random() * 15),
+          minHeartRate: newHeartRate - Math.floor(Math.random() * 15)
         });
       }, 1000);
     } catch (error) {
@@ -184,6 +215,25 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
       'Excitement/Anxiety': 'bg-red-100 text-red-800'
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getCardiacRhythm = (heartRate: number, rrInterval: number): 'normal' | 'bradycardia' | 'tachycardia' | 'irregular' | 'afib' => {
+    if (heartRate < 60) return 'bradycardia';
+    if (heartRate > 100) return 'tachycardia';
+    if (Math.random() > 0.9) return 'irregular';
+    if (Math.random() > 0.95) return 'afib';
+    return 'normal';
+  };
+
+  const getRhythmColor = (rhythm: string): string => {
+    const colors = {
+      'normal': 'bg-green-100 text-green-800',
+      'bradycardia': 'bg-blue-100 text-blue-800',
+      'tachycardia': 'bg-orange-100 text-orange-800',
+      'irregular': 'bg-yellow-100 text-yellow-800',
+      'afib': 'bg-red-100 text-red-800'
+    };
+    return colors[rhythm] || 'bg-gray-100 text-gray-800';
   };
 
   const getContactColor = (quality: string): string => {
@@ -336,16 +386,32 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
                    className={stats.isContactDetected ? "bg-green-100 text-green-800" : ""}>
               {stats.isContactDetected ? `Contact: ${stats.contactQuality}` : 'No Contact'}
             </Badge>
-            {showControls && (
-              <Button 
-                onClick={isRecording ? stopRecording : startRecording}
-                size="sm"
-                variant={isRecording ? "destructive" : "default"}
-              >
-                {isRecording ? <Square className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
-                {isRecording ? 'Stop' : 'Start'}
-              </Button>
-            )}
+            <div className="flex items-center space-x-2">
+              {showControls && (
+                <>
+                  <Button 
+                    onClick={isRecording ? stopRecording : startRecording}
+                    size="sm"
+                    variant={isRecording ? "destructive" : "default"}
+                  >
+                    {isRecording ? <Square className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+                    {isRecording ? 'Stop' : 'Start'}
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Download className="w-4 h-4 mr-1" />
+                    Export
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Share className="w-4 h-4 mr-1" />
+                    Share
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <History className="w-4 h-4 mr-1" />
+                    History
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </CardTitle>
       </CardHeader>
@@ -390,8 +456,8 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
           </div>
         </div>
 
-        {/* Detailed Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Enhanced Detailed Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-3">
             <h4 className="font-medium text-gray-800">Heart Rate Variability</h4>
             <div className="space-y-2">
@@ -408,14 +474,48 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
                 <span className="font-medium">{stats.sdnn} ms</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">RR Interval</span>
-                <span className="font-medium">{stats.rrInterval} ms</span>
+                <span className="text-gray-600">Average RR</span>
+                <span className="font-medium">{stats.averageRR} ms</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">HR Range</span>
+                <span className="font-medium">{stats.minHeartRate}-{stats.maxHeartRate} BPM</span>
               </div>
             </div>
           </div>
           
           <div className="space-y-3">
-            <h4 className="font-medium text-gray-800">Status & Quality</h4>
+            <h4 className="font-medium text-gray-800">ECG Intervals</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600">QRS Width</span>
+                <span className="font-medium">{stats.qrsWidth} ms</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">QT Interval</span>
+                <span className="font-medium">{stats.qtInterval} ms</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">PR Interval</span>
+                <span className="font-medium">{stats.prInterval} ms</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">ST Elevation</span>
+                <span className={`font-medium ${Math.abs(stats.stSegmentElevation) > 1 ? 'text-red-600' : 'text-green-600'}`}>
+                  {stats.stSegmentElevation.toFixed(1)} mm
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Cardiac Rhythm</span>
+                <Badge variant="secondary" className={getRhythmColor(stats.rhythm)}>
+                  {stats.rhythm.charAt(0).toUpperCase() + stats.rhythm.slice(1)}
+                </Badge>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <h4 className="font-medium text-gray-800">Status & Alerts</h4>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Mood Category</span>
@@ -427,6 +527,12 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
                 <span className="text-gray-600">Contact Quality</span>
                 <Badge variant="secondary" className={getContactColor(stats.contactQuality)}>
                   {stats.contactQuality}
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Arrhythmia</span>
+                <Badge variant={stats.arrhythmiaDetected ? "destructive" : "secondary"}>
+                  {stats.arrhythmiaDetected ? 'Detected' : 'None'}
                 </Badge>
               </div>
               <div className="flex justify-between">
@@ -441,6 +547,93 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Critical Alerts Section */}
+        {(stats.arrhythmiaDetected || Math.abs(stats.stSegmentElevation) > 1 || stats.qtInterval > 450 || stats.rhythm !== 'normal') && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h4 className="font-medium text-red-800 mb-2 flex items-center">
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Critical ECG Findings
+            </h4>
+            <div className="space-y-1 text-sm text-red-700">
+              {stats.arrhythmiaDetected && <p>• Arrhythmia detected - irregular heart rhythm</p>}
+              {Math.abs(stats.stSegmentElevation) > 1 && <p>• Significant ST segment elevation ({stats.stSegmentElevation.toFixed(1)} mm)</p>}
+              {stats.qtInterval > 450 && <p>• Prolonged QT interval ({stats.qtInterval} ms) - risk of torsades de pointes</p>}
+              {stats.rhythm === 'afib' && <p>• Atrial fibrillation detected</p>}
+              {stats.rhythm === 'bradycardia' && <p>• Bradycardia - heart rate below 60 BPM</p>}
+              {stats.rhythm === 'tachycardia' && <p>• Tachycardia - heart rate above 100 BPM</p>}
+            </div>
+            <div className="mt-3 flex space-x-2">
+              <Button size="sm" variant="outline" className="bg-white">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                Alert Doctor
+              </Button>
+              <Button size="sm" variant="outline" className="bg-white">
+                <Download className="w-3 h-3 mr-1" />
+                Export Report
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Real-time Analysis Panel */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="p-4">
+            <h4 className="font-medium text-gray-800 mb-3">Rhythm Analysis</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Dominant Rhythm</span>
+                <Badge variant="secondary" className={getRhythmColor(stats.rhythm)}>
+                  {stats.rhythm.charAt(0).toUpperCase() + stats.rhythm.slice(1)}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">P-Wave Present</span>
+                <span className="text-sm font-medium">{stats.rhythm !== 'afib' ? 'Yes' : 'No'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">QRS Morphology</span>
+                <span className="text-sm font-medium">{stats.qrsWidth < 120 ? 'Normal' : 'Wide'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Axis Deviation</span>
+                <span className="text-sm font-medium">Normal</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <h4 className="font-medium text-gray-800 mb-3">Clinical Interpretation</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Overall Assessment</span>
+                <Badge variant={stats.arrhythmiaDetected || stats.rhythm !== 'normal' ? "destructive" : "secondary"} 
+                       className={stats.arrhythmiaDetected || stats.rhythm !== 'normal' ? "" : "bg-green-100 text-green-800"}>
+                  {stats.arrhythmiaDetected || stats.rhythm !== 'normal' ? 'Abnormal' : 'Normal'}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Urgency Level</span>
+                <span className="text-sm font-medium">
+                  {stats.arrhythmiaDetected || Math.abs(stats.stSegmentElevation) > 1 ? 'High' : 'Low'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Follow-up Required</span>
+                <span className="text-sm font-medium">
+                  {stats.rhythm !== 'normal' || stats.qtInterval > 450 ? 'Yes' : 'No'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Risk Stratification</span>
+                <Badge variant={stats.stressScore > 70 ? "destructive" : stats.stressScore > 40 ? "secondary" : "secondary"}
+                       className={stats.stressScore > 70 ? "" : stats.stressScore > 40 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}>
+                  {stats.stressScore > 70 ? 'High Risk' : stats.stressScore > 40 ? 'Moderate' : 'Low Risk'}
+                </Badge>
+              </div>
+            </div>
+          </Card>
         </div>
       </CardContent>
     </Card>
