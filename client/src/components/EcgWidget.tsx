@@ -397,15 +397,15 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
                     {isRecording ? <Square className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
                     {isRecording ? 'Stop' : 'Start'}
                   </Button>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={handleExport}>
                     <Download className="w-4 h-4 mr-1" />
                     Export
                   </Button>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={handleShare}>
                     <Share className="w-4 h-4 mr-1" />
                     Share
                   </Button>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={handleHistory}>
                     <History className="w-4 h-4 mr-1" />
                     History
                   </Button>
