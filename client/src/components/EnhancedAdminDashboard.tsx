@@ -294,6 +294,51 @@ export default function EnhancedAdminDashboard() {
             </Card>
           </div>
 
+          {/* Blood Glucose Overview */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <BloodGlucoseWidget 
+              patientId="PAT001" 
+              showControls={false}
+              compact={false}
+            />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Droplets className="w-5 h-5 mr-2 text-blue-600" />
+                  Glucose Monitoring Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Active Monitors</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">3 Devices</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Daily Measurements</span>
+                    <span className="font-medium">4.2 avg</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Compliance Rate</span>
+                    <span className="font-medium text-green-600">92%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Critical Alerts</span>
+                    <Badge variant="destructive">2 Active</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Average Glucose</span>
+                    <span className="font-medium">105 mg/dL</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">In Range %</span>
+                    <span className="font-medium text-blue-600">78%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Analytics Overview */}
           <Card 
             className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500"
