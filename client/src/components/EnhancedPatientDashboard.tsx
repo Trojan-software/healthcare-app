@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   TrendingUp,
   Battery,
-  Wifi
+  Wifi,
+  Monitor
 } from 'lucide-react';
 import VitalsChart from './VitalsChart';
 import BloodGlucoseWidget from './BloodGlucoseWidget';
@@ -259,6 +260,50 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     if (issues.length === 0) return { status: 'Normal', color: 'bg-green-100 text-green-800' };
     if (issues.length === 1) return { status: 'Attention', color: 'bg-yellow-100 text-yellow-800' };
     return { status: 'Critical', color: 'bg-red-100 text-red-800' };
+  };
+
+
+
+  const handleVitalMonitor = (vitalType: string) => {
+    const vitalDetails = {
+      heartRate: {
+        name: 'Heart Rate Monitor',
+        current: dashboardData.vitals.heartRate + ' BPM',
+        normal: '60-100 BPM',
+        status: dashboardData.vitals.heartRate >= 60 && dashboardData.vitals.heartRate <= 100 ? 'Normal' : 'Abnormal',
+        trend: getVitalTrend('heartRate'),
+        device: 'HC03-002'
+      },
+      bloodPressure: {
+        name: 'Blood Pressure Monitor',
+        current: dashboardData.vitals.bloodPressure,
+        normal: '120/80 mmHg',
+        status: 'Normal',
+        trend: getVitalTrend('bloodPressure'),
+        device: 'HC03-001'
+      },
+      temperature: {
+        name: 'Temperature Monitor',
+        current: dashboardData.vitals.temperature + '°C',
+        normal: '36.1-37.2°C',
+        status: parseFloat(dashboardData.vitals.temperature) >= 36.1 && parseFloat(dashboardData.vitals.temperature) <= 37.2 ? 'Normal' : 'Abnormal',
+        trend: getVitalTrend('temperature'),
+        device: 'HC03-004'
+      },
+      oxygenLevel: {
+        name: 'Oxygen Level Monitor',
+        current: dashboardData.vitals.oxygenLevel + '%',
+        normal: '95-100%',
+        status: dashboardData.vitals.oxygenLevel >= 95 ? 'Normal' : 'Low',
+        trend: getVitalTrend('oxygenLevel'),
+        device: 'HC03-003'
+      }
+    };
+
+    const vital = vitalDetails[vitalType];
+    if (!vital) return;
+
+    alert(`${vital.name}\nCurrent: ${vital.current}\nStatus: ${vital.status}\nDevice: ${vital.device}`);
   };
 
   if (loading) {
