@@ -1,4 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { 
+  Heart, 
+  Activity, 
+  Thermometer, 
+  Droplets, 
+  Calendar,
+  Clock,
+  AlertTriangle,
+  TrendingUp,
+  Battery,
+  Wifi
+} from 'lucide-react';
+import VitalsChart from './VitalsChart';
+import BloodGlucoseWidget from './BloodGlucoseWidget';
+import BatteryWidget from './BatteryWidget';
+import EcgWidget from './EcgWidget';
 
 interface VitalSigns {
   id: number;
