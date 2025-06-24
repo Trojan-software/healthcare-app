@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { emailNotificationService } from "./email-notifications";
+import { bloodGlucoseManager } from "./hc03-blood-glucose";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
