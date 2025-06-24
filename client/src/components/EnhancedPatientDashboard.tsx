@@ -64,16 +64,13 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
   useEffect(() => {
     loadDashboardData();
-    loadVitalsHistory();
-    
-    // Set up real-time updates every 30 seconds
-    const interval = setInterval(() => {
-      loadDashboardData();
-      loadVitalsHistory();
-    }, 30000);
-
-    return () => clearInterval(interval);
   }, [userId]);
+
+  useEffect(() => {
+    if (dashboardData?.user?.patientId) {
+      loadVitalsHistory();
+    }
+  }, [dashboardData]);
 
   const loadDashboardData = async () => {
     try {
@@ -95,11 +92,17 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const loadVitalsHistory = async () => {
     try {
       if (dashboardData?.user?.patientId) {
+        console.log('Loading vitals for patient:', dashboardData.user.patientId);
         const response = await fetch(`/api/vital-signs/${dashboardData.user.patientId}`);
         if (response.ok) {
           const history = await response.json();
+          console.log('Vitals history loaded:', history.length, 'records');
           setVitalsHistory(history);
+        } else {
+          console.error('Failed to load vitals history:', response.status);
         }
+      } else {
+        console.log('No patient ID available for vitals loading');
       }
     } catch (err) {
       console.error('Error loading vitals history:', err);
@@ -382,9 +385,9 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
         </div>
 
         {/* Vitals History with Filters */}
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-white rounded-xl shadow-md p-6 mt-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold text-gray-800">Vitals History</h3>
+            <h3 className="text-xl font-semibold text-gray-800">Vitals History ({vitalsHistory.length} records)</h3>
             <div className="flex space-x-4 items-center">
               <select
                 value={selectedVitalType}
@@ -477,9 +480,16 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               </tbody>
             </table>
             
-            {getFilteredVitals().length === 0 && (
+            {getFilteredVitals().length === 0 && vitalsHistory.length > 0 && (
               <div className="text-center py-8 text-gray-500">
                 No vital signs data available for the selected period.
+                <br />
+                <small>Total records: {vitalsHistory.length}, Date range: {fromDate} to {toDate}</small>
+              </div>
+            )}
+            {vitalsHistory.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No vital signs data available. Loading...
               </div>
             )}
           </div>
