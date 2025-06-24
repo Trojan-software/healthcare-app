@@ -127,20 +127,25 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
     // Filter by vital type
     if (selectedVitalType !== 'all') {
+      const beforeFilter = filtered.length;
       filtered = filtered.filter(vital => {
         switch (selectedVitalType) {
           case 'heartRate':
-            return vital.heartRate != null;
+            return vital.heartRate != null && vital.heartRate > 0;
           case 'bloodPressure':
-            return vital.bloodPressureSystolic != null || vital.bloodPressureDiastolic != null;
+            const hasBloodPressure = (vital.bloodPressureSystolic != null && vital.bloodPressureSystolic > 0) && 
+                   (vital.bloodPressureDiastolic != null && vital.bloodPressureDiastolic > 0);
+            console.log('BP Check:', vital.id, 'Systolic:', vital.bloodPressureSystolic, 'Diastolic:', vital.bloodPressureDiastolic, 'Result:', hasBloodPressure);
+            return hasBloodPressure;
           case 'temperature':
-            return vital.temperature != null;
+            return vital.temperature != null && vital.temperature !== '';
           case 'oxygenLevel':
-            return vital.oxygenLevel != null;
+            return vital.oxygenLevel != null && vital.oxygenLevel > 0;
           default:
             return true;
         }
       });
+      console.log(`Filtering by ${selectedVitalType}: ${beforeFilter} -> ${filtered.length} records`);
     }
 
     // Sort by timestamp descending (newest first)
