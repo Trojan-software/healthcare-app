@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { emailNotificationService } from "./email-notifications";
 import { bloodGlucoseManager } from "./hc03-blood-glucose";
 import { batteryManager } from "./hc03-battery";
+import { ecgDataManager } from "./hc03-ecg";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
@@ -352,6 +353,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error simulating charging status:", error);
       res.status(500).json({ message: "Failed to simulate charging status" });
+    }
+  });
+
+  // ECG API Endpoints
+  app.get("/api/ecg/:deviceId", async (req, res) => {
+    try {
+      const { deviceId } = req.params;
+      const ecgData = await ecgDataManager.getEcgData(deviceId);
+      
+      if (!ecgData) {
+        return res.json({ message: "No ECG data available", wavePoints: [] });
+      }
+      
+      res.json(ecgData);
+    } catch (error) {
+      console.error("Error fetching ECG data:", error);
+      res.status(500).json({ message: "Failed to fetch ECG data" });
+    }
+  });
+
+  app.get("/api/ecg/wave/:deviceId", async (req, res) => {
+    try {
+      const { deviceId } = req.params;
+      const waveData = ecgDataManager.getCurrentWaveData(deviceId);
+      res.json({ deviceId, wavePoints: waveData, timestamp: new Date() });
+    } catch (error) {
+      console.error("Error fetching ECG wave data:", error);
+      res.status(500).json({ message: "Failed to fetch ECG wave data" });
+    }
+  });
+
+  app.post("/api/ecg/start-recording", async (req, res) => {
+    try {
+      const { deviceId, patientId } = req.body;
+      if (!deviceId || !patientId) {
+        return res.status(400).json({ message: "Device ID and Patient ID are required" });
+      }
+      
+      const success = await ecgDataManager.startEcgRecording(deviceId, patientId);
+      if (success) {
+        res.json({ message: "ECG recording started successfully", status: "recording" });
+      } else {
+        res.status(500).json({ message: "Failed to start ECG recording" });
+      }
+    } catch (error) {
+      console.error("Error starting ECG recording:", error);
+      res.status(500).json({ message: "Failed to start ECG recording" });
+    }
+  });
+
+  app.post("/api/ecg/stop-recording", async (req, res) => {
+    try {
+      const { deviceId, patientId } = req.body;
+      if (!deviceId || !patientId) {
+        return res.status(400).json({ message: "Device ID and Patient ID are required" });
+      }
+      
+      const success = await ecgDataManager.stopEcgRecording(deviceId, patientId);
+      if (success) {
+        res.json({ message: "ECG recording stopped successfully", status: "stopped" });
+      } else {
+        res.status(500).json({ message: "Failed to stop ECG recording" });
+      }
+    } catch (error) {
+      console.error("Error stopping ECG recording:", error);
+      res.status(500).json({ message: "Failed to stop ECG recording" });
+    }
+  });
+
+  app.post("/api/ecg/simulate", async (req, res) => {
+    try {
+      const { deviceId, patientId } = req.body;
+      if (!deviceId || !patientId) {
+        return res.status(400).json({ message: "Device ID and Patient ID are required" });
+      }
+      
+      await ecgDataManager.simulateEcgSession(deviceId, patientId);
+      res.json({ message: "ECG simulation completed successfully", status: "simulated" });
+    } catch (error) {
+      console.error("Error simulating ECG session:", error);
+      res.status(500).json({ message: "Failed to simulate ECG session" });
     }
   });
 

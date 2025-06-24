@@ -35,6 +35,7 @@ import CriticalAlertsSystem from './CriticalAlertsSystem';
 import AdvancedHealthAnalytics from './AdvancedHealthAnalytics';
 import PatientManagementModule from './PatientManagementModule';
 import BloodGlucoseWidget from './BloodGlucoseWidget';
+import EcgWidget from './EcgWidget';
 
 interface DashboardStats {
   totalPatients: number;
@@ -294,49 +295,60 @@ export default function EnhancedAdminDashboard() {
             </Card>
           </div>
 
-          {/* Blood Glucose Overview */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <BloodGlucoseWidget 
+          {/* Health Monitoring Overview */}
+          <div className="space-y-6 mb-8">
+            {/* ECG Monitor - Full Width */}
+            <EcgWidget 
+              deviceId="HC03-003"
               patientId="PAT001" 
               showControls={false}
               compact={false}
             />
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Droplets className="w-5 h-5 mr-2 text-blue-600" />
-                  Glucose Monitoring Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Active Monitors</span>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">3 Devices</Badge>
+            
+            {/* Blood Glucose and Status */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <BloodGlucoseWidget 
+                patientId="PAT001" 
+                showControls={false}
+                compact={false}
+              />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Activity className="w-5 h-5 mr-2 text-green-600" />
+                    Health Monitoring Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">ECG Monitors</span>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">2 Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Glucose Monitors</span>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">3 Devices</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Average Heart Rate</span>
+                      <span className="font-medium">72 BPM</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Stress Levels</span>
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Moderate</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Critical Alerts</span>
+                      <Badge variant="destructive">2 Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Compliance Rate</span>
+                      <span className="font-medium text-green-600">92%</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Daily Measurements</span>
-                    <span className="font-medium">4.2 avg</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Compliance Rate</span>
-                    <span className="font-medium text-green-600">92%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Critical Alerts</span>
-                    <Badge variant="destructive">2 Active</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Average Glucose</span>
-                    <span className="font-medium">105 mg/dL</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">In Range %</span>
-                    <span className="font-medium text-blue-600">78%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Analytics Overview */}

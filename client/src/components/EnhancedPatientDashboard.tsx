@@ -390,16 +390,27 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
         </div>
 
         {/* Health Monitoring Widgets */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <BloodGlucoseWidget 
+        <div className="space-y-6 mt-6">
+          {/* ECG Monitor - Full Width */}
+          <EcgWidget 
+            deviceId="HC03-003"
             patientId={dashboardData?.user?.patientId || ''} 
             showControls={true}
             compact={false}
           />
-          <BatteryWidget 
-            patientId={dashboardData?.user?.patientId || ''} 
-            compact={false}
-          />
+          
+          {/* Blood Glucose and Battery - Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BloodGlucoseWidget 
+              patientId={dashboardData?.user?.patientId || ''} 
+              showControls={true}
+              compact={false}
+            />
+            <BatteryWidget 
+              patientId={dashboardData?.user?.patientId || ''} 
+              compact={false}
+            />
+          </div>
         </div>
 
         {/* Vitals History with Filters */}
