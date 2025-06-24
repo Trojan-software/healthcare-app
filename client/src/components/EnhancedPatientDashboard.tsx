@@ -161,6 +161,8 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             return vital.temperature != null && vital.temperature !== '';
           case 'oxygenLevel':
             return vital.oxygenLevel != null && vital.oxygenLevel > 0;
+          case 'bloodGlucose':
+            return vital.bloodGlucose != null && vital.bloodGlucose > 0;
           default:
             return true;
         }
@@ -192,6 +194,9 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
         break;
       case 'oxygenLevel':
         values = filtered.map(v => v.oxygenLevel).filter(v => v != null);
+        break;
+      case 'bloodGlucose':
+        values = filtered.map(v => v.bloodGlucose).filter(v => v != null);
         break;
       default:
         return 'stable';
@@ -448,6 +453,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                 <option value="bloodPressure">Blood Pressure</option>
                 <option value="temperature">Temperature</option>
                 <option value="oxygenLevel">Oxygen Level</option>
+                <option value="bloodGlucose">Blood Glucose Monitor</option>
               </select>
               
               <div className="flex items-center space-x-2">

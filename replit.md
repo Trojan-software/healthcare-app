@@ -107,6 +107,13 @@ Changelog:
   * Added real-time rhythm analysis panel with P-wave detection and QRS morphology assessment
   * Implemented clinical interpretation panel with risk stratification and follow-up recommendations
   * Professional medical-grade interface showing authentic cardiac measurements and abnormality detection
+- June 22, 2025. ADDED BLOOD GLUCOSE MONITOR FILTER TO PATIENT DASHBOARD:
+  * Added "Blood Glucose Monitor" option to Vitals History filter dropdown
+  * Implemented blood glucose filtering logic to show only glucose readings
+  * Added Blood Glucose column to vitals history table with mg/dL units
+  * Enhanced vital status detection to include blood glucose range alerts (70-180 mg/dL)
+  * Filter works with existing date range and trending analysis features
+  * Blood glucose data properly integrated with existing vital signs tracking system
 - June 22, 2025. COMPREHENSIVE PATIENT MANAGEMENT MODULE AUDIT COMPLETED:
   * Performed end-to-end testing of all Patient Management features and functionality
   * Verified CRUD operations: Create, Read, Update operations working correctly with API endpoints
