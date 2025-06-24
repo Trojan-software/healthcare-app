@@ -32,11 +32,18 @@ interface AdvancedAnalyticsProps {
 export default function AdvancedAnalytics({ onClose }: AdvancedAnalyticsProps) {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
+  const [fromDate, setFromDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    return date.toISOString().split('T')[0];
+  });
+  const [toDate, setToDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
 
   useEffect(() => {
     loadAnalyticsData();
-  }, [selectedTimeRange]);
+  }, [fromDate, toDate]);
 
   const loadAnalyticsData = async () => {
     try {
@@ -89,16 +96,24 @@ export default function AdvancedAnalytics({ onClose }: AdvancedAnalyticsProps) {
               <p className="text-indigo-100">Health Trends & Insights Dashboard</p>
             </div>
             <div className="flex items-center space-x-4">
-              <select
-                value={selectedTimeRange}
-                onChange={(e) => setSelectedTimeRange(e.target.value)}
-                className="bg-white bg-opacity-20 text-white border border-white border-opacity-30 rounded-lg px-3 py-2"
-              >
-                <option value="24h">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="90d">Last 3 Months</option>
-              </select>
+              <div className="flex items-center space-x-2 text-indigo-100">
+                <label className="text-sm font-medium">From:</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="bg-white bg-opacity-20 text-white border border-white border-opacity-30 rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex items-center space-x-2 text-indigo-100">
+                <label className="text-sm font-medium">To:</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="bg-white bg-opacity-20 text-white border border-white border-opacity-30 rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
               <button
                 onClick={onClose}
                 className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all"
@@ -115,7 +130,7 @@ export default function AdvancedAnalytics({ onClose }: AdvancedAnalyticsProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Vital Signs Trends */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Vital Signs Trends</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Body Temperature</h3>
               <div className="space-y-4">
                 {analyticsData.trendsData.slice(0, 7).map((day, index) => (
                   <div key={day.date} className="flex items-center justify-between">
@@ -283,7 +298,7 @@ export default function AdvancedAnalytics({ onClose }: AdvancedAnalyticsProps) {
 
             {/* Vitals Averages */}
             <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Average Vital Signs</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Vital Signs</h3>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white rounded-lg p-4 text-center">
