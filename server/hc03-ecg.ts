@@ -113,8 +113,9 @@ export class EcgDataManager {
       await storage.saveEcgData({
         patientId: payload.patientId,
         deviceId: payload.deviceId,
-        waveformData: JSON.stringify(payload.wavePoints),
+        ecgData: JSON.stringify(payload.wavePoints),
         sampleRate: payload.sampleRate,
+        leadType: payload.wavePoints[0]?.lead || 'II',
         timestamp: payload.timestamp
       });
       
