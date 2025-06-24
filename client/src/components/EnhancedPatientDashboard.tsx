@@ -326,13 +326,14 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Current Vitals */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-cyan-400 text-white p-6 rounded-2xl shadow-lg">
+          <div className="bg-gradient-to-br from-blue-500 to-cyan-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleVitalMonitor('heartRate')}>
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.heartRate}</div>
                 <div className="text-blue-100 text-sm">Heart Rate (BPM)</div>
               </div>
               <div className="text-right">
+                <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
                 <div className={`text-sm ${getTrendColor(getVitalTrend('heartRate'))}`}>
                   {getTrendIcon(getVitalTrend('heartRate'))}
                 </div>
@@ -340,13 +341,14 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-emerald-400 text-white p-6 rounded-2xl shadow-lg">
+          <div className="bg-gradient-to-br from-green-500 to-emerald-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleVitalMonitor('bloodPressure')}>
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.bloodPressure}</div>
                 <div className="text-green-100 text-sm">Blood Pressure</div>
               </div>
               <div className="text-right">
+                <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
                 <div className={`text-sm ${getTrendColor(getVitalTrend('bloodPressure'))}`}>
                   {getTrendIcon(getVitalTrend('bloodPressure'))}
                 </div>
@@ -354,13 +356,14 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-6 rounded-2xl shadow-lg">
+          <div className="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleVitalMonitor('temperature')}>
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.temperature}°C</div>
                 <div className="text-pink-100 text-sm">Temperature</div>
               </div>
               <div className="text-right">
+                <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
                 <div className={`text-sm ${getTrendColor(getVitalTrend('temperature'))}`}>
                   {getTrendIcon(getVitalTrend('temperature'))}
                 </div>
@@ -368,13 +371,14 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-violet-400 text-white p-6 rounded-2xl shadow-lg">
+          <div className="bg-gradient-to-br from-purple-500 to-violet-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleVitalMonitor('oxygenLevel')}>
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.oxygenLevel}%</div>
                 <div className="text-purple-100 text-sm">Oxygen Level</div>
               </div>
               <div className="text-right">
+                <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
                 <div className={`text-sm ${getTrendColor(getVitalTrend('oxygenLevel'))}`}>
                   {getTrendIcon(getVitalTrend('oxygenLevel'))}
                 </div>
