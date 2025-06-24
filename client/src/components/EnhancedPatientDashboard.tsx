@@ -389,11 +389,15 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           </div>
         </div>
 
-        {/* Blood Glucose Monitor */}
-        <div className="mt-6">
+        {/* Health Monitoring Widgets */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <BloodGlucoseWidget 
             patientId={dashboardData?.user?.patientId || ''} 
             showControls={true}
+            compact={false}
+          />
+          <BatteryWidget 
+            patientId={dashboardData?.user?.patientId || ''} 
             compact={false}
           />
         </div>

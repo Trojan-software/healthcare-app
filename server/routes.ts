@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { emailNotificationService } from "./email-notifications";
 import { bloodGlucoseManager } from "./hc03-blood-glucose";
+import { batteryManager } from "./hc03-battery";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
@@ -289,6 +290,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error simulating glucose measurement:", error);
       res.status(500).json({ message: "Failed to simulate glucose measurement" });
+    }
+  });
+
+  // Battery API Endpoints
+  app.get("/api/battery/:deviceId", async (req, res) => {
+    try {
+      const { deviceId } = req.params;
+      const batteryInfo = await batteryManager.getBattery(deviceId);
+      
+      if (!batteryInfo) {
+        return res.status(404).json({ message: "Device not found or battery information unavailable" });
+      }
+      
+      res.json(batteryInfo);
+    } catch (error) {
+      console.error("Error fetching battery information:", error);
+      res.status(500).json({ message: "Failed to fetch battery information" });
+    }
+  });
+
+  app.get("/api/battery/patient/:patientId", async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const devicesBattery = await batteryManager.getPatientDevicesBattery(patientId);
+      res.json(devicesBattery);
+    } catch (error) {
+      console.error("Error fetching patient devices battery:", error);
+      res.status(500).json({ message: "Failed to fetch devices battery information" });
+    }
+  });
+
+  app.post("/api/battery/simulate-level", async (req, res) => {
+    try {
+      const { deviceId, patientId, batteryLevel } = req.body;
+      if (!deviceId || !patientId || batteryLevel === undefined) {
+        return res.status(400).json({ message: "Device ID, Patient ID, and Battery Level are required" });
+      }
+      
+      if (batteryLevel < 0 || batteryLevel > 100) {
+        return res.status(400).json({ message: "Battery level must be between 0 and 100" });
+      }
+      
+      await batteryManager.simulateBatteryLevel(deviceId, patientId, batteryLevel);
+      res.json({ message: "Battery level simulation completed", batteryLevel });
+    } catch (error) {
+      console.error("Error simulating battery level:", error);
+      res.status(500).json({ message: "Failed to simulate battery level" });
+    }
+  });
+
+  app.post("/api/battery/simulate-charging", async (req, res) => {
+    try {
+      const { deviceId, patientId, isCharging, method } = req.body;
+      if (!deviceId || !patientId || isCharging === undefined) {
+        return res.status(400).json({ message: "Device ID, Patient ID, and Charging Status are required" });
+      }
+      
+      await batteryManager.simulateChargingStatus(deviceId, patientId, isCharging, method);
+      res.json({ message: "Charging status simulation completed", isCharging, method });
+    } catch (error) {
+      console.error("Error simulating charging status:", error);
+      res.status(500).json({ message: "Failed to simulate charging status" });
     }
   });
 
