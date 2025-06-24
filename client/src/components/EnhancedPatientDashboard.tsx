@@ -112,13 +112,33 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     let filtered = [...vitalsHistory];
 
     // Date filtering using custom date range
-    const fromDateTime = new Date(fromDate + 'T00:00:00');
-    const toDateTime = new Date(toDate + 'T23:59:59');
-    
-    filtered = filtered.filter(vital => {
-      const vitalDate = new Date(vital.timestamp);
-      return vitalDate >= fromDateTime && vitalDate <= toDateTime;
-    });
+    if (fromDate && toDate) {
+      const fromDateTime = new Date(fromDate + 'T00:00:00');
+      const toDateTime = new Date(toDate + 'T23:59:59');
+      
+      filtered = filtered.filter(vital => {
+        const vitalDate = new Date(vital.timestamp);
+        return vitalDate >= fromDateTime && vitalDate <= toDateTime;
+      });
+    }
+
+    // Filter by vital type
+    if (selectedVitalType !== 'all') {
+      filtered = filtered.filter(vital => {
+        switch (selectedVitalType) {
+          case 'heartRate':
+            return vital.heartRate != null;
+          case 'bloodPressure':
+            return vital.bloodPressureSystolic != null || vital.bloodPressureDiastolic != null;
+          case 'temperature':
+            return vital.temperature != null;
+          case 'oxygenLevel':
+            return vital.oxygenLevel != null;
+          default:
+            return true;
+        }
+      });
+    }
 
     // Sort by timestamp descending (newest first)
     filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
