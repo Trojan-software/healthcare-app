@@ -389,6 +389,15 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           </div>
         </div>
 
+        {/* Blood Glucose Monitor */}
+        <div className="mt-6">
+          <BloodGlucoseWidget 
+            patientId={dashboardData?.user?.patientId || ''} 
+            showControls={true}
+            compact={false}
+          />
+        </div>
+
         {/* Vitals History with Filters */}
         <div className="bg-white rounded-xl shadow-md p-6 mt-6">
           <div className="flex justify-between items-center mb-6">

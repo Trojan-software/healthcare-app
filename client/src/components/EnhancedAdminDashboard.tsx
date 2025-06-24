@@ -34,6 +34,7 @@ import HealthHistoryOverview from './HealthHistoryOverview';
 import CriticalAlertsSystem from './CriticalAlertsSystem';
 import AdvancedHealthAnalytics from './AdvancedHealthAnalytics';
 import PatientManagementModule from './PatientManagementModule';
+import BloodGlucoseWidget from './BloodGlucoseWidget';
 
 interface DashboardStats {
   totalPatients: number;

@@ -245,6 +245,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Blood Glucose API Endpoints
+  app.get("/api/blood-glucose/:patientId", async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const glucoseData = await storage.getBloodGlucoseDataByPatient(patientId, limit);
+      res.json(glucoseData);
+    } catch (error) {
+      console.error("Error fetching blood glucose data:", error);
+      res.status(500).json({ message: "Failed to fetch blood glucose data" });
+    }
+  });
+
+  app.post("/api/blood-glucose/start-measurement", async (req, res) => {
+    try {
+      const { patientId, deviceId } = req.body;
+      if (!patientId || !deviceId) {
+        return res.status(400).json({ message: "Patient ID and Device ID are required" });
+      }
+      
+      const success = await bloodGlucoseManager.startGlucoseMeasurement(patientId, deviceId);
+      if (success) {
+        res.json({ message: "Glucose measurement started successfully", status: "measuring" });
+      } else {
+        res.status(500).json({ message: "Failed to start glucose measurement" });
+      }
+    } catch (error) {
+      console.error("Error starting glucose measurement:", error);
+      res.status(500).json({ message: "Failed to start glucose measurement" });
+    }
+  });
+
+  app.post("/api/blood-glucose/simulate", async (req, res) => {
+    try {
+      const { patientId, deviceId, glucoseLevel } = req.body;
+      if (!patientId || !deviceId || !glucoseLevel) {
+        return res.status(400).json({ message: "Patient ID, Device ID, and Glucose Level are required" });
+      }
+      
+      await bloodGlucoseManager.simulateGlucoseMeasurement(patientId, deviceId, glucoseLevel);
+      res.json({ message: "Glucose measurement simulation started", status: "simulating" });
+    } catch (error) {
+      console.error("Error simulating glucose measurement:", error);
+      res.status(500).json({ message: "Failed to simulate glucose measurement" });
+    }
+  });
+
   // Dashboard endpoints
   app.get("/api/dashboard/admin", async (req, res) => {
     try {
