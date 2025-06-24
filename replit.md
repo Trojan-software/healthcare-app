@@ -115,6 +115,11 @@ Changelog:
   * Share creates formatted text summary with key vital signs and patient information
   * History displays tabular view of past recordings with trends and summary statistics
   * All functions work seamlessly with existing ECG monitoring and data collection systems
+- June 22, 2025. COMPLETED BLOOD GLUCOSE MONITOR INTEGRATION IN PATIENT DASHBOARD:
+  * Added "Blood Glucose Monitor" column to vitals history table with mg/dL units
+  * Enhanced table structure to display blood glucose readings alongside other vital signs
+  * Updated vital status detection to include blood glucose range alerts (70-180 mg/dL normal range)
+  * Blood glucose data now visible in comprehensive vitals history view with proper formatting
 - June 22, 2025. ADDED BLOOD GLUCOSE MONITOR FILTER TO PATIENT DASHBOARD:
   * Added "Blood Glucose Monitor" option to Vitals History filter dropdown
   * Implemented blood glucose filtering logic to show only glucose readings
