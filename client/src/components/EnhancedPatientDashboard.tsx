@@ -52,7 +52,14 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const [vitalsHistory, setVitalsHistory] = useState<VitalSigns[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVitalType, setSelectedVitalType] = useState('all');
-  const [dateFilter, setDateFilter] = useState('7days');
+  const [fromDate, setFromDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    return date.toISOString().split('T')[0];
+  });
+  const [toDate, setToDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -104,28 +111,14 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
     let filtered = [...vitalsHistory];
 
-    // Date filtering
-    const now = new Date();
-    let cutoffDate = new Date();
+    // Date filtering using custom date range
+    const fromDateTime = new Date(fromDate + 'T00:00:00');
+    const toDateTime = new Date(toDate + 'T23:59:59');
     
-    switch (dateFilter) {
-      case '24hours':
-        cutoffDate.setHours(now.getHours() - 24);
-        break;
-      case '7days':
-        cutoffDate.setDate(now.getDate() - 7);
-        break;
-      case '30days':
-        cutoffDate.setDate(now.getDate() - 30);
-        break;
-      case '90days':
-        cutoffDate.setDate(now.getDate() - 90);
-        break;
-      default:
-        cutoffDate = new Date(0); // All time
-    }
-
-    filtered = filtered.filter(vital => new Date(vital.timestamp) >= cutoffDate);
+    filtered = filtered.filter(vital => {
+      const vitalDate = new Date(vital.timestamp);
+      return vitalDate >= fromDateTime && vitalDate <= toDateTime;
+    });
 
     // Sort by timestamp descending (newest first)
     filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -372,7 +365,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-semibold text-gray-800">Vitals History</h3>
-            <div className="flex space-x-4">
+            <div className="flex space-x-4 items-center">
               <select
                 value={selectedVitalType}
                 onChange={(e) => setSelectedVitalType(e.target.value)}
@@ -385,17 +378,25 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                 <option value="oxygenLevel">Oxygen Level</option>
               </select>
               
-              <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="24hours">Last 24 Hours</option>
-                <option value="7days">Last 7 Days</option>
-                <option value="30days">Last 30 Days</option>
-                <option value="90days">Last 90 Days</option>
-                <option value="all">All Time</option>
-              </select>
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-600">From:</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-600">To:</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+              </div>
             </div>
           </div>
 

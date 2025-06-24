@@ -98,6 +98,12 @@ The system follows a modern full-stack architecture with React frontend, Express
 
 ```
 Changelog:
+- June 22, 2025. ENHANCED DATE FILTERING IN PATIENT DASHBOARD:
+  * Replaced preset time filters with custom From/To date-picker controls in Vitals History
+  * Updated Advanced Analytics dashboard with date-picker controls instead of dropdown
+  * Removed "Average" from Vital Signs summary card and updated section header to "Body Temperature"
+  * Improved user experience with flexible date range selection across both dashboards
+  * Maintained professional styling and functionality while providing more precise filtering options
 - June 21, 2025. COMPREHENSIVE APPLICATION FLOWCHART DOCUMENTATION CREATED:
   * Generated complete system flowchart PDF generator with detailed explanations
   * Documented all application components: authentication, admin dashboard, patient monitoring
