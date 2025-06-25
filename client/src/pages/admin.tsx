@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Switch } from "@/components/ui/switch";
 import { Users, UserPlus, Shield, Activity, AlertCircle, CheckCircle, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage, LanguageSwitcher } from "@/lib/i18n";
 
 const createPatientSchema = z.object({
   patientId: z.string().min(3, "Patient ID must be at least 3 characters"),
@@ -44,6 +45,7 @@ export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     // Check authentication
@@ -197,22 +199,29 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 p-6 ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage patient dashboard access for 24/7 Tele H</p>
+        <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={isRTL ? 'text-right' : ''}>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {isRTL ? 'لوحة الإدارة' : 'Admin Dashboard'}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              {isRTL ? 'إدارة وصول المرضى لنظام الرعاية الصحية 24/7' : 'Manage patient dashboard access for 24/7 Tele H'}
+            </p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-4 ${isRTL ? 'space-x-reverse' : ''}`}>
+            <LanguageSwitcher />
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <Shield className="w-6 h-6 text-blue-600" />
-              <span className="text-sm font-medium text-blue-600">Administrator</span>
+              <span className="text-sm font-medium text-blue-600">
+                {isRTL ? 'مدير النظام' : 'Administrator'}
+              </span>
             </div>
-            <Button onClick={handleLogout} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
+            <Button onClick={handleLogout} variant="outline" size="sm" className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <LogOut className="w-4 h-4" />
+              <span>{t('logout')}</span>
             </Button>
           </div>
         </div>
