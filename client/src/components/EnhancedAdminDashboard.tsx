@@ -25,8 +25,10 @@ import {
   CheckCircle,
   XCircle,
   Battery,
-  Signal
+  Signal,
+  LogOut
 } from 'lucide-react';
+import { useLanguage, LanguageSwitcher } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
 import WeeklyReportDashboard from './WeeklyReportDashboard';
 import CheckupScheduling from './CheckupScheduling';
@@ -34,6 +36,7 @@ import HealthHistoryOverview from './HealthHistoryOverview';
 import CriticalAlertsSystem from './CriticalAlertsSystem';
 import AdvancedHealthAnalytics from './AdvancedHealthAnalytics';
 import PatientManagementModule from './PatientManagementModule';
+import BilingualPatientManagement from './BilingualPatientManagement';
 import BloodGlucoseWidget from './BloodGlucoseWidget';
 import EcgWidget from './EcgWidget';
 
@@ -82,6 +85,7 @@ export default function EnhancedAdminDashboard() {
   const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
   const [hospitalFilter, setHospitalFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const { t, isRTL } = useLanguage();
   const { t, isRTL } = useLanguage();
 
   // Fetch dashboard statistics
