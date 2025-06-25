@@ -468,11 +468,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isRTL = language === 'ar';
+  const contextValue = { language, setLanguage, t, isRTL };
 
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, isRTL }}>
-      {children}
-    </LanguageContext.Provider>
+  return React.createElement(
+    LanguageContext.Provider,
+    { value: contextValue },
+    children
   );
 }
 
@@ -492,21 +493,13 @@ export function LanguageSwitcher() {
     <div className="flex items-center space-x-2 rtl:space-x-reverse">
       <button
         onClick={() => setLanguage('en')}
-        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-          language === 'en'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-        }`}
+        className={language === 'en' ? 'bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium'}
       >
         EN
       </button>
       <button
         onClick={() => setLanguage('ar')}
-        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-          language === 'ar'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-        }`}
+        className={language === 'ar' ? 'bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium'}
       >
         العربية
       </button>
