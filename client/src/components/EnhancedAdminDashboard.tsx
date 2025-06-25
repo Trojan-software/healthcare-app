@@ -82,6 +82,7 @@ export default function EnhancedAdminDashboard() {
   const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
   const [hospitalFilter, setHospitalFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const { t, isRTL } = useLanguage();
 
   // Fetch dashboard statistics
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({

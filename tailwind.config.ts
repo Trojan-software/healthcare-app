@@ -86,5 +86,37 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [
+    require("tailwindcss-animate"), 
+    require("@tailwindcss/typography"),
+    function({ addUtilities }: { addUtilities: Function }) {
+      const newUtilities = {
+        '.rtl': {
+          direction: 'rtl',
+        },
+        '.ltr': {
+          direction: 'ltr',
+        },
+        '.rtl .rtl\\:space-x-reverse > :not([hidden]) ~ :not([hidden])': {
+          '--tw-space-x-reverse': '1',
+        },
+        '.rtl .rtl\\:flex-row-reverse': {
+          'flex-direction': 'row-reverse',
+        },
+        '.rtl .rtl\\:text-right': {
+          'text-align': 'right',
+        },
+        '.rtl .rtl\\:text-left': {
+          'text-align': 'left',
+        },
+        '.rtl .rtl\\:mr-auto': {
+          'margin-right': 'auto',
+        },
+        '.rtl .rtl\\:ml-auto': {
+          'margin-left': 'auto',
+        },
+      }
+      addUtilities(newUtilities, ['responsive', 'hover'])
+    }
+  ],
 } satisfies Config;
