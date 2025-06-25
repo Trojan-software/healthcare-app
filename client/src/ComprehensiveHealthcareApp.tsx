@@ -4,6 +4,7 @@ import DeviceMonitoring from './components/DeviceMonitoring';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
 import CheckupScheduling from './components/CheckupScheduling';
 import EnhancedPatientDashboard from './components/EnhancedPatientDashboard';
+import { LanguageProvider, useLanguage, LanguageSwitcher } from './lib/i18n';
 
 interface User {
   id: number;
@@ -54,7 +55,8 @@ interface AppState {
   error: string;
 }
 
-export default function ComprehensiveHealthcareApp() {
+function AppContent() {
+  const { t, isRTL } = useLanguage();
   const [state, setState] = useState<AppState>({
     view: 'login',
     user: null,
@@ -412,15 +414,24 @@ For questions, contact: support@24x7teleh.com
           </div>
 
           {/* Login Form */}
-          <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12">
+          <div className={`w-full lg:w-1/2 flex items-center justify-center px-6 py-12 ${isRTL ? 'rtl' : 'ltr'}`}>
             <div className="w-full max-w-md space-y-8">
-              <div className="text-center">
-                <div className="lg:hidden mb-6">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">24/7 Tele H</h1>
-                  <p className="text-gray-600">Technology Services</p>
+              <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className={isRTL ? 'text-right' : 'text-left'}>
+                  <div className="lg:hidden mb-6">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">24/7 Tele H</h1>
+                    <p className="text-gray-600">
+                      {isRTL ? 'خدمات التكنولوجيا' : 'Technology Services'}
+                    </p>
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    {isRTL ? 'مرحباً بعودتك' : 'Welcome Back'}
+                  </h2>
+                  <p className="mt-2 text-gray-600">
+                    {isRTL ? 'سجل دخولك إلى لوحة الرعاية الصحية' : 'Sign in to your healthcare dashboard'}
+                  </p>
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-                <p className="mt-2 text-gray-600">Sign in to your healthcare dashboard</p>
+                <LanguageSwitcher />
               </div>
 
               <form onSubmit={(e) => {
@@ -432,30 +443,31 @@ For questions, contact: support@24x7teleh.com
                 );
               }} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address or Patient ID
+                  <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    {isRTL ? 'البريد الإلكتروني أو رقم المريض' : 'Email Address or Patient ID'}
                   </label>
                   <input
                     type="text"
                     name="email"
                     defaultValue="admin@24x7teleh.com"
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Enter your email or patient ID"
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
+                    placeholder={isRTL ? 'أدخل بريدك الإلكتروني أو رقم المريض' : 'Enter your email or patient ID'}
+                    dir={isRTL ? 'rtl' : 'ltr'}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password
+                  <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    {isRTL ? 'كلمة المرور' : 'Password'}
                   </label>
                   <input
                     type="password"
                     name="password"
                     defaultValue="admin123"
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Enter your password"
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
+                    placeholder={isRTL ? 'أدخل كلمة المرور' : 'Enter your password'}
                   />
                 </div>
 
@@ -470,25 +482,27 @@ For questions, contact: support@24x7teleh.com
                   disabled={state.loading}
                   className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-teal-700 disabled:opacity-50 transition-all transform hover:scale-[1.02]"
                 >
-                  {state.loading ? 'Signing In...' : 'Sign In'}
+                  {state.loading ? (isRTL ? 'جاري تسجيل الدخول...' : 'Signing In...') : (isRTL ? 'تسجيل الدخول' : 'Sign In')}
                 </button>
               </form>
 
               <div className="space-y-4">
-                <div className="text-center">
+                <div className={`text-center ${isRTL ? 'text-right' : 'text-left'}`}>
                   <button
                     onClick={() => setState(prev => ({ ...prev, view: 'register' }))}
                     className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
                   >
-                    New Patient? Create Account
+                    {isRTL ? 'مريض جديد؟ إنشاء حساب' : 'New Patient? Create Account'}
                   </button>
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <p className="text-gray-600 text-sm mb-2">Demo Credentials</p>
-                  <div className="text-gray-800 font-medium text-sm space-y-1">
-                    <div>Admin: admin@24x7teleh.com / admin123</div>
-                    <div>Patient: test@example.com / patient123</div>
+                  <p className={`text-gray-600 text-sm mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    {isRTL ? 'بيانات تجريبية' : 'Demo Credentials'}
+                  </p>
+                  <div className={`text-gray-800 font-medium text-sm space-y-1 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <div>{isRTL ? 'مدير:' : 'Admin:'} admin@24x7teleh.com / admin123</div>
+                    <div>{isRTL ? 'مريض:' : 'Patient:'} test@example.com / patient123</div>
                   </div>
                 </div>
               </div>
@@ -1148,5 +1162,13 @@ For questions, contact: support@24x7teleh.com
         <p className="text-gray-600">Loading healthcare system...</p>
       </div>
     </div>
+  );
+}
+
+export default function ComprehensiveHealthcareApp() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
