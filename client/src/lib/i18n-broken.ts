@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
+// Internationalization support for Arabic and English
 export type Language = 'en' | 'ar';
 
 export interface Translation {
@@ -299,16 +298,16 @@ export const translations: Record<Language, Translation> = {
     password: 'كلمة المرور',
     signIn: 'تسجيل الدخول',
     signUp: 'إنشاء حساب',
-    register: 'التسجيل',
+    register: 'تسجيل',
     firstName: 'الاسم الأول',
     middleName: 'الاسم الأوسط',
     lastName: 'اسم العائلة',
-    mobileNumber: 'رقم الهاتف',
+    mobileNumber: 'رقم الهاتف المحمول',
     patientId: 'رقم المريض',
     hospital: 'المستشفى',
     dateOfBirth: 'تاريخ الميلاد',
     createAccount: 'إنشاء حساب',
-    alreadyHaveAccount: 'لديك حساب بالفعل؟',
+    alreadyHaveAccount: 'هل لديك حساب بالفعل؟',
     forgotPassword: 'نسيت كلمة المرور؟',
     
     // Dashboard
@@ -342,7 +341,7 @@ export const translations: Record<Language, Translation> = {
     bloodPressure: 'ضغط الدم',
     temperature: 'درجة الحرارة',
     oxygenLevel: 'مستوى الأكسجين',
-    bloodGlucose: 'الجلوكوز في الدم',
+    bloodGlucose: 'جلوكوز الدم',
     ecg: 'تخطيط القلب',
     normal: 'طبيعي',
     elevated: 'مرتفع',
@@ -358,7 +357,7 @@ export const translations: Record<Language, Translation> = {
     signalStrength: 'قوة الإشارة',
     addDevice: 'إضافة جهاز',
     connectDevice: 'ربط الجهاز',
-    disconnectDevice: 'قطع الجهاز',
+    disconnectDevice: 'قطع الاتصال',
     deviceStatus: 'حالة الجهاز',
     
     // Alerts & Notifications
@@ -367,7 +366,7 @@ export const translations: Record<Language, Translation> = {
     lowBattery: 'بطارية منخفضة',
     deviceOffline: 'الجهاز غير متصل',
     abnormalVitals: 'علامات حيوية غير طبيعية',
-    emergencyContact: 'اتصال طارئ',
+    emergencyContact: 'جهة اتصال الطوارئ',
     
     // Reports
     weeklyReport: 'التقرير الأسبوعي',
@@ -420,8 +419,11 @@ export const translations: Record<Language, Translation> = {
     updated: 'تم التحديث بنجاح',
     connectionEstablished: 'تم تأسيس الاتصال',
     connectionFailed: 'فشل الاتصال',
-  },
+  }
 };
+
+// Language context and hooks
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface LanguageContextType {
   language: Language;
@@ -432,32 +434,45 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('healthcare-language');
-      return (saved as Language) || 'en';
-    }
-    return 'en';
-  });
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('healthcare-language', language);
-      document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-      document.documentElement.lang = language;
+    // Load saved language from localStorage
+    const savedLanguage = localStorage.getItem('language') as Language;
+    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'ar')) {
+      setLanguageState(savedLanguage);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Update document direction and language
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+    
+    // Add/remove RTL class for Tailwind CSS
+    if (language === 'ar') {
+      document.documentElement.classList.add('rtl');
+    } else {
+      document.documentElement.classList.remove('rtl');
     }
   }, [language]);
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem('language', lang);
+  };
 
   const t = (key: keyof Translation): string => {
     return translations[language][key] || key;
   };
 
   const isRTL = language === 'ar';
+  const contextValue = { language, setLanguage, t, isRTL };
 
   return React.createElement(
     LanguageContext.Provider,
-    { value: { language, setLanguage, t, isRTL } },
+    { value: contextValue },
     children
   );
 }
@@ -470,31 +485,24 @@ export function useLanguage() {
   return context;
 }
 
+// Language switcher component
 export function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage();
 
-  return React.createElement(
-    'div',
-    { className: 'flex items-center space-x-2 rtl:space-x-reverse' },
-    React.createElement(
-      'button',
-      {
-        onClick: () => setLanguage('en'),
-        className: language === 'en' 
-          ? 'bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors'
-          : 'bg-gray-200 text-gray-700 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium transition-colors'
-      },
-      'EN'
-    ),
-    React.createElement(
-      'button',
-      {
-        onClick: () => setLanguage('ar'),
-        className: language === 'ar'
-          ? 'bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors'
-          : 'bg-gray-200 text-gray-700 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium transition-colors'
-      },
-      'العربية'
-    )
+  return (
+    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+      <button
+        onClick={() => setLanguage('en')}
+        className={language === 'en' ? 'bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium'}
+      >
+        EN
+      </button>
+      <button
+        onClick={() => setLanguage('ar')}
+        className={language === 'ar' ? 'bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium'}
+      >
+        العربية
+      </button>
+    </div>
   );
 }
