@@ -22,7 +22,12 @@ import {
   User,
   LogOut,
   Gauge,
-  Zap
+  Zap,
+  Play,
+  Download,
+  FileText,
+  Pause,
+  Square
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BatteryWidget from './BatteryWidget';
@@ -65,6 +70,14 @@ interface PatientDashboardData {
 export default function BilingualPatientDashboard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState('overview');
+  const [activeTests, setActiveTests] = useState<{[key: string]: boolean}>({
+    heartRate: false,
+    bloodPressure: false,
+    temperature: false,
+    oxygenLevel: false,
+    bloodGlucose: false,
+    ecg: false
+  });
   const { t, isRTL } = useLanguage();
   const { toast } = useToast();
 
@@ -130,6 +143,76 @@ export default function BilingualPatientDashboard() {
       case 'elevated': return 'text-yellow-600 bg-yellow-50';
       case 'high': return 'text-orange-600 bg-orange-50';
       case 'critical': return 'text-red-600 bg-red-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    const statusTexts = {
+      normal: isRTL ? 'طبيعي' : 'Normal',
+      elevated: isRTL ? 'مرتفع' : 'Elevated',
+      high: isRTL ? 'عالي' : 'High',
+      critical: isRTL ? 'حرج' : 'Critical'
+    };
+    return statusTexts[status as keyof typeof statusTexts] || status;
+  };
+
+  const startTest = (testType: string) => {
+    setActiveTests(prev => ({ ...prev, [testType]: true }));
+    toast({
+      title: isRTL ? 'بدء الاختبار' : 'Test Started',
+      description: isRTL ? `تم بدء اختبار ${getTestName(testType)}` : `${getTestName(testType)} test started`,
+    });
+  };
+
+  const stopTest = (testType: string) => {
+    setActiveTests(prev => ({ ...prev, [testType]: false }));
+    toast({
+      title: isRTL ? 'توقف الاختبار' : 'Test Stopped',
+      description: isRTL ? `تم إيقاف اختبار ${getTestName(testType)}` : `${getTestName(testType)} test stopped`,
+    });
+  };
+
+  const getTestName = (testType: string) => {
+    const names = {
+      heartRate: isRTL ? 'معدل ضربات القلب' : 'Heart Rate',
+      bloodPressure: isRTL ? 'ضغط الدم' : 'Blood Pressure',
+      temperature: isRTL ? 'درجة الحرارة' : 'Temperature',
+      oxygenLevel: isRTL ? 'مستوى الأكسجين' : 'Oxygen Level',
+      bloodGlucose: isRTL ? 'الجلوكوز في الدم' : 'Blood Glucose',
+      ecg: isRTL ? 'تخطيط القلب' : 'ECG'
+    };
+    return names[testType as keyof typeof names] || testType;
+  };
+
+  const exportReadingsReport = () => {
+    const reportData = vitalSigns.map(vital => ({
+      Date: new Date(vital.timestamp).toLocaleDateString(),
+      Time: new Date(vital.timestamp).toLocaleTimeString(),
+      'Heart Rate': vital.heartRate,
+      'Blood Pressure': `${vital.bloodPressureSystolic}/${vital.bloodPressureDiastolic}`,
+      'Temperature': vital.temperature,
+      'Oxygen Level': vital.oxygenLevel,
+      'Blood Glucose': vital.bloodGlucose || 'N/A'
+    }));
+
+    const csvContent = [
+      Object.keys(reportData[0] || {}).join(','),
+      ...reportData.map(row => Object.values(row).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `patient-readings-${patientId}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: isRTL ? 'تصدير التقرير' : 'Report Exported',
+      description: isRTL ? 'تم تصدير تقرير القراءات بنجاح' : 'Readings report exported successfully',
+    });
       default: return 'text-gray-600 bg-gray-50';
     }
   };
@@ -340,18 +423,210 @@ export default function BilingualPatientDashboard() {
           {/* Reports Tab */}
           <TabsContent value="reports" className="space-y-6">
             <Card>
-              <CardContent className="p-8 text-center">
-                <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {isRTL ? 'التقارير والتحليلات' : 'Reports & Analytics'}
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  {isRTL ? 'عرض التقارير الصحية والاتجاهات الطبية' : 'View health reports and medical trends'}
-                </p>
-                <Button className={`flex items-center space-x-2 mx-auto ${isRTL ? 'space-x-reverse' : ''}`}>
-                  <TrendingUp className="w-4 h-4" />
-                  <span>{isRTL ? 'عرض التقارير' : 'View Reports'}</span>
-                </Button>
+              <CardHeader>
+                <CardTitle className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <div className={`flex items-center space-x-3 ${isRTL ? 'space-x-reverse' : ''}`}>
+                    <FileText className="w-5 h-5" />
+                    <span>{isRTL ? 'تقارير القراءات' : 'Readings Reports'}</span>
+                  </div>
+                  <Button 
+                    onClick={exportReadingsReport}
+                    className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>{isRTL ? 'تصدير' : 'Export'}</span>
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Individual Test Controls */}
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
+                          <Heart className="w-5 h-5 text-red-500" />
+                          <div className={isRTL ? 'text-right' : ''}>
+                            <p className="font-medium">{isRTL ? 'معدل ضربات القلب' : 'Heart Rate'}</p>
+                            <p className="text-sm text-gray-600">{isRTL ? 'مراقبة مستمرة' : 'Continuous monitoring'}</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={activeTests.heartRate ? "destructive" : "default"}
+                          onClick={() => activeTests.heartRate ? stopTest('heartRate') : startTest('heartRate')}
+                        >
+                          {activeTests.heartRate ? (
+                            <>
+                              <Square className="w-3 h-3 mr-1" />
+                              {isRTL ? 'إيقاف' : 'Stop'}
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3 h-3 mr-1" />
+                              {isRTL ? 'بدء' : 'Start'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
+                          <Gauge className="w-5 h-5 text-blue-500" />
+                          <div className={isRTL ? 'text-right' : ''}>
+                            <p className="font-medium">{isRTL ? 'ضغط الدم' : 'Blood Pressure'}</p>
+                            <p className="text-sm text-gray-600">{isRTL ? 'قياس دوري' : 'Periodic measurement'}</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={activeTests.bloodPressure ? "destructive" : "default"}
+                          onClick={() => activeTests.bloodPressure ? stopTest('bloodPressure') : startTest('bloodPressure')}
+                        >
+                          {activeTests.bloodPressure ? (
+                            <>
+                              <Square className="w-3 h-3 mr-1" />
+                              {isRTL ? 'إيقاف' : 'Stop'}
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3 h-3 mr-1" />
+                              {isRTL ? 'بدء' : 'Start'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
+                          <Thermometer className="w-5 h-5 text-orange-500" />
+                          <div className={isRTL ? 'text-right' : ''}>
+                            <p className="font-medium">{isRTL ? 'درجة الحرارة' : 'Temperature'}</p>
+                            <p className="text-sm text-gray-600">{isRTL ? 'قياس حراري' : 'Thermal measurement'}</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={activeTests.temperature ? "destructive" : "default"}
+                          onClick={() => activeTests.temperature ? stopTest('temperature') : startTest('temperature')}
+                        >
+                          {activeTests.temperature ? (
+                            <>
+                              <Square className="w-3 h-3 mr-1" />
+                              {isRTL ? 'إيقاف' : 'Stop'}
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3 h-3 mr-1" />
+                              {isRTL ? 'بدء' : 'Start'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
+                          <Droplets className="w-5 h-5 text-cyan-500" />
+                          <div className={isRTL ? 'text-right' : ''}>
+                            <p className="font-medium">{isRTL ? 'مستوى الأكسجين' : 'Oxygen Level'}</p>
+                            <p className="text-sm text-gray-600">{isRTL ? 'قياس الأكسجين' : 'Oxygen measurement'}</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={activeTests.oxygenLevel ? "destructive" : "default"}
+                          onClick={() => activeTests.oxygenLevel ? stopTest('oxygenLevel') : startTest('oxygenLevel')}
+                        >
+                          {activeTests.oxygenLevel ? (
+                            <>
+                              <Square className="w-3 h-3 mr-1" />
+                              {isRTL ? 'إيقاف' : 'Stop'}
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3 h-3 mr-1" />
+                              {isRTL ? 'بدء' : 'Start'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
+                          <Zap className="w-5 h-5 text-purple-500" />
+                          <div className={isRTL ? 'text-right' : ''}>
+                            <p className="font-medium">{isRTL ? 'الجلوكوز في الدم' : 'Blood Glucose'}</p>
+                            <p className="text-sm text-gray-600">{isRTL ? 'قياس السكري' : 'Glucose measurement'}</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={activeTests.bloodGlucose ? "destructive" : "default"}
+                          onClick={() => activeTests.bloodGlucose ? stopTest('bloodGlucose') : startTest('bloodGlucose')}
+                        >
+                          {activeTests.bloodGlucose ? (
+                            <>
+                              <Square className="w-3 h-3 mr-1" />
+                              {isRTL ? 'إيقاف' : 'Stop'}
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3 h-3 mr-1" />
+                              {isRTL ? 'بدء' : 'Start'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
+                          <Activity className="w-5 h-5 text-green-500" />
+                          <div className={isRTL ? 'text-right' : ''}>
+                            <p className="font-medium">{isRTL ? 'تخطيط القلب' : 'ECG'}</p>
+                            <p className="text-sm text-gray-600">{isRTL ? 'مراقبة القلب' : 'Heart monitoring'}</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={activeTests.ecg ? "destructive" : "default"}
+                          onClick={() => activeTests.ecg ? stopTest('ecg') : startTest('ecg')}
+                        >
+                          {activeTests.ecg ? (
+                            <>
+                              <Square className="w-3 h-3 mr-1" />
+                              {isRTL ? 'إيقاف' : 'Stop'}
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3 h-3 mr-1" />
+                              {isRTL ? 'بدء' : 'Start'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

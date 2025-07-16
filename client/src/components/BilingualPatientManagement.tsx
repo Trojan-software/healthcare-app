@@ -23,6 +23,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import MissedReadingsReport from './MissedReadingsReport';
 
 interface Patient {
   id: number;
@@ -48,11 +49,13 @@ interface Hospital {
 
 export default function BilingualPatientManagement() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<'name' | 'dob' | 'patientId'>('name');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [hospitalFilter, setHospitalFilter] = useState('all');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showMissedReadingsReport, setShowMissedReadingsReport] = useState(false);
 
   const { t, isRTL } = useLanguage();
   const { toast } = useToast();
@@ -66,25 +69,41 @@ export default function BilingualPatientManagement() {
 
   const allPatients: Patient[] = Array.isArray(patientsData) ? patientsData : [];
 
-  // Hospitals list with Arabic names
+  // Hospitals list with Arabic names and "Others" option
   const hospitals: Hospital[] = [
     { id: "SEHA", name: isRTL ? "مدينة الشيخ خليفة الطبية" : "Sheikh Khalifa Medical City", location: "Abu Dhabi", type: "Government Hospital" },
     { id: "MAFRAQ", name: isRTL ? "مستشفى المفرق" : "Mafraq Hospital", location: "Abu Dhabi", type: "Government Hospital" },
     { id: "ALZAHRA", name: isRTL ? "مستشفى الزهراء" : "Al Zahra Hospital", location: "Sharjah", type: "Private Hospital" },
     { id: "CORNICHE", name: isRTL ? "مستشفى الكورنيش" : "Corniche Hospital", location: "Abu Dhabi", type: "Government Hospital" },
     { id: "CLEVELANAD", name: isRTL ? "كليفلاند كلينك أبوظبي" : "Cleveland Clinic Abu Dhabi", location: "Abu Dhabi", type: "Private Hospital" },
+    { id: "OTHERS", name: isRTL ? "أخرى" : "Others", location: "Custom", type: "Custom Hospital" },
     { id: "BURJEEL", name: isRTL ? "مستشفى برجيل" : "Burjeel Hospital", location: "Abu Dhabi", type: "Private Hospital" },
     { id: "NMC", name: isRTL ? "مستشفى NMC الملكي" : "NMC Royal Hospital", location: "Abu Dhabi", type: "Private Hospital" },
     { id: "DANAT", name: isRTL ? "مستشفى دانة الإمارات" : "Danat Al Emarat Hospital", location: "Abu Dhabi", type: "Private Hospital" },
   ];
 
-  // Filter patients based on search and filters
+  // Filter patients based on search type and query
   const filteredPatients = allPatients.filter(patient => {
-    const fullName = `${patient.firstName} ${patient.middleName || ''} ${patient.lastName}`.toLowerCase().trim();
-    const matchesSearch = searchQuery === '' || 
-      fullName.includes(searchQuery.toLowerCase()) ||
-      patient.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.patientId.toLowerCase().includes(searchQuery.toLowerCase());
+    let matchesSearch = false;
+    
+    if (searchQuery === '') {
+      matchesSearch = true;
+    } else {
+      switch (searchType) {
+        case 'name':
+          const fullName = `${patient.firstName} ${patient.middleName || ''} ${patient.lastName}`.toLowerCase().trim();
+          matchesSearch = fullName.includes(searchQuery.toLowerCase());
+          break;
+        case 'dob':
+          matchesSearch = patient.dateOfBirth && patient.dateOfBirth.includes(searchQuery);
+          break;
+        case 'patientId':
+          matchesSearch = patient.patientId.toLowerCase().includes(searchQuery.toLowerCase());
+          break;
+        default:
+          matchesSearch = true;
+      }
+    }
     
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'active' && patient.isActive) ||
@@ -141,17 +160,30 @@ export default function BilingualPatientManagement() {
       {/* Search and Filters */}
       <Card>
         <CardContent className="p-6">
-          <div className={`grid grid-cols-1 md:grid-cols-4 gap-4 ${isRTL ? 'rtl:text-right' : ''}`}>
+          <div className={`grid grid-cols-1 md:grid-cols-5 gap-4 ${isRTL ? 'rtl:text-right' : ''}`}>
             <div className="relative">
               <Search className={`absolute top-3 w-4 h-4 text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} />
               <Input
-                placeholder={t('searchPatients')}
+                placeholder={searchType === 'name' ? (isRTL ? 'البحث بالاسم' : 'Search by name') : 
+                           searchType === 'dob' ? (isRTL ? 'البحث بتاريخ الميلاد' : 'Search by DOB') : 
+                           (isRTL ? 'البحث برقم المريض' : 'Search by Patient ID')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`${isRTL ? 'pr-10' : 'pl-10'}`}
                 dir={isRTL ? 'rtl' : 'ltr'}
               />
             </div>
+            
+            <Select value={searchType} onValueChange={(value) => setSearchType(value as 'name' | 'dob' | 'patientId')}>
+              <SelectTrigger>
+                <SelectValue placeholder={isRTL ? 'نوع البحث' : 'Search Type'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">{isRTL ? 'الاسم' : 'Name'}</SelectItem>
+                <SelectItem value="dob">{isRTL ? 'تاريخ الميلاد' : 'Date of Birth'}</SelectItem>
+                <SelectItem value="patientId">{isRTL ? 'رقم المريض' : 'Patient ID'}</SelectItem>
+              </SelectContent>
+            </Select>
             
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
               <SelectTrigger>
@@ -178,9 +210,13 @@ export default function BilingualPatientManagement() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
-              <Filter className="w-4 h-4" />
-              <span>{t('filter')}</span>
+            <Button 
+              variant="outline" 
+              className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}
+              onClick={() => setShowMissedReadingsReport(true)}
+            >
+              <Activity className="w-4 h-4" />
+              <span>{isRTL ? 'تقرير القراءات الفائتة' : 'Missed Readings Report'}</span>
             </Button>
           </div>
         </CardContent>
@@ -409,6 +445,12 @@ export default function BilingualPatientManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Missed Readings Report */}
+      <MissedReadingsReport 
+        isOpen={showMissedReadingsReport} 
+        onClose={() => setShowMissedReadingsReport(false)} 
+      />
     </div>
   );
 }

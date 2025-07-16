@@ -97,6 +97,17 @@ The system follows a modern full-stack architecture with React frontend, Express
 ## Changelog
 
 ```
+- January 16, 2025. ENHANCED PATIENT SEARCH, MISSED READINGS REPORT, AND DASHBOARD CONTROLS:
+  * Implemented advanced patient search functionality with multiple search types (name, DOB, Patient ID)
+  * Added comprehensive Missed Readings Report with filtering by priority, reading type, and missed days
+  * Created detailed MissedReadingsReport component with export functionality and bilingual support
+  * Enhanced hospital list with "Others" option for custom hospital selection
+  * Implemented individual test controls in patient dashboard for all vital signs monitoring
+  * Added export functionality for patient readings reports with CSV format
+  * Integrated real-time test start/stop controls for Heart Rate, Blood Pressure, Temperature, Oxygen Level, Blood Glucose, and ECG
+  * Enhanced patient dashboard Reports tab with comprehensive test management interface
+  * All features include complete Arabic/English bilingual support with proper RTL/LTR layouts
+  * Professional healthcare interface with authentic medical workflow and compliance tracking
 - January 16, 2025. COMPREHENSIVE APPLICATION FLOWCHARTS CREATED:
   * Generated complete system flowcharts covering all major application workflows
   * User Authentication & Registration Flow with bilingual support and role-based access
