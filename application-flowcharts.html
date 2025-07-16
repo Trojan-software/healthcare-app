@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>24/7 Tele H - Application Flowcharts</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+        .flowchart-section {
+            margin-bottom: 60px;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .flowchart-title {
+            color: #2c3e50;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .flowchart-description {
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        .print-button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        @media print {
+            .print-button { display: none; }
+            body { background: white; }
+            .container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button" onclick="window.print()">Print Flowcharts</button>
+    
+    <div class="container">
+        <h1>24/7 Tele H Technology Services</h1>
+        <p class="subtitle">Healthcare Monitoring Application - System Flowcharts</p>
+
+        <!-- 1. User Authentication Flow -->
+        <div class="flowchart-section">
+            <h2 class="flowchart-title">1. User Authentication & Registration Flow</h2>
+            <p class="flowchart-description">This flowchart shows how users register and login to the system with bilingual support and role-based access control.</p>
+            <div class="mermaid">
+                graph TD
+                    A[Application Start] --> B{Language Selection}
+                    B --> C[English Interface]
+                    B --> D[Arabic Interface RTL]
+                    C --> E[Login/Register Page]
+                    D --> E
+                    E --> F{User Choice}
+                    F -->|Login| G[Enter Email/Patient ID]
+                    F -->|Register| H[Registration Form]
+                    G --> I[Enter Password]
+                    H --> J[Fill Personal Details]
+                    I --> K{Authentication}
+                    J --> L[Select UAE Hospital]
+                    K -->|Success| M{User Role}
+                    K -->|Failed| N[Show Error Message]
+                    L --> O[OTP Verification]
+                    N --> G
+                    O --> P[Email Verification]
+                    M -->|Admin| Q[Admin Dashboard]
+                    M -->|Patient| R[Patient Dashboard]
+                    M -->|Doctor| S[Healthcare Professional Dashboard]
+                    P --> T[Account Created Successfully]
+                    T --> E
+            </div>
+        </div>
+
+        <!-- 2. HC03 Device Integration Flow -->
+        <div class="flowchart-section">
+            <h2 class="flowchart-title">2. HC03 Device Integration & Monitoring Flow</h2>
+            <p class="flowchart-description">This flowchart illustrates how HC03 Bluetooth devices connect and stream vital signs data to the application.</p>
+            <div class="mermaid">
+                graph TD
+                    A[Patient Dashboard] --> B[Device Management]
+                    B --> C[Scan for HC03 Devices]
+                    C --> D{Device Found}
+                    D -->|Yes| E[Bluetooth Pairing]
+                    D -->|No| F[Show No Devices Message]
+                    E --> G{Connection Status}
+                    G -->|Connected| H[Device Configuration]
+                    G -->|Failed| I[Retry Connection]
+                    H --> J[Start Data Streaming]
+                    J --> K[ECG Monitoring]
+                    J --> L[Blood Glucose Monitoring]
+                    J --> M[Battery Status Monitoring]
+                    K --> N[Real-time Waveform Display]
+                    L --> O[Glucose Level Readings]
+                    M --> P[Battery Level Alerts]
+                    N --> Q[Heart Rate Analysis]
+                    O --> R[Blood Sugar Trends]
+                    P --> S[Low Battery Warnings]
+                    Q --> T[Mood Index Calculation]
+                    R --> U[Diabetes Management]
+                    S --> V[Charging Reminders]
+                    T --> W[HRV Metrics]
+                    U --> X[Alert Generation]
+                    V --> Y[Device Status Updates]
+                    W --> Z[Health Analytics]
+                    X --> AA[Doctor Notifications]
+                    Y --> BB[Patient Notifications]
+                    Z --> CC[Historical Data Storage]
+            </div>
+        </div>
+
+        <!-- 3. Vital Signs Monitoring Flow -->
+        <div class="flowchart-section">
+            <h2 class="flowchart-title">3. Vital Signs Monitoring & Alert System Flow</h2>
+            <p class="flowchart-description">This flowchart demonstrates real-time vital signs monitoring with automated alert generation and healthcare professional notifications.</p>
+            <div class="mermaid">
+                graph TD
+                    A[HC03 Device Data] --> B[Real-time Data Processing]
+                    B --> C[Heart Rate Analysis]
+                    B --> D[Blood Pressure Monitoring]
+                    B --> E[Temperature Readings]
+                    B --> F[Oxygen Saturation]
+                    B --> G[Blood Glucose Levels]
+                    C --> H{Normal Range Check}
+                    D --> I{BP Threshold Check}
+                    E --> J{Fever Detection}
+                    F --> K{Hypoxia Detection}
+                    G --> L{Diabetes Range Check}
+                    H -->|Normal| M[Store Data]
+                    H -->|Abnormal| N[Generate Alert]
+                    I -->|Normal| M
+                    I -->|High/Low| O[Hypertension Alert]
+                    J -->|Normal| M
+                    J -->|Fever| P[Temperature Alert]
+                    K -->|Normal| M
+                    K -->|Low| Q[Oxygen Alert]
+                    L -->|Normal| M
+                    L -->|Abnormal| R[Glucose Alert]
+                    N --> S[Classify Alert Severity]
+                    O --> S
+                    P --> S
+                    Q --> S
+                    R --> S
+                    S --> T{Alert Level}
+                    T -->|Low| U[Patient Notification]
+                    T -->|Medium| V[Doctor Notification]
+                    T -->|High| W[Emergency Protocol]
+                    T -->|Critical| X[Immediate Emergency Response]
+                    U --> Y[Dashboard Update]
+                    V --> Z[Email/SMS to Doctor]
+                    W --> AA[Multiple Contact Alerts]
+                    X --> BB[Emergency Services Contact]
+                    Y --> CC[Patient Dashboard]
+                    Z --> DD[Healthcare Dashboard]
+                    AA --> EE[Family/Emergency Contacts]
+                    BB --> FF[Hospital Emergency Department]
+                    M --> GG[Historical Data Database]
+                    GG --> HH[Trend Analysis]
+                    HH --> II[Health Reports]
+            </div>
+        </div>
+
+        <!-- 4. Patient Management Flow -->
+        <div class="flowchart-section">
+            <h2 class="flowchart-title">4. Patient Management System Flow</h2>
+            <p class="flowchart-description">This flowchart shows comprehensive patient management including registration, monitoring, and healthcare professional interactions.</p>
+            <div class="mermaid">
+                graph TD
+                    A[Admin Dashboard] --> B[Patient Management Module]
+                    B --> C[Patient Operations]
+                    C --> D[Add New Patient]
+                    C --> E[Search/Filter Patients]
+                    C --> F[View Patient Details]
+                    C --> G[Edit Patient Information]
+                    D --> H[Patient Registration Form]
+                    E --> I[Multi-field Search]
+                    F --> J[Complete Patient Profile]
+                    G --> K[Update Patient Data]
+                    H --> L[Personal Information]
+                    I --> M[Real-time Search Results]
+                    J --> N[Medical History]
+                    K --> O[Save Changes]
+                    L --> P[Contact Details]
+                    M --> Q[Filtered Patient List]
+                    N --> R[Vital Signs History]
+                    O --> S[Update Database]
+                    P --> T[Hospital Assignment]
+                    Q --> U[Patient Selection]
+                    R --> V[Device Connections]
+                    S --> W[Confirmation Message]
+                    T --> X[Patient ID Generation]
+                    U --> Y[Patient Dashboard Access]
+                    V --> Z[Alert History]
+                    W --> AA[Updated Patient List]
+                    X --> BB[Account Creation]
+                    Y --> CC[Individual Patient View]
+                    Z --> DD[Health Analytics]
+                    AA --> EE[Admin Dashboard Update]
+                    BB --> FF[Welcome Email]
+                    CC --> GG[Real-time Monitoring]
+                    DD --> HH[Health Reports]
+                    FF --> II[Patient Onboarding]
+                    GG --> JJ[Live Vital Signs]
+                    HH --> KK[Trend Analysis]
+                    II --> LL[Device Setup Guide]
+                    JJ --> MM[Alert Monitoring]
+                    KK --> NN[Clinical Insights]
+            </div>
+        </div>
+
+        <!-- 5. Bilingual Interface Flow -->
+        <div class="flowchart-section">
+            <h2 class="flowchart-title">5. Bilingual Interface & Language Switching Flow</h2>
+            <p class="flowchart-description">This flowchart demonstrates how the application handles Arabic/English language switching with proper RTL/LTR layout support.</p>
+            <div class="mermaid">
+                graph TD
+                    A[Application Load] --> B[Check Saved Language Preference]
+                    B --> C{Saved Language}
+                    C -->|English| D[Load English Interface]
+                    C -->|Arabic| E[Load Arabic Interface]
+                    C -->|None| F[Default to English]
+                    D --> G[LTR Layout]
+                    E --> H[RTL Layout]
+                    F --> G
+                    G --> I[English Text Content]
+                    H --> J[Arabic Text Content]
+                    I --> K[Language Switcher Buttons]
+                    J --> K
+                    K --> L[EN/العربية Buttons]
+                    L --> M{User Language Switch}
+                    M -->|Click EN| N[Switch to English]
+                    M -->|Click عربية| O[Switch to Arabic]
+                    N --> P[Update Layout to LTR]
+                    O --> Q[Update Layout to RTL]
+                    P --> R[Load English Translations]
+                    Q --> S[Load Arabic Translations]
+                    R --> T[Update UI Components]
+                    S --> U[Update UI Components - Arabic]
+                    T --> V[Save Language Preference]
+                    U --> W[Save Language Preference]
+                    V --> X[English Interface Active]
+                    W --> Y[Arabic Interface Active]
+                    X --> Z[Medical Terms in English]
+                    Y --> AA[Medical Terms in Arabic]
+                    Z --> BB[Date/Time Format - Western]
+                    AA --> CC[Date/Time Format - Arabic]
+                    BB --> DD[Complete English Experience]
+                    CC --> EE[Complete Arabic Experience]
+                    DD --> FF[All Forms and Buttons in English]
+                    EE --> GG[All Forms and Buttons in Arabic]
+                    FF --> HH[Healthcare Terminology - English]
+                    GG --> II[Healthcare Terminology - Arabic]
+                    HH --> JJ[UAE Context - English]
+                    II --> KK[UAE Context - Arabic]
+            </div>
+        </div>
+
+        <!-- 6. Data Flow and Analytics -->
+        <div class="flowchart-section">
+            <h2 class="flowchart-title">6. Data Flow & Analytics System</h2>
+            <p class="flowchart-description">This flowchart shows how data flows through the system for analytics, reporting, and clinical decision support.</p>
+            <div class="mermaid">
+                graph TD
+                    A[Multiple Data Sources] --> B[Data Collection Layer]
+                    A --> C[HC03 Devices]
+                    A --> D[Manual Input]
+                    A --> E[Patient Registration]
+                    B --> F[Real-time Data Processing]
+                    C --> G[Bluetooth Data Stream]
+                    D --> H[Healthcare Professional Input]
+                    E --> I[Patient Demographics]
+                    F --> J[Data Validation]
+                    G --> K[Device Data Parser]
+                    H --> L[Clinical Notes]
+                    I --> M[Patient Database]
+                    J --> N[Data Storage]
+                    K --> O[Vital Signs Database]
+                    L --> P[Medical Records]
+                    M --> Q[Patient Management System]
+                    N --> R[PostgreSQL Database]
+                    O --> S[Time-series Data]
+                    P --> T[Clinical Database]
+                    Q --> U[Patient Search & Filtering]
+                    R --> V[Data Analytics Engine]
+                    S --> W[Trend Analysis]
+                    T --> X[Medical History]
+                    U --> Y[Patient Dashboard]
+                    V --> Z[Health Analytics]
+                    W --> AA[Predictive Modeling]
+                    X --> BB[Clinical Decision Support]
+                    Y --> CC[Individual Patient View]
+                    Z --> DD[Population Health Analytics]
+                    AA --> EE[Early Warning Systems]
+                    BB --> FF[Treatment Recommendations]
+                    CC --> GG[Personal Health Trends]
+                    DD --> HH[Admin Dashboard Analytics]
+                    EE --> II[Alert Generation]
+                    FF --> JJ[Healthcare Professional Dashboard]
+                    GG --> KK[Patient Health Reports]
+                    HH --> LL[System Performance Metrics]
+                    II --> MM[Automated Notifications]
+                    JJ --> NN[Clinical Workflow]
+                    KK --> OO[Weekly/Monthly Reports]
+                    LL --> PP[System Administration]
+                    MM --> QQ[Patient/Doctor Alerts]
+                    NN --> RR[Patient Care Optimization]
+                    OO --> SS[Export/Print Reports]
+                    PP --> TT[System Monitoring]
+                    QQ --> UU[Emergency Response]
+                    RR --> VV[Improved Health Outcomes]
+                    SS --> WW[Patient Health Documentation]
+                    TT --> XX[Performance Optimization]
+                    UU --> YY[Critical Care Coordination]
+                    VV --> ZZ[Quality of Care Metrics]
+                    WW --> AAA[Historical Health Records]
+                    XX --> BBB[System Scalability]
+                    YY --> CCC[Emergency Medical Response]
+                    ZZ --> DDD[Healthcare Quality Improvement]
+            </div>
+        </div>
+
+        <!-- 7. System Architecture Flow -->
+        <div class="flowchart-section">
+            <h2 class="flowchart-title">7. System Architecture & Technical Flow</h2>
+            <p class="flowchart-description">This flowchart illustrates the technical architecture and data flow between different system components.</p>
+            <div class="mermaid">
+                graph TD
+                    A[Client Browser/PWA] --> B[React Frontend]
+                    B --> C[Language Context]
+                    B --> D[TanStack Query]
+                    B --> E[Tailwind CSS + shadcn/ui]
+                    C --> F[i18n Translation System]
+                    D --> G[API Request Layer]
+                    E --> H[Responsive UI Components]
+                    F --> I[Arabic/English Support]
+                    G --> J[Express.js Backend]
+                    H --> K[Mobile-First Design]
+                    I --> L[RTL/LTR Layout]
+                    J --> M[Authentication Middleware]
+                    K --> N[Progressive Web App]
+                    L --> O[Bilingual Interface]
+                    M --> P[JWT Token Validation]
+                    N --> Q[Service Worker]
+                    O --> R[Language Switching]
+                    P --> S[Role-based Access Control]
+                    Q --> T[Offline Capability]
+                    R --> U[Cultural Localization]
+                    S --> V[API Route Protection]
+                    T --> W[Push Notifications]
+                    U --> X[User Interface Rendering]
+                    V --> Y[Database Operations]
+                    W --> Z[Mobile App Experience]
+                    X --> AA[Frontend Components]
+                    Y --> BB[Drizzle ORM]
+                    Z --> CC[Cross-platform Support]
+                    AA --> DD[User Dashboard]
+                    BB --> EE[PostgreSQL Database]
+                    CC --> FF[iOS/Android Compatibility]
+                    DD --> GG[Real-time Updates]
+                    EE --> HH[Data Storage]
+                    FF --> II[Native App Feel]
+                    GG --> JJ[WebSocket Connections]
+                    HH --> KK[Patient Data]
+                    II --> LL[Device Integration]
+                    JJ --> MM[Live Data Streaming]
+                    KK --> NN[Vital Signs Storage]
+                    LL --> OO[HC03 Bluetooth Connectivity]
+                    MM --> PP[Real-time Monitoring]
+                    NN --> QQ[Historical Analytics]
+                    OO --> RR[Medical Device Communication]
+                    PP --> SS[Dashboard Updates]
+                    QQ --> TT[Health Trend Analysis]
+                    RR --> UU[Device Data Collection]
+                    SS --> VV[Alert Generation]
+                    TT --> WW[Clinical Insights]
+                    UU --> XX[Vital Signs Processing]
+                    VV --> YY[Notification System]
+                    WW --> ZZ[Healthcare Analytics]
+                    XX --> AAA[Health Monitoring]
+                    YY --> BBB[Email/SMS Alerts]
+                    ZZ --> CCC[Clinical Decision Support]
+                    AAA --> DDD[Patient Health Tracking]
+                    BBB --> EEE[Healthcare Professional Notifications]
+                    CCC --> FFF[Improved Patient Care]
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 8px; text-align: center;">
+            <h3 style="color: #2c3e50; margin-bottom: 10px;">24/7 Tele H Technology Services</h3>
+            <p style="color: #7f8c8d; margin: 0;">Comprehensive Healthcare Monitoring Solution</p>
+            <p style="color: #7f8c8d; margin: 5px 0 0 0; font-size: 0.9em;">Document Generated: January 2025</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>
