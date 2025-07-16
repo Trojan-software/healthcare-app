@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage, LanguageSwitcher } from "@/lib/i18n";
+import PrivacyPolicyFooter from "./PrivacyPolicyFooter";
 
 interface LoginFormProps {
   onLoginSuccess: (token: string, role: string) => void;
@@ -154,6 +155,9 @@ export default function BilingualLoginForm({ onLoginSuccess }: LoginFormProps) {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Privacy Policy Footer */}
+      <PrivacyPolicyFooter />
     </div>
   );
 }

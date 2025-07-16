@@ -29,6 +29,7 @@ import {
   Pause,
   Square
 } from 'lucide-react';
+import PrivacyPolicyFooter from './PrivacyPolicyFooter';
 import { useToast } from '@/hooks/use-toast';
 import BatteryWidget from './BatteryWidget';
 import BloodGlucoseWidget from './BloodGlucoseWidget';
@@ -632,6 +633,9 @@ export default function BilingualPatientDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Privacy Policy Footer */}
+      <PrivacyPolicyFooter />
     </div>
   );
 }

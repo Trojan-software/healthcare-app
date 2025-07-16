@@ -39,6 +39,7 @@ import PatientManagementModule from './PatientManagementModule';
 import BilingualPatientManagement from './BilingualPatientManagement';
 import BloodGlucoseWidget from './BloodGlucoseWidget';
 import EcgWidget from './EcgWidget';
+import PrivacyPolicyFooter from './PrivacyPolicyFooter';
 
 interface DashboardStats {
   totalPatients: number;
@@ -513,6 +514,9 @@ export default function EnhancedAdminDashboard() {
           <AdvancedHealthAnalytics />
         </TabsContent>
       </Tabs>
+      
+      {/* Privacy Policy Footer */}
+      <PrivacyPolicyFooter />
     </div>
   );
 }
