@@ -214,18 +214,6 @@ export default function BilingualPatientDashboard() {
       title: isRTL ? 'تصدير التقرير' : 'Report Exported',
       description: isRTL ? 'تم تصدير تقرير القراءات بنجاح' : 'Readings report exported successfully',
     });
-      default: return 'text-gray-600 bg-gray-50';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'normal': return t('normal');
-      case 'elevated': return t('elevated');
-      case 'high': return t('high');
-      case 'critical': return t('critical');
-      default: return status;
-    }
   };
 
   return (
