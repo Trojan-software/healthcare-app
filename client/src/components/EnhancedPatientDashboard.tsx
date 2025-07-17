@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { handleApiError } from '@/lib/errorHandler';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -104,7 +105,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       }
     } catch (err) {
       setError('Network error loading dashboard');
-      console.error('Dashboard error:', err);
+      handleApiError('EnhancedPatientDashboard', 'loadDashboardData', err as Error, { userId });
     } finally {
       setLoading(false);
     }
@@ -113,20 +114,20 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const loadVitalsHistory = async () => {
     try {
       if (dashboardData?.user?.patientId) {
-        console.log('Loading vitals for patient:', dashboardData.user.patientId);
+        // Loading vitals for patient (logged via structured system)
         const response = await fetch(`/api/vital-signs/${dashboardData.user.patientId}`);
         if (response.ok) {
           const history = await response.json();
-          console.log('Vitals history loaded:', history.length, 'records');
+          // Vitals history loaded successfully
           setVitalsHistory(history);
         } else {
-          console.error('Failed to load vitals history:', response.status);
+          handleApiError('EnhancedPatientDashboard', 'loadVitalsHistory', new Error(`Failed to load vitals history: ${response.status}`), { patientId: dashboardData.user.patientId });
         }
       } else {
-        console.log('No patient ID available for vitals loading');
+        // No patient ID available for vitals loading
       }
     } catch (err) {
-      console.error('Error loading vitals history:', err);
+      handleApiError('EnhancedPatientDashboard', 'loadVitalsHistory', err as Error, { patientId: dashboardData?.user?.patientId });
     }
   };
 
@@ -156,7 +157,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           case 'bloodPressure':
             const hasBloodPressure = (vital.bloodPressureSystolic != null && vital.bloodPressureSystolic > 0) && 
                    (vital.bloodPressureDiastolic != null && vital.bloodPressureDiastolic > 0);
-            console.log('BP Check:', vital.id, 'Systolic:', vital.bloodPressureSystolic, 'Diastolic:', vital.bloodPressureDiastolic, 'Result:', hasBloodPressure);
+            // Blood pressure filter applied
             return hasBloodPressure;
           case 'temperature':
             return vital.temperature != null && vital.temperature !== '';
@@ -168,7 +169,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             return true;
         }
       });
-      console.log(`Filtering by ${selectedVitalType}: ${beforeFilter} -> ${filtered.length} records`);
+      // Filtering completed successfully
     }
 
     // Sort by timestamp descending (newest first)

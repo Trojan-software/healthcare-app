@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useLanguage, LanguageSwitcher } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
+import { handleApiError } from '@/lib/errorHandler';
 import WeeklyReportDashboard from './WeeklyReportDashboard';
 import CheckupScheduling from './CheckupScheduling';
 import HealthHistoryOverview from './HealthHistoryOverview';
@@ -180,7 +181,7 @@ export default function EnhancedAdminDashboard() {
       if (hours < 24) return `${hours}h ago`;
       return `${days}d ago`;
     } catch (error) {
-      console.error('Error parsing date:', date, error);
+      handleApiError('EnhancedAdminDashboard', 'getTimeAgo', error as Error, { date });
       return 'Unknown';
     }
   };

@@ -246,7 +246,7 @@ export default function HealthHistoryOverview() {
   };
 
   const exportData = () => {
-    console.log('Exporting health history data:', { dateRange, selectedVitalType, statusFilter });
+    // Exporting health history data
   };
 
   if (isLoading) {

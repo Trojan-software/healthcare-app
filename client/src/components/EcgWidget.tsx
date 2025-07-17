@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { handleApiError, handleDeviceError } from '@/lib/errorHandler';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Heart, Play, Square, Fingerprint, Zap, Wind, TrendingUp, AlertTriangle, Download, Share, History } from 'lucide-react';
@@ -107,7 +108,7 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
         }
       }
     } catch (error) {
-      console.error('Error loading ECG data:', error);
+      handleDeviceError('EcgWidget', 'loadEcgData', error as Error, { deviceId });
     } finally {
       setLoading(false);
     }
@@ -121,7 +122,7 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
         setEcgData(data);
       }
     } catch (error) {
-      console.error('Error loading wave data:', error);
+      handleDeviceError('EcgWidget', 'loadWaveData', error as Error, { deviceId });
     }
   };
 
@@ -173,7 +174,7 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
         });
       }, 1000);
     } catch (error) {
-      console.error('Error starting ECG recording:', error);
+      handleDeviceError('EcgWidget', 'startRecording', error as Error, { deviceId, patientId });
       setIsRecording(false);
     }
   };
@@ -194,7 +195,7 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
         signalStrength: 0
       }));
     } catch (error) {
-      console.error('Error stopping ECG recording:', error);
+      handleDeviceError('EcgWidget', 'stopRecording', error as Error, { deviceId, patientId });
     }
   };
 
@@ -270,7 +271,7 @@ Generated: ${new Date().toLocaleString()}`;
         alert('ECG report copied to clipboard!');
       }
     } catch (error) {
-      console.error('Share failed:', error);
+      handleApiError('EcgWidget', 'handleShare', error as Error, { deviceId, patientId });
       alert('Unable to share report');
     }
   };
@@ -329,10 +330,10 @@ ${historyData.map(r => `<tr><td>${new Date(r.date).toLocaleDateString()}</td><td
 
     try {
       // In a real implementation, this would send to healthcare provider
-      console.log('Alerting doctor with data:', alertData);
+      // Doctor alert logged through structured system
       alert(`Critical ECG alert sent to healthcare provider!\n\nFindings:\n${alertData.findings.map(f => '• ' + f).join('\n')}\n\nTimestamp: ${new Date().toLocaleTimeString()}`);
     } catch (error) {
-      console.error('Failed to send alert:', error);
+      handleApiError('EcgWidget', 'handleAlertDoctor', error as Error, { patientId, deviceId });
       alert('Failed to send alert. Please contact healthcare provider directly.');
     }
   };

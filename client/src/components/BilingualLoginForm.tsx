@@ -46,7 +46,7 @@ export default function BilingualLoginForm({ onLoginSuccess }: LoginFormProps) {
       setError(err.message || t('connectionFailed'));
       toast({
         title: t('error'),
-        description: error.message || t('connectionFailed'),
+        description: err.message || t('connectionFailed'),
         variant: "destructive",
       });
     } finally {

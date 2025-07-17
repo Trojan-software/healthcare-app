@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { handleApiError, handleDeviceError } from '@/lib/errorHandler';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -58,7 +59,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       const response = await apiRequest(`/api/hc03/devices/${patientId}`) as unknown as HC03Device[];
       setDevices(response);
     } catch (error) {
-      console.error('Failed to load devices:', error);
+      handleDeviceError('HC03DeviceManager', 'loadDevices', error as Error, { patientId });
     }
   };
 
@@ -92,7 +93,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       
       await loadPatientDevices();
     } catch (error) {
-      console.error('Failed to connect device:', error);
+      handleDeviceError('HC03DeviceManager', 'connectDevice', error as Error, { patientId });
       toast({
         title: "Connection Failed",
         description: "Failed to connect to HC03 device. Please try again.",
@@ -196,7 +197,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         fingerDetected: data.touch
       });
     } catch (error) {
-      console.error('Failed to save ECG data:', error);
+      handleDeviceError('HC03DeviceManager', 'saveEcgData', error as Error, { deviceId: connectedDevice?.deviceId });
     }
   };
 
@@ -211,7 +212,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         waveData: data.bloodOxygenWaveData
       });
     } catch (error) {
-      console.error('Failed to save blood oxygen data:', error);
+      handleDeviceError('HC03DeviceManager', 'saveBloodOxygenData', error as Error, { deviceId: connectedDevice?.deviceId });
     }
   };
 
@@ -226,7 +227,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         measurementProgress: data.progress
       });
     } catch (error) {
-      console.error('Failed to save blood pressure data:', error);
+      handleDeviceError('HC03DeviceManager', 'saveBloodPressureData', error as Error, { deviceId: connectedDevice?.deviceId });
     }
   };
 
@@ -239,7 +240,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         measurementSite: 'forehead'
       });
     } catch (error) {
-      console.error('Failed to save temperature data:', error);
+      handleDeviceError('HC03DeviceManager', 'saveTemperatureData', error as Error, { deviceId: connectedDevice?.deviceId });
     }
   };
 
@@ -249,7 +250,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       
       setConnectedDevice(prev => prev ? { ...prev, batteryLevel, chargingStatus } : null);
     } catch (error) {
-      console.error('Failed to update device battery:', error);
+      handleDeviceError('HC03DeviceManager', 'updateDeviceBattery', error as Error, { deviceId });
     }
   };
 
@@ -273,7 +274,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         description: `Started ${getDetectionName(detection)} monitoring`,
       });
     } catch (error) {
-      console.error(`Failed to start ${detection} detection:`, error);
+      handleDeviceError('HC03DeviceManager', 'startDetection', error as Error, { deviceId, detection });
       toast({
         title: "Detection Failed",
         description: `Failed to start ${getDetectionName(detection)} monitoring`,
@@ -297,7 +298,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         description: `Stopped ${getDetectionName(detection)} monitoring`,
       });
     } catch (error) {
-      console.error(`Failed to stop ${detection} detection:`, error);
+      handleDeviceError('HC03DeviceManager', 'stopDetection', error as Error, { deviceId, detection });
     }
   }, [toast]);
 

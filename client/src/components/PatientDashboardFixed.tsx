@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { handleApiError } from '@/lib/errorHandler';
 
 interface User {
   id: number;
@@ -19,8 +20,7 @@ interface PatientDashboardProps {
 }
 
 export default function PatientDashboardFixed({ user, onLogout }: PatientDashboardProps = {}) {
-  console.log('PatientDashboardFixed rendering for user:', user?.id);
-  console.log('COMPONENT VERIFICATION: This is PatientDashboardFixed, not placeholder text');
+  // Component verification logs removed for production
 
   // Local state for vital signs with default values
   const [vitals, setVitals] = useState({
@@ -45,7 +45,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
       if (!user?.id) return null;
       const response = await fetch(`/api/dashboard/patient/${user.id}`);
       if (!response.ok) {
-        console.warn('Dashboard API failed, using default data');
+        handleApiError('PatientDashboardFixed', 'dashboardQuery', new Error('Dashboard API failed'), { userId: user?.id });
         return null;
       }
       return response.json();
