@@ -233,7 +233,7 @@ export default function PatientManagementModule() {
     mutationFn: async (patientId: string) => {
       return await apiRequest(`/api/patients/${patientId}/reset-password`, 'POST');
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast({
         title: "Password Reset Successful",
         description: `New temporary password: ${data.temporaryPassword}. Please share this with the patient securely.`,

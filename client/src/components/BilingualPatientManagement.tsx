@@ -622,7 +622,7 @@ export default function BilingualPatientManagement() {
               }}
               onCancel={() => setShowEditDialog(false)}
               isRTL={isRTL}
-              t={t}
+              t={t as any}
             />
           )}
         </DialogContent>

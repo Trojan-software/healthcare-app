@@ -479,8 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
       
       const updatedPatient = await storage.updateUser(parseInt(id), {
-        password: hashedPassword,
-        mustChangePassword: true // Flag to force password change on next login
+        password: hashedPassword
       });
       
       if (!updatedPatient) {
