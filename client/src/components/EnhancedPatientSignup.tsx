@@ -26,6 +26,7 @@ const signupSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   middleName: z.string().optional(),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  dateOfBirth: z.string().min(1, 'Date of birth is required'),
   email: z.string().email('Please enter a valid email address'),
   mobileNumber: z.string().regex(/^(\+971|971|0)?[0-9]{9}$/, 'Please enter a valid UAE mobile number'),
   patientId: z.string().min(6, 'Patient ID must be at least 6 characters'),
@@ -82,6 +83,7 @@ export default function EnhancedPatientSignup() {
       firstName: '',
       middleName: '',
       lastName: '',
+      dateOfBirth: '',
       email: '',
       mobileNumber: '',
       patientId: '',
@@ -359,6 +361,23 @@ export default function EnhancedPatientSignup() {
                       {signupForm.formState.errors.lastName && (
                         <p className="text-red-600 text-sm mt-1">
                           {signupForm.formState.errors.lastName.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date of Birth *
+                      </label>
+                      <input
+                        {...signupForm.register('dateOfBirth')}
+                        type="date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        max={new Date().toISOString().split('T')[0]}
+                      />
+                      {signupForm.formState.errors.dateOfBirth && (
+                        <p className="text-red-600 text-sm mt-1">
+                          {signupForm.formState.errors.dateOfBirth.message}
                         </p>
                       )}
                     </div>
