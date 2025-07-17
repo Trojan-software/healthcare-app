@@ -133,21 +133,17 @@ export class EcgDataManager {
       // Update vital signs with heart rate
       await storage.createVitalSigns({
         patientId: payload.patientId,
-        deviceId: payload.deviceId,
-        heartRate: payload.heartRate,
-        timestamp: payload.timestamp
+        heartRate: payload.heartRate
       });
       
       // Check for abnormal heart rate
       if (payload.heartRate < 60 || payload.heartRate > 100) {
-        const severity = payload.heartRate < 50 || payload.heartRate > 120 ? 'critical' : 'medium';
+        const severity = payload.heartRate < 50 || payload.heartRate > 120 ? 'critical' : 'warning';
         await storage.createAlert({
           patientId: payload.patientId,
-          alertType: 'abnormal_heart_rate',
-          severity,
-          message: `Heart rate: ${payload.heartRate} BPM`,
-          isResolved: false,
-          timestamp: payload.timestamp
+          type: severity,
+          title: 'Abnormal Heart Rate Alert',
+          description: `Heart rate: ${payload.heartRate} BPM`
         });
       }
       
@@ -185,11 +181,9 @@ export class EcgDataManager {
       if (payload.rrVariability > 200) {
         await storage.createAlert({
           patientId: payload.patientId,
-          alertType: 'irregular_rhythm',
-          severity: 'medium',
-          message: `High RR variability: ${payload.rrVariability}ms`,
-          isResolved: false,
-          timestamp: payload.timestamp
+          type: 'warning',
+          title: 'Irregular Rhythm Alert',
+          description: `High RR variability: ${payload.rrVariability}ms`
         });
       }
     } catch (error) {
@@ -206,11 +200,9 @@ export class EcgDataManager {
       if (payload.stress_score > 80) {
         await storage.createAlert({
           patientId: payload.patientId,
-          alertType: 'high_stress',
-          severity: 'medium',
-          message: `High stress level detected: ${payload.stress_score}/100`,
-          isResolved: false,
-          timestamp: payload.timestamp
+          type: 'warning',
+          title: 'High Stress Alert',
+          description: `High stress level detected: ${payload.stress_score}/100`
         });
       }
     } catch (error) {
@@ -225,14 +217,12 @@ export class EcgDataManager {
       
       // Check for abnormal respiratory rate
       if (payload.respiratoryRate < 12 || payload.respiratoryRate > 20) {
-        const severity = payload.respiratoryRate < 8 || payload.respiratoryRate > 24 ? 'critical' : 'medium';
+        const severity = payload.respiratoryRate < 8 || payload.respiratoryRate > 24 ? 'critical' : 'warning';
         await storage.createAlert({
           patientId: payload.patientId,
-          alertType: 'abnormal_respiratory_rate',
-          severity,
-          message: `Respiratory rate: ${payload.respiratoryRate} BPM`,
-          isResolved: false,
-          timestamp: payload.timestamp
+          type: severity,
+          title: 'Abnormal Respiratory Rate Alert',
+          description: `Respiratory rate: ${payload.respiratoryRate} BPM`
         });
       }
     } catch (error) {

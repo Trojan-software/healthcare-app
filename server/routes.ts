@@ -448,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "First name, last name, and email are required" });
       }
       
-      const updatedPatient = await storage.updatePatient(parseInt(id), updateData);
+      const updatedPatient = await storage.updateUser(parseInt(id), updateData);
       if (!updatedPatient) {
         return res.status(404).json({ message: "Patient not found" });
       }

@@ -266,7 +266,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
 
     try {
       await hc03Sdk.startDetect(detection);
-      setActiveDetections(prev => new Set([...prev, detection]));
+      setActiveDetections(prev => new Set([...Array.from(prev), detection]));
       
       toast({
         title: "Detection Started",

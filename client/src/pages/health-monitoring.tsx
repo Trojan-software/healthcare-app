@@ -455,7 +455,7 @@ export default function HealthMonitoringPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {devices?.map((device: any) => (
+                  {Array.isArray(devices) ? devices.map((device: any) => (
                     <div key={device.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <div className="font-medium">{device.deviceName}</div>
@@ -470,8 +470,8 @@ export default function HealthMonitoringPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
-                  {(!devices || devices.length === 0) && (
+                  )) : null}
+                  {(!Array.isArray(devices) || devices.length === 0) && (
                     <p className="text-gray-500 text-center py-4">No devices registered</p>
                   )}
                 </div>
@@ -490,23 +490,23 @@ export default function HealthMonitoringPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span>ECG Readings (24h)</span>
-                    <span className="font-medium">{healthData?.ecg?.length || 0}</span>
+                    <span className="font-medium">{(healthData as any)?.ecg?.length || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Blood Pressure (24h)</span>
-                    <span className="font-medium">{healthData?.bloodPressure?.length || 0}</span>
+                    <span className="font-medium">{(healthData as any)?.bloodPressure?.length || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Blood Oxygen (24h)</span>
-                    <span className="font-medium">{healthData?.bloodOxygen?.length || 0}</span>
+                    <span className="font-medium">{(healthData as any)?.bloodOxygen?.length || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Temperature (24h)</span>
-                    <span className="font-medium">{healthData?.temperature?.length || 0}</span>
+                    <span className="font-medium">{(healthData as any)?.temperature?.length || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Blood Glucose (24h)</span>
-                    <span className="font-medium">{healthData?.bloodGlucose?.length || 0}</span>
+                    <span className="font-medium">{(healthData as any)?.bloodGlucose?.length || 0}</span>
                   </div>
                 </div>
               </CardContent>

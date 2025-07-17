@@ -171,7 +171,7 @@ export class BloodGlucoseManager {
       'strip_removed': 'Test strip removed',
       'error': 'Error occurred during measurement'
     };
-    return messages[status] || `Unknown status: ${status}`;
+    return messages[status as keyof typeof messages] || `Unknown status: ${status}`;
   }
 
   // Public method to get blood glucose data

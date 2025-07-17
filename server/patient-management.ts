@@ -325,7 +325,10 @@ export function registerPatientManagementRoutes(app: Express) {
         }
       }
 
-      const updatedPatient = await storage.updateUser(patient.id, validation.data);
+      const updatedPatient = await storage.updateUser(patient.id, {
+        ...validation.data,
+        dateOfBirth: validation.data.dateOfBirth ? new Date(validation.data.dateOfBirth) : undefined
+      });
       
       if (!updatedPatient) {
         return res.status(500).json({

@@ -58,11 +58,9 @@ export class BatteryManager {
         // Create low battery alert
         await storage.createAlert({
           patientId: payload.patientId,
-          alertType: 'low_battery',
-          severity: payload.batteryLevel <= 10 ? 'critical' : 'medium',
-          message: `Device ${payload.deviceId} battery level is ${payload.batteryLevel}%`,
-          isResolved: false,
-          timestamp: payload.timestamp
+          type: payload.batteryLevel <= 10 ? 'critical' : 'warning',
+          title: 'Low Battery Alert',
+          description: `Device ${payload.deviceId} battery level is ${payload.batteryLevel}%`
         });
       }
       
@@ -100,7 +98,7 @@ export class BatteryManager {
       }
       
       // Update device charging status in database
-      await storage.updateDeviceBattery(payload.deviceId, null, payload.isCharging);
+      await storage.updateDeviceBattery(payload.deviceId, 0, payload.isCharging);
       
       // Update device status based on charging state
       const deviceStatus = payload.isCharging ? 'charging' : 'active';
