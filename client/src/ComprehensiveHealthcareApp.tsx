@@ -1067,7 +1067,7 @@ For questions, contact: support@24x7teleh.com
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold">Patient Dashboard</h1>
-                <p className="text-green-100">Welcome, {state.user.firstName} {state.user.lastName}</p>
+                <p className="text-green-100">Welcome, {state.user?.firstName} {state.user?.lastName}</p>
               </div>
               <button
                 onClick={() => setState({ view: 'login', user: null, loading: false, error: '' })}
@@ -1084,22 +1084,22 @@ For questions, contact: support@24x7teleh.com
           {patientData.vitals && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="bg-gradient-to-br from-blue-500 to-cyan-400 text-white p-6 rounded-2xl shadow-lg">
-                <div className="text-3xl font-bold mb-2">{patientData.vitals.heartRate}</div>
+                <div className="text-3xl font-bold mb-2">{patientData.vitals?.heartRate || 'N/A'}</div>
                 <div className="text-blue-100 text-sm">Heart Rate (BPM)</div>
               </div>
 
               <div className="bg-gradient-to-br from-green-500 to-emerald-400 text-white p-6 rounded-2xl shadow-lg">
-                <div className="text-3xl font-bold mb-2">{patientData.vitals.bloodPressure}</div>
+                <div className="text-3xl font-bold mb-2">{patientData.vitals?.bloodPressure || 'N/A'}</div>
                 <div className="text-green-100 text-sm">Blood Pressure</div>
               </div>
 
               <div className="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-6 rounded-2xl shadow-lg">
-                <div className="text-3xl font-bold mb-2">{patientData.vitals.temperature}°C</div>
+                <div className="text-3xl font-bold mb-2">{patientData.vitals?.temperature || 'N/A'}°C</div>
                 <div className="text-pink-100 text-sm">Temperature</div>
               </div>
 
               <div className="bg-gradient-to-br from-purple-500 to-violet-400 text-white p-6 rounded-2xl shadow-lg">
-                <div className="text-3xl font-bold mb-2">{patientData.vitals.oxygenLevel}%</div>
+                <div className="text-3xl font-bold mb-2">{patientData.vitals?.oxygenLevel || 'N/A'}%</div>
                 <div className="text-purple-100 text-sm">Oxygen Level</div>
               </div>
             </div>

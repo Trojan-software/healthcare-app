@@ -90,7 +90,7 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
   };
 
   const formatMeasurementType = (type: string) => {
-    const types = {
+    const types: Record<string, string> = {
       'fasting': 'Fasting',
       'post_meal': 'Post-Meal',
       'random': 'Random',

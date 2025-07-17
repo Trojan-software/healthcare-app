@@ -65,11 +65,13 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
 
   const checkBluetoothAvailability = async () => {
     try {
-      if (!navigator.bluetooth) {
+      // Check if bluetooth is available
+      const nav = navigator as any;
+      if (!nav.bluetooth) {
         throw new Error('Bluetooth not supported');
       }
       
-      const availability = await navigator.bluetooth.getAvailability();
+      const availability = await nav.bluetooth.getAvailability();
       setIsBluetoothEnabled(availability);
       
       if (availability) {

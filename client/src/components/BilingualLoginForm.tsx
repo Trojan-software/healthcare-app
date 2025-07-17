@@ -32,7 +32,7 @@ export default function BilingualLoginForm({ onLoginSuccess }: LoginFormProps) {
         method: "POST",
         body: JSON.stringify({ email, password }),
         headers: { "Content-Type": "application/json" },
-      });
+      }) as any;
 
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));

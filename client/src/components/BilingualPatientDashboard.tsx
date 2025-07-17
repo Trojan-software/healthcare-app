@@ -93,9 +93,19 @@ export default function BilingualPatientDashboard() {
     retry: false
   });
 
-  const dashboard: PatientDashboardData = dashboardData || {
+  const dashboard: PatientDashboardData = (dashboardData && typeof dashboardData === 'object' && 'user' in dashboardData) ? dashboardData as PatientDashboardData : {
     user: { id: 0, firstName: '', lastName: '', email: '', patientId: '' },
-    latestVitals: null,
+    latestVitals: {
+      id: 0,
+      patientId: '',
+      heartRate: 0,
+      bloodPressureSystolic: 0,
+      bloodPressureDiastolic: 0,
+      temperature: '0',
+      oxygenLevel: 0,
+      bloodGlucose: 0,
+      timestamp: ''
+    },
     healthScore: 0,
     complianceRate: 0,
     nextAppointment: null,
@@ -108,7 +118,7 @@ export default function BilingualPatientDashboard() {
     retry: false
   });
 
-  const vitalSigns: VitalSigns[] = vitalSignsData || [];
+  const vitalSigns: VitalSigns[] = Array.isArray(vitalSignsData) ? vitalSignsData : [];
 
   const getVitalStatus = (vital: string, value: number): 'normal' | 'elevated' | 'high' | 'critical' => {
     switch (vital) {

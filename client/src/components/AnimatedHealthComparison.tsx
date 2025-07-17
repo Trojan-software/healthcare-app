@@ -146,7 +146,7 @@ const AnimatedMetric: React.FC<AnimatedMetricProps> = ({
               <div className="flex items-center gap-1 mb-1">
                 {getTrendIcon()}
                 <span className={`text-sm font-medium ${getTrendColor()}`}>
-                  {Math.abs(parseFloat(getChangePercentage()))}%
+                  {Math.abs(parseFloat(getChangePercentage() || '0'))}%
                 </span>
               </div>
               <p className="text-xs text-gray-500">vs previous</p>
@@ -158,7 +158,7 @@ const AnimatedMetric: React.FC<AnimatedMetricProps> = ({
             <div 
               className="h-2 rounded-full transition-all duration-1500 ease-out"
               style={{ 
-                width: `${Math.min(Math.abs(parseFloat(getChangePercentage())) * 2, 100)}%`,
+                width: `${Math.min(Math.abs(parseFloat(getChangePercentage() || '0')) * 2, 100)}%`,
                 backgroundColor: trend === 'up' ? '#ef4444' : trend === 'down' ? '#10b981' : '#6b7280'
               }}
             />
@@ -187,7 +187,7 @@ export default function AnimatedHealthComparison() {
     queryKey: ['/api/admin/patients-list'],
   });
 
-  const mockComparisonData: ComparisonData[] = comparisonData || [
+  const mockComparisonData: ComparisonData[] = Array.isArray(comparisonData) ? comparisonData : [
     {
       patientId: 'PAT001',
       patientName: 'Sarah Johnson',
@@ -222,7 +222,7 @@ export default function AnimatedHealthComparison() {
     }
   ];
 
-  const mockPatients = availablePatients || [
+  const mockPatients = Array.isArray(availablePatients) ? availablePatients : [
     { id: 'PAT001', name: 'Sarah Johnson' },
     { id: 'PAT002', name: 'Michael Chen' },
     { id: 'PAT003', name: 'Emma Davis' },
@@ -251,16 +251,31 @@ export default function AnimatedHealthComparison() {
   };
 
   const getMetricComparison = (metricName: string) => {
-    return mockComparisonData.map(patient => ({
-      patient: patient.patientName,
-      value: metricName === 'bloodPressure' 
-        ? `${patient.metrics.bloodPressure.systolic.current}/${patient.metrics.bloodPressure.diastolic.current}`
-        : patient.metrics[metricName as keyof typeof patient.metrics].current,
-      trend: metricName === 'bloodPressure' 
-        ? patient.metrics.bloodPressure.systolic.trend
-        : patient.metrics[metricName as keyof typeof patient.metrics].trend,
-      color: patient.color
-    }));
+    return mockComparisonData.map(patient => {
+      const metrics = patient.metrics;
+      let value, trend;
+      
+      if (metricName === 'bloodPressure') {
+        value = `${metrics.bloodPressure.systolic.current}/${metrics.bloodPressure.diastolic.current}`;
+        trend = metrics.bloodPressure.systolic.trend;
+      } else {
+        const metric = metrics[metricName as keyof typeof metrics];
+        if (metric && typeof metric === 'object' && 'current' in metric) {
+          value = metric.current;
+          trend = metric.trend;
+        } else {
+          value = 'N/A';
+          trend = 'stable';
+        }
+      }
+      
+      return {
+        patient: patient.patientName,
+        value,
+        trend,
+        color: patient.color
+      };
+    });
   };
 
   if (isLoading) {

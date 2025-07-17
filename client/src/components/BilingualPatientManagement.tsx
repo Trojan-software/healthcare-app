@@ -95,7 +95,7 @@ export default function BilingualPatientManagement() {
           matchesSearch = fullName.includes(searchQuery.toLowerCase());
           break;
         case 'dob':
-          matchesSearch = patient.dateOfBirth && patient.dateOfBirth.includes(searchQuery);
+          matchesSearch = patient.dateOfBirth && patient.dateOfBirth.toString().includes(searchQuery);
           break;
         case 'patientId':
           matchesSearch = patient.patientId.toLowerCase().includes(searchQuery.toLowerCase());
