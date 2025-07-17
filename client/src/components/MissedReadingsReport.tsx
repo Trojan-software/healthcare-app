@@ -114,7 +114,7 @@ export default function MissedReadingsReport({ isOpen, onClose }: MissedReadings
   const allMissedReadings = missedReadingsData || mockMissedReadings;
 
   // Filter missed readings
-  const filteredMissedReadings = allMissedReadings.filter(reading => {
+  const filteredMissedReadings = Array.isArray(allMissedReadings) ? allMissedReadings.filter((reading: any) => {
     const matchesSearch = searchQuery === '' || 
       reading.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       reading.patientId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -129,7 +129,7 @@ export default function MissedReadingsReport({ isOpen, onClose }: MissedReadings
       (daysFilter === '14' && reading.missedDays <= 14);
 
     return matchesSearch && matchesPriority && matchesType && matchesDays;
-  });
+  }) : [];
 
   const getPriorityBadge = (priority: string) => {
     const variants = {
@@ -168,7 +168,7 @@ export default function MissedReadingsReport({ isOpen, onClose }: MissedReadings
   const exportReport = () => {
     const csvContent = [
       ['Patient ID', 'Patient Name', 'Email', 'Mobile', 'Hospital', 'Reading Type', 'Missed Days', 'Priority', 'Last Reading', 'Compliance Rate'],
-      ...filteredMissedReadings.map(reading => [
+      ...filteredMissedReadings.map((reading: any) => [
         reading.patientId,
         reading.patientName,
         reading.email,
@@ -288,7 +288,7 @@ export default function MissedReadingsReport({ isOpen, onClose }: MissedReadings
               <CardContent className="p-4">
                 <div className={`text-center ${isRTL ? 'rtl:text-right' : ''}`}>
                   <div className="text-2xl font-bold text-orange-600">
-                    {filteredMissedReadings.filter(r => r.priority === 'critical').length}
+                    {filteredMissedReadings.filter((r: any) => r.priority === 'critical').length}
                   </div>
                   <div className="text-sm text-gray-600">{isRTL ? 'حالات حرجة' : 'Critical Cases'}</div>
                 </div>
@@ -298,7 +298,7 @@ export default function MissedReadingsReport({ isOpen, onClose }: MissedReadings
               <CardContent className="p-4">
                 <div className={`text-center ${isRTL ? 'rtl:text-right' : ''}`}>
                   <div className="text-2xl font-bold text-blue-600">
-                    {Math.round(filteredMissedReadings.reduce((sum, r) => sum + r.complianceRate, 0) / filteredMissedReadings.length) || 0}%
+                    {Math.round(filteredMissedReadings.reduce((sum: any, r: any) => sum + r.complianceRate, 0) / filteredMissedReadings.length) || 0}%
                   </div>
                   <div className="text-sm text-gray-600">{isRTL ? 'متوسط معدل الالتزام' : 'Avg Compliance Rate'}</div>
                 </div>
@@ -308,7 +308,7 @@ export default function MissedReadingsReport({ isOpen, onClose }: MissedReadings
               <CardContent className="p-4">
                 <div className={`text-center ${isRTL ? 'rtl:text-right' : ''}`}>
                   <div className="text-2xl font-bold text-green-600">
-                    {Math.round(filteredMissedReadings.reduce((sum, r) => sum + r.missedDays, 0) / filteredMissedReadings.length) || 0}
+                    {Math.round(filteredMissedReadings.reduce((sum: any, r: any) => sum + r.missedDays, 0) / filteredMissedReadings.length) || 0}
                   </div>
                   <div className="text-sm text-gray-600">{isRTL ? 'متوسط الأيام الفائتة' : 'Avg Missed Days'}</div>
                 </div>
@@ -363,7 +363,7 @@ export default function MissedReadingsReport({ isOpen, onClose }: MissedReadings
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredMissedReadings.map((reading, index) => (
+                      {filteredMissedReadings.map((reading: any, index: any) => (
                         <tr key={index} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4">
                             <div className="space-y-1">

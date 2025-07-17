@@ -14,11 +14,11 @@ interface User {
 }
 
 interface PatientDashboardProps {
-  user: User;
-  onLogout: () => void;
+  user?: User;
+  onLogout?: () => void;
 }
 
-export default function PatientDashboardFixed({ user, onLogout }: PatientDashboardProps) {
+export default function PatientDashboardFixed({ user, onLogout }: PatientDashboardProps = {}) {
   console.log('PatientDashboardFixed rendering for user:', user?.id);
   console.log('COMPONENT VERIFICATION: This is PatientDashboardFixed, not placeholder text');
 

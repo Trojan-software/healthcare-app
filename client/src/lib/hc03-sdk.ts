@@ -70,8 +70,8 @@ export interface BloodPressureResultData {
 // HC03 SDK Main Class
 export class Hc03Sdk {
   private static instance: Hc03Sdk;
-  private device: BluetoothDevice | null = null;
-  private server: BluetoothRemoteGATTServer | null = null;
+  private device: any | null = null;
+  private server: any | null = null;
   private isConnected: boolean = false;
   private callbacks: Map<Detection, (data: any) => void> = new Map();
   private activeDetections: Set<Detection> = new Set();
@@ -88,15 +88,15 @@ export class Hc03Sdk {
 
   // Initialize HC03 SDK
   public async initialize(): Promise<void> {
-    if (!navigator.bluetooth) {
+    if (!(navigator as any).bluetooth) {
       throw new Error('Bluetooth not supported in this browser');
     }
   }
 
   // Connect to HC03 device via BLE
-  public async connectDevice(): Promise<BluetoothDevice> {
+  public async connectDevice(): Promise<any> {
     try {
-      this.device = await navigator.bluetooth.requestDevice({
+      this.device = await (navigator as any).bluetooth.requestDevice({
         filters: [
           { namePrefix: 'HC03' },
           { namePrefix: 'Health' },
@@ -340,7 +340,7 @@ export class Hc03Sdk {
     return this.isConnected;
   }
 
-  public getConnectedDevice(): BluetoothDevice | null {
+  public getConnectedDevice(): any | null {
     return this.device;
   }
 

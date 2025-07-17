@@ -70,7 +70,7 @@ export default function HealthHistoryOverview() {
     refetchInterval: 60000,
   });
 
-  const mockHealthData: DayGroup[] = healthHistory || [
+  const mockHealthData: DayGroup[] = Array.isArray(healthHistory) ? healthHistory : [
     {
       date: '2024-01-15',
       records: [

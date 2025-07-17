@@ -78,11 +78,11 @@ export default function HealthMonitoringPage() {
     }
   };
 
-  const latestEcg = getLatestReading(healthData?.ecg);
-  const latestOxygen = getLatestReading(healthData?.bloodOxygen);
-  const latestBP = getLatestReading(healthData?.bloodPressure);
-  const latestTemp = getLatestReading(healthData?.temperature);
-  const latestGlucose = getLatestReading(healthData?.bloodGlucose);
+  const latestEcg = getLatestReading((healthData as any)?.ecg);
+  const latestOxygen = getLatestReading((healthData as any)?.bloodOxygen);
+  const latestBP = getLatestReading((healthData as any)?.bloodPressure);
+  const latestTemp = getLatestReading((healthData as any)?.temperature);
+  const latestGlucose = getLatestReading((healthData as any)?.bloodGlucose);
 
   // Show ECG Report if requested
   if (showECGReport) {
@@ -310,7 +310,7 @@ export default function HealthMonitoringPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {healthData?.ecg?.slice(0, 10).map((reading: any, index: number) => (
+                  {(healthData as any)?.ecg?.slice(0, 10).map((reading: any, index: number) => (
                     <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
                       <div>
                         <div className="font-medium">{reading.heartRate} BPM</div>
@@ -328,7 +328,7 @@ export default function HealthMonitoringPage() {
                       </div>
                     </div>
                   ))}
-                  {(!healthData?.ecg || healthData.ecg.length === 0) && (
+                  {(!(healthData as any)?.ecg || (healthData as any).ecg.length === 0) && (
                     <p className="text-gray-500 text-center py-4">No ECG data available</p>
                   )}
                 </div>
@@ -345,7 +345,7 @@ export default function HealthMonitoringPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {healthData?.bloodPressure?.slice(0, 10).map((reading: any, index: number) => (
+                  {(healthData as any)?.bloodPressure?.slice(0, 10).map((reading: any, index: number) => (
                     <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
                       <div>
                         <div className="font-medium">{reading.systolic}/{reading.diastolic} mmHg</div>
@@ -363,7 +363,7 @@ export default function HealthMonitoringPage() {
                       </div>
                     </div>
                   ))}
-                  {(!healthData?.bloodPressure || healthData.bloodPressure.length === 0) && (
+                  {(!(healthData as any)?.bloodPressure || (healthData as any).bloodPressure.length === 0) && (
                     <p className="text-gray-500 text-center py-4">No blood pressure data available</p>
                   )}
                 </div>
@@ -380,7 +380,7 @@ export default function HealthMonitoringPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {healthData?.bloodOxygen?.slice(0, 10).map((reading: any, index: number) => (
+                  {(healthData as any)?.bloodOxygen?.slice(0, 10).map((reading: any, index: number) => (
                     <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
                       <div>
                         <div className="font-medium">{reading.bloodOxygen}%</div>
@@ -398,7 +398,7 @@ export default function HealthMonitoringPage() {
                       </div>
                     </div>
                   ))}
-                  {(!healthData?.bloodOxygen || healthData.bloodOxygen.length === 0) && (
+                  {(!(healthData as any)?.bloodOxygen || (healthData as any).bloodOxygen.length === 0) && (
                     <p className="text-gray-500 text-center py-4">No blood oxygen data available</p>
                   )}
                 </div>
@@ -415,7 +415,7 @@ export default function HealthMonitoringPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {healthData?.temperature?.slice(0, 10).map((reading: any, index: number) => (
+                  {(healthData as any)?.temperature?.slice(0, 10).map((reading: any, index: number) => (
                     <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
                       <div>
                         <div className="font-medium">{reading.temperature}°C</div>
@@ -433,7 +433,7 @@ export default function HealthMonitoringPage() {
                       </div>
                     </div>
                   ))}
-                  {(!healthData?.temperature || healthData.temperature.length === 0) && (
+                  {(!(healthData as any)?.temperature || (healthData as any).temperature.length === 0) && (
                     <p className="text-gray-500 text-center py-4">No temperature data available</p>
                   )}
                 </div>

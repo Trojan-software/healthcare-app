@@ -53,14 +53,14 @@ export default function ECGReport({ patientId, ecgDataId }: ECGReportProps) {
 
   // Select the latest ECG if no specific ID provided
   useEffect(() => {
-    if (ecgData && ecgData.length > 0 && !selectedEcgId) {
+    if (ecgData && Array.isArray(ecgData) && ecgData.length > 0 && !selectedEcgId) {
       setSelectedEcgId(ecgData[0].id);
     }
   }, [ecgData, selectedEcgId]);
 
   // Analyze ECG data when selected
   useEffect(() => {
-    if (selectedEcgId && ecgData) {
+    if (selectedEcgId && ecgData && Array.isArray(ecgData)) {
       const selectedEcg = ecgData.find((ecg: any) => ecg.id === selectedEcgId);
       if (selectedEcg) {
         analyzeECG(selectedEcg);
@@ -127,7 +127,7 @@ export default function ECGReport({ patientId, ecgDataId }: ECGReportProps) {
     });
   };
 
-  const selectedEcg = ecgData?.find((ecg: any) => ecg.id === selectedEcgId);
+  const selectedEcg = Array.isArray(ecgData) ? ecgData.find((ecg: any) => ecg.id === selectedEcgId) : null;
 
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
@@ -185,7 +185,7 @@ export default function ECGReport({ patientId, ecgDataId }: ECGReportProps) {
     );
   }
 
-  if (!ecgData || ecgData.length === 0) {
+  if (!ecgData || !Array.isArray(ecgData) || ecgData.length === 0) {
     return (
       <Card>
         <CardContent className="text-center py-8">
@@ -223,7 +223,7 @@ export default function ECGReport({ patientId, ecgDataId }: ECGReportProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {ecgData.map((ecg: any) => (
+            {Array.isArray(ecgData) ? ecgData.map((ecg: any) => (
               <button
                 key={ecg.id}
                 onClick={() => setSelectedEcgId(ecg.id)}
@@ -237,7 +237,7 @@ export default function ECGReport({ patientId, ecgDataId }: ECGReportProps) {
                   {ecg.fingerDetected ? 'Good Signal' : 'Poor Signal'}
                 </div>
               </button>
-            ))}
+            )) : null}
           </div>
         </CardContent>
       </Card>

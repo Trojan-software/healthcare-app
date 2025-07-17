@@ -16,7 +16,7 @@ import {
   Wifi,
   Monitor
 } from 'lucide-react';
-import VitalsChart from './VitalsChart';
+// import VitalsChart from './VitalsChart';
 import BloodGlucoseWidget from './BloodGlucoseWidget';
 import BatteryWidget from './BatteryWidget';
 import EcgWidget from './EcgWidget';
@@ -268,15 +268,15 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     const vitalDetails = {
       heartRate: {
         name: 'Heart Rate Monitor',
-        current: dashboardData.vitals.heartRate + ' BPM',
+        current: dashboardData?.vitals?.heartRate + ' BPM',
         normal: '60-100 BPM',
-        status: dashboardData.vitals.heartRate >= 60 && dashboardData.vitals.heartRate <= 100 ? 'Normal' : 'Abnormal',
+        status: (dashboardData?.vitals?.heartRate ?? 0) >= 60 && (dashboardData?.vitals?.heartRate ?? 0) <= 100 ? 'Normal' : 'Abnormal',
         trend: getVitalTrend('heartRate'),
         device: 'HC03-002'
       },
       bloodPressure: {
         name: 'Blood Pressure Monitor',
-        current: dashboardData.vitals.bloodPressure,
+        current: dashboardData?.vitals?.bloodPressure,
         normal: '120/80 mmHg',
         status: 'Normal',
         trend: getVitalTrend('bloodPressure'),
@@ -284,23 +284,23 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       },
       temperature: {
         name: 'Temperature Monitor',
-        current: dashboardData.vitals.temperature + '°C',
+        current: dashboardData?.vitals?.temperature + '°C',
         normal: '36.1-37.2°C',
-        status: parseFloat(dashboardData.vitals.temperature) >= 36.1 && parseFloat(dashboardData.vitals.temperature) <= 37.2 ? 'Normal' : 'Abnormal',
+        status: parseFloat(String(dashboardData?.vitals?.temperature || '0')) >= 36.1 && parseFloat(String(dashboardData?.vitals?.temperature || '0')) <= 37.2 ? 'Normal' : 'Abnormal',
         trend: getVitalTrend('temperature'),
         device: 'HC03-004'
       },
       oxygenLevel: {
         name: 'Oxygen Level Monitor',
-        current: dashboardData.vitals.oxygenLevel + '%',
+        current: dashboardData?.vitals?.oxygenLevel + '%',
         normal: '95-100%',
-        status: dashboardData.vitals.oxygenLevel >= 95 ? 'Normal' : 'Low',
+        status: (dashboardData?.vitals?.oxygenLevel ?? 0) >= 95 ? 'Normal' : 'Low',
         trend: getVitalTrend('oxygenLevel'),
         device: 'HC03-003'
       }
     };
 
-    const vital = vitalDetails[vitalType];
+    const vital = (vitalDetails as any)[vitalType];
     if (!vital) return;
 
     alert(`${vital.name}\nCurrent: ${vital.current}\nStatus: ${vital.status}\nDevice: ${vital.device}`);

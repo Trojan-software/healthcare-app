@@ -510,11 +510,7 @@ export default function PatientManagementModule() {
               hospitals={hospitals}
               onSubmit={async (updatedData) => {
                 try {
-                  await apiRequest(`/api/patients/${selectedPatient.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedData)
-                  });
+                  await apiRequest(`/api/patients/${selectedPatient.id}`, 'PUT', updatedData);
                   
                   toast({
                     title: "Patient Updated",

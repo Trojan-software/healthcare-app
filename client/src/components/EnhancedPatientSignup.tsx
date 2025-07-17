@@ -92,10 +92,7 @@ export default function EnhancedPatientSignup() {
   // Registration mutation
   const registerMutation = useMutation({
     mutationFn: async (data: SignupForm) => {
-      return await apiRequest('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return await apiRequest('/api/auth/register', 'POST', data);
     },
     onSuccess: (data) => {
       setRegistrationData(signupForm.getValues());
@@ -110,12 +107,9 @@ export default function EnhancedPatientSignup() {
   // OTP verification mutation
   const verifyOtpMutation = useMutation({
     mutationFn: async (data: OtpForm) => {
-      return await apiRequest('/api/auth/verify-otp', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: registrationData?.email,
-          otp: data.otp
-        }),
+      return await apiRequest('/api/auth/verify-otp', 'POST', {
+        email: registrationData?.email,
+        otp: data.otp
       });
     },
     onSuccess: () => {
@@ -129,11 +123,8 @@ export default function EnhancedPatientSignup() {
   // Resend OTP mutation
   const resendOtpMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/auth/resend-otp', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: registrationData?.email
-        }),
+      return await apiRequest('/api/auth/resend-otp', 'POST', {
+        email: registrationData?.email
       });
     },
     onSuccess: () => {
@@ -141,7 +132,7 @@ export default function EnhancedPatientSignup() {
     }
   });
 
-  const abuDhabiHospitals: Hospital[] = hospitals || [
+  const abuDhabiHospitals: Hospital[] = Array.isArray(hospitals) ? hospitals : [
     {
       id: 'sheikh-khalifa',
       name: 'Sheikh Khalifa Medical City',

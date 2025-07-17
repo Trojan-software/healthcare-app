@@ -111,7 +111,7 @@ export default function CriticalAlertsSystem() {
     },
   });
 
-  const mockAlerts: CriticalAlert[] = alerts || [
+  const mockAlerts: CriticalAlert[] = Array.isArray(alerts) ? alerts : [
     {
       id: 'ALT001',
       patientId: 'PAT001',

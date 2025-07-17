@@ -417,7 +417,7 @@ For immediate assistance, contact emergency services or your healthcare provider
   };
 
   const getMoodColor = (category: string): string => {
-    const colors = {
+    const colors: Record<string, string> = {
       'Chill': 'bg-blue-100 text-blue-800',
       'Relax': 'bg-green-100 text-green-800',
       'Balance': 'bg-yellow-100 text-yellow-800',
@@ -436,7 +436,7 @@ For immediate assistance, contact emergency services or your healthcare provider
   };
 
   const getRhythmColor = (rhythm: string): string => {
-    const colors = {
+    const colors: Record<string, string> = {
       'normal': 'bg-green-100 text-green-800',
       'bradycardia': 'bg-blue-100 text-blue-800',
       'tachycardia': 'bg-orange-100 text-orange-800',
@@ -447,7 +447,7 @@ For immediate assistance, contact emergency services or your healthcare provider
   };
 
   const getContactColor = (quality: string): string => {
-    const colors = {
+    const colors: Record<string, string> = {
       'excellent': 'bg-green-100 text-green-800',
       'good': 'bg-blue-100 text-blue-800',
       'fair': 'bg-yellow-100 text-yellow-800',

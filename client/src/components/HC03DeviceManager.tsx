@@ -55,7 +55,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
 
   const loadPatientDevices = async () => {
     try {
-      const response = await apiRequest(`/api/hc03/devices/${patientId}`);
+      const response = await apiRequest(`/api/hc03/devices/${patientId}`) as unknown as HC03Device[];
       setDevices(response);
     } catch (error) {
       console.error('Failed to load devices:', error);
@@ -78,10 +78,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       };
 
       // Register device with backend
-      const registeredDevice = await apiRequest('/api/hc03/devices', {
-        method: 'POST',
-        body: deviceData
-      });
+      const registeredDevice = await apiRequest('/api/hc03/devices', 'POST', deviceData) as unknown as HC03Device;
 
       setConnectedDevice(registeredDevice);
       
@@ -187,19 +184,16 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
   // Save data functions
   const saveEcgData = async (data: ECGData) => {
     try {
-      await apiRequest('/api/hc03/data/ecg', {
-        method: 'POST',
-        body: {
-          patientId,
-          deviceId: connectedDevice?.deviceId,
-          waveData: data.wave,
-          heartRate: data.hr,
-          moodIndex: data.moodIndex,
-          rrInterval: data.rr,
-          hrv: data.hrv,
-          respiratoryRate: data.respiratoryRate,
-          fingerDetected: data.touch
-        }
+      await apiRequest('/api/hc03/data/ecg', 'POST', {
+        patientId,
+        deviceId: connectedDevice?.deviceId,
+        waveData: data.wave,
+        heartRate: data.hr,
+        moodIndex: data.moodIndex,
+        rrInterval: data.rr,
+        hrv: data.hrv,
+        respiratoryRate: data.respiratoryRate,
+        fingerDetected: data.touch
       });
     } catch (error) {
       console.error('Failed to save ECG data:', error);
@@ -208,16 +202,13 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
 
   const saveBloodOxygenData = async (data: BloodOxygenData) => {
     try {
-      await apiRequest('/api/hc03/data/blood-oxygen', {
-        method: 'POST',
-        body: {
-          patientId,
-          deviceId: connectedDevice?.deviceId,
-          bloodOxygen: data.bloodOxygen,
-          heartRate: data.heartRate,
-          fingerDetected: data.fingerDetection,
-          waveData: data.bloodOxygenWaveData
-        }
+      await apiRequest('/api/hc03/data/blood-oxygen', 'POST', {
+        patientId,
+        deviceId: connectedDevice?.deviceId,
+        bloodOxygen: data.bloodOxygen,
+        heartRate: data.heartRate,
+        fingerDetected: data.fingerDetection,
+        waveData: data.bloodOxygenWaveData
       });
     } catch (error) {
       console.error('Failed to save blood oxygen data:', error);
@@ -226,16 +217,13 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
 
   const saveBloodPressureData = async (data: BloodPressureData) => {
     try {
-      await apiRequest('/api/hc03/data/blood-pressure', {
-        method: 'POST',
-        body: {
-          patientId,
-          deviceId: connectedDevice?.deviceId,
-          systolic: data.ps,
-          diastolic: data.pd,
-          heartRate: data.hr,
-          measurementProgress: data.progress
-        }
+      await apiRequest('/api/hc03/data/blood-pressure', 'POST', {
+        patientId,
+        deviceId: connectedDevice?.deviceId,
+        systolic: data.ps,
+        diastolic: data.pd,
+        heartRate: data.hr,
+        measurementProgress: data.progress
       });
     } catch (error) {
       console.error('Failed to save blood pressure data:', error);
@@ -244,14 +232,11 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
 
   const saveTemperatureData = async (data: TemperatureData) => {
     try {
-      await apiRequest('/api/hc03/data/temperature', {
-        method: 'POST',
-        body: {
-          patientId,
-          deviceId: connectedDevice?.deviceId,
-          temperature: data.temperature,
-          measurementSite: 'forehead'
-        }
+      await apiRequest('/api/hc03/data/temperature', 'POST', {
+        patientId,
+        deviceId: connectedDevice?.deviceId,
+        temperature: data.temperature,
+        measurementSite: 'forehead'
       });
     } catch (error) {
       console.error('Failed to save temperature data:', error);
@@ -260,10 +245,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
 
   const updateDeviceBattery = async (deviceId: string, batteryLevel: number, chargingStatus: boolean) => {
     try {
-      await apiRequest(`/api/hc03/devices/${deviceId}/battery`, {
-        method: 'PATCH',
-        body: { batteryLevel, chargingStatus }
-      });
+      await apiRequest(`/api/hc03/devices/${deviceId}/battery`, 'PATCH', { batteryLevel, chargingStatus });
       
       setConnectedDevice(prev => prev ? { ...prev, batteryLevel, chargingStatus } : null);
     } catch (error) {

@@ -550,11 +550,11 @@ export default function ProfessionalHealthcareApp() {
   }
 
   if (state.view === 'admin' && state.user) {
-    return <EnhancedAdminDashboard user={state.user} onLogout={handleLogout} />;
+    return <EnhancedAdminDashboard />;
   }
 
   if (state.view === 'patient' && state.user) {
-    return <PatientDashboardFixed user={state.user} onLogout={handleLogout} />;
+    return <PatientDashboardFixed />;
   }
 
   return (
