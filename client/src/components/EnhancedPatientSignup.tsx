@@ -30,12 +30,21 @@ const signupSchema = z.object({
   mobileNumber: z.string().regex(/^(\+971|971|0)?[0-9]{9}$/, 'Please enter a valid UAE mobile number'),
   patientId: z.string().min(6, 'Patient ID must be at least 6 characters'),
   hospitalId: z.string().min(1, 'Please select a hospital'),
+  customHospitalName: z.string().optional(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
   termsAccepted: z.boolean().refine(val => val === true, 'You must accept the terms and conditions')
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
+}).refine((data) => {
+  if (data.hospitalId === 'OTHER' && (!data.customHospitalName || data.customHospitalName.trim() === '')) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please enter the hospital name",
+  path: ["customHospitalName"],
 });
 
 const otpSchema = z.object({
@@ -60,6 +69,7 @@ export default function EnhancedPatientSignup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registrationData, setRegistrationData] = useState<SignupForm | null>(null);
   const [otpSent, setOtpSent] = useState(false);
+  const [showCustomHospital, setShowCustomHospital] = useState(false);
 
   // Fetch Abu Dhabi hospitals
   const { data: hospitals, isLoading: hospitalsLoading } = useQuery({
@@ -76,6 +86,7 @@ export default function EnhancedPatientSignup() {
       mobileNumber: '',
       patientId: '',
       hospitalId: '',
+      customHospitalName: '',
       password: '',
       confirmPassword: '',
       termsAccepted: false
@@ -212,6 +223,14 @@ export default function EnhancedPatientSignup() {
       location: 'Al Reem Island, Abu Dhabi',
       type: 'private',
       departments: ['Maternity', 'Pediatrics', 'Surgery']
+    },
+    {
+      id: 'OTHER',
+      name: 'Other',
+      nameArabic: 'أخرى',
+      location: 'Custom Hospital',
+      type: 'private',
+      departments: ['Custom']
     }
   ];
 
@@ -427,6 +446,13 @@ export default function EnhancedPatientSignup() {
                       <select
                         {...signupForm.register('hospitalId')}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onChange={(e) => {
+                          signupForm.setValue('hospitalId', e.target.value);
+                          setShowCustomHospital(e.target.value === 'OTHER');
+                          if (e.target.value !== 'OTHER') {
+                            signupForm.setValue('customHospitalName', '');
+                          }
+                        }}
                       >
                         <option value="">Select a hospital in Abu Dhabi</option>
                         {abuDhabiHospitals.map((hospital) => (
@@ -442,6 +468,26 @@ export default function EnhancedPatientSignup() {
                       )}
                     </div>
 
+                    {/* Custom Hospital Name Field */}
+                    {showCustomHospital && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Hospital Name *
+                        </label>
+                        <input
+                          {...signupForm.register('customHospitalName')}
+                          type="text"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter the hospital name"
+                        />
+                        {signupForm.formState.errors.customHospitalName && (
+                          <p className="text-red-600 text-sm mt-1">
+                            {signupForm.formState.errors.customHospitalName.message}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* Hospital Info Display */}
                     {signupForm.watch('hospitalId') && (
                       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -451,15 +497,22 @@ export default function EnhancedPatientSignup() {
                             <div>
                               <div className="flex items-center gap-2 mb-2">
                                 <Building2 className="w-4 h-4 text-blue-600" />
-                                <span className="font-medium text-blue-900">{selectedHospital.name}</span>
+                                <span className="font-medium text-blue-900">
+                                  {selectedHospital.id === 'OTHER' ? 
+                                    (signupForm.watch('customHospitalName') || 'Custom Hospital') : 
+                                    selectedHospital.name
+                                  }
+                                </span>
                                 <Badge variant={selectedHospital.type === 'government' ? 'default' : 'secondary'}>
-                                  {selectedHospital.type}
+                                  {selectedHospital.id === 'OTHER' ? 'custom' : selectedHospital.type}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-blue-700 mb-2">{selectedHospital.nameArabic}</p>
+                              {selectedHospital.id !== 'OTHER' && (
+                                <p className="text-sm text-blue-700 mb-2">{selectedHospital.nameArabic}</p>
+                              )}
                               <div className="flex items-center gap-1 text-sm text-blue-600">
                                 <MapPin className="w-3 h-3" />
-                                {selectedHospital.location}
+                                {selectedHospital.id === 'OTHER' ? 'Custom Location' : selectedHospital.location}
                               </div>
                             </div>
                           ) : null;
