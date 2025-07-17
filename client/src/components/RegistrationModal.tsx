@@ -61,7 +61,7 @@ export default function RegistrationModal({ open, onOpenChange }: RegistrationMo
       setStep('otp');
       sendOtpMutation.mutate(form.getValues('email'));
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Registration Failed",
         description: error.message || "Something went wrong",
@@ -80,7 +80,7 @@ export default function RegistrationModal({ open, onOpenChange }: RegistrationMo
         description: "Please check your email for the verification code",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Failed to Send OTP",
         description: error.message || "Something went wrong",

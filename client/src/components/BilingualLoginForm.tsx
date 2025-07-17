@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage, LanguageSwitcher } from "@/lib/i18n";
+import { handleApiError } from "@/lib/errorHandler";
 import PrivacyPolicyFooter from "./PrivacyPolicyFooter";
 
 interface LoginFormProps {
@@ -39,9 +40,10 @@ export default function BilingualLoginForm({ onLoginSuccess }: LoginFormProps) {
       });
 
       onLoginSuccess(response.token, response.user.role);
-    } catch (error: any) {
-      console.error("Login error:", error);
-      setError(error.message || t('connectionFailed'));
+    } catch (error: unknown) {
+      const err = error as Error;
+      handleApiError('BilingualLoginForm', 'login', err, { email });
+      setError(err.message || t('connectionFailed'));
       toast({
         title: t('error'),
         description: error.message || t('connectionFailed'),

@@ -85,7 +85,7 @@ export default function UserProfile({ onLogout }: UserProfileProps) {
       setIsEditing(false);
       setTimeout(() => setSuccess(""), 3000);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       setError(error.message || 'Failed to update profile');
       setTimeout(() => setError(""), 5000);
     },

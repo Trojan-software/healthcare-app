@@ -62,8 +62,9 @@ export default function EmailVerificationForm({ email, onVerified, onBack }: Ema
       setTimeout(() => {
         onVerified();
       }, 1500);
-    } catch (err: any) {
-      setError(err.message || 'Verification failed. Please try again.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Verification failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -89,8 +90,9 @@ export default function EmailVerificationForm({ email, onVerified, onBack }: Ema
       }
 
       setSuccess("Verification code sent successfully!");
-    } catch (err: any) {
-      setError(err.message || 'Failed to resend code. Please try again.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Failed to resend code. Please try again.');
     } finally {
       setIsResending(false);
     }

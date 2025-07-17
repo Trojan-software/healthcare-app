@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Battery, BatteryLow, Zap, Smartphone, AlertTriangle, CheckCircle } from 'lucide-react';
+import { handleApiError, handleDeviceError } from '@/lib/errorHandler';
 
 interface DeviceBattery {
   deviceId: string;
@@ -35,7 +36,7 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
         setDevicesBattery(data);
       }
     } catch (error) {
-      console.error('Error loading battery data:', error);
+      handleApiError('BatteryWidget', 'loadBatteryData', error as Error, { patientId });
     } finally {
       setLoading(false);
     }
@@ -56,7 +57,7 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
       // Refresh data after simulation
       setTimeout(loadBatteryData, 1000);
     } catch (error) {
-      console.error('Error simulating battery level:', error);
+      handleDeviceError('BatteryWidget', 'simulateBatteryLevel', error as Error, { deviceId, level });
     }
   };
 
@@ -76,7 +77,7 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
       // Refresh data after simulation
       setTimeout(loadBatteryData, 1000);
     } catch (error) {
-      console.error('Error simulating charging:', error);
+      handleDeviceError('BatteryWidget', 'simulateCharging', error as Error, { deviceId, isCharging });
     }
   };
 

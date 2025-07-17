@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { handleApiError } from '@/lib/errorHandler';
 
 interface AnalyticsData {
   trendsData: Array<{
@@ -53,7 +54,7 @@ export default function AdvancedAnalytics({ onClose }: AdvancedAnalyticsProps) {
         setAnalyticsData(data);
       }
     } catch (error) {
-      console.error('Error loading analytics:', error);
+      handleApiError('AdvancedAnalytics', 'loadAnalyticsData', error as Error);
     } finally {
       setLoading(false);
     }

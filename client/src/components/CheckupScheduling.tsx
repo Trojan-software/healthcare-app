@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { handleApiError } from '@/lib/errorHandler';
 
 interface ScheduleSettings {
   patientId: string;
@@ -58,7 +59,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
         setPatients(data);
       }
     } catch (error) {
-      console.error('Error loading patients:', error);
+      handleApiError('CheckupScheduling', 'loadPatients', error as Error);
     }
   };
 
@@ -85,7 +86,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
       ];
       setSchedules(mockSchedules);
     } catch (error) {
-      console.error('Error loading schedules:', error);
+      handleApiError('CheckupScheduling', 'loadSchedules', error as Error);
     }
   };
 
@@ -120,7 +121,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
 
       alert('Checkup schedule created successfully!');
     } catch (error) {
-      console.error('Error creating schedule:', error);
+      handleApiError('CheckupScheduling', 'createSchedule', error as Error);
       alert('Failed to create schedule');
     } finally {
       setLoading(false);

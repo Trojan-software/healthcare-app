@@ -96,7 +96,7 @@ export default function DeviceRegistrationFlow({
       // Send OTP automatically
       sendOtpMutation.mutate(form.getValues('email'));
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Registration Failed",
         description: error.message || "Something went wrong during registration",
@@ -135,7 +135,7 @@ export default function DeviceRegistrationFlow({
         onRegistrationComplete(patientId);
       }, 3000);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Verification Failed",
         description: error.message || "Invalid verification code",
@@ -162,7 +162,7 @@ export default function DeviceRegistrationFlow({
         description: `Connected device to patient ${userData.user.patientId}`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Login Failed",
         description: error.message || "Invalid credentials",

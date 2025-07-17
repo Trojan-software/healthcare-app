@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Droplets, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { handleApiError, handleDeviceError } from '@/lib/errorHandler';
 
 interface BloodGlucoseReading {
   id: number;
@@ -41,7 +42,7 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
         setGlucoseData(data);
       }
     } catch (error) {
-      console.error('Error loading glucose data:', error);
+      handleApiError('BloodGlucoseWidget', 'loadGlucoseData', error as Error, { patientId });
     } finally {
       setLoading(false);
     }
@@ -70,7 +71,7 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
         }, 4000);
       }
     } catch (error) {
-      console.error('Error starting measurement:', error);
+      handleDeviceError('BloodGlucoseWidget', 'startMeasurement', error as Error, { patientId });
       setMeasuring(false);
     }
   };

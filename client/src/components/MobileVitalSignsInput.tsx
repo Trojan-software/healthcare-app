@@ -77,7 +77,7 @@ export default function MobileVitalSignsInput() {
       setVitals({});
       setCurrentReading(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Save Failed",
         description: error.message || "Failed to save vital signs",

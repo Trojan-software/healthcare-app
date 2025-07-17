@@ -66,8 +66,9 @@ export default function RegisterForm({ onRegister, onSwitchToLogin }: RegisterFo
 
       const result = await response.json();
       onRegister(data.email);
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

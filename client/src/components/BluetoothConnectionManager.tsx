@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { handleDeviceError, handleApiError } from '@/lib/errorHandler';
 
 interface HC03Device {
   id: string;
@@ -81,7 +82,7 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
         });
       }
     } catch (error) {
-      console.error('Bluetooth check failed:', error);
+      handleDeviceError('BluetoothConnectionManager', 'checkBluetoothAvailability', error as Error, { patientId });
       setIsBluetoothEnabled(false);
       toast({
         title: "Bluetooth Unavailable",
@@ -142,7 +143,7 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
       setDevices(mockDevices);
       updateConnectionStats(mockDevices);
     } catch (error) {
-      console.error('Failed to load devices:', error);
+      handleApiError('BluetoothConnectionManager', 'loadRegisteredDevices', error as Error, { patientId });
       toast({
         title: "Device Load Error",
         description: "Failed to load registered HC03 devices",
@@ -192,7 +193,7 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
         await connectToDevice(device);
       }
     } catch (error) {
-      console.error('Device scan failed:', error);
+      handleDeviceError('BluetoothConnectionManager', 'scanForDevices', error as Error, { patientId });
       toast({
         title: "Scan Failed",
         description: "Failed to discover HC03 devices. Please try again.",
@@ -257,7 +258,7 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
       startDeviceMonitoring(device);
 
     } catch (error) {
-      console.error('Connection failed:', error);
+      handleDeviceError('BluetoothConnectionManager', 'connectToDevice', error as Error, { patientId });
       toast({
         title: "Connection Failed",
         description: "Failed to connect to HC03 device. Please try again.",
