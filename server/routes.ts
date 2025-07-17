@@ -460,6 +460,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reset patient password
+  app.post("/api/patients/:id/reset-password", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Generate a secure temporary password
+      const generateTempPassword = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+        let password = '';
+        for (let i = 0; i < 12; i++) {
+          password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+      };
+      
+      const temporaryPassword = generateTempPassword();
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+      
+      const updatedPatient = await storage.updateUser(parseInt(id), {
+        password: hashedPassword,
+        mustChangePassword: true // Flag to force password change on next login
+      });
+      
+      if (!updatedPatient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      // Log the password reset action
+      console.log(`Password reset for patient ID: ${id}, new temp password generated`);
+      
+      res.json({ 
+        message: "Password reset successfully", 
+        temporaryPassword: temporaryPassword,
+        patientId: updatedPatient.patientId,
+        patientName: `${updatedPatient.firstName} ${updatedPatient.lastName}`
+      });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // Dashboard endpoints
   app.get("/api/dashboard/admin", async (req, res) => {
     try {

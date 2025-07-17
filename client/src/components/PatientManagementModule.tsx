@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Search, UserPlus, Users, UserCheck, UserX, Calendar } from 'lucide-react';
+import { Search, UserPlus, Users, UserCheck, UserX, Calendar, Download, Key, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Patient {
@@ -64,6 +65,7 @@ export default function PatientManagementModule() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -186,6 +188,66 @@ export default function PatientManagementModule() {
   const handleCreatePatient = (formData: PatientFormData) => {
     createPatientMutation.mutate(formData);
   };
+
+  // Export patient data as JSON
+  const handleExportPatient = (patient: Patient) => {
+    const exportData = {
+      patientId: patient.patientId,
+      personalInfo: {
+        firstName: patient.firstName,
+        middleName: patient.middleName,
+        lastName: patient.lastName,
+        dateOfBirth: patient.dateOfBirth,
+        email: patient.email,
+        mobileNumber: patient.mobileNumber,
+      },
+      medicalInfo: {
+        hospitalId: patient.hospitalId,
+        hospitalName: hospitals.find(h => h.id === patient.hospitalId)?.name || patient.hospitalId,
+        isActive: patient.isActive,
+        registrationDate: patient.createdAt,
+        lastActivity: patient.lastActivity,
+      },
+      exportDate: new Date().toISOString(),
+      exportedBy: 'admin@24x7teleh.com'
+    };
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `patient_${patient.patientId}_${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    toast({
+      title: "Patient Data Exported",
+      description: `Patient data for ${patient.firstName} ${patient.lastName} has been exported successfully.`,
+    });
+  };
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (patientId: string) => {
+      return await apiRequest(`/api/patients/${patientId}/reset-password`, 'POST');
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Password Reset Successful",
+        description: `New temporary password: ${data.temporaryPassword}. Please share this with the patient securely.`,
+      });
+      setShowResetPasswordDialog(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Password Reset Failed",
+        description: error.message || "Failed to reset patient password",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Helper function to highlight search text
   const highlightText = (text: string, searchTerm: string) => {
@@ -429,6 +491,26 @@ export default function PatientManagementModule() {
                         >
                           Edit
                         </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleExportPatient(patient)}>
+                              <Download className="w-4 h-4 mr-2" />
+                              Export Data
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedPatient(patient);
+                              setShowResetPasswordDialog(true);
+                            }}>
+                              <Key className="w-4 h-4 mr-2" />
+                              Reset Password
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>
@@ -536,6 +618,58 @@ export default function PatientManagementModule() {
               }}
               onCancel={() => setShowEditDialog(false)}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={showResetPasswordDialog} onOpenChange={setShowResetPasswordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Patient Password</DialogTitle>
+          </DialogHeader>
+          {selectedPatient && (
+            <div className="space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <Key className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-amber-800">
+                      Password Reset Confirmation
+                    </h3>
+                    <div className="mt-2 text-sm text-amber-700">
+                      <p>
+                        Are you sure you want to reset the password for:
+                      </p>
+                      <p className="font-semibold mt-1">
+                        {selectedPatient.firstName} {selectedPatient.lastName} ({selectedPatient.patientId})
+                      </p>
+                      <p className="mt-2">
+                        A new temporary password will be generated and should be shared with the patient securely.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowResetPasswordDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => resetPasswordMutation.mutate(selectedPatient.id.toString())}
+                  disabled={resetPasswordMutation.isPending}
+                  className="bg-amber-600 hover:bg-amber-700"
+                >
+                  {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
+                </Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
