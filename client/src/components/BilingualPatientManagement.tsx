@@ -389,6 +389,9 @@ export default function BilingualPatientManagement() {
                       {t('fullName')}
                     </th>
                     <th className={`p-3 font-medium text-gray-600 ${isRTL ? 'text-right' : 'text-left'}`}>
+                      {isRTL ? 'تاريخ الميلاد' : 'Date of Birth'}
+                    </th>
+                    <th className={`p-3 font-medium text-gray-600 ${isRTL ? 'text-right' : 'text-left'}`}>
                       {t('contactInfo')}
                     </th>
                     <th className={`p-3 font-medium text-gray-600 ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -421,9 +424,20 @@ export default function BilingualPatientManagement() {
                               searchQuery
                             )}
                           </p>
-                          <p className="text-sm text-gray-500">
-                            {patient.dateOfBirth && new Date(patient.dateOfBirth).toLocaleDateString(isRTL ? 'ar-AE' : 'en-US')}
-                          </p>
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm">
+                            {patient.dateOfBirth ? 
+                              highlightSearchTerm(
+                                new Date(patient.dateOfBirth).toLocaleDateString(isRTL ? 'ar-AE' : 'en-US'),
+                                searchQuery
+                              ) : 
+                              (isRTL ? 'غير محدد' : 'Not specified')
+                            }
+                          </span>
                         </div>
                       </td>
                       <td className="p-3">
