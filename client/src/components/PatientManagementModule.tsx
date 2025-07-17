@@ -24,6 +24,7 @@ interface Patient {
   createdAt: string;
   lastActivity: string;
   role: string;
+  dateOfBirth?: string;
 }
 
 interface PatientFormData {
@@ -352,17 +353,23 @@ export default function PatientManagementModule() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-gray-200">
+                  <th className="text-left p-3 font-medium text-gray-700">Patient ID</th>
                   <th className="text-left p-3 font-medium text-gray-700">Patient</th>
+                  <th className="text-left p-3 font-medium text-gray-700">Date of Birth</th>
                   <th className="text-left p-3 font-medium text-gray-700">Contact</th>
                   <th className="text-left p-3 font-medium text-gray-700">Hospital</th>
                   <th className="text-left p-3 font-medium text-gray-700">Status</th>
-                  <th className="text-left p-3 font-medium text-gray-700">Created</th>
                   <th className="text-left p-3 font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {patients.map((patient) => (
                   <tr key={patient.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="p-3">
+                      <p className="font-medium text-blue-600">
+                        {highlightText(patient.patientId, searchQuery)}
+                      </p>
+                    </td>
                     <td className="p-3">
                       <div>
                         <p className="font-medium text-gray-900">
@@ -371,10 +378,16 @@ export default function PatientManagementModule() {
                             searchQuery
                           )}
                         </p>
-                        <p className="text-sm text-gray-600">
-                          ID: {highlightText(patient.patientId, searchQuery)}
-                        </p>
+                        <p className="text-sm text-gray-600">{patient.email}</p>
                       </div>
+                    </td>
+                    <td className="p-3">
+                      <p className="text-sm text-gray-900">
+                        {patient.dateOfBirth ? 
+                          new Date(patient.dateOfBirth).toLocaleDateString() : 
+                          'Not specified'
+                        }
+                      </p>
                     </td>
                     <td className="p-3">
                       <div>
@@ -393,11 +406,6 @@ export default function PatientManagementModule() {
                       <Badge variant={patient.isActive ? "default" : "secondary"}>
                         {patient.isActive ? "Active" : "Inactive"}
                       </Badge>
-                    </td>
-                    <td className="p-3">
-                      <p className="text-sm text-gray-900">
-                        {new Date(patient.createdAt).toLocaleDateString()}
-                      </p>
                     </td>
                     <td className="p-3">
                       <div className="flex gap-2">
