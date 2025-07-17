@@ -143,6 +143,148 @@ export default function BilingualPatientManagement() {
     );
   };
 
+  // Edit Patient Form Component
+  const EditPatientForm = ({ patient, hospitals, onSubmit, onCancel, isRTL, t }: {
+    patient: Patient;
+    hospitals: Hospital[];
+    onSubmit: (data: any) => void;
+    onCancel: () => void;
+    isRTL: boolean;
+    t: (key: string) => string;
+  }) => {
+    const [formData, setFormData] = useState({
+      firstName: patient.firstName || '',
+      middleName: patient.middleName || '',
+      lastName: patient.lastName || '',
+      email: patient.email || '',
+      mobileNumber: patient.mobileNumber || '',
+      hospitalId: patient.hospitalId || '',
+      isActive: patient.isActive || false,
+      dateOfBirth: patient.dateOfBirth || '',
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      onSubmit(formData);
+    };
+
+    const handleChange = (field: string, value: any) => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    };
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'} block mb-2`}>
+              {t('firstName')}
+            </Label>
+            <Input
+              value={formData.firstName}
+              onChange={(e) => handleChange('firstName', e.target.value)}
+              className={isRTL ? 'text-right' : 'text-left'}
+              required
+            />
+          </div>
+          <div>
+            <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'} block mb-2`}>
+              {t('middleName')}
+            </Label>
+            <Input
+              value={formData.middleName}
+              onChange={(e) => handleChange('middleName', e.target.value)}
+              className={isRTL ? 'text-right' : 'text-left'}
+            />
+          </div>
+          <div>
+            <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'} block mb-2`}>
+              {t('lastName')}
+            </Label>
+            <Input
+              value={formData.lastName}
+              onChange={(e) => handleChange('lastName', e.target.value)}
+              className={isRTL ? 'text-right' : 'text-left'}
+              required
+            />
+          </div>
+          <div>
+            <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'} block mb-2`}>
+              {t('email')}
+            </Label>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              className={isRTL ? 'text-right' : 'text-left'}
+              required
+            />
+          </div>
+          <div>
+            <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'} block mb-2`}>
+              {t('mobileNumber')}
+            </Label>
+            <Input
+              value={formData.mobileNumber}
+              onChange={(e) => handleChange('mobileNumber', e.target.value)}
+              className={isRTL ? 'text-right' : 'text-left'}
+            />
+          </div>
+          <div>
+            <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'} block mb-2`}>
+              {isRTL ? 'تاريخ الميلاد' : 'Date of Birth'}
+            </Label>
+            <Input
+              type="date"
+              value={formData.dateOfBirth}
+              onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+              className={isRTL ? 'text-right' : 'text-left'}
+            />
+          </div>
+          <div>
+            <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'} block mb-2`}>
+              {t('hospital')}
+            </Label>
+            <Select value={formData.hospitalId} onValueChange={(value) => handleChange('hospitalId', value)}>
+              <SelectTrigger className={isRTL ? 'text-right' : 'text-left'}>
+                <SelectValue placeholder={t('selectHospital')} />
+              </SelectTrigger>
+              <SelectContent>
+                {hospitals.map(hospital => (
+                  <SelectItem key={hospital.id} value={hospital.id}>
+                    {hospital.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={formData.isActive}
+              onChange={(e) => handleChange('isActive', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label className={`text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}>
+              {t('activeStatus')}
+            </Label>
+          </div>
+        </div>
+        
+        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <Button type="submit" className="flex-1">
+            {t('saveChanges')}
+          </Button>
+          <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+            {t('cancel')}
+          </Button>
+        </div>
+      </form>
+    );
+  };
+
   return (
     <div className={`space-y-6 ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Header */}
@@ -423,7 +565,7 @@ export default function BilingualPatientManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Patient Dialog - Placeholder for now */}
+      {/* Edit Patient Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className={`sm:max-w-2xl ${isRTL ? 'rtl' : ''}`}>
           <DialogHeader>
@@ -431,18 +573,44 @@ export default function BilingualPatientManagement() {
               {t('editPatient')}
             </DialogTitle>
           </DialogHeader>
-          <div className={`text-center py-8 ${isRTL ? 'text-right' : 'text-left'}`}>
-            <p className="text-gray-600">
-              {isRTL ? 'نموذج تعديل المريض سيتم تنفيذه قريباً' : 'Edit patient form coming soon'}
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowEditDialog(false)}
-              className="mt-4"
-            >
-              {t('close')}
-            </Button>
-          </div>
+          {selectedPatient && (
+            <EditPatientForm 
+              patient={selectedPatient}
+              hospitals={hospitals}
+              onSubmit={async (updatedData) => {
+                try {
+                  const response = await fetch(`/api/patients/${selectedPatient.id}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedData),
+                  });
+
+                  if (!response.ok) {
+                    throw new Error('Failed to update patient');
+                  }
+
+                  toast({
+                    title: isRTL ? 'تم التحديث بنجاح' : 'Update Successful',
+                    description: isRTL ? 'تم تحديث معلومات المريض بنجاح' : 'Patient information updated successfully',
+                  });
+                  
+                  setShowEditDialog(false);
+                  queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
+                } catch (error) {
+                  toast({
+                    title: isRTL ? 'فشل التحديث' : 'Update Failed',
+                    description: isRTL ? 'فشل في تحديث معلومات المريض' : 'Failed to update patient information',
+                    variant: "destructive"
+                  });
+                }
+              }}
+              onCancel={() => setShowEditDialog(false)}
+              isRTL={isRTL}
+              t={t}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
