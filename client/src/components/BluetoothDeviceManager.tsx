@@ -300,20 +300,21 @@ export default function BluetoothDeviceManager() {
     const interval = setInterval(() => {
       const mockECG: ECGData = {
         wave: Array.from({length: 100}, () => Math.sin(Math.random() * Math.PI * 2) * 50),
+        hr: 70 + Math.random() * 30,
         moodIndex: Math.floor(Math.random() * 100),
-        rrInterval: 800 + Math.random() * 400,
+        rr: 800 + Math.random() * 400,
         hrv: 20 + Math.random() * 60,
         respiratoryRate: 12 + Math.random() * 8,
-        fingerDetection: Math.random() > 0.1
+        touch: Math.random() > 0.1
       };
       setEcgData(mockECG);
       
       addVitalReading({
         type: Detection.ECG,
-        value: 70 + Math.random() * 30,
+        value: mockECG.hr,
         unit: 'BPM',
         timestamp: new Date(),
-        quality: mockECG.fingerDetection ? 'good' : 'poor'
+        quality: mockECG.touch ? 'good' : 'poor'
       });
     }, 1000);
     
@@ -326,7 +327,7 @@ export default function BluetoothDeviceManager() {
         bloodOxygen: 95 + Math.random() * 5,
         heartRate: 70 + Math.random() * 30,
         fingerDetection: Math.random() > 0.1,
-        waveData: Array.from({length: 50}, () => Math.random() * 100)
+        bloodOxygenWaveData: Array.from({length: 50}, () => Math.random() * 100)
       };
       setBloodOxygenData(mockOxygen);
       
@@ -347,9 +348,9 @@ export default function BluetoothDeviceManager() {
     const interval = setInterval(() => {
       progress += 10;
       const mockBP: BloodPressureData = {
-        systolic: progress < 100 ? 0 : 110 + Math.random() * 30,
-        diastolic: progress < 100 ? 0 : 70 + Math.random() * 20,
-        heartRate: 70 + Math.random() * 30,
+        ps: progress < 100 ? 0 : 110 + Math.random() * 30,
+        pd: progress < 100 ? 0 : 70 + Math.random() * 20,
+        hr: 70 + Math.random() * 30,
         progress: Math.min(progress, 100)
       };
       setBloodPressureData(mockBP);
@@ -357,7 +358,7 @@ export default function BluetoothDeviceManager() {
       if (progress >= 100) {
         addVitalReading({
           type: Detection.BP,
-          value: mockBP.systolic,
+          value: mockBP.ps,
           unit: 'mmHg',
           timestamp: new Date(),
           quality: 'good'
@@ -618,7 +619,7 @@ export default function BluetoothDeviceManager() {
                 <CardTitle className="flex items-center space-x-2">
                   <Activity className="h-5 w-5 text-red-500" />
                   <span>Electrocardiogram (ECG)</span>
-                  {!ecgData.fingerDetected && (
+                  {!ecgData.touch && (
                     <Badge variant="destructive" className="ml-auto">
                       <AlertCircle className="w-3 h-3 mr-1" />
                       Finger Not Detected
@@ -629,7 +630,7 @@ export default function BluetoothDeviceManager() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <p className="text-2xl font-bold text-red-500">{Math.round(ecgData.heartRate)}</p>
+                    <p className="text-2xl font-bold text-red-500">{Math.round(ecgData.hr)}</p>
                     <p className="text-xs text-muted-foreground">Heart Rate (BPM)</p>
                   </div>
                   <div className="text-center p-3 bg-muted/50 rounded-lg">
@@ -656,7 +657,7 @@ export default function BluetoothDeviceManager() {
                 <CardTitle className="flex items-center space-x-2">
                   <Wind className="h-5 w-5 text-cyan-500" />
                   <span>Blood Oxygen Monitor</span>
-                  {!bloodOxygenData.fingerDetected && (
+                  {!bloodOxygenData.fingerDetection && (
                     <Badge variant="destructive" className="ml-auto">
                       <AlertCircle className="w-3 h-3 mr-1" />
                       Finger Not Detected
@@ -699,15 +700,15 @@ export default function BluetoothDeviceManager() {
                 {bloodPressureData.progress >= 100 && (
                   <div className="grid grid-cols-3 gap-4">
                     <div className="text-center p-3 bg-muted/50 rounded-lg">
-                      <p className="text-2xl font-bold text-red-500">{Math.round(bloodPressureData.systolic)}</p>
+                      <p className="text-2xl font-bold text-red-500">{Math.round(bloodPressureData.ps)}</p>
                       <p className="text-xs text-muted-foreground">Systolic (mmHg)</p>
                     </div>
                     <div className="text-center p-3 bg-muted/50 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-500">{Math.round(bloodPressureData.diastolic)}</p>
+                      <p className="text-2xl font-bold text-blue-500">{Math.round(bloodPressureData.pd)}</p>
                       <p className="text-xs text-muted-foreground">Diastolic (mmHg)</p>
                     </div>
                     <div className="text-center p-3 bg-muted/50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-500">{Math.round(bloodPressureData.heartRate)}</p>
+                      <p className="text-2xl font-bold text-green-500">{Math.round(bloodPressureData.hr)}</p>
                       <p className="text-xs text-muted-foreground">Heart Rate (BPM)</p>
                     </div>
                   </div>
