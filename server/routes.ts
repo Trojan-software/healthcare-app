@@ -601,6 +601,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/hospitals/abudhabi", async (req, res) => {
+    try {
+      const hospitals = [
+        { id: "1", name: "Sheikh Khalifa Medical City", location: "Abu Dhabi", type: "Government" },
+        { id: "2", name: "Cleveland Clinic Abu Dhabi", location: "Abu Dhabi", type: "Private" },
+        { id: "3", name: "Mediclinic City Hospital", location: "Abu Dhabi", type: "Private" },
+        { id: "4", name: "Abu Dhabi Hospital", location: "Abu Dhabi", type: "Private" },
+        { id: "5", name: "Al Noor Hospital", location: "Abu Dhabi", type: "Private" },
+        { id: "6", name: "Burjeel Hospital", location: "Abu Dhabi", type: "Private" },
+        { id: "7", name: "Danat Al Emarat Hospital", location: "Abu Dhabi", type: "Specialized" }
+      ];
+      
+      res.json(hospitals);
+    } catch (error) {
+      console.error("Error fetching Abu Dhabi hospitals:", error);
+      res.status(500).json({ message: "Failed to fetch Abu Dhabi hospitals" });
+    }
+  });
+
   // Checkup and scheduling endpoints
   app.post("/api/checkup-log", async (req, res) => {
     try {

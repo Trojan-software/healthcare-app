@@ -83,6 +83,7 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
       setDevices(deviceData);
       setLoading(false);
     } catch (error) {
+      // Log error for debugging but handle gracefully
       console.error('Error loading device data:', error);
       setLoading(false);
     }

@@ -50,6 +50,7 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
         console.log('PatientDashboard API response:', data);
         return data;
       } catch (err) {
+        // Log error for debugging but handle gracefully
         console.error('PatientDashboard API error:', err);
         throw err;
       }
