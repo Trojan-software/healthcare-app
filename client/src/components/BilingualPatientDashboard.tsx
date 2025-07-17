@@ -407,10 +407,10 @@ export default function BilingualPatientDashboard() {
               </Card>
 
               {/* Blood Glucose Widget */}
-              <BloodGlucoseWidget patientId={patientId} deviceId="HC03-001" />
+              <BloodGlucoseWidget patientId={patientId} />
 
               {/* Battery Widget */}
-              <BatteryWidget patientId={patientId} deviceId="HC03-002" />
+              <BatteryWidget patientId={patientId} />
             </div>
           </TabsContent>
 

@@ -300,21 +300,20 @@ export default function BluetoothDeviceManager() {
     const interval = setInterval(() => {
       const mockECG: ECGData = {
         wave: Array.from({length: 100}, () => Math.sin(Math.random() * Math.PI * 2) * 50),
-        heartRate: 70 + Math.random() * 30,
         moodIndex: Math.floor(Math.random() * 100),
         rrInterval: 800 + Math.random() * 400,
         hrv: 20 + Math.random() * 60,
         respiratoryRate: 12 + Math.random() * 8,
-        fingerDetected: Math.random() > 0.1
+        fingerDetection: Math.random() > 0.1
       };
       setEcgData(mockECG);
       
       addVitalReading({
         type: Detection.ECG,
-        value: mockECG.heartRate,
+        value: 70 + Math.random() * 30,
         unit: 'BPM',
         timestamp: new Date(),
-        quality: mockECG.fingerDetected ? 'good' : 'poor'
+        quality: mockECG.fingerDetection ? 'good' : 'poor'
       });
     }, 1000);
     
@@ -326,7 +325,7 @@ export default function BluetoothDeviceManager() {
       const mockOxygen: BloodOxygenData = {
         bloodOxygen: 95 + Math.random() * 5,
         heartRate: 70 + Math.random() * 30,
-        fingerDetected: Math.random() > 0.1,
+        fingerDetection: Math.random() > 0.1,
         waveData: Array.from({length: 50}, () => Math.random() * 100)
       };
       setBloodOxygenData(mockOxygen);
@@ -336,7 +335,7 @@ export default function BluetoothDeviceManager() {
         value: mockOxygen.bloodOxygen,
         unit: '%',
         timestamp: new Date(),
-        quality: mockOxygen.fingerDetected ? 'good' : 'poor'
+        quality: mockOxygen.fingerDetection ? 'good' : 'poor'
       });
     }, 2000);
     

@@ -93,7 +93,7 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
 
   const loadRegisteredDevices = async () => {
     try {
-      const response = await apiRequest(`/api/hc03/devices/${patientId}`);
+      const response = await apiRequest(`/api/hc03/devices/${patientId}`) as any;
       const deviceList = response.devices || [];
       
       // Simulate device data with realistic HC03 devices
@@ -173,7 +173,8 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
 
     setIsScanning(true);
     try {
-      const device = await navigator.bluetooth.requestDevice({
+      const nav = navigator as any;
+      const device = await nav.bluetooth.requestDevice({
         filters: [
           { namePrefix: 'HC03' },
           { namePrefix: 'Health' },
@@ -202,7 +203,7 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
     }
   };
 
-  const connectToDevice = async (bluetoothDevice: BluetoothDevice | HC03Device) => {
+  const connectToDevice = async (bluetoothDevice: any) => {
     try {
       let device: HC03Device;
       
@@ -224,16 +225,12 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
         };
 
         // Register device with backend
-        await apiRequest('/api/hc03/devices/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            deviceId: device.deviceId,
-            deviceName: device.name,
-            patientId: patientId,
-            macAddress: device.macAddress,
-            firmwareVersion: device.firmwareVersion
-          })
+        await apiRequest('/api/hc03/devices/register', 'POST', {
+          deviceId: device.deviceId,
+          deviceName: device.name,
+          patientId: patientId,
+          macAddress: device.macAddress,
+          firmwareVersion: device.firmwareVersion
         });
       } else {
         // Existing device reconnection
@@ -311,7 +308,7 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
     }, 30000); // Update every 30 seconds
 
     // Store interval for cleanup
-    device.monitoringInterval = interval;
+    (device as any).monitoringInterval = interval;
   };
 
   const startConnectionMonitoring = () => {
