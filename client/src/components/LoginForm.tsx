@@ -17,7 +17,7 @@ const loginSchema = z.object({
 type LoginData = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
-  onLogin: (user: any) => void;
+  onLogin: (user: User) => void;
   onSwitchToRegister: () => void;
   onForgotPassword?: () => void;
 }
@@ -60,7 +60,7 @@ export default function LoginForm({ onLogin, onSwitchToRegister, onForgotPasswor
       localStorage.setItem('user', JSON.stringify(result.user));
       
       onLogin(result.user);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);

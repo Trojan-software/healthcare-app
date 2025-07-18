@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { handleApiError } from '@/lib/errorHandler';
 import FAQSection from './components/FAQSection';
 import DeviceMonitoring from './components/DeviceMonitoring';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
@@ -155,7 +156,7 @@ function AppContent() {
         setAdminData(prev => ({ ...prev, patients, dashboardStats: stats }));
       }
     } catch (error) {
-      console.error('Error loading admin data:', error);
+      handleApiError('ComprehensiveHealthcareApp', 'loadAdminData', error as Error, {});
     }
   };
 
@@ -175,7 +176,7 @@ function AppContent() {
         });
       }
     } catch (error) {
-      console.error('Error loading patient data:', error);
+      handleApiError('ComprehensiveHealthcareApp', 'loadPatientData', error as Error, { userId });
     }
   };
 

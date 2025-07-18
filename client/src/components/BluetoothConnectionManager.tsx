@@ -321,7 +321,7 @@ export default function BluetoothConnectionManager({ patientId }: { patientId: s
           // Attempt reconnection for disconnected devices
           const timeSinceLastSeen = Date.now() - device.lastSeen.getTime();
           if (timeSinceLastSeen > 60000) { // 1 minute
-            console.log(`Attempting to reconnect to ${device.name}`);
+            // Attempting to reconnect to device
             // In real implementation, attempt BLE reconnection
           }
         }

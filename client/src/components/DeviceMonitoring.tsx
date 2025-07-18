@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { handleApiError } from '@/lib/errorHandler';
 
 interface Device {
   id: string;
@@ -84,7 +85,7 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
       setLoading(false);
     } catch (error) {
       // Log error for debugging but handle gracefully
-      console.error('Error loading device data:', error);
+      handleApiError('DeviceMonitoring', 'loadDeviceData', error as Error, { patientId });
       setLoading(false);
     }
   };

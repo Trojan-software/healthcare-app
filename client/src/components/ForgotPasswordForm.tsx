@@ -73,7 +73,7 @@ export default function ForgotPasswordForm({ onBack, onSuccess }: ForgotPassword
         description: "Check your email for the password reset code",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to send reset code",
@@ -106,7 +106,7 @@ export default function ForgotPasswordForm({ onBack, onSuccess }: ForgotPassword
       });
       onSuccess();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to reset password",

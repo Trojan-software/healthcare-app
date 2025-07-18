@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { handleApiError } from '@/lib/errorHandler';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -113,7 +114,7 @@ export default function EnhancedPatientSignup() {
       setCurrentStep(2);
     },
     onError: (error) => {
-      console.error('Registration error:', error);
+      handleApiError('EnhancedPatientSignup', 'register', error as Error, { email: formData.email, patientId: formData.patientId });
     }
   });
 
@@ -129,7 +130,7 @@ export default function EnhancedPatientSignup() {
       setCurrentStep(3); // Success step
     },
     onError: (error) => {
-      console.error('OTP verification error:', error);
+      handleApiError('EnhancedPatientSignup', 'verifyOTP', error as Error, { email: formData.email, otp });
     }
   });
 

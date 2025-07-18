@@ -16,7 +16,7 @@ interface User {
 }
 
 interface PatientAuthSystemProps {
-  onAuthSuccess?: (user: any) => void;
+  onAuthSuccess?: (user: User) => void;
 }
 
 export default function PatientAuthSystem({ onAuthSuccess }: PatientAuthSystemProps = {}) {

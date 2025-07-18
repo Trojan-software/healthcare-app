@@ -274,7 +274,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         description: `Started ${getDetectionName(detection)} monitoring`,
       });
     } catch (error) {
-      handleDeviceError('HC03DeviceManager', 'startDetection', error as Error, { deviceId, detection });
+      handleDeviceError('HC03DeviceManager', 'startDetection', error as Error, { deviceId: connectedDevice?.deviceId, detection });
       toast({
         title: "Detection Failed",
         description: `Failed to start ${getDetectionName(detection)} monitoring`,
@@ -298,7 +298,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         description: `Stopped ${getDetectionName(detection)} monitoring`,
       });
     } catch (error) {
-      handleDeviceError('HC03DeviceManager', 'stopDetection', error as Error, { deviceId, detection });
+      handleDeviceError('HC03DeviceManager', 'stopDetection', error as Error, { deviceId: connectedDevice?.deviceId, detection });
     }
   }, [toast]);
 

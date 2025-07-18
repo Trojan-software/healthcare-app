@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { handleApiError } from '@/lib/errorHandler';
 import { useQuery } from '@tanstack/react-query';
 
 interface User {
@@ -35,7 +36,7 @@ interface PatientDashboardProps {
 
 export default function PatientDashboard({ user, onLogout }: PatientDashboardProps) {
   // Debug logging to verify this component is being rendered
-  console.log('PatientDashboard component rendering for user:', user);
+  // PatientDashboard component rendering
   
   // Fetch patient dashboard data
   const { data: dashboardData, isLoading, error } = useQuery({
@@ -47,11 +48,11 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
           throw new Error(`HTTP ${response.status}: Failed to fetch dashboard data`);
         }
         const data = await response.json();
-        console.log('PatientDashboard API response:', data);
+        // PatientDashboard API response received
         return data;
       } catch (err) {
         // Log error for debugging but handle gracefully
-        console.error('PatientDashboard API error:', err);
+        handleApiError('PatientDashboard', 'loadDashboard', err as Error, { userId: user?.id });
         throw err;
       }
     },

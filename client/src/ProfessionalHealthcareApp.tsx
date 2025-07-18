@@ -97,7 +97,7 @@ export default function ProfessionalHealthcareApp() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Login successful, user role:', data.user.role);
+        // Login successful
         
         setState(prev => ({
           ...prev,

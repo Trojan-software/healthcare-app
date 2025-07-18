@@ -102,7 +102,7 @@ export default function AdminDashboard() {
       setCreateDialogOpen(false);
       form.reset();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to create patient access",
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/patients'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update patient access",

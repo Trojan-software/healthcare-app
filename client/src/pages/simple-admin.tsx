@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Users, UserPlus, Shield, LogOut, CheckCircle, AlertCircle } from "lucide-react";
+import { handleApiError } from '@/lib/errorHandler';
 
 interface Patient {
   id: number;
@@ -67,7 +68,7 @@ export default function SimpleAdminPage() {
         setPatients(data);
       }
     } catch (error) {
-      console.error('Failed to fetch patients:', error);
+      handleApiError('SimpleAdmin', 'fetchPatients', error as Error, {});
     } finally {
       setLoading(false);
     }
