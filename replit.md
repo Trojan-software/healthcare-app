@@ -428,4 +428,5 @@ Changelog:
 ```
 Preferred communication style: Simple, everyday language.
 Technical documentation: Comprehensive technology descriptions when requested.
+PDF documentation: Professional technical documentation with detailed specifications.
 ```
