@@ -427,4 +427,5 @@ Changelog:
 
 ```
 Preferred communication style: Simple, everyday language.
+Technical documentation: Comprehensive technology descriptions when requested.
 ```
