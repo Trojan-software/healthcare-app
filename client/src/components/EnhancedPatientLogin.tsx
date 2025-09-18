@@ -30,9 +30,10 @@ type LoginForm = z.infer<typeof loginSchema>;
 interface LoginProps {
   onLoginSuccess: (user: any) => void;
   onShowSignup: () => void;
+  onForgotPassword?: () => void;
 }
 
-export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup }: LoginProps) {
+export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onForgotPassword }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
@@ -160,9 +161,14 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup }: L
                   />
                   <label className="text-sm text-gray-600">Remember me</label>
                 </div>
-                <a href="#" className="text-sm text-blue-600 hover:underline" data-testid="link-forgot-password">
+                <button 
+                  type="button"
+                  onClick={() => onForgotPassword?.()}
+                  className="text-sm text-blue-600 hover:underline" 
+                  data-testid="link-forgot-password"
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
 
               {/* Login Button */}

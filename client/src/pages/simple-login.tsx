@@ -91,9 +91,14 @@ export default function SimpleLogin() {
 
           {/* Forgot Password Link */}
           <div className="text-right">
-            <a href="#" className="text-sm text-blue-600 hover:underline" data-testid="link-forgot-password">
+            <button 
+              type="button"
+              onClick={() => window.location.href = '/forgot-password'}
+              className="text-sm text-blue-600 hover:underline" 
+              data-testid="link-forgot-password"
+            >
               Forgot password?
-            </a>
+            </button>
           </div>
 
           <button
@@ -110,9 +115,14 @@ export default function SimpleLogin() {
         <div className="text-center pt-4">
           <p className="text-sm text-gray-600">
             Don't have an account?{' '}
-            <a href="#" className="text-blue-600 hover:underline font-medium" data-testid="button-show-signup">
+            <button 
+              type="button"
+              onClick={() => window.location.href = '/signup'}
+              className="text-blue-600 hover:underline font-medium" 
+              data-testid="button-show-signup"
+            >
               Create Account
-            </a>
+            </button>
           </p>
         </div>
 

@@ -223,13 +223,13 @@ export default function EnhancedAdminDashboard() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="patients">Patient Management</TabsTrigger>
-          <TabsTrigger value="devices">Device Monitoring</TabsTrigger>
-          <TabsTrigger value="alerts">Critical Alerts</TabsTrigger>
-          <TabsTrigger value="reports">Weekly Reports</TabsTrigger>
-          <TabsTrigger value="scheduling">Check-up Scheduling</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+          <TabsTrigger value="patients" data-testid="tab-patients">Patient Management</TabsTrigger>
+          <TabsTrigger value="devices" data-testid="tab-devices">Device Monitoring</TabsTrigger>
+          <TabsTrigger value="alerts" data-testid="tab-alerts">Critical Alerts</TabsTrigger>
+          <TabsTrigger value="reports" data-testid="tab-reports">Weekly Reports</TabsTrigger>
+          <TabsTrigger value="scheduling" data-testid="tab-scheduling">Check-up Scheduling</TabsTrigger>
+          <TabsTrigger value="analytics" data-testid="tab-analytics">Analytics</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -239,6 +239,7 @@ export default function EnhancedAdminDashboard() {
             <Card 
               className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-blue-500"
               onClick={() => setActiveTab('patients')}
+              data-testid="card-total-patients"
             >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -255,6 +256,7 @@ export default function EnhancedAdminDashboard() {
             <Card 
               className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-green-500"
               onClick={() => setActiveTab('patients')}
+              data-testid="card-active-monitoring"
             >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -271,6 +273,7 @@ export default function EnhancedAdminDashboard() {
             <Card 
               className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-red-500"
               onClick={() => setActiveTab('alerts')}
+              data-testid="card-critical-alerts"
             >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -287,6 +290,7 @@ export default function EnhancedAdminDashboard() {
             <Card 
               className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-purple-500"
               onClick={() => setActiveTab('devices')}
+              data-testid="card-devices"
             >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -361,6 +365,7 @@ export default function EnhancedAdminDashboard() {
           <Card 
             className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500"
             onClick={() => setActiveTab('analytics')}
+            data-testid="card-analytics"
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -393,6 +398,7 @@ export default function EnhancedAdminDashboard() {
                   variant="outline" 
                   className="h-16 flex-col gap-2"
                   onClick={() => setActiveTab('reports')}
+                  data-testid="button-generate-report"
                 >
                   <Calendar className="w-5 h-5" />
                   <span className="text-sm">Generate Report</span>
@@ -401,6 +407,7 @@ export default function EnhancedAdminDashboard() {
                   variant="outline" 
                   className="h-16 flex-col gap-2"
                   onClick={() => setActiveTab('scheduling')}
+                  data-testid="button-schedule-checkup"
                 >
                   <Clock className="w-5 h-5" />
                   <span className="text-sm">Schedule Checkup</span>
@@ -409,6 +416,7 @@ export default function EnhancedAdminDashboard() {
                   variant="outline" 
                   className="h-16 flex-col gap-2"
                   onClick={() => setActiveTab('devices')}
+                  data-testid="button-device-settings"
                 >
                   <Settings className="w-5 h-5" />
                   <span className="text-sm">Device Settings</span>
@@ -417,6 +425,7 @@ export default function EnhancedAdminDashboard() {
                   variant="outline" 
                   className="h-16 flex-col gap-2"
                   onClick={() => setActiveTab('alerts')}
+                  data-testid="button-view-alerts"
                 >
                   <AlertTriangle className="w-5 h-5" />
                   <span className="text-sm">View Alerts</span>

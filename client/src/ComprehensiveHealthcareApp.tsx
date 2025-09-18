@@ -5,6 +5,7 @@ import DeviceMonitoring from './components/DeviceMonitoring';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
 import CheckupScheduling from './components/CheckupScheduling';
 import EnhancedPatientDashboard from './components/EnhancedPatientDashboard';
+import ForgotPasswordForm from './components/ForgotPasswordForm';
 import { LanguageProvider, useLanguage, LanguageSwitcher } from './lib/i18n';
 
 interface User {
@@ -50,7 +51,7 @@ interface Patient {
 }
 
 interface AppState {
-  view: 'login' | 'register' | 'admin' | 'patient';
+  view: 'login' | 'register' | 'admin' | 'patient' | 'forgot-password';
   user: User | null;
   loading: boolean;
   error: string;
@@ -176,7 +177,7 @@ function AppContent() {
         });
       }
     } catch (error) {
-      handleApiError('ComprehensiveHealthcareApp', 'loadPatientData', error as Error, { userId });
+      handleApiError('ComprehensiveHealthcareApp', 'loadPatientData', error as Error, { userId: state.user.id });
     }
   };
 
@@ -507,6 +508,34 @@ For questions, contact: support@24x7teleh.com
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.view === 'forgot-password') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 py-12 px-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900">Reset Password</h1>
+            <p className="text-gray-600 mt-2">Enter your email to receive password reset instructions</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <ForgotPasswordForm 
+              onBack={() => setState(prev => ({ ...prev, view: 'login' }))}
+              onSuccess={() => setState(prev => ({ ...prev, view: 'login', error: '' }))}
+            />
+            <div className="text-center mt-6">
+              <button
+                onClick={() => setState(prev => ({ ...prev, view: 'login' }))}
+                className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                data-testid="button-back-to-login"
+              >
+                Back to Login
+              </button>
             </div>
           </div>
         </div>

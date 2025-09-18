@@ -352,7 +352,7 @@ export default function PatientManagementModule() {
             
             <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
               <DialogTrigger asChild>
-                <Button>
+                <Button data-testid="button-add-patient">
                   <UserPlus className="w-4 h-4 mr-2" />
                   Add Patient
                 </Button>
@@ -478,6 +478,7 @@ export default function PatientManagementModule() {
                             setSelectedPatient(patient);
                             setShowViewDialog(true);
                           }}
+                          data-testid={`button-view-patient-${patient.id}`}
                         >
                           View
                         </Button>
@@ -488,12 +489,13 @@ export default function PatientManagementModule() {
                             setSelectedPatient(patient);
                             setShowEditDialog(true);
                           }}
+                          data-testid={`button-edit-patient-${patient.id}`}
                         >
                           Edit
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" data-testid={`button-patient-actions-${patient.id}`}>
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -573,13 +575,13 @@ export default function PatientManagementModule() {
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowViewDialog(false)}>
+                <Button variant="outline" onClick={() => setShowViewDialog(false)} data-testid="button-close-view">
                   Close
                 </Button>
                 <Button onClick={() => {
                   setShowViewDialog(false);
                   setShowEditDialog(true);
-                }}>
+                }} data-testid="button-edit-from-view">
                   Edit Patient
                 </Button>
               </div>
@@ -658,6 +660,7 @@ export default function PatientManagementModule() {
                 <Button 
                   variant="outline" 
                   onClick={() => setShowResetPasswordDialog(false)}
+                  data-testid="button-cancel-reset"
                 >
                   Cancel
                 </Button>
@@ -665,6 +668,7 @@ export default function PatientManagementModule() {
                   onClick={() => resetPasswordMutation.mutate(selectedPatient.id.toString())}
                   disabled={resetPasswordMutation.isPending}
                   className="bg-amber-600 hover:bg-amber-700"
+                  data-testid="button-reset-password"
                 >
                   {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
                 </Button>
@@ -781,10 +785,10 @@ function EditPatientForm({
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} data-testid="button-cancel-edit">
           Cancel
         </Button>
-        <Button type="submit">
+        <Button type="submit" data-testid="button-update-patient">
           Update Patient
         </Button>
       </div>
@@ -905,7 +909,7 @@ function CreatePatientForm({
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading} data-testid="button-create-patient">
           {isLoading ? "Creating..." : "Create Patient"}
         </Button>
       </div>
