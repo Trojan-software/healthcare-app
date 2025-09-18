@@ -169,6 +169,7 @@ export default function SimpleAdminPage() {
             <button 
               onClick={handleLogout}
               className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              data-testid="button-logout"
             >
               <LogOut className="w-4 h-4" />
               Logout
@@ -233,6 +234,7 @@ export default function SimpleAdminPage() {
               <button
                 onClick={() => setShowCreateForm(!showCreateForm)}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                data-testid="button-create-patient-access"
               >
                 <UserPlus className="w-4 h-4" />
                 Create Patient Access
@@ -252,6 +254,7 @@ export default function SimpleAdminPage() {
                   onChange={(e) => setCreateForm({...createForm, patientId: e.target.value})}
                   className="px-3 py-2 border border-gray-300 rounded-lg"
                   required
+                  data-testid="input-patient-id"
                 />
                 <input
                   type="email"
@@ -260,6 +263,7 @@ export default function SimpleAdminPage() {
                   onChange={(e) => setCreateForm({...createForm, email: e.target.value})}
                   className="px-3 py-2 border border-gray-300 rounded-lg"
                   required
+                  data-testid="input-email"
                 />
                 <input
                   type="text"
@@ -268,6 +272,7 @@ export default function SimpleAdminPage() {
                   onChange={(e) => setCreateForm({...createForm, firstName: e.target.value})}
                   className="px-3 py-2 border border-gray-300 rounded-lg"
                   required
+                  data-testid="input-first-name"
                 />
                 <input
                   type="text"
@@ -276,6 +281,7 @@ export default function SimpleAdminPage() {
                   onChange={(e) => setCreateForm({...createForm, lastName: e.target.value})}
                   className="px-3 py-2 border border-gray-300 rounded-lg"
                   required
+                  data-testid="input-last-name"
                 />
                 <input
                   type="text"
@@ -284,6 +290,7 @@ export default function SimpleAdminPage() {
                   onChange={(e) => setCreateForm({...createForm, username: e.target.value})}
                   className="px-3 py-2 border border-gray-300 rounded-lg"
                   required
+                  data-testid="input-username"
                 />
                 <input
                   type="text"
@@ -292,6 +299,7 @@ export default function SimpleAdminPage() {
                   onChange={(e) => setCreateForm({...createForm, mobileNumber: e.target.value})}
                   className="px-3 py-2 border border-gray-300 rounded-lg"
                   required
+                  data-testid="input-mobile-number"
                 />
                 <input
                   type="password"
@@ -301,18 +309,21 @@ export default function SimpleAdminPage() {
                   className="px-3 py-2 border border-gray-300 rounded-lg col-span-2"
                   required
                   minLength={8}
+                  data-testid="input-password-create"
                 />
                 <div className="col-span-2 flex gap-3">
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(false)}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    data-testid="button-cancel"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    data-testid="button-create-access-submit"
                   >
                     Create Access
                   </button>
@@ -361,6 +372,7 @@ export default function SimpleAdminPage() {
                             ? 'bg-red-100 text-red-800 hover:bg-red-200'
                             : 'bg-green-100 text-green-800 hover:bg-green-200'
                         }`}
+                        data-testid={`button-toggle-access-${patient.patientId}`}
                       >
                         {patient.isVerified ? 'Deactivate' : 'Activate'}
                       </button>

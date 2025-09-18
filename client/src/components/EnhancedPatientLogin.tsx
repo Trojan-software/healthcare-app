@@ -109,6 +109,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup }: L
                     type="text"
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter email or patient ID"
+                    data-testid="input-email-patientid"
                   />
                 </div>
                 {form.formState.errors.emailOrPatientId && (
@@ -130,11 +131,13 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup }: L
                     type={showPassword ? 'text' : 'password'}
                     className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your password"
+                    data-testid="input-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    data-testid="button-toggle-password"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -153,10 +156,11 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup }: L
                     {...form.register('rememberMe')}
                     type="checkbox"
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    data-testid="checkbox-remember-me"
                   />
                   <label className="text-sm text-gray-600">Remember me</label>
                 </div>
-                <a href="#" className="text-sm text-blue-600 hover:underline">
+                <a href="#" className="text-sm text-blue-600 hover:underline" data-testid="link-forgot-password">
                   Forgot password?
                 </a>
               </div>
@@ -166,6 +170,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup }: L
                 type="submit"
                 className="w-full"
                 disabled={loginMutation.isPending}
+                data-testid="button-login-submit"
               >
                 {loginMutation.isPending ? (
                   'Signing in...'
@@ -205,6 +210,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup }: L
                   type="button"
                   onClick={onShowSignup}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                  data-testid="button-show-signup"
                 >
                   <User className="w-4 h-4" />
                   Register as New Patient

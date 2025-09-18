@@ -69,6 +69,7 @@ export default function SimpleLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              data-testid="input-email-patientid"
             />
           </div>
 
@@ -84,17 +85,36 @@ export default function SimpleLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              data-testid="input-password"
             />
+          </div>
+
+          {/* Forgot Password Link */}
+          <div className="text-right">
+            <a href="#" className="text-sm text-blue-600 hover:underline" data-testid="link-forgot-password">
+              Forgot password?
+            </a>
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
             className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
+            data-testid="button-login-submit"
           >
             {isLoading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
+        {/* Sign Up Link */}
+        <div className="text-center pt-4">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <a href="#" className="text-blue-600 hover:underline font-medium" data-testid="button-show-signup">
+              Create Account
+            </a>
+          </p>
+        </div>
 
         <div className="text-center pt-6 border-t border-gray-200 mt-8">
           <p className="text-sm text-gray-600 mb-2">Demo Accounts:</p>

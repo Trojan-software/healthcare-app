@@ -174,6 +174,7 @@ export default function ForgotPasswordForm({ onBack, onSuccess }: ForgotPassword
                   type="submit" 
                   className="w-full"
                   disabled={forgotPasswordMutation.isPending}
+                  data-testid="button-send-reset-code"
                 >
                   {forgotPasswordMutation.isPending ? "Sending..." : "Send Reset Code"}
                 </Button>
@@ -249,6 +250,7 @@ export default function ForgotPasswordForm({ onBack, onSuccess }: ForgotPassword
                   type="submit" 
                   className="w-full"
                   disabled={resetPasswordMutation.isPending}
+                  data-testid="button-reset-password"
                 >
                   {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
                 </Button>
@@ -262,6 +264,7 @@ export default function ForgotPasswordForm({ onBack, onSuccess }: ForgotPassword
               variant="ghost"
               onClick={onBack}
               className="flex items-center gap-2"
+              data-testid="button-back-to-login"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Login
@@ -273,6 +276,7 @@ export default function ForgotPasswordForm({ onBack, onSuccess }: ForgotPassword
                 variant="ghost"
                 onClick={() => setStep('email')}
                 className="text-blue-600"
+                data-testid="button-resend-code"
               >
                 Resend Code
               </Button>

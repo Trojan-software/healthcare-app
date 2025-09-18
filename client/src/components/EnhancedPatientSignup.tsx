@@ -114,7 +114,8 @@ export default function EnhancedPatientSignup() {
       setCurrentStep(2);
     },
     onError: (error) => {
-      handleApiError('EnhancedPatientSignup', 'register', error as Error, { email: formData.email, patientId: formData.patientId });
+      const currentFormData = signupForm.getValues();
+      handleApiError('EnhancedPatientSignup', 'register', error as Error, { email: currentFormData.email, patientId: currentFormData.patientId });
     }
   });
 
@@ -130,7 +131,8 @@ export default function EnhancedPatientSignup() {
       setCurrentStep(3); // Success step
     },
     onError: (error) => {
-      handleApiError('EnhancedPatientSignup', 'verifyOTP', error as Error, { email: formData.email, otp });
+      const currentOtp = otpForm.getValues().otp;
+      handleApiError('EnhancedPatientSignup', 'verifyOTP', error as Error, { email: registrationData?.email, otp: currentOtp });
     }
   });
 
@@ -448,6 +450,7 @@ export default function EnhancedPatientSignup() {
                           type="button"
                           variant="outline"
                           onClick={generatePatientId}
+                          data-testid="button-generate-patient-id"
                         >
                           Generate
                         </Button>
@@ -631,6 +634,7 @@ export default function EnhancedPatientSignup() {
                     type="submit"
                     className="w-full"
                     disabled={registerMutation.isPending}
+                    data-testid="button-signup-submit"
                   >
                     {registerMutation.isPending ? (
                       'Creating Account...'
@@ -680,6 +684,7 @@ export default function EnhancedPatientSignup() {
                       maxLength={6}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg tracking-widest"
                       placeholder="000000"
+                      data-testid="input-otp-code"
                     />
                     {otpForm.formState.errors.otp && (
                       <p className="text-red-600 text-sm mt-1">
@@ -694,6 +699,7 @@ export default function EnhancedPatientSignup() {
                       variant="outline"
                       onClick={() => setCurrentStep(1)}
                       className="flex-1"
+                      data-testid="button-back-to-step1"
                     >
                       <ArrowLeft className="w-4 h-4 mr-2" />
                       Back
@@ -702,6 +708,7 @@ export default function EnhancedPatientSignup() {
                       type="submit"
                       className="flex-1"
                       disabled={verifyOtpMutation.isPending}
+                      data-testid="button-verify-complete"
                     >
                       {verifyOtpMutation.isPending ? 'Verifying...' : 'Verify & Complete'}
                     </Button>
@@ -715,6 +722,7 @@ export default function EnhancedPatientSignup() {
                         onClick={() => resendOtpMutation.mutate()}
                         disabled={resendOtpMutation.isPending}
                         className="text-blue-600 hover:underline font-medium"
+                        data-testid="button-resend-otp"
                       >
                         {resendOtpMutation.isPending ? 'Sending...' : 'Resend OTP'}
                       </button>
@@ -753,6 +761,7 @@ export default function EnhancedPatientSignup() {
                   <Button
                     onClick={() => window.location.href = '/login'}
                     className="w-full"
+                    data-testid="button-proceed-login"
                   >
                     Proceed to Login
                   </Button>
