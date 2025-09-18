@@ -125,7 +125,14 @@ export default function PatientManagementModule() {
 
   // Fetch patients with filters
   const { data: patientsData, isLoading: loadingPatients, error: patientsError } = useQuery({
-    queryKey: ['/api/patients'],
+    queryKey: ['/api/admin/patients'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/patients');
+      if (!response.ok) {
+        throw new Error('Failed to fetch patients');
+      }
+      return response.json();
+    },
     retry: false
   });
 

@@ -281,7 +281,7 @@ export default function AdminPage() {
 
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
+                <Button className="flex items-center gap-2" data-testid="button-add-patient">
                   <UserPlus className="w-4 h-4" />
                   Create Patient Access
                 </Button>

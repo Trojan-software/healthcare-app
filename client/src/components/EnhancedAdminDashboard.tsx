@@ -82,7 +82,7 @@ interface DeviceInfo {
 }
 
 export default function EnhancedAdminDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('patients');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
   const [hospitalFilter, setHospitalFilter] = useState('all');
@@ -91,9 +91,9 @@ export default function EnhancedAdminDashboard() {
 
   // Fetch dashboard statistics
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/admin/dashboard-stats'],
+    queryKey: ['/api/admin/dashboard'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/dashboard-stats');
+      const response = await fetch('/api/admin/dashboard');
       if (!response.ok) throw new Error('Failed to fetch dashboard stats');
       return response.json();
     }
