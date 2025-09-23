@@ -72,6 +72,7 @@ export default function EnhancedPatientSignup() {
   const [registrationData, setRegistrationData] = useState<SignupForm | null>(null);
   const [otpSent, setOtpSent] = useState(false);
   const [showCustomHospital, setShowCustomHospital] = useState(false);
+  const [otpMethod, setOtpMethod] = useState<'email' | 'sms'>('email');
 
   // Fetch Abu Dhabi hospitals
   const { data: hospitals, isLoading: hospitalsLoading } = useQuery({
@@ -106,7 +107,7 @@ export default function EnhancedPatientSignup() {
   // Registration mutation
   const registerMutation = useMutation({
     mutationFn: async (data: SignupForm) => {
-      return await apiRequest('/api/auth/register', 'POST', data);
+      return await apiRequest('/api/auth/register', 'POST', { ...data, otpMethod });
     },
     onSuccess: (data) => {
       setRegistrationData(signupForm.getValues());
@@ -124,7 +125,9 @@ export default function EnhancedPatientSignup() {
     mutationFn: async (data: OtpForm) => {
       return await apiRequest('/api/auth/verify-otp', 'POST', {
         email: registrationData?.email,
-        otp: data.otp
+        mobileNumber: registrationData?.mobileNumber,
+        otp: data.otp,
+        method: otpMethod
       });
     },
     onSuccess: () => {
@@ -140,7 +143,9 @@ export default function EnhancedPatientSignup() {
   const resendOtpMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest('/api/auth/resend-otp', 'POST', {
-        email: registrationData?.email
+        email: registrationData?.email,
+        mobileNumber: registrationData?.mobileNumber,
+        method: otpMethod
       });
     },
     onSuccess: () => {
@@ -630,6 +635,68 @@ export default function EnhancedPatientSignup() {
                     )}
                   </div>
 
+                  {/* OTP Method Selection */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Verification Method</h3>
+                    <div className="flex gap-4">
+                      <div 
+                        className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          otpMethod === 'email' 
+                            ? 'border-blue-500 bg-blue-50' 
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => setOtpMethod('email')}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 ${
+                            otpMethod === 'email' ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                          }`}>
+                            {otpMethod === 'email' && (
+                              <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Mail className="w-4 h-4 text-blue-600" />
+                              <span className="font-medium">Email Verification</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Receive OTP via email
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div 
+                        className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          otpMethod === 'sms' 
+                            ? 'border-green-500 bg-green-50' 
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => setOtpMethod('sms')}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 ${
+                            otpMethod === 'sms' ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                          }`}>
+                            {otpMethod === 'sms' && (
+                              <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="w-4 h-4 text-green-600" />
+                              <span className="font-medium">SMS Verification</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Receive OTP via SMS
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <Button
                     type="submit"
                     className="w-full"
@@ -640,7 +707,7 @@ export default function EnhancedPatientSignup() {
                       'Creating Account...'
                     ) : (
                       <>
-                        Create Account
+                        Create Account & Send {otpMethod === 'email' ? 'Email' : 'SMS'} OTP
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </>
                     )}
@@ -656,20 +723,26 @@ export default function EnhancedPatientSignup() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="w-5 h-5" />
-                  Email Verification
+                  {otpMethod === 'email' ? 'Email' : 'SMS'} Verification
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Mail className="w-8 h-8 text-blue-600" />
+                  <div className={`w-16 h-16 ${otpMethod === 'email' ? 'bg-blue-100' : 'bg-green-100'} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                    {otpMethod === 'email' ? (
+                      <Mail className="w-8 h-8 text-blue-600" />
+                    ) : (
+                      <Phone className="w-8 h-8 text-green-600" />
+                    )}
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Verify Your Email
+                    Verify Your {otpMethod === 'email' ? 'Email' : 'Mobile Number'}
                   </h3>
                   <p className="text-gray-600">
-                    We've sent a 6-digit verification code to{' '}
-                    <span className="font-medium">{registrationData?.email}</span>
+                    We've sent a 6-digit verification code {otpMethod === 'email' ? 'to' : 'via SMS to'}{' '}
+                    <span className="font-medium">
+                      {otpMethod === 'email' ? registrationData?.email : registrationData?.mobileNumber}
+                    </span>
                   </p>
                 </div>
 
