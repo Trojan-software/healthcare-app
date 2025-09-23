@@ -48,6 +48,7 @@ interface Patient {
   lastActivity: string;
   vitals?: VitalSigns;
   age: number;
+  dateOfBirth?: string;
 }
 
 interface AppState {
