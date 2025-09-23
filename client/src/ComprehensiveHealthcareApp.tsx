@@ -94,7 +94,8 @@ function AppContent() {
     showDeviceMonitoring: false,
     showAdvancedAnalytics: false,
     showCheckupScheduling: false,
-    showEditPatient: false
+    showEditPatient: false,
+    showAddPatient: false
   });
 
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -926,7 +927,7 @@ For questions, contact: support@24x7teleh.com
               <div className="flex space-x-4">
                 <button
                   onClick={() => {
-                    alert('Add Patient functionality would open a patient registration form here');
+                    setModalState(prev => ({ ...prev, showAddPatient: true }));
                   }}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
                   data-testid="button-add-patient"
@@ -1117,6 +1118,119 @@ For questions, contact: support@24x7teleh.com
         
         {modalState.showCheckupScheduling && (
           <CheckupScheduling onClose={() => setModalState(prev => ({ ...prev, showCheckupScheduling: false }))} />
+        )}
+
+        {/* Add Patient Dialog */}
+        {modalState.showAddPatient && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">Add New Patient</h2>
+                <button 
+                  onClick={() => setModalState(prev => ({ ...prev, showAddPatient: false }))}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  data-testid="button-close-add"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target as HTMLFormElement);
+                
+                // Generate new patient ID
+                const newPatientId = `PT${Date.now().toString().slice(-6)}`;
+                
+                const newPatient = {
+                  id: Date.now(),
+                  firstName: formData.get('firstName') as string,
+                  lastName: formData.get('lastName') as string,
+                  email: formData.get('email') as string,
+                  patientId: newPatientId,
+                  dateOfBirth: formData.get('dateOfBirth') as string,
+                  status: 'No Data',
+                  lastActivity: new Date().toLocaleDateString(),
+                  age: 0,
+                  vitals: undefined
+                };
+                
+                // Add patient to the list
+                setAdminData(prev => ({
+                  ...prev,
+                  patients: [...prev.patients, newPatient]
+                }));
+                
+                // Close dialog
+                setModalState(prev => ({ ...prev, showAddPatient: false }));
+                
+                alert(`Patient ${newPatient.firstName} ${newPatient.lastName} (${newPatientId}) added successfully!`);
+              }} className="space-y-4">
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                    <input 
+                      type="text" 
+                      name="firstName"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                    <input 
+                      type="text" 
+                      name="lastName"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <input 
+                    type="email" 
+                    name="email"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter email address"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                  <input 
+                    type="date" 
+                    name="dateOfBirth"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-4">
+                  <button 
+                    type="button"
+                    onClick={() => setModalState(prev => ({ ...prev, showAddPatient: false }))}
+                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    data-testid="button-cancel-add"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    data-testid="button-create-patient"
+                  >
+                    Add Patient
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
 
         {/* Edit Patient Dialog */}
