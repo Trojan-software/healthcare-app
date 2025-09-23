@@ -921,14 +921,25 @@ For questions, contact: support@24x7teleh.com
               <h2 className="text-2xl font-bold text-gray-800">Patient Management</h2>
               <div className="flex space-x-4">
                 <button
+                  onClick={() => {
+                    alert('Add Patient functionality would open a patient registration form here');
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                  data-testid="button-add-patient"
+                >
+                  Add Patient
+                </button>
+                <button
                   onClick={exportPatientData}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                  data-testid="button-export-csv"
                 >
                   Export CSV
                 </button>
                 <button
                   onClick={generateWeeklyReport}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                  data-testid="button-weekly-report"
                 >
                   Weekly Report
                 </button>
@@ -1048,8 +1059,24 @@ For questions, contact: support@24x7teleh.com
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900 mr-4">View</button>
-                        <button className="text-green-600 hover:text-green-900">Edit</button>
+                        <button 
+                          className="text-blue-600 hover:text-blue-900 mr-4 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"
+                          onClick={() => {
+                            alert(`Viewing patient details for ${patient.firstName} ${patient.lastName} (${patient.patientId})`);
+                          }}
+                          data-testid={`button-view-patient-${patient.id}`}
+                        >
+                          View
+                        </button>
+                        <button 
+                          className="text-green-600 hover:text-green-900 px-3 py-1 rounded border border-green-600 hover:bg-green-50"
+                          onClick={() => {
+                            alert(`Editing patient ${patient.firstName} ${patient.lastName} (${patient.patientId})`);
+                          }}
+                          data-testid={`button-edit-patient-${patient.id}`}
+                        >
+                          Edit
+                        </button>
                       </td>
                     </tr>
                   ))}
