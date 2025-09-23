@@ -1075,25 +1075,42 @@ For questions, contact: support@24x7teleh.com
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button 
-                          className="text-blue-600 hover:text-blue-900 mr-4 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"
-                          onClick={() => {
-                            alert(`Viewing patient details for ${patient.firstName} ${patient.lastName} (${patient.patientId})`);
-                          }}
-                          data-testid={`button-view-patient-${patient.id}`}
-                        >
-                          View
-                        </button>
-                        <button 
-                          className="text-green-600 hover:text-green-900 px-3 py-1 rounded border border-green-600 hover:bg-green-50"
-                          onClick={() => {
-                            setSelectedPatient(patient);
-                            setModalState(prev => ({ ...prev, showEditPatient: true }));
-                          }}
-                          data-testid={`button-edit-patient-${patient.id}`}
-                        >
-                          Edit
-                        </button>
+                        <div className="flex space-x-2">
+                          <button 
+                            className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"
+                            onClick={() => {
+                              alert(`Viewing patient details for ${patient.firstName} ${patient.lastName} (${patient.patientId})`);
+                            }}
+                            data-testid={`button-view-patient-${patient.id}`}
+                          >
+                            View
+                          </button>
+                          <button 
+                            className="text-green-600 hover:text-green-900 px-3 py-1 rounded border border-green-600 hover:bg-green-50"
+                            onClick={() => {
+                              setSelectedPatient(patient);
+                              setModalState(prev => ({ ...prev, showEditPatient: true }));
+                            }}
+                            data-testid={`button-edit-patient-${patient.id}`}
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            className="text-red-600 hover:text-red-900 px-3 py-1 rounded border border-red-600 hover:bg-red-50"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to remove patient ${patient.firstName} ${patient.lastName} (${patient.patientId})? This action cannot be undone.`)) {
+                                setAdminData(prev => ({
+                                  ...prev,
+                                  patients: prev.patients.filter(p => p.id !== patient.id)
+                                }));
+                                alert(`Patient ${patient.firstName} ${patient.lastName} has been removed successfully.`);
+                              }
+                            }}
+                            data-testid={`button-remove-patient-${patient.id}`}
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
