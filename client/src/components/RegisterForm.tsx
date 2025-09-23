@@ -35,6 +35,7 @@ export default function RegisterForm({ onRegister, onSwitchToLogin }: RegisterFo
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [otpMethod, setOtpMethod] = useState<'email' | 'sms'>('email');
 
   const {
     register,
@@ -56,7 +57,7 @@ export default function RegisterForm({ onRegister, onSwitchToLogin }: RegisterFo
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(registrationData),
+        body: JSON.stringify({ ...registrationData, otpMethod }),
       });
 
       if (!response.ok) {
@@ -260,10 +261,77 @@ export default function RegisterForm({ onRegister, onSwitchToLogin }: RegisterFo
             )}
           </div>
 
+          {/* OTP Method Selection */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Verification Method
+            </Label>
+            <div className="flex gap-4">
+              <div 
+                className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  otpMethod === 'email' 
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                }`}
+                onClick={() => setOtpMethod('email')}
+                data-testid="option-email-verification"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-4 h-4 rounded-full border-2 ${
+                    otpMethod === 'email' ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}>
+                    {otpMethod === 'email' && (
+                      <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-gray-900 dark:text-gray-100">Email Verification</span>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Receive OTP via email
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div 
+                className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  otpMethod === 'sms' 
+                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                }`}
+                onClick={() => setOtpMethod('sms')}
+                data-testid="option-sms-verification"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-4 h-4 rounded-full border-2 ${
+                    otpMethod === 'sms' ? 'border-green-500 bg-green-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}>
+                    {otpMethod === 'sms' && (
+                      <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-green-600" />
+                      <span className="font-medium text-gray-900 dark:text-gray-100">SMS Verification</span>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Receive OTP via SMS
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <Button
             type="submit"
             disabled={isLoading}
             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl"
+            data-testid="button-create-account"
           >
             {isLoading ? (
               <>
@@ -271,7 +339,7 @@ export default function RegisterForm({ onRegister, onSwitchToLogin }: RegisterFo
                 Creating Account...
               </>
             ) : (
-              'Create Account'
+              `Create Account & Send ${otpMethod === 'email' ? 'Email' : 'SMS'} OTP`
             )}
           </Button>
         </form>

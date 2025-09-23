@@ -98,6 +98,8 @@ function AppContent() {
     showAddPatient: false
   });
 
+  const [otpMethod, setOtpMethod] = useState<'email' | 'sms'>('email');
+
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   const [patientData, setPatientData] = useState({
@@ -743,6 +745,76 @@ For questions, contact: support@24x7teleh.com
                 </div>
               )}
 
+              {/* OTP Method Selection */}
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Verification Method
+                </label>
+                <div className="flex gap-4">
+                  <div 
+                    className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      otpMethod === 'email' 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => setOtpMethod('email')}
+                    data-testid="option-email-verification"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-4 h-4 rounded-full border-2 ${
+                        otpMethod === 'email' ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                      }`}>
+                        {otpMethod === 'email' && (
+                          <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          <span className="font-medium text-gray-900">Email Verification</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Receive OTP via email
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={`flex-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      otpMethod === 'sms' 
+                        ? 'border-green-500 bg-green-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => setOtpMethod('sms')}
+                    data-testid="option-sms-verification"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-4 h-4 rounded-full border-2 ${
+                        otpMethod === 'sms' ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                      }`}>
+                        {otpMethod === 'sms' && (
+                          <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                          <span className="font-medium text-gray-900">SMS Verification</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Receive OTP via SMS
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex gap-4">
                 <button
                   type="button"
@@ -755,8 +827,9 @@ For questions, contact: support@24x7teleh.com
                   type="submit"
                   disabled={state.loading}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-teal-700 disabled:opacity-50 transition-all"
+                  data-testid="button-create-account"
                 >
-                  {state.loading ? 'Creating Account...' : 'Create Account'}
+                  {state.loading ? 'Creating Account...' : `Create Account & Send ${otpMethod === 'email' ? 'Email' : 'SMS'} OTP`}
                 </button>
               </div>
             </form>
