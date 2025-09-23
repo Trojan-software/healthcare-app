@@ -93,8 +93,11 @@ function AppContent() {
     showFAQ: false,
     showDeviceMonitoring: false,
     showAdvancedAnalytics: false,
-    showCheckupScheduling: false
+    showCheckupScheduling: false,
+    showEditPatient: false
   });
+
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   const [patientData, setPatientData] = useState({
     vitals: null as VitalSigns | null,
@@ -1083,7 +1086,8 @@ For questions, contact: support@24x7teleh.com
                         <button 
                           className="text-green-600 hover:text-green-900 px-3 py-1 rounded border border-green-600 hover:bg-green-50"
                           onClick={() => {
-                            alert(`Editing patient ${patient.firstName} ${patient.lastName} (${patient.patientId})`);
+                            setSelectedPatient(patient);
+                            setModalState(prev => ({ ...prev, showEditPatient: true }));
                           }}
                           data-testid={`button-edit-patient-${patient.id}`}
                         >
@@ -1113,6 +1117,135 @@ For questions, contact: support@24x7teleh.com
         
         {modalState.showCheckupScheduling && (
           <CheckupScheduling onClose={() => setModalState(prev => ({ ...prev, showCheckupScheduling: false }))} />
+        )}
+
+        {/* Edit Patient Dialog */}
+        {modalState.showEditPatient && selectedPatient && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">Edit Patient</h2>
+                <button 
+                  onClick={() => {
+                    setModalState(prev => ({ ...prev, showEditPatient: false }));
+                    setSelectedPatient(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                  data-testid="button-close-edit"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target as HTMLFormElement);
+                const updatedPatient = {
+                  ...selectedPatient,
+                  firstName: formData.get('firstName') as string,
+                  lastName: formData.get('lastName') as string,
+                  email: formData.get('email') as string,
+                  dateOfBirth: formData.get('dateOfBirth') as string,
+                  status: formData.get('status') as string,
+                };
+                
+                // Update patient in the list
+                setAdminData(prev => ({
+                  ...prev,
+                  patients: prev.patients.map(p => 
+                    p.id === selectedPatient.id ? updatedPatient : p
+                  )
+                }));
+                
+                // Close dialog
+                setModalState(prev => ({ ...prev, showEditPatient: false }));
+                setSelectedPatient(null);
+                
+                alert(`Patient ${updatedPatient.firstName} ${updatedPatient.lastName} updated successfully!`);
+              }} className="space-y-4">
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <input 
+                      type="text" 
+                      name="firstName"
+                      defaultValue={selectedPatient.firstName}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <input 
+                      type="text" 
+                      name="lastName"
+                      defaultValue={selectedPatient.lastName}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input 
+                    type="email" 
+                    name="email"
+                    defaultValue={selectedPatient.email}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                  <input 
+                    type="date" 
+                    name="dateOfBirth"
+                    defaultValue={selectedPatient.dateOfBirth || ''}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select 
+                    name="status"
+                    defaultValue={selectedPatient.status}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="Normal">Normal</option>
+                    <option value="Attention">Attention</option>
+                    <option value="Critical">Critical</option>
+                    <option value="No Data">No Data</option>
+                  </select>
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-4">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setModalState(prev => ({ ...prev, showEditPatient: false }));
+                      setSelectedPatient(null);
+                    }}
+                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    data-testid="button-cancel-edit"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    data-testid="button-save-patient"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     );
