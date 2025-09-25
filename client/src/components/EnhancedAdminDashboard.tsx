@@ -109,7 +109,7 @@ export default function EnhancedAdminDashboard() {
   });
 
   // Default stats to avoid undefined errors
-  const mockStats: DashboardStats = dashboardStats?.stats || {
+  const mockStats: DashboardStats = (dashboardStats as any)?.stats || {
     totalPatients: 0,
     activeMonitoring: 0,
     criticalAlerts: 0,
@@ -118,8 +118,8 @@ export default function EnhancedAdminDashboard() {
     complianceRate: 0
   };
 
-  const mockPatients: PatientRecord[] = patientsData?.patients || [];
-  const mockDevices: DeviceInfo[] = devicesData?.devices || [];
+  const mockPatients: PatientRecord[] = (patientsData as any)?.patients || patientsData || [];
+  const mockDevices: DeviceInfo[] = (devicesData as any)?.devices || [];
   const mockHospitals = ['Sheikh Khalifa Medical City', 'Cleveland Clinic Abu Dhabi', 'Mediclinic City Hospital'];
 
   const getStatusColor = (status: string) => {
@@ -529,7 +529,7 @@ export default function EnhancedAdminDashboard() {
                                 Patient ID: {device.patientId}
                               </p>
                               <p className="text-xs text-gray-500">
-                                {device.patientEmail}
+                                {device.patientName}
                               </p>
                             </div>
                           </div>
@@ -553,14 +553,14 @@ export default function EnhancedAdminDashboard() {
                                   <span className={`text-sm font-medium ${device.batteryLevel <= 20 ? 'text-red-600' : 'text-green-600'}`}>
                                     {device.batteryLevel}%
                                   </span>
-                                  {device.chargingStatus && (
+                                  {device.batteryLevel < 20 && (
                                     <span className="text-xs text-blue-600 ml-1">Charging</span>
                                   )}
                                 </div>
                               </div>
                               
                               <div className="text-xs text-gray-500 mb-1">
-                                {device.lastConnected ? `Last seen: ${getTimeAgo(device.lastConnected)}` : 'Never connected'}
+                                {device.lastSync ? `Last seen: ${getTimeAgo(new Date(device.lastSync))}` : 'Never connected'}
                               </div>
                               
                               {device.firmwareVersion && (
