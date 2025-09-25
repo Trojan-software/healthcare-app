@@ -22,6 +22,7 @@ import BloodGlucoseWidget from './BloodGlucoseWidget';
 import BatteryWidget from './BatteryWidget';
 import EcgWidget from './EcgWidget';
 import HC03DeviceWidget from './HC03DeviceWidget';
+import { useLanguage } from '@/lib/i18n';
 
 interface VitalSigns {
   id: number;
@@ -71,6 +72,7 @@ interface EnhancedPatientDashboardProps {
 }
 
 export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedPatientDashboardProps) {
+  const { t, isRTL } = useLanguage();
   const [dashboardData, setDashboardData] = useState<PatientDashboardData | null>(null);
   const [vitalsHistory, setVitalsHistory] = useState<VitalSigns[]>([]);
   const [loading, setLoading] = useState(true);
@@ -728,7 +730,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       <div className="min-h-screen bg-gray-50">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="ml-4 text-gray-600">Loading patient dashboard...</p>
+          <p className="ml-4 text-gray-600">{t('loading')}</p>
         </div>
       </div>
     );
@@ -780,13 +782,13 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold">24/7 Tele H Patient</h1>
-                <p className="text-blue-100">Welcome, {dashboardData.user.firstName} {dashboardData.user.lastName}</p>
+                <h1 className="text-2xl font-bold">24/7 Tele H - {t('dashboard')}</h1>
+                <p className="text-blue-100">{t('welcomeBack')}, {dashboardData.user.firstName} {dashboardData.user.lastName}</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="font-medium">ID: {dashboardData.user.patientId}</p>
+                <p className="font-medium">{t('patientId')}: {dashboardData.user.patientId}</p>
                 <p className="text-blue-100 text-sm">Last updated: {formatTimestamp(dashboardData.vitals.timestamp)}</p>
               </div>
               <button
@@ -794,7 +796,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                 className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
                 data-testid="button-logout-patient"
               >
-                Logout
+                {t('logout')}
               </button>
             </div>
           </div>
@@ -808,7 +810,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.heartRate}</div>
-                <div className="text-blue-100 text-sm">Heart Rate (BPM)</div>
+                <div className="text-blue-100 text-sm">{t('heartRate')} ({t('bpm')})</div>
               </div>
               <div className="text-right">
                 <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
@@ -823,7 +825,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.bloodPressure}</div>
-                <div className="text-green-100 text-sm">Blood Pressure</div>
+                <div className="text-green-100 text-sm">{t('bloodPressure')}</div>
               </div>
               <div className="text-right">
                 <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
@@ -838,7 +840,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.temperature}°C</div>
-                <div className="text-pink-100 text-sm">Temperature</div>
+                <div className="text-pink-100 text-sm">{t('temperature')}</div>
               </div>
               <div className="text-right">
                 <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
@@ -853,7 +855,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.oxygenLevel}%</div>
-                <div className="text-purple-100 text-sm">Oxygen Level</div>
+                <div className="text-purple-100 text-sm">{t('oxygenLevel')}</div>
               </div>
               <div className="text-right">
                 <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
@@ -867,29 +869,29 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
         {/* Health Overview */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Health Overview</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">{t('healthTrends')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex justify-between">
-                <span className="text-gray-600">Health Score</span>
+                <span className="text-gray-600">{t('healthTrends')}</span>
                 <span className="font-medium">{dashboardData.healthScore}/100</span>
               </div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex justify-between">
-                <span className="text-gray-600">Compliance Rate</span>
+                <span className="text-gray-600">{t('complianceRate')}</span>
                 <span className="font-medium">{dashboardData.complianceRate}%</span>
               </div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex justify-between">
-                <span className="text-gray-600">Last Checkup</span>
+                <span className="text-gray-600">{t('lastActivity')}</span>
                 <span className="font-medium">{dashboardData.lastCheckup}</span>
               </div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex justify-between">
-                <span className="text-gray-600">Next Appointment</span>
+                <span className="text-gray-600">{t('nextAppointment')}</span>
                 <span className="font-medium">{dashboardData.nextAppointment}</span>
               </div>
             </div>
@@ -934,23 +936,23 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
         {/* Vitals History with Filters */}
         <div className="bg-white rounded-xl shadow-md p-6 mt-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold text-gray-800">Vitals History ({vitalsHistory.length} records)</h3>
+            <h3 className="text-xl font-semibold text-gray-800">{t('vitalSigns')} ({vitalsHistory.length} {t('medicalHistory')})</h3>
             <div className="flex space-x-4 items-center">
               <select
                 value={selectedVitalType}
                 onChange={(e) => setSelectedVitalType(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="all">All Vitals</option>
-                <option value="heartRate">Heart Rate</option>
-                <option value="bloodPressure">Blood Pressure</option>
-                <option value="temperature">Temperature</option>
-                <option value="oxygenLevel">Oxygen Level</option>
-                <option value="bloodGlucose">Blood Glucose Monitor</option>
+                <option value="all">{t('vitalSigns')}</option>
+                <option value="heartRate">{t('heartRate')}</option>
+                <option value="bloodPressure">{t('bloodPressure')}</option>
+                <option value="temperature">{t('temperature')}</option>
+                <option value="oxygenLevel">{t('oxygenLevel')}</option>
+                <option value="bloodGlucose">{t('bloodGlucose')}</option>
               </select>
               
               <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-600">From:</label>
+                <label className="text-sm font-medium text-gray-600">{t('from')}:</label>
                 <input
                   type="date"
                   value={fromDate}
@@ -960,7 +962,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               </div>
               
               <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-600">To:</label>
+                <label className="text-sm font-medium text-gray-600">{t('to')}:</label>
                 <input
                   type="date"
                   value={toDate}

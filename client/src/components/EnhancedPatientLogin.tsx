@@ -18,6 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useLanguage } from '@/lib/i18n';
 
 const loginSchema = z.object({
   emailOrPatientId: z.string().min(1, 'Please enter your email or patient ID'),
@@ -34,6 +35,7 @@ interface LoginProps {
 }
 
 export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onForgotPassword }: LoginProps) {
+  const { t } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
@@ -76,16 +78,16 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onF
             <Shield className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            24/7 Tele H Technology Services
+            {t('appTitle')}
           </h1>
-          <p className="text-gray-600">Healthcare Monitoring Portal</p>
+          <p className="text-gray-600">{t('appSubtitle')}</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5" />
-              Patient Login
+              {t('patientLogin')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -101,7 +103,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onF
               {/* Email or Patient ID */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address or Patient ID
+                  {t('emailOrPatientId')}
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -109,7 +111,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onF
                     {...form.register('emailOrPatientId')}
                     type="text"
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter email or patient ID"
+                    placeholder={t('enterEmailOrPatientId')}
                     data-testid="input-email-patientid"
                   />
                 </div>
@@ -123,7 +125,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onF
               {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
+                  {t('password')}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -131,7 +133,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onF
                     {...form.register('password')}
                     type={showPassword ? 'text' : 'password'}
                     className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter your password"
+                    placeholder={t('enterPassword')}
                     data-testid="input-password"
                   />
                   <button
@@ -159,7 +161,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onF
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     data-testid="checkbox-remember-me"
                   />
-                  <label className="text-sm text-gray-600">Remember me</label>
+                  <label className="text-sm text-gray-600">{t('rememberMe')}</label>
                 </div>
                 <button 
                   type="button"
@@ -167,7 +169,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onF
                   className="text-sm text-blue-600 hover:underline" 
                   data-testid="link-forgot-password"
                 >
-                  Forgot password?
+                  {t('forgotPassword')}
                 </button>
               </div>
 
@@ -179,10 +181,10 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onF
                 data-testid="button-login-submit"
               >
                 {loginMutation.isPending ? (
-                  'Signing in...'
+                  t('signingIn')
                 ) : (
                   <>
-                    Sign In
+                    {t('signIn')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}

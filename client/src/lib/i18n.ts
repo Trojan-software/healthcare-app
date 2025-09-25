@@ -31,6 +31,18 @@ export interface Translation {
   alreadyHaveAccount: string;
   forgotPassword: string;
   
+  // App Info
+  appTitle: string;
+  appSubtitle: string;
+  
+  // Login Form
+  patientLogin: string;
+  emailOrPatientId: string;
+  enterEmailOrPatientId: string;
+  enterPassword: string;
+  rememberMe: string;
+  signingIn: string;
+  
   // Dashboard
   welcomeBack: string;
   totalPatients: string;
@@ -221,6 +233,8 @@ export interface Translation {
   export: string;
   share: string;
   history: string;
+  from: string;
+  to: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -252,6 +266,18 @@ export const translations: Record<Language, Translation> = {
     createAccount: 'Create Account',
     alreadyHaveAccount: 'Already have an account?',
     forgotPassword: 'Forgot Password?',
+    
+    // App Info
+    appTitle: '24/7 Tele H Technology Services',
+    appSubtitle: 'Healthcare Monitoring Portal',
+    
+    // Login Form
+    patientLogin: 'Patient Login',
+    emailOrPatientId: 'Email Address or Patient ID',
+    enterEmailOrPatientId: 'Enter email or patient ID',
+    enterPassword: 'Enter your password',
+    rememberMe: 'Remember me',
+    signingIn: 'Signing in...',
     
     // Dashboard
     welcomeBack: 'Welcome Back',
@@ -443,6 +469,8 @@ export const translations: Record<Language, Translation> = {
     export: 'Export',
     share: 'Share',
     history: 'History',
+    from: 'From',
+    to: 'To',
   },
   ar: {
     // Navigation
@@ -472,6 +500,18 @@ export const translations: Record<Language, Translation> = {
     createAccount: 'إنشاء حساب',
     alreadyHaveAccount: 'لديك حساب بالفعل؟',
     forgotPassword: 'نسيت كلمة المرور؟',
+    
+    // App Info
+    appTitle: 'خدمات تكنولوجيا الصحة 24/7',
+    appSubtitle: 'بوابة مراقبة الرعاية الصحية',
+    
+    // Login Form
+    patientLogin: 'تسجيل دخول المريض',
+    emailOrPatientId: 'عنوان البريد الإلكتروني أو رقم المريض',
+    enterEmailOrPatientId: 'أدخل البريد الإلكتروني أو رقم المريض',
+    enterPassword: 'أدخل كلمة المرور',
+    rememberMe: 'تذكرني',
+    signingIn: 'جارٍ تسجيل الدخول...',
     
     // Dashboard
     welcomeBack: 'مرحباً بعودتك',
@@ -663,6 +703,8 @@ export const translations: Record<Language, Translation> = {
     export: 'تصدير',
     share: 'مشاركة',
     history: 'السجل',
+    from: 'من',
+    to: 'إلى',
   },
 };
 
