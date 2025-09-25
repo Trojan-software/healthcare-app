@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, UserPlus, Shield, LogOut, CheckCircle, AlertCircle } from "lucide-react";
+import { Users, Shield, LogOut, CheckCircle, AlertCircle } from "lucide-react";
 import { handleApiError } from '@/lib/errorHandler';
 
 interface Patient {
@@ -19,16 +19,6 @@ export default function SimpleAdminPage() {
   const [user, setUser] = useState<any>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [createForm, setCreateForm] = useState({
-    patientId: '',
-    email: '',
-    firstName: '',
-    lastName: '',
-    username: '',
-    mobileNumber: '',
-    password: '',
-  });
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -74,41 +64,6 @@ export default function SimpleAdminPage() {
     }
   };
 
-  const createPatient = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/create-patient', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(createForm),
-      });
-      
-      if (response.ok) {
-        setMessage('Patient access created successfully');
-        setCreateForm({
-          patientId: '',
-          email: '',
-          firstName: '',
-          lastName: '',
-          username: '',
-          mobileNumber: '',
-          password: '',
-        });
-        setShowCreateForm(false);
-        fetchPatients();
-      } else {
-        const error = await response.json();
-        setMessage(`Error: ${error.message}`);
-      }
-    } catch (error) {
-      setMessage('Failed to create patient access');
-    }
-    setTimeout(() => setMessage(''), 3000);
-  };
 
   const togglePatientAccess = async (patientId: string, isActive: boolean) => {
     try {
@@ -231,106 +186,9 @@ export default function SimpleAdminPage() {
                 <h2 className="text-xl font-semibold text-gray-900">Patient Dashboard Access</h2>
                 <p className="text-gray-600">Manage patient login credentials and dashboard access permissions</p>
               </div>
-              <button
-                onClick={() => setShowCreateForm(!showCreateForm)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                data-testid="button-add-patient"
-              >
-                <UserPlus className="w-4 h-4" />
-                Create Patient Access
-              </button>
             </div>
           </div>
 
-          {/* Create Form */}
-          {showCreateForm && (
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Create Patient Dashboard Access</h3>
-              <form onSubmit={createPatient} className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Patient ID (e.g., TH-12345)"
-                  value={createForm.patientId}
-                  onChange={(e) => setCreateForm({...createForm, patientId: e.target.value})}
-                  className="px-3 py-2 border border-gray-300 rounded-lg"
-                  required
-                  data-testid="input-patient-id"
-                />
-                <input
-                  type="email"
-                  placeholder="Email Address"
-                  value={createForm.email}
-                  onChange={(e) => setCreateForm({...createForm, email: e.target.value})}
-                  className="px-3 py-2 border border-gray-300 rounded-lg"
-                  required
-                  data-testid="input-email"
-                />
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  value={createForm.firstName}
-                  onChange={(e) => setCreateForm({...createForm, firstName: e.target.value})}
-                  className="px-3 py-2 border border-gray-300 rounded-lg"
-                  required
-                  data-testid="input-first-name"
-                />
-                <input
-                  type="text"
-                  placeholder="Last Name"
-                  value={createForm.lastName}
-                  onChange={(e) => setCreateForm({...createForm, lastName: e.target.value})}
-                  className="px-3 py-2 border border-gray-300 rounded-lg"
-                  required
-                  data-testid="input-last-name"
-                />
-                <input
-                  type="text"
-                  placeholder="Username"
-                  value={createForm.username}
-                  onChange={(e) => setCreateForm({...createForm, username: e.target.value})}
-                  className="px-3 py-2 border border-gray-300 rounded-lg"
-                  required
-                  data-testid="input-username"
-                />
-                <input
-                  type="text"
-                  placeholder="Mobile Number"
-                  value={createForm.mobileNumber}
-                  onChange={(e) => setCreateForm({...createForm, mobileNumber: e.target.value})}
-                  className="px-3 py-2 border border-gray-300 rounded-lg"
-                  required
-                  data-testid="input-mobile-number"
-                />
-                <input
-                  type="password"
-                  placeholder="Password (min 8 characters)"
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm({...createForm, password: e.target.value})}
-                  className="px-3 py-2 border border-gray-300 rounded-lg col-span-2"
-                  required
-                  minLength={8}
-                  data-testid="input-password-create"
-                />
-                <div className="col-span-2 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                    data-testid="button-cancel"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    data-testid="button-create-access-submit"
-                  >
-                    Create Access
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
 
           {/* Patient List */}
           <div className="p-6">

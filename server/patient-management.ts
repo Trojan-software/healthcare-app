@@ -4,18 +4,6 @@ import bcrypt from "bcrypt";
 import { z } from "zod";
 
 // Patient Management API Schema Validation
-const createPatientSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  middleName: z.string().optional(),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Valid email is required"),
-  mobileNumber: z.string().regex(/^\+971[0-9]{8,9}$/, "Valid UAE mobile number required"),
-  hospitalId: z.string().min(1, "Hospital selection is required"),
-  dateOfBirth: z.string().optional(),
-  gender: z.enum(['male', 'female', 'other']).optional(),
-  emergencyContact: z.string().optional(),
-  medicalHistory: z.string().optional()
-});
 
 const updatePatientSchema = z.object({
   firstName: z.string().optional(),
@@ -218,79 +206,6 @@ export function registerPatientManagementRoutes(app: Express) {
     }
   });
 
-  // Create new patient account
-  app.post('/api/admin/patients', async (req, res) => {
-    try {
-      const validation = createPatientSchema.safeParse(req.body);
-      
-      if (!validation.success) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid patient data",
-          errors: validation.error.format()
-        });
-      }
-
-      const { firstName, middleName, lastName, email, mobileNumber, hospitalId, ...additionalData } = validation.data;
-
-      // Check if patient already exists
-      const existingPatient = await storage.getUserByEmail(email);
-      if (existingPatient) {
-        return res.status(409).json({
-          success: false,
-          message: 'Patient with this email already exists'
-        });
-      }
-
-      // Generate unique patient ID
-      const patientId = `PAT${Date.now().toString().slice(-6)}`;
-      
-      // Generate temporary password
-      const tempPassword = Math.random().toString(36).slice(-8).toUpperCase();
-      const passwordHash = await bcrypt.hash(tempPassword, 10);
-
-      // Create patient account
-      const newPatient = await storage.createPatientAccess({
-        firstName,
-        middleName: middleName || null,
-        lastName,
-        email,
-        mobileNumber,
-        patientId,
-        hospitalId,
-        password: passwordHash,
-        username: email,
-        isVerified: true, // Admin-created accounts are pre-verified
-        role: 'patient',
-        ...additionalData
-      });
-
-      console.log(`New patient created - ID: ${patientId}, Email: ${email}, Temp Password: ${tempPassword}`);
-
-      res.json({
-        success: true,
-        message: 'Patient account created successfully',
-        patient: {
-          id: newPatient.id,
-          patientId,
-          firstName,
-          middleName,
-          lastName,
-          email,
-          mobileNumber,
-          hospitalId,
-          tempPassword,
-          isActive: true
-        }
-      });
-    } catch (error) {
-      console.error('Error creating patient:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to create patient account'
-      });
-    }
-  });
 
   // Update patient information
   app.put('/api/admin/patients/:patientId', async (req, res) => {

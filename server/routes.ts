@@ -144,50 +144,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/patients", async (req, res) => {
-    try {
-      const { firstName, lastName, email, patientId, hospitalId, dateOfBirth } = req.body;
-
-      if (!firstName || !lastName || !email || !patientId) {
-        return res.status(400).json({ message: "Required fields are missing" });
-      }
-
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ message: "Email already exists" });
-      }
-
-      const existingPatient = await storage.getUserByPatientId(patientId);
-      if (existingPatient) {
-        return res.status(409).json({ message: "Patient ID already exists" });
-      }
-
-      // Generate secure random password for new patient accounts
-      const crypto = require('crypto');
-      const randomPassword = crypto.randomBytes(12).toString('base64').slice(0, 16);
-      const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
-      const patient = await storage.createPatientAccess({
-        firstName,
-        lastName,
-        email,
-        password: hashedPassword,
-        patientId,
-        hospitalId,
-        dateOfBirth,
-        role: "patient",
-        isVerified: true
-      });
-
-      res.status(201).json({ 
-        ...patient, 
-        temporaryPassword: randomPassword 
-      });
-    } catch (error) {
-      console.error("Error creating patient:", error);
-      res.status(500).json({ message: "Failed to create patient" });
-    }
-  });
 
   app.put("/api/admin/patients/:patientId", async (req, res) => {
     try {

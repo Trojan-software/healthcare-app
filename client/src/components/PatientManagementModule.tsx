@@ -28,18 +28,6 @@ interface Patient {
   dateOfBirth?: string;
 }
 
-interface PatientFormData {
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  email: string;
-  mobileNumber: string;
-  hospitalId: string;
-  dateOfBirth: string;
-  gender?: 'male' | 'female' | 'other';
-  emergencyContact?: string;
-  medicalHistory?: string;
-}
 
 interface Hospital {
   id: string;
@@ -167,8 +155,6 @@ export default function PatientManagementModule() {
   });
 
   const patients = filteredPatients;
-
-  // Create patient mutation
 
   // Export patient data as JSON
   const handleExportPatient = (patient: Patient) => {
@@ -759,123 +745,3 @@ function EditPatientForm({
   );
 }
 
-// Create Patient Form Component
-function CreatePatientForm({ 
-  hospitals, 
-  onSubmit, 
-  isLoading 
-}: { 
-  hospitals: Hospital[]; 
-  onSubmit: (data: PatientFormData) => void; 
-  isLoading: boolean;
-}) {
-  const [formData, setFormData] = useState<PatientFormData>({
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    email: '',
-    mobileNumber: '',
-    hospitalId: '',
-    dateOfBirth: '',
-    gender: undefined,
-    emergencyContact: '',
-    medicalHistory: ''
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="firstName">First Name *</Label>
-          <Input
-            id="firstName"
-            value={formData.firstName}
-            onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="lastName">Last Name *</Label>
-          <Input
-            id="lastName"
-            value={formData.lastName}
-            onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-            required
-          />
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="middleName">Middle Name</Label>
-        <Input
-          id="middleName"
-          value={formData.middleName}
-          onChange={(e) => setFormData(prev => ({ ...prev, middleName: e.target.value }))}
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="email">Email *</Label>
-        <Input
-          id="email"
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="mobileNumber">Mobile Number *</Label>
-        <Input
-          id="mobileNumber"
-          value={formData.mobileNumber}
-          onChange={(e) => setFormData(prev => ({ ...prev, mobileNumber: e.target.value }))}
-          placeholder="+971 50 123 4567"
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-        <Input
-          id="dateOfBirth"
-          type="date"
-          value={formData.dateOfBirth}
-          onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="hospitalId">Hospital / Clinic *</Label>
-        <Select 
-          value={formData.hospitalId} 
-          onValueChange={(value) => setFormData(prev => ({ ...prev, hospitalId: value }))}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select Hospital" />
-          </SelectTrigger>
-          <SelectContent>
-            {hospitals.map((hospital) => (
-              <SelectItem key={hospital.id} value={hospital.id}>
-                {hospital.name} - {hospital.type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button type="submit" disabled={isLoading} data-testid="button-create-patient">
-          {isLoading ? "Creating..." : "Create Patient"}
-        </Button>
-      </div>
-    </form>
-  );
-}
