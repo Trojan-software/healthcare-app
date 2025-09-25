@@ -11,8 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Users, UserPlus, Shield, Activity, AlertCircle, CheckCircle } from "lucide-react";
+import { Users, UserPlus, Shield, Activity, AlertCircle, CheckCircle, Monitor } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import AdminHC03DeviceManager from "./AdminHC03DeviceManager";
 
 const createPatientSchema = z.object({
   patientId: z.string().min(3, "Patient ID must be at least 3 characters"),
@@ -223,6 +224,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <TabsList>
               <TabsTrigger value="patients">Patient Management</TabsTrigger>
+              <TabsTrigger value="devices">Device Management</TabsTrigger>
               <TabsTrigger value="activity">Activity Log</TabsTrigger>
             </TabsList>
 
@@ -419,6 +421,15 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="devices">
+            <AdminHC03DeviceManager 
+              onDeviceSelect={(device) => {
+                console.log('Selected device:', device);
+                // Optional: Handle device selection for detailed view
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="activity">
