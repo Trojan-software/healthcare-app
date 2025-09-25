@@ -320,7 +320,7 @@ export default function ProfessionalHealthcareApp() {
                   <p className="text-gray-600 text-sm mb-2">Demo Credentials</p>
                   <div className="text-gray-800 font-medium text-sm space-y-1">
                     <div>Admin: admin@24x7teleh.com / admin123</div>
-                    <div>Patient: test@example.com / patient123</div>
+                    <div>Patient: patient.demo@example.com / patient123</div>
                   </div>
                 </div>
               </div>

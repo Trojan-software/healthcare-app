@@ -520,7 +520,7 @@ For questions, contact: support@24x7teleh.com
                   </p>
                   <div className={`text-gray-800 font-medium text-sm space-y-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                     <div>{isRTL ? 'مدير:' : 'Admin:'} admin@24x7teleh.com / admin123</div>
-                    <div>{isRTL ? 'مريض:' : 'Patient:'} test@example.com / patient123</div>
+                    <div>{isRTL ? 'مريض:' : 'Patient:'} patient.demo@example.com / patient123</div>
                   </div>
                 </div>
               </div>
