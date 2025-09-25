@@ -18,9 +18,6 @@ export default function BasicApp() {
             .button:hover { background: #1d4ed8; }
             .button:disabled { background: #9ca3af; cursor: not-allowed; }
             .error { margin-bottom: 16px; padding: 12px; border: 1px solid #fecaca; background: #fef2f2; border-radius: 6px; color: #dc2626; font-size: 14px; display: none; }
-            .demo-info { text-align: center; padding-top: 24px; border-top: 1px solid #e5e7eb; margin-top: 24px; }
-            .demo-title { font-size: 14px; color: #6b7280; margin: 0 0 8px 0; }
-            .demo-text { font-size: 12px; color: #9ca3af; margin: 0 0 4px 0; }
           </style>
         </head>
         <body>
@@ -45,11 +42,6 @@ export default function BasicApp() {
                 <button id="loginBtn" type="submit" class="button">Sign In</button>
               </form>
               
-              <div class="demo-info">
-                <p class="demo-title">Demo Accounts:</p>
-                <p class="demo-text">Admin: admin@24x7teleh.com / admin123</p>
-                <p class="demo-text">Patient: patient.demo@example.com / patient123</p>
-              </div>
             </div>
           </div>
           
