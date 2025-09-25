@@ -47,8 +47,16 @@
     </div>
 
     <script>
-      // Get the current domain and redirect to the actual app
+      // Enforce HTTPS and redirect to the actual app
       const currentDomain = window.location.origin;
+      
+      // Force HTTPS if not already using it
+      if (window.location.protocol === 'http:' && !currentDomain.includes('localhost')) {
+        const httpsUrl = currentDomain.replace('http:', 'https:') + '/mobile-dashboard';
+        window.location.replace(httpsUrl);
+        return;
+      }
+      
       const targetUrl = currentDomain + '/mobile-dashboard';
       
       // Wait a moment for better UX, then redirect

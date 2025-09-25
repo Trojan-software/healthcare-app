@@ -20,18 +20,72 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Fetch event
+// Fetch event for caching static assets only
 self.addEventListener('fetch', (event) => {
+  const request = event.request;
+  const url = new URL(request.url);
+
+  // Only handle GET requests for security
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Skip API routes and authenticated requests
+  if (url.pathname.includes('/api/') || request.headers.get('Authorization')) {
+    return;
+  }
+
+  // Only cache same-origin requests
+  if (url.origin !== location.origin) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then((response) => {
-        // Return cached version or fetch from network
+        // Return cached version if available
         if (response) {
           return response;
         }
-        return fetch(event.request);
-      }
-    )
+        
+        return fetch(request)
+          .then((response) => {
+            // Only cache successful responses for static assets
+            if (response && response.status === 200 && response.type === 'basic') {
+              // Cache static assets only (icons, manifest, CSS, JS)
+              const cacheable = url.pathname.includes('/icons/') || 
+                               url.pathname.includes('/static/') ||
+                               url.pathname === '/manifest.json' ||
+                               url.pathname.endsWith('.js') ||
+                               url.pathname.endsWith('.css');
+
+              if (cacheable) {
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME)
+                  .then((cache) => {
+                    cache.put(request, responseToCache);
+                  });
+              }
+            }
+
+            return response;
+          })
+          .catch(() => {
+            // Return navigation fallback for navigation requests only
+            if (request.mode === 'navigate') {
+              return caches.match('/mobile-dashboard') || 
+                     caches.match('/') ||
+                     new Response('Offline - Please check your connection', {
+                       status: 503,
+                       statusText: 'Service Unavailable',
+                       headers: { 'Content-Type': 'text/html' }
+                     });
+            }
+            
+            // For non-navigation requests, let them fail naturally
+            throw new Error('Network unavailable');
+          });
+      })
   );
 });
 
