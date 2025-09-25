@@ -142,6 +142,35 @@ const COMMANDS = {
   BATTERY_QUERY: [0xaa, 0xaa, 0x17, 0x01, 0x01]
 };
 
+export enum ConnectionState {
+  DISCONNECTED = 'disconnected',
+  SCANNING = 'scanning',
+  CONNECTING = 'connecting',
+  CONNECTED = 'connected',
+  RECONNECTING = 'reconnecting',
+  ERROR = 'error'
+}
+
+export enum BluetoothErrorType {
+  NOT_SUPPORTED = 'not_supported',
+  PERMISSION_DENIED = 'permission_denied',
+  DEVICE_NOT_FOUND = 'device_not_found',
+  CONNECTION_FAILED = 'connection_failed',
+  CONNECTION_TIMEOUT = 'connection_timeout',
+  DISCONNECTED = 'disconnected',
+  COMMAND_FAILED = 'command_failed',
+  DATA_PARSE_ERROR = 'data_parse_error',
+  UNKNOWN = 'unknown'
+}
+
+export interface BluetoothError {
+  type: BluetoothErrorType;
+  message: string;
+  originalError?: Error;
+  deviceId?: string;
+  timestamp: number;
+}
+
 export class BluetoothService {
   private device: BluetoothDevice | null = null;
   private server: BluetoothRemoteGATTServer | null = null;
@@ -149,9 +178,15 @@ export class BluetoothService {
   private writeCharacteristic: BluetoothRemoteGATTCharacteristic | null = null;
   private notifyCharacteristic: BluetoothRemoteGATTCharacteristic | null = null;
   private listeners: Map<string, Function[]> = new Map();
-  private isScanning = false;
-  private isConnected = false;
+  private connectionState: ConnectionState = ConnectionState.DISCONNECTED;
   private currentPatientId: string | null = null;
+
+  // Connection management
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 3;
+  private reconnectInterval = 2000; // 2 seconds
+  private connectionTimeout = 10000; // 10 seconds
+  private reconnectTimer: NodeJS.Timeout | null = null;
 
   // Data buffers for real-time processing
   private ecgBuffer: number[] = [];
@@ -161,45 +196,147 @@ export class BluetoothService {
   constructor() {
     // Check Web Bluetooth API support
     if (!navigator.bluetooth) {
-      throw new Error('Web Bluetooth API is not supported in this browser');
+      throw this.createError(
+        BluetoothErrorType.NOT_SUPPORTED,
+        'Web Bluetooth API is not supported in this browser. Please use a supported browser like Chrome, Edge, or Opera.'
+      );
     }
+  }
+
+  /**
+   * Create standardized error object
+   */
+  private createError(type: BluetoothErrorType, message: string, originalError?: Error, deviceId?: string): BluetoothError {
+    const bluetoothError: BluetoothError = {
+      type,
+      message,
+      originalError,
+      deviceId,
+      timestamp: Date.now()
+    };
+    
+    this.emit('bluetoothError', bluetoothError);
+    return bluetoothError;
+  }
+
+  /**
+   * Get user-friendly error message
+   */
+  private getUserFriendlyErrorMessage(error: BluetoothError): string {
+    switch (error.type) {
+      case BluetoothErrorType.NOT_SUPPORTED:
+        return 'Bluetooth is not supported on this device. Please use a compatible browser.';
+      case BluetoothErrorType.PERMISSION_DENIED:
+        return 'Bluetooth access was denied. Please allow Bluetooth permissions and try again.';
+      case BluetoothErrorType.DEVICE_NOT_FOUND:
+        return 'HC03 device not found. Make sure the device is turned on and nearby.';
+      case BluetoothErrorType.CONNECTION_FAILED:
+        return 'Failed to connect to HC03 device. Please try again.';
+      case BluetoothErrorType.CONNECTION_TIMEOUT:
+        return 'Connection timed out. Please move closer to the device and try again.';
+      case BluetoothErrorType.DISCONNECTED:
+        return 'Device disconnected unexpectedly. Attempting to reconnect...';
+      case BluetoothErrorType.COMMAND_FAILED:
+        return 'Failed to send command to device. Please check the connection.';
+      case BluetoothErrorType.DATA_PARSE_ERROR:
+        return 'Error reading data from device. The measurement may be incomplete.';
+      default:
+        return 'An unexpected error occurred. Please try again.';
+    }
+  }
+
+  /**
+   * Set connection state and emit event
+   */
+  private setConnectionState(state: ConnectionState): void {
+    const previousState = this.connectionState;
+    this.connectionState = state;
+    this.emit('connectionStateChanged', { 
+      previousState, 
+      currentState: state, 
+      deviceId: this.device?.id 
+    });
   }
 
   /**
    * Start scanning for HC03 devices
    */
   async startScan(): Promise<HC03DeviceInfo[]> {
-    if (this.isScanning) {
-      throw new Error('Already scanning for devices');
+    if (this.connectionState === ConnectionState.SCANNING) {
+      throw this.createError(
+        BluetoothErrorType.UNKNOWN,
+        'Already scanning for devices'
+      );
     }
 
     try {
-      this.isScanning = true;
+      this.setConnectionState(ConnectionState.SCANNING);
       this.emit('scanStarted');
 
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [
-          { services: [HC03_SERVICE_UUID] },
-          { namePrefix: 'HC03' },
-          { namePrefix: 'LT-' }
-        ],
-        optionalServices: [HC03_SERVICE_UUID]
+      // Create a timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(this.createError(
+            BluetoothErrorType.CONNECTION_TIMEOUT,
+            'Device scan timed out'
+          ));
+        }, this.connectionTimeout);
       });
 
+      // Race between device request and timeout
+      const device = await Promise.race([
+        navigator.bluetooth.requestDevice({
+          filters: [
+            { services: [HC03_SERVICE_UUID] },
+            { namePrefix: 'HC03' },
+            { namePrefix: 'LT-' }
+          ],
+          optionalServices: [HC03_SERVICE_UUID]
+        }),
+        timeoutPromise
+      ]);
+
+      this.device = device;
       const deviceInfo: HC03DeviceInfo = {
         id: device.id,
         name: device.name || 'HC03 Device',
         connected: device.gatt?.connected || false
       };
 
-      this.isScanning = false;
+      this.setConnectionState(ConnectionState.DISCONNECTED);
       this.emit('scanCompleted', [deviceInfo]);
       
       return [deviceInfo];
-    } catch (error) {
-      this.isScanning = false;
-      this.emit('scanError', error);
-      throw error;
+    } catch (error: any) {
+      this.setConnectionState(ConnectionState.ERROR);
+      
+      let bluetoothError: BluetoothError;
+      
+      if (error.name === 'NotFoundError') {
+        bluetoothError = this.createError(
+          BluetoothErrorType.DEVICE_NOT_FOUND,
+          'No HC03 device found. Make sure the device is turned on and in pairing mode.',
+          error
+        );
+      } else if (error.name === 'NotAllowedError') {
+        bluetoothError = this.createError(
+          BluetoothErrorType.PERMISSION_DENIED,
+          'Bluetooth access denied. Please allow Bluetooth permissions in your browser.',
+          error
+        );
+      } else if (error.type) {
+        // Already a BluetoothError
+        bluetoothError = error;
+      } else {
+        bluetoothError = this.createError(
+          BluetoothErrorType.UNKNOWN,
+          `Scan failed: ${error.message || 'Unknown error'}`,
+          error
+        );
+      }
+      
+      this.emit('scanError', bluetoothError);
+      throw bluetoothError;
     }
   }
 
@@ -209,42 +346,116 @@ export class BluetoothService {
   async connect(deviceId: string, patientId: string): Promise<void> {
     try {
       if (!this.device || this.device.id !== deviceId) {
-        throw new Error('Device not found. Please scan for devices first.');
+        throw this.createError(
+          BluetoothErrorType.DEVICE_NOT_FOUND,
+          'Device not found. Please scan for devices first.',
+          undefined,
+          deviceId
+        );
+      }
+
+      if (this.connectionState === ConnectionState.CONNECTING || 
+          this.connectionState === ConnectionState.CONNECTED) {
+        throw this.createError(
+          BluetoothErrorType.UNKNOWN,
+          'Already connecting or connected to device',
+          undefined,
+          deviceId
+        );
       }
 
       this.currentPatientId = patientId;
+      this.setConnectionState(ConnectionState.CONNECTING);
       this.emit('connecting', deviceId);
 
-      // Connect to GATT server
-      this.server = await this.device.gatt!.connect();
-      
-      // Get primary service
-      this.service = await this.server.getPrimaryService(HC03_SERVICE_UUID);
-      
-      // Get characteristics
-      this.writeCharacteristic = await this.service.getCharacteristic(HC03_WRITE_CHARACTERISTIC_UUID);
-      this.notifyCharacteristic = await this.service.getCharacteristic(HC03_NOTIFY_CHARACTERISTIC_UUID);
-      
-      // Setup notifications
-      await this.notifyCharacteristic.startNotifications();
-      this.notifyCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotification.bind(this));
-      
-      // Handle disconnection
-      this.device.addEventListener('gattserverdisconnected', this.handleDisconnection.bind(this));
-      
-      this.isConnected = true;
-      this.emit('connected', {
-        deviceId,
-        deviceName: this.device.name,
-        patientId
+      // Clear any existing reconnect timer
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+
+      // Create connection timeout
+      const connectionTimeout = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(this.createError(
+            BluetoothErrorType.CONNECTION_TIMEOUT,
+            'Connection timed out. Please move closer to the device.',
+            undefined,
+            deviceId
+          ));
+        }, this.connectionTimeout);
       });
 
-      // Query device info
-      await this.queryBattery();
+      // Attempt connection with timeout
+      await Promise.race([
+        this.performConnection(deviceId, patientId),
+        connectionTimeout
+      ]);
+
+    } catch (error: any) {
+      this.setConnectionState(ConnectionState.ERROR);
       
+      let bluetoothError: BluetoothError;
+      
+      if (error.type) {
+        bluetoothError = error;
+      } else if (error.name === 'NetworkError') {
+        bluetoothError = this.createError(
+          BluetoothErrorType.CONNECTION_FAILED,
+          'Network error during connection. Please check device and try again.',
+          error,
+          deviceId
+        );
+      } else {
+        bluetoothError = this.createError(
+          BluetoothErrorType.CONNECTION_FAILED,
+          `Connection failed: ${error.message || 'Unknown error'}`,
+          error,
+          deviceId
+        );
+      }
+      
+      this.emit('connectionError', bluetoothError);
+      throw bluetoothError;
+    }
+  }
+
+  /**
+   * Perform the actual connection steps
+   */
+  private async performConnection(deviceId: string, patientId: string): Promise<void> {
+    // Connect to GATT server
+    this.server = await this.device!.gatt!.connect();
+    
+    // Get primary service
+    this.service = await this.server.getPrimaryService(HC03_SERVICE_UUID);
+    
+    // Get characteristics
+    this.writeCharacteristic = await this.service.getCharacteristic(HC03_WRITE_CHARACTERISTIC_UUID);
+    this.notifyCharacteristic = await this.service.getCharacteristic(HC03_NOTIFY_CHARACTERISTIC_UUID);
+    
+    // Setup notifications
+    await this.notifyCharacteristic.startNotifications();
+    this.notifyCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotification.bind(this));
+    
+    // Handle disconnection
+    this.device!.addEventListener('gattserverdisconnected', this.handleDisconnection.bind(this));
+    
+    this.setConnectionState(ConnectionState.CONNECTED);
+    this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+    
+    this.emit('connected', {
+      deviceId,
+      deviceName: this.device!.name,
+      patientId
+    });
+
+    // Query device info
+    try {
+      await this.queryBattery();
     } catch (error) {
-      this.emit('connectionError', error);
-      throw error;
+      console.warn('Failed to query battery after connection:', error);
+      // Don't fail the connection for this
     }
   }
 
@@ -253,13 +464,69 @@ export class BluetoothService {
    */
   async disconnect(): Promise<void> {
     try {
+      // Clear reconnect timer if any
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+
       if (this.server && this.server.connected) {
         await this.server.disconnect();
       }
-      this.handleDisconnection();
+      this.handleDisconnection(false); // Don't auto-reconnect on manual disconnect
     } catch (error) {
       console.error('Error disconnecting:', error);
-      this.handleDisconnection();
+      const bluetoothError = this.createError(
+        BluetoothErrorType.UNKNOWN,
+        `Disconnect error: ${error.message || 'Unknown error'}`,
+        error as Error,
+        this.device?.id
+      );
+      this.emit('disconnectionError', bluetoothError);
+      this.handleDisconnection(false);
+    }
+  }
+
+  /**
+   * Attempt to reconnect to the device
+   */
+  private async attemptReconnect(): Promise<void> {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      const error = this.createError(
+        BluetoothErrorType.CONNECTION_FAILED,
+        `Failed to reconnect after ${this.maxReconnectAttempts} attempts`,
+        undefined,
+        this.device?.id
+      );
+      this.emit('reconnectFailed', error);
+      this.setConnectionState(ConnectionState.ERROR);
+      return;
+    }
+
+    this.reconnectAttempts++;
+    this.setConnectionState(ConnectionState.RECONNECTING);
+    
+    this.emit('reconnectAttempt', {
+      attempt: this.reconnectAttempts,
+      maxAttempts: this.maxReconnectAttempts,
+      deviceId: this.device?.id
+    });
+
+    try {
+      if (this.device && this.currentPatientId) {
+        await this.performConnection(this.device.id, this.currentPatientId);
+        this.emit('reconnectSuccess', {
+          attempts: this.reconnectAttempts,
+          deviceId: this.device.id
+        });
+      }
+    } catch (error) {
+      console.warn(`Reconnect attempt ${this.reconnectAttempts} failed:`, error);
+      
+      // Schedule next reconnect attempt
+      this.reconnectTimer = setTimeout(() => {
+        this.attemptReconnect();
+      }, this.reconnectInterval * this.reconnectAttempts); // Exponential backoff
     }
   }
 
@@ -267,8 +534,13 @@ export class BluetoothService {
    * Start measurement for specific detection type
    */
   async startMeasurement(type: DetectionType): Promise<void> {
-    if (!this.isConnected || !this.writeCharacteristic) {
-      throw new Error('Device not connected');
+    if (this.connectionState !== ConnectionState.CONNECTED || !this.writeCharacteristic) {
+      throw this.createError(
+        BluetoothErrorType.DISCONNECTED,
+        'Device not connected. Please connect to device first.',
+        undefined,
+        this.device?.id
+      );
     }
 
     let command: number[];
@@ -298,17 +570,33 @@ export class BluetoothService {
         throw new Error(`Unsupported detection type: ${type}`);
     }
 
-    await this.writeCharacteristic.writeValue(new Uint8Array(command));
-    this.measurementActive.add(type);
-    this.emit('measurementStarted', { type, patientId: this.currentPatientId });
+    try {
+      await this.writeCharacteristic.writeValue(new Uint8Array(command));
+      this.measurementActive.add(type);
+      this.emit('measurementStarted', { type, patientId: this.currentPatientId });
+    } catch (error) {
+      const bluetoothError = this.createError(
+        BluetoothErrorType.COMMAND_FAILED,
+        `Failed to start ${type} measurement`,
+        error as Error,
+        this.device?.id
+      );
+      this.emit('measurementError', bluetoothError);
+      throw bluetoothError;
+    }
   }
 
   /**
    * Stop measurement for specific detection type
    */
   async stopMeasurement(type: DetectionType): Promise<void> {
-    if (!this.isConnected || !this.writeCharacteristic) {
-      throw new Error('Device not connected');
+    if (this.connectionState !== ConnectionState.CONNECTED || !this.writeCharacteristic) {
+      throw this.createError(
+        BluetoothErrorType.DISCONNECTED,
+        'Device not connected. Please connect to device first.',
+        undefined,
+        this.device?.id
+      );
     }
 
     let command: number[];
@@ -333,9 +621,20 @@ export class BluetoothService {
         return; // Battery doesn't need stop command
     }
 
-    await this.writeCharacteristic.writeValue(new Uint8Array(command));
-    this.measurementActive.delete(type);
-    this.emit('measurementStopped', { type, patientId: this.currentPatientId });
+    try {
+      await this.writeCharacteristic.writeValue(new Uint8Array(command));
+      this.measurementActive.delete(type);
+      this.emit('measurementStopped', { type, patientId: this.currentPatientId });
+    } catch (error) {
+      const bluetoothError = this.createError(
+        BluetoothErrorType.COMMAND_FAILED,
+        `Failed to stop ${type} measurement`,
+        error as Error,
+        this.device?.id
+      );
+      this.emit('measurementError', bluetoothError);
+      throw bluetoothError;
+    }
   }
 
   /**
@@ -349,14 +648,25 @@ export class BluetoothService {
    * Handle incoming notifications from device
    */
   private handleNotification(event: Event): void {
-    const characteristic = event.target as unknown as BluetoothRemoteGATTCharacteristic;
-    const data = new Uint8Array(characteristic.value!.buffer);
-    
     try {
+      const characteristic = event.target as unknown as BluetoothRemoteGATTCharacteristic;
+      
+      if (!characteristic.value) {
+        console.warn('Received notification with no data');
+        return;
+      }
+      
+      const data = new Uint8Array(characteristic.value.buffer);
       this.parseData(Array.from(data));
     } catch (error) {
       console.error('Error parsing device data:', error);
-      this.emit('dataError', error);
+      const bluetoothError = this.createError(
+        BluetoothErrorType.DATA_PARSE_ERROR,
+        `Failed to parse device data: ${error.message || 'Unknown error'}`,
+        error as Error,
+        this.device?.id
+      );
+      this.emit('dataError', bluetoothError);
     }
   }
 
@@ -585,16 +895,44 @@ export class BluetoothService {
   /**
    * Handle device disconnection
    */
-  private handleDisconnection(): void {
-    this.isConnected = false;
+  private handleDisconnection(autoReconnect: boolean = true): void {
     this.server = null;
     this.service = null;
     this.writeCharacteristic = null;
     this.notifyCharacteristic = null;
     this.measurementActive.clear();
-    this.currentPatientId = null;
     
-    this.emit('disconnected');
+    const wasConnected = this.connectionState === ConnectionState.CONNECTED;
+    this.setConnectionState(ConnectionState.DISCONNECTED);
+    
+    const disconnectData = {
+      deviceId: this.device?.id,
+      patientId: this.currentPatientId,
+      unexpected: wasConnected
+    };
+    
+    this.emit('disconnected', disconnectData);
+    
+    // Attempt auto-reconnect if it was an unexpected disconnection
+    if (autoReconnect && wasConnected && this.device && this.currentPatientId) {
+      const error = this.createError(
+        BluetoothErrorType.DISCONNECTED,
+        'Device disconnected unexpectedly. Attempting to reconnect...',
+        undefined,
+        this.device.id
+      );
+      
+      this.emit('unexpectedDisconnection', error);
+      
+      // Start reconnection attempts
+      this.reconnectTimer = setTimeout(() => {
+        this.attemptReconnect();
+      }, this.reconnectInterval);
+    } else {
+      // Manual disconnect - clean up completely
+      this.currentPatientId = null;
+      this.reconnectAttempts = 0;
+    }
   }
 
   /**
@@ -640,7 +978,63 @@ export class BluetoothService {
    * Get connection status
    */
   isDeviceConnected(): boolean {
-    return this.isConnected;
+    return this.connectionState === ConnectionState.CONNECTED;
+  }
+
+  /**
+   * Get current connection state
+   */
+  getConnectionState(): ConnectionState {
+    return this.connectionState;
+  }
+
+  /**
+   * Get connection health info
+   */
+  getConnectionHealth(): {
+    state: ConnectionState;
+    reconnectAttempts: number;
+    maxReconnectAttempts: number;
+    deviceId?: string;
+    patientId?: string;
+  } {
+    return {
+      state: this.connectionState,
+      reconnectAttempts: this.reconnectAttempts,
+      maxReconnectAttempts: this.maxReconnectAttempts,
+      deviceId: this.device?.id,
+      patientId: this.currentPatientId || undefined
+    };
+  }
+
+  /**
+   * Set reconnection settings
+   */
+  setReconnectionSettings(maxAttempts: number, intervalMs: number): void {
+    this.maxReconnectAttempts = maxAttempts;
+    this.reconnectInterval = intervalMs;
+  }
+
+  /**
+   * Set connection timeout
+   */
+  setConnectionTimeout(timeoutMs: number): void {
+    this.connectionTimeout = timeoutMs;
+  }
+
+  /**
+   * Force stop reconnection attempts
+   */
+  stopReconnection(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.reconnectAttempts = 0;
+    
+    if (this.connectionState === ConnectionState.RECONNECTING) {
+      this.setConnectionState(ConnectionState.DISCONNECTED);
+    }
   }
 
   /**
