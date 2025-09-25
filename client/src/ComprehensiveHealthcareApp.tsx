@@ -96,7 +96,8 @@ function AppContent() {
     showAdvancedAnalytics: false,
     showCheckupScheduling: false,
     showEditPatient: false,
-    showAddPatient: false
+    showAddPatient: false,
+    showViewPatient: false
   });
 
   const [otpMethod, setOtpMethod] = useState<'email' | 'sms'>('email');
@@ -1183,7 +1184,8 @@ For questions, contact: support@24x7teleh.com
                           <button 
                             className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded border border-blue-600 hover:bg-blue-50"
                             onClick={() => {
-                              alert(`Viewing patient details for ${patient.firstName} ${patient.lastName} (${patient.patientId})`);
+                              setSelectedPatient(patient);
+                              setModalState(prev => ({ ...prev, showViewPatient: true }));
                             }}
                             data-testid={`button-view-patient-${patient.id}`}
                           >
@@ -1350,6 +1352,272 @@ For questions, contact: support@24x7teleh.com
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* View Patient Details Dialog */}
+        {modalState.showViewPatient && selectedPatient && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-teal-600 text-white px-6 py-4 rounded-t-lg">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold">Patient Details</h2>
+                    <p className="text-blue-100">Complete patient information and health records</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setModalState(prev => ({ ...prev, showViewPatient: false }));
+                      setSelectedPatient(null);
+                    }}
+                    className="text-white hover:text-gray-200 text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white hover:bg-opacity-20 transition-all"
+                    data-testid="button-close-view"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Patient Basic Information */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                  {/* Personal Info */}
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-100">
+                    <div className="flex items-center mb-4">
+                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xl font-bold mr-4">
+                        {selectedPatient.firstName.charAt(0)}{selectedPatient.lastName.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">{selectedPatient.firstName} {selectedPatient.lastName}</h3>
+                        <p className="text-blue-600 font-semibold">ID: {selectedPatient.patientId}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Email Address</label>
+                        <p className="text-gray-800">{selectedPatient.email}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Date of Birth</label>
+                        <p className="text-gray-800">
+                          {selectedPatient.dateOfBirth ? 
+                            new Date(selectedPatient.dateOfBirth).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            }) : 
+                            'Not specified'
+                          }
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Age</label>
+                        <p className="text-gray-800">{selectedPatient.age} years old</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Current Status */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                      <span className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-sm mr-2">✓</span>
+                      Current Status
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Health Status</label>
+                        <div className="mt-1">
+                          <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                            selectedPatient.status === 'Critical' ? 'bg-red-100 text-red-800' :
+                            selectedPatient.status === 'Attention' ? 'bg-yellow-100 text-yellow-800' :
+                            selectedPatient.status === 'Normal' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {selectedPatient.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Last Activity</label>
+                        <p className="text-gray-800">{selectedPatient.lastActivity}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Hospital Affiliation</label>
+                        <p className="text-gray-800">
+                          {hospitals.find(h => h.id === (selectedPatient as any).hospitalId)?.name || 'Not assigned'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact Information */}
+                  <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-6 border border-purple-100">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                      <span className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm mr-2">📧</span>
+                      Contact & Access
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Registration Status</label>
+                        <div className="mt-1">
+                          <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                            (selectedPatient as any).isVerified ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {(selectedPatient as any).isVerified ? 'Verified' : 'Pending Verification'}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Mobile Number</label>
+                        <p className="text-gray-800">{(selectedPatient as any).mobileNumber || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Portal Access</label>
+                        <p className="text-gray-800">Healthcare Dashboard Enabled</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Current Vital Signs */}
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6 border border-gray-200">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <span className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center text-white text-lg mr-3">💓</span>
+                    Current Vital Signs
+                  </h3>
+                  {selectedPatient.vitals ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">{selectedPatient.vitals.heartRate}</div>
+                          <div className="text-sm text-gray-600">Heart Rate (BPM)</div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600">{selectedPatient.vitals.bloodPressure}</div>
+                          <div className="text-sm text-gray-600">Blood Pressure</div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-orange-600">{selectedPatient.vitals.temperature}°C</div>
+                          <div className="text-sm text-gray-600">Temperature</div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-purple-600">{selectedPatient.vitals.oxygenLevel}%</div>
+                          <div className="text-sm text-gray-600">Blood Oxygen</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-2xl text-gray-400">📊</span>
+                      </div>
+                      <p className="text-gray-500 text-lg">No recent vital signs data available</p>
+                      <p className="text-gray-400 text-sm">Connect HC03 device or manually record measurements</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Medical Summary */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  {/* Health Overview */}
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                      <span className="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center text-white text-sm mr-2">📋</span>
+                      Health Overview
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Health Score</span>
+                        <span className="font-semibold text-green-600">Good</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Risk Level</span>
+                        <span className="font-semibold text-yellow-600">
+                          {selectedPatient.status === 'Critical' ? 'High' :
+                           selectedPatient.status === 'Attention' ? 'Medium' : 'Low'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Monitoring Status</span>
+                        <span className="font-semibold text-blue-600">Active</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-gray-600">Data Collection</span>
+                        <span className="font-semibold text-green-600">Real-time</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Activity */}
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                      <span className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm mr-2">🕒</span>
+                      Recent Activity
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-blue-600 text-sm">📊</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">Vital signs recorded</p>
+                          <p className="text-xs text-gray-600">{selectedPatient.lastActivity}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center p-3 bg-green-50 rounded-lg">
+                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-green-600 text-sm">✓</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">Health status updated</p>
+                          <p className="text-xs text-gray-600">Status: {selectedPatient.status}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center p-3 bg-purple-50 rounded-lg">
+                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-purple-600 text-sm">🔗</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">Device connectivity</p>
+                          <p className="text-xs text-gray-600">HC03 device synchronized</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => {
+                      setModalState(prev => ({ ...prev, showViewPatient: false, showEditPatient: true }));
+                    }}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    data-testid="button-edit-from-view"
+                  >
+                    Edit Patient
+                  </button>
+                  <button
+                    onClick={() => {
+                      setModalState(prev => ({ ...prev, showViewPatient: false }));
+                      setSelectedPatient(null);
+                    }}
+                    className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                    data-testid="button-close-view-modal"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
