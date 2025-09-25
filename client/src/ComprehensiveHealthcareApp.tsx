@@ -490,6 +490,7 @@ For questions, contact: support@24x7teleh.com
                   type="submit"
                   disabled={state.loading}
                   className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-teal-700 disabled:opacity-50 transition-all transform hover:scale-[1.02]"
+                  data-testid="button-login-submit"
                 >
                   {state.loading ? (isRTL ? 'جاري تسجيل الدخول...' : 'Signing In...') : (isRTL ? 'تسجيل الدخول' : 'Sign In')}
                 </button>
@@ -500,6 +501,7 @@ For questions, contact: support@24x7teleh.com
                   <button
                     onClick={() => setState(prev => ({ ...prev, view: 'register' }))}
                     className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                    data-testid="button-go-to-register"
                   >
                     {isRTL ? 'مريض جديد؟ إنشاء حساب' : 'New Patient? Create Account'}
                   </button>
@@ -820,6 +822,7 @@ For questions, contact: support@24x7teleh.com
                   type="button"
                   onClick={() => setState(prev => ({ ...prev, view: 'login' }))}
                   className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                  data-testid="button-back-to-login-register"
                 >
                   Back to Login
                 </button>
@@ -865,6 +868,7 @@ For questions, contact: support@24x7teleh.com
                 <button
                   onClick={() => setState({ view: 'login', user: null, loading: false, error: '' })}
                   className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
+                  data-testid="button-logout-admin"
                 >
                   Logout
                 </button>
@@ -883,6 +887,7 @@ For questions, contact: support@24x7teleh.com
                   setAdminData(prev => ({ ...prev, searchTerm: '', filterStatus: 'all', filterHospital: 'all' }));
                 }}
                 className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 hover:shadow-lg transition-all cursor-pointer w-full text-left"
+                data-testid="button-dashboard-total-patients"
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -902,6 +907,7 @@ For questions, contact: support@24x7teleh.com
                   setAdminData(prev => ({ ...prev, searchTerm: '', filterStatus: 'Normal', filterHospital: 'all' }));
                 }}
                 className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 hover:shadow-lg transition-all cursor-pointer w-full text-left"
+                data-testid="button-dashboard-active-patients"
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -921,6 +927,7 @@ For questions, contact: support@24x7teleh.com
                   setAdminData(prev => ({ ...prev, searchTerm: '', filterStatus: 'Critical', filterHospital: 'all' }));
                 }}
                 className="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500 hover:shadow-lg transition-all cursor-pointer w-full text-left"
+                data-testid="button-dashboard-critical-alerts"
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -939,6 +946,7 @@ For questions, contact: support@24x7teleh.com
                   setModalState(prev => ({ ...prev, showAdvancedAnalytics: true }));
                 }}
                 className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 hover:shadow-lg transition-all cursor-pointer w-full text-left"
+                data-testid="button-dashboard-analytics"
               >
                 <div className="flex justify-between items-start">
                   <div>
