@@ -15,7 +15,9 @@ import {
   BluetoothOff,
   Battery,
   BatteryLow,
-  Gauge
+  Gauge,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { hc03Sdk, Detection, type ECGData, type BloodOxygenData, type BloodPressureData, type TemperatureData, type BatteryData } from '@/lib/hc03-sdk';
 import { apiRequest } from '@/lib/queryClient';
@@ -59,6 +61,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
     deviceId: '',
     signalStrength: 0
   });
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Load patient's HC03 devices
@@ -90,24 +93,31 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         // Update active detections
         setActiveDetections(new Set(activeDetectionsList));
       } else {
+        // Connection lost - just update status, let SDK handle reconnection
         setRealTimeStatus({
           connected: false,
-          deviceName: '',
-          deviceId: '',
+          deviceName: connectedDevice?.deviceName || '',
+          deviceId: connectedDevice?.deviceId || '',
           signalStrength: 0
         });
         
         setConnectionHealth(prev => ({
           isHealthy: false,
           lastHeartbeat: prev.lastHeartbeat,
-          reconnectAttempts: prev.reconnectAttempts,
+          reconnectAttempts: prev.reconnectAttempts + (prev.reconnectAttempts > 0 ? 0 : 1),
           signalStrength: 0
         }));
+        
+        // Show connection lost message if we had a connected device
+        if (connectedDevice) {
+          setConnectionError('Connection lost. Please reconnect manually.');
+        }
       }
     }, 2000); // Check every 2 seconds
 
     return () => clearInterval(healthCheckInterval);
-  }, []);
+  }, [connectedDevice]);
+
 
   const loadPatientDevices = async () => {
     try {
@@ -118,10 +128,17 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
     }
   };
 
-  // Connect to HC03 device
+  // Connect to HC03 device with enhanced error handling
   const connectToDevice = useCallback(async () => {
     setIsConnecting(true);
+    setConnectionError(null);
+    
     try {
+      // Check if Bluetooth is available
+      if (!navigator.bluetooth) {
+        throw new Error('Bluetooth not supported on this device');
+      }
+
       await hc03Sdk.initialize();
       const device = await hc03Sdk.connectDevice();
       
@@ -137,6 +154,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       const registeredDevice = await apiRequest('/api/hc03/devices', 'POST', deviceData) as unknown as HC03Device;
 
       setConnectedDevice(registeredDevice);
+      setConnectionError(null);
       
       // Set up data callbacks
       setupDataCallbacks();
@@ -147,17 +165,37 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       });
       
       await loadPatientDevices();
+      
     } catch (error) {
-      handleDeviceError('HC03DeviceManager', 'connectDevice', error as Error, { patientId });
+      const err = error as Error;
+      let errorMessage = "Failed to connect to HC03 device";
+      
+      // Provide specific error messages based on DOMException names
+      if (err.name === 'NotSupportedError' || err.message.includes('Bluetooth not supported')) {
+        errorMessage = "Bluetooth is not supported on this device";
+      } else if (err.name === 'NotAllowedError' || err.message.includes('not allowed')) {
+        errorMessage = "Bluetooth permission denied. Please allow Bluetooth access.";
+      } else if (err.name === 'NotFoundError' || err.message.includes('not found')) {
+        errorMessage = "No HC03 device found nearby. Please make sure device is turned on.";
+      } else if (err.name === 'NetworkError' || err.message.includes('GATT')) {
+        errorMessage = "Failed to connect to device. Please try again.";
+      } else if (err.name === 'SecurityError') {
+        errorMessage = "Secure context required. Please use HTTPS.";
+      }
+      
+      setConnectionError(errorMessage);
+      handleDeviceError('HC03DeviceManager', 'connectDevice', err, { patientId });
+      
       toast({
         title: "Connection Failed",
-        description: "Failed to connect to HC03 device. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsConnecting(false);
     }
   }, [patientId, toast]);
+
 
   // Set up data callbacks for different detection types
   const setupDataCallbacks = () => {
@@ -450,9 +488,18 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
             <div className="text-center py-6">
               <BluetoothOff className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-4">No HC03 device connected</p>
-              <Button onClick={connectToDevice} disabled={isConnecting}>
-                {isConnecting ? 'Connecting...' : 'Connect Device'}
-              </Button>
+              
+              <div className="space-y-3">
+                <Button onClick={connectToDevice} disabled={isConnecting}>
+                  {isConnecting ? 'Connecting...' : 'Connect Device'}
+                </Button>
+                {connectionError && (
+                  <Alert className="text-left">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{connectionError}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
             </div>
           )}
         </CardContent>

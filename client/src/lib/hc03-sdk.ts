@@ -75,6 +75,10 @@ export class Hc03Sdk {
   private isConnected: boolean = false;
   private callbacks: Map<Detection, (data: any) => void> = new Map();
   private activeDetections: Set<Detection> = new Set();
+  private reconnectionAttempts = 0;
+  private maxReconnectionAttempts = 5;
+  private isReconnecting = false;
+  private onConnectionStatusChange?: (status: { connected: boolean; reconnecting: boolean; attempts: number }) => void;
 
   private constructor() {}
 
@@ -84,6 +88,22 @@ export class Hc03Sdk {
       Hc03Sdk.instance = new Hc03Sdk();
     }
     return Hc03Sdk.instance;
+  }
+
+  // Set callback for connection status changes
+  public setConnectionStatusCallback(callback: (status: { connected: boolean; reconnecting: boolean; attempts: number }) => void): void {
+    this.onConnectionStatusChange = callback;
+  }
+
+  // Notify connection status changes
+  private notifyConnectionStatus(): void {
+    if (this.onConnectionStatusChange) {
+      this.onConnectionStatusChange({
+        connected: this.isConnected,
+        reconnecting: this.isReconnecting,
+        attempts: this.reconnectionAttempts
+      });
+    }
   }
 
   // Initialize HC03 SDK
@@ -128,14 +148,17 @@ export class Hc03Sdk {
       // Start connection health monitoring
       this.startConnectionHealthCheck();
 
+      this.reconnectionAttempts = 0; // Reset on successful connection
+      this.notifyConnectionStatus();
       return this.device;
     } catch (error) {
-      throw new Error(`Failed to connect to HC03 device: ${error}`);
+      // Preserve original DOMException properties for proper error handling in UI
+      throw error;
     }
   }
 
-  // Connection health monitoring
-  private healthCheckInterval: NodeJS.Timeout | null = null;
+  // Connection health monitoring (browser environment)
+  private healthCheckInterval: number | null = null;
   
   private startConnectionHealthCheck(): void {
     if (this.healthCheckInterval) {
@@ -155,29 +178,61 @@ export class Hc03Sdk {
     }, 10000); // Check every 10 seconds
   }
 
-  // Automatic reconnection logic
+  // Automatic reconnection logic with exponential backoff and single-flight protection
   private async attemptReconnection(): Promise<void> {
-    if (this.isConnected || !this.device) {
+    // Single-flight protection - if already reconnecting or connected, skip
+    if (this.isReconnecting || this.isConnected || !this.device) {
+      return;
+    }
+
+    this.isReconnecting = true;
+    this.reconnectionAttempts++;
+    this.notifyConnectionStatus();
+
+    // Check if max attempts reached
+    if (this.reconnectionAttempts > this.maxReconnectionAttempts) {
+      console.warn(`Max reconnection attempts (${this.maxReconnectionAttempts}) reached. Stopping reconnection attempts.`);
+      this.isReconnecting = false;
+      this.notifyConnectionStatus();
       return;
     }
 
     try {
-      console.log('Attempting to reconnect to HC03 device...');
+      console.log(`Reconnection attempt ${this.reconnectionAttempts}/${this.maxReconnectionAttempts}`);
+      
+      // Use exponential backoff: 2^attempt * 1000ms, max 30 seconds
+      const delay = Math.min(Math.pow(2, this.reconnectionAttempts - 1) * 1000, 30000);
+      await new Promise(resolve => setTimeout(resolve, delay));
+
+      // Attempt to reconnect using existing device reference (no new requestDevice needed)
       this.server = await this.device.gatt!.connect();
       this.isConnected = true;
-      console.log('HC03 device reconnected successfully');
+      this.isReconnecting = false;
+      this.reconnectionAttempts = 0; // Reset on successful connection
       
-      // Restart active detections
+      console.log('HC03 device reconnected successfully');
+      this.notifyConnectionStatus();
+      
+      // Restart active detections that were running before disconnect
       for (const detection of Array.from(this.activeDetections)) {
-        await this.startDetect(detection);
+        try {
+          await this.startDetect(detection);
+        } catch (detectionError) {
+          console.warn(`Failed to restart ${detection} detection:`, detectionError);
+        }
       }
     } catch (error) {
-      console.error('Failed to reconnect to HC03 device:', error);
+      console.error(`Reconnection attempt ${this.reconnectionAttempts} failed:`, error);
+      this.isReconnecting = false;
+      this.notifyConnectionStatus();
       
-      // Try again in 30 seconds
-      setTimeout(() => {
-        this.attemptReconnection();
-      }, 30000);
+      // Schedule next attempt with exponential backoff if under max attempts
+      if (this.reconnectionAttempts < this.maxReconnectionAttempts) {
+        const nextDelay = Math.min(Math.pow(2, this.reconnectionAttempts) * 2000, 30000);
+        setTimeout(() => {
+          this.attemptReconnection();
+        }, nextDelay);
+      }
     }
   }
 
@@ -214,7 +269,57 @@ export class Hc03Sdk {
   // Stop detection as per HC03 API
   public async stopDetect(detection: Detection): Promise<void> {
     this.activeDetections.delete(detection);
-    // Implementation depends on specific BLE characteristics
+    this.callbacks.delete(detection);
+    
+    // Stop notifications for the specific characteristic
+    if (!this.server) return;
+    
+    try {
+      const service = await this.server.getPrimaryService(HC03_SERVICE_UUID);
+      let characteristicUuid: string;
+      
+      // Map detection to characteristic UUID
+      switch (detection) {
+        case Detection.ECG:
+          characteristicUuid = HC03_CHARACTERISTICS.ECG;
+          break;
+        case Detection.OX:
+          characteristicUuid = HC03_CHARACTERISTICS.BLOOD_OXYGEN;
+          break;
+        case Detection.BP:
+          characteristicUuid = HC03_CHARACTERISTICS.BLOOD_PRESSURE;
+          break;
+        case Detection.BT:
+          characteristicUuid = HC03_CHARACTERISTICS.TEMPERATURE;
+          break;
+        case Detection.BATTERY:
+          // Battery service uses different service UUID
+          try {
+            const batteryService = await this.server.getPrimaryService('battery_service');
+            const characteristic = await batteryService.getCharacteristic('battery_level');
+            await characteristic.stopNotifications();
+          } catch (error) {
+            console.warn(`Failed to stop battery notifications:`, error);
+          }
+          return;
+        case Detection.BG:
+          characteristicUuid = HC03_CHARACTERISTICS.BLOOD_GLUCOSE;
+          break;
+        default:
+          console.warn(`Unknown detection type: ${detection}`);
+          return;
+      }
+      
+      const characteristic = await service.getCharacteristic(characteristicUuid);
+      await characteristic.stopNotifications();
+      
+      // Note: We don't remove all event listeners here because other detections might be using the same characteristic
+      // Event listeners will be cleaned up on disconnect
+      
+    } catch (error) {
+      console.warn(`Failed to stop ${detection} detection:`, error);
+      // Continue execution - device might be disconnected
+    }
   }
 
   // Parse incoming data as per HC03 API
