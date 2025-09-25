@@ -21,6 +21,7 @@ import {
 import BloodGlucoseWidget from './BloodGlucoseWidget';
 import BatteryWidget from './BatteryWidget';
 import EcgWidget from './EcgWidget';
+import HC03DeviceWidget from './HC03DeviceWidget';
 
 interface VitalSigns {
   id: number;
@@ -897,6 +898,17 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
         {/* Health Monitoring Widgets */}
         <div className="space-y-6 mt-6">
+          {/* HC03 Device Control - Full Width */}
+          <HC03DeviceWidget 
+            patientId={dashboardData?.user?.patientId || ''}
+            onDataUpdate={(data) => {
+              // Handle real-time data updates from HC03 device
+              console.log('HC03 data received:', data);
+              // Optionally refresh dashboard data or update specific metrics
+              loadDashboardData();
+            }}
+          />
+          
           {/* ECG Monitor - Full Width */}
           <EcgWidget 
             deviceId="HC03-003"
