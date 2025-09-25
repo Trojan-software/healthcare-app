@@ -136,7 +136,7 @@ export default function PatientManagementModule() {
   });
 
   const stats: PatientStats = (statsData as any)?.stats || { total: 0, active: 0, inactive: 0, registeredToday: 0, byHospital: {} };
-  const allPatients: Patient[] = Array.isArray(patientsData) ? patientsData : (patientsData as any)?.patients || [];
+  const allPatients: Patient[] = Array.isArray(patientsData) ? patientsData : [];
 
   // Filter patients based on search query, hospital, and status
   const filteredPatients = allPatients.filter(patient => {
