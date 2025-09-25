@@ -414,7 +414,7 @@ For immediate assistance, contact emergency services or your healthcare provider
   const getMoodCategory = (moodIndex: number): string => {
     if (moodIndex <= 20) return 'Chill';
     if (moodIndex <= 40) return 'Relax';
-    if (moodIndex <= 60) return 'Balance';
+    if (moodIndex <= 60) return t('balance');
     if (moodIndex <= 80) return 'Excitation';
     return 'Excitement/Anxiety';
   };
@@ -653,73 +653,73 @@ For immediate assistance, contact emergency services or your healthcare provider
           <div className="text-center p-3 bg-blue-50 rounded-lg">
             <Wind className="w-6 h-6 mx-auto mb-1 text-blue-500" />
             <div className="text-2xl font-bold text-blue-600">{stats.respiratoryRate}</div>
-            <div className="text-sm text-gray-600">Breaths/min</div>
+            <div className="text-sm text-gray-600">{t('breathsPerMin')}</div>
           </div>
           
           <div className="text-center p-3 bg-purple-50 rounded-lg">
             <TrendingUp className="w-6 h-6 mx-auto mb-1 text-purple-500" />
             <div className="text-2xl font-bold text-purple-600">{stats.stressScore}</div>
-            <div className="text-sm text-gray-600">Stress Level</div>
+            <div className="text-sm text-gray-600">{t('stressLevel')}</div>
           </div>
           
           <div className="text-center p-3 bg-yellow-50 rounded-lg">
             <Zap className="w-6 h-6 mx-auto mb-1 text-yellow-500" />
             <div className="text-2xl font-bold text-yellow-600">{stats.moodIndex}</div>
-            <div className="text-sm text-gray-600">Mood Index</div>
+            <div className="text-sm text-gray-600">{t('moodIndex')}</div>
           </div>
         </div>
 
         {/* Enhanced Detailed Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-3">
-            <h4 className="font-medium text-gray-800">Heart Rate Variability</h4>
+            <h4 className="font-medium text-gray-800">{t('heartRateVariability')}</h4>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">RMSSD</span>
+                <span className="text-gray-600">{t('rmssd')}</span>
                 <span className="font-medium">{stats.rmssd} ms</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">pNN50</span>
+                <span className="text-gray-600">{t('pnn50')}</span>
                 <span className="font-medium">{stats.pnn50}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">SDNN</span>
+                <span className="text-gray-600">{t('sdnn')}</span>
                 <span className="font-medium">{stats.sdnn} ms</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Average RR</span>
+                <span className="text-gray-600">{t('averageRR')}</span>
                 <span className="font-medium">{stats.averageRR} ms</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">HR Range</span>
+                <span className="text-gray-600">{t('hrRange')}</span>
                 <span className="font-medium">{stats.minHeartRate}-{stats.maxHeartRate} BPM</span>
               </div>
             </div>
           </div>
           
           <div className="space-y-3">
-            <h4 className="font-medium text-gray-800">ECG Intervals</h4>
+            <h4 className="font-medium text-gray-800">{t('ecgIntervals')}</h4>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">QRS Width</span>
+                <span className="text-gray-600">{t('qrsWidth')}</span>
                 <span className="font-medium">{stats.qrsWidth} ms</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">QT Interval</span>
+                <span className="text-gray-600">{t('qtInterval')}</span>
                 <span className="font-medium">{stats.qtInterval} ms</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">PR Interval</span>
+                <span className="text-gray-600">{t('prInterval')}</span>
                 <span className="font-medium">{stats.prInterval} ms</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">ST Elevation</span>
+                <span className="text-gray-600">{t('stElevation')}</span>
                 <span className={`font-medium ${Math.abs(stats.stSegmentElevation) > 1 ? 'text-red-600' : 'text-green-600'}`}>
                   {stats.stSegmentElevation.toFixed(1)} mm
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Cardiac Rhythm</span>
+                <span className="text-gray-600">{t('cardiacRhythm')}</span>
                 <Badge variant="secondary" className={getRhythmColor(stats.rhythm)}>
                   {stats.rhythm.charAt(0).toUpperCase() + stats.rhythm.slice(1)}
                 </Badge>
@@ -728,34 +728,34 @@ For immediate assistance, contact emergency services or your healthcare provider
           </div>
           
           <div className="space-y-3">
-            <h4 className="font-medium text-gray-800">Status & Alerts</h4>
+            <h4 className="font-medium text-gray-800">{t('statusAndAlerts')}</h4>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Mood Category</span>
+                <span className="text-gray-600">{t('moodCategory')}</span>
                 <Badge variant="secondary" className={getMoodColor(stats.moodCategory)}>
                   {stats.moodCategory}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Contact Quality</span>
+                <span className="text-gray-600">{t('contactQuality')}</span>
                 <Badge variant="secondary" className={getContactColor(stats.contactQuality)}>
                   {stats.contactQuality}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Arrhythmia</span>
+                <span className="text-gray-600">{t('arrhythmia')}</span>
                 <Badge variant={stats.arrhythmiaDetected ? "destructive" : "secondary"}>
-                  {stats.arrhythmiaDetected ? 'Detected' : 'None'}
+                  {stats.arrhythmiaDetected ? t('detected') : t('none')}
                 </Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Signal Strength</span>
+                <span className="text-gray-600">{t('signalStrength')}</span>
                 <span className="font-medium">{stats.signalStrength}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Recording Status</span>
+                <span className="text-gray-600">{t('recordingStatus')}</span>
                 <span className={`font-medium ${isRecording ? 'text-green-600' : 'text-gray-600'}`}>
-                  {isRecording ? 'Active' : 'Standby'}
+                  {isRecording ? t('active') : t('standby')}
                 </span>
               </div>
             </div>
@@ -767,7 +767,7 @@ For immediate assistance, contact emergency services or your healthcare provider
           <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <h4 className="font-medium text-red-800 mb-2 flex items-center">
               <AlertTriangle className="w-4 h-4 mr-2" />
-              Critical ECG Findings
+              {t('criticalEcgFindings')}
             </h4>
             <div className="space-y-1 text-sm text-red-700">
               {stats.arrhythmiaDetected && <p>• Arrhythmia detected - irregular heart rhythm</p>}
@@ -793,56 +793,56 @@ For immediate assistance, contact emergency services or your healthcare provider
         {/* Real-time Analysis Panel */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="p-4">
-            <h4 className="font-medium text-gray-800 mb-3">Rhythm Analysis</h4>
+            <h4 className="font-medium text-gray-800 mb-3">{t('rhythmAnalysis')}</h4>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Dominant Rhythm</span>
+                <span className="text-sm text-gray-600">{t('dominantRhythm')}</span>
                 <Badge variant="secondary" className={getRhythmColor(stats.rhythm)}>
                   {stats.rhythm.charAt(0).toUpperCase() + stats.rhythm.slice(1)}
                 </Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">P-Wave Present</span>
-                <span className="text-sm font-medium">{stats.rhythm !== 'afib' ? 'Yes' : 'No'}</span>
+                <span className="text-sm text-gray-600">{t('pWavePresent')}</span>
+                <span className="text-sm font-medium">{stats.rhythm !== 'afib' ? t('yes') : t('no')}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">QRS Morphology</span>
-                <span className="text-sm font-medium">{stats.qrsWidth < 120 ? 'Normal' : 'Wide'}</span>
+                <span className="text-sm text-gray-600">{t('qrsMorphology')}</span>
+                <span className="text-sm font-medium">{stats.qrsWidth < 120 ? t('normal') : t('wide')}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Axis Deviation</span>
-                <span className="text-sm font-medium">Normal</span>
+                <span className="text-sm text-gray-600">{t('axisDeviation')}</span>
+                <span className="text-sm font-medium">{t('normal')}</span>
               </div>
             </div>
           </Card>
 
           <Card className="p-4">
-            <h4 className="font-medium text-gray-800 mb-3">Clinical Interpretation</h4>
+            <h4 className="font-medium text-gray-800 mb-3">{t('clinicalInterpretation')}</h4>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Overall Assessment</span>
+                <span className="text-sm text-gray-600">{t('overallAssessment')}</span>
                 <Badge variant={stats.arrhythmiaDetected || stats.rhythm !== 'normal' ? "destructive" : "secondary"} 
                        className={stats.arrhythmiaDetected || stats.rhythm !== 'normal' ? "" : "bg-green-100 text-green-800"}>
-                  {stats.arrhythmiaDetected || stats.rhythm !== 'normal' ? 'Abnormal' : 'Normal'}
+                  {stats.arrhythmiaDetected || stats.rhythm !== 'normal' ? t('abnormal') : t('normal')}
                 </Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Urgency Level</span>
+                <span className="text-sm text-gray-600">{t('urgencyLevel')}</span>
                 <span className="text-sm font-medium">
-                  {stats.arrhythmiaDetected || Math.abs(stats.stSegmentElevation) > 1 ? 'High' : 'Low'}
+                  {stats.arrhythmiaDetected || Math.abs(stats.stSegmentElevation) > 1 ? t('high') : t('low')}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Follow-up Required</span>
+                <span className="text-sm text-gray-600">{t('followupRequired')}</span>
                 <span className="text-sm font-medium">
-                  {stats.rhythm !== 'normal' || stats.qtInterval > 450 ? 'Yes' : 'No'}
+                  {stats.rhythm !== 'normal' || stats.qtInterval > 450 ? t('yes') : t('no')}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Risk Stratification</span>
+                <span className="text-sm text-gray-600">{t('riskStratification')}</span>
                 <Badge variant={stats.stressScore > 70 ? "destructive" : stats.stressScore > 40 ? "secondary" : "secondary"}
                        className={stats.stressScore > 70 ? "" : stats.stressScore > 40 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}>
-                  {stats.stressScore > 70 ? 'High Risk' : stats.stressScore > 40 ? 'Moderate' : 'Low Risk'}
+                  {stats.stressScore > 70 ? t('highRisk') : stats.stressScore > 40 ? t('moderate') : t('lowRisk')}
                 </Badge>
               </div>
             </div>

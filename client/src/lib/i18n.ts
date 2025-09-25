@@ -47,6 +47,61 @@ export interface Translation {
   healthcareMonitoringRegistration: string;
   patientRegistration: string;
   
+  // ECG Dashboard - Vital Statistics
+  breathsPerMin: string;
+  stressLevel: string;
+  moodIndex: string;
+  
+  // ECG Dashboard - Detailed Metrics
+  heartRateVariability: string;
+  rmssd: string;
+  pnn50: string;
+  sdnn: string;
+  averageRR: string;
+  hrRange: string;
+  ecgIntervals: string;
+  qrsWidth: string;
+  qtInterval: string;
+  prInterval: string;
+  stElevation: string;
+  cardiacRhythm: string;
+  statusAndAlerts: string;
+  moodCategory: string;
+  contactQuality: string;
+  arrhythmia: string;
+  signalStrength: string;
+  recordingStatus: string;
+  active: string;
+  standby: string;
+  
+  // Status Values
+  balance: string;
+  poor: string;
+  none: string;
+  detected: string;
+  wide: string;
+  yes: string;
+  no: string;
+  abnormal: string;
+  
+  // Analysis Sections
+  rhythmAnalysis: string;
+  dominantRhythm: string;
+  pWavePresent: string;
+  qrsMorphology: string;
+  axisDeviation: string;
+  clinicalInterpretation: string;
+  overallAssessment: string;
+  urgencyLevel: string;
+  followupRequired: string;
+  riskStratification: string;
+  high: string;
+  low: string;
+  moderate: string;
+  highRisk: string;
+  lowRisk: string;
+  criticalEcgFindings: string;
+  
   // Dashboard
   welcomeBack: string;
   totalPatients: string;
@@ -287,6 +342,61 @@ export const translations: Record<Language, Translation> = {
     healthcareMonitoringRegistration: 'Healthcare Monitoring Registration',
     patientRegistration: 'Patient Registration',
     
+    // ECG Dashboard - Vital Statistics
+    breathsPerMin: 'Breaths/min',
+    stressLevel: 'Stress Level',
+    moodIndex: 'Mood Index',
+    
+    // ECG Dashboard - Detailed Metrics
+    heartRateVariability: 'Heart Rate Variability',
+    rmssd: 'RMSSD',
+    pnn50: 'pNN50',
+    sdnn: 'SDNN',
+    averageRR: 'Average RR',
+    hrRange: 'HR Range',
+    ecgIntervals: 'ECG Intervals',
+    qrsWidth: 'QRS Width',
+    qtInterval: 'QT Interval',
+    prInterval: 'PR Interval',
+    stElevation: 'ST Elevation',
+    cardiacRhythm: 'Cardiac Rhythm',
+    statusAndAlerts: 'Status & Alerts',
+    moodCategory: 'Mood Category',
+    contactQuality: 'Contact Quality',
+    arrhythmia: 'Arrhythmia',
+    signalStrength: 'Signal Strength',
+    recordingStatus: 'Recording Status',
+    active: 'Active',
+    standby: 'Standby',
+    
+    // Status Values
+    balance: 'Balance',
+    poor: 'poor',
+    none: 'None',
+    detected: 'Detected',
+    wide: 'Wide',
+    yes: 'Yes',
+    no: 'No',
+    abnormal: 'Abnormal',
+    
+    // Analysis Sections
+    rhythmAnalysis: 'Rhythm Analysis',
+    dominantRhythm: 'Dominant Rhythm',
+    pWavePresent: 'P-Wave Present',
+    qrsMorphology: 'QRS Morphology',
+    axisDeviation: 'Axis Deviation',
+    clinicalInterpretation: 'Clinical Interpretation',
+    overallAssessment: 'Overall Assessment',
+    urgencyLevel: 'Urgency Level',
+    followupRequired: 'Follow-up Required',
+    riskStratification: 'Risk Stratification',
+    high: 'High',
+    low: 'Low',
+    moderate: 'Moderate',
+    highRisk: 'High Risk',
+    lowRisk: 'Low Risk',
+    criticalEcgFindings: 'Critical ECG Findings',
+    
     // Dashboard
     welcomeBack: 'Welcome Back',
     totalPatients: 'Total Patients',
@@ -524,6 +634,61 @@ export const translations: Record<Language, Translation> = {
     // Signup Form
     healthcareMonitoringRegistration: 'تسجيل مراقبة الرعاية الصحية',
     patientRegistration: 'تسجيل المريض',
+    
+    // ECG Dashboard - Vital Statistics
+    breathsPerMin: 'نفس/الدقيقة',
+    stressLevel: 'مستوى التوتر',
+    moodIndex: 'مؤشر المزاج',
+    
+    // ECG Dashboard - Detailed Metrics
+    heartRateVariability: 'تباين معدل ضربات القلب',
+    rmssd: 'متوسط مربع الجذر',
+    pnn50: 'نسبة التباين',
+    sdnn: 'الانحراف المعياري',
+    averageRR: 'متوسط RR',
+    hrRange: 'نطاق معدل القلب',
+    ecgIntervals: 'فترات تخطيط القلب',
+    qrsWidth: 'عرض QRS',
+    qtInterval: 'فترة QT',
+    prInterval: 'فترة PR',
+    stElevation: 'ارتفاع ST',
+    cardiacRhythm: 'إيقاع القلب',
+    statusAndAlerts: 'الحالة والتنبيهات',
+    moodCategory: 'فئة المزاج',
+    contactQuality: 'جودة الاتصال',
+    arrhythmia: 'عدم انتظام ضربات القلب',
+    signalStrength: 'قوة الإشارة',
+    recordingStatus: 'حالة التسجيل',
+    active: 'نشط',
+    standby: 'في الانتظار',
+    
+    // Status Values
+    balance: 'متوازن',
+    poor: 'ضعيف',
+    none: 'لا يوجد',
+    detected: 'مكتشف',
+    wide: 'عريض',
+    yes: 'نعم',
+    no: 'لا',
+    abnormal: 'غير طبيعي',
+    
+    // Analysis Sections
+    rhythmAnalysis: 'تحليل الإيقاع',
+    dominantRhythm: 'الإيقاع المهيمن',
+    pWavePresent: 'وجود موجة P',
+    qrsMorphology: 'شكل QRS',
+    axisDeviation: 'انحراف المحور',
+    clinicalInterpretation: 'التفسير السريري',
+    overallAssessment: 'التقييم العام',
+    urgencyLevel: 'مستوى الإلحاح',
+    followupRequired: 'المتابعة المطلوبة',
+    riskStratification: 'تصنيف المخاطر',
+    high: 'مرتفع',
+    low: 'منخفض',
+    moderate: 'متوسط',
+    highRisk: 'عالي المخاطر',
+    lowRisk: 'منخفض المخاطر',
+    criticalEcgFindings: 'نتائج حرجة في تخطيط القلب',
     
     // Dashboard
     welcomeBack: 'مرحباً بعودتك',
