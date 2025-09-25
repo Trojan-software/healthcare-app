@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Battery, BatteryLow, Zap, Smartphone, AlertTriangle, CheckCircle } from 'lucide-react';
 import { handleApiError, handleDeviceError } from '@/lib/errorHandler';
+import { useLanguage } from '@/lib/i18n';
 
 interface DeviceBattery {
   deviceId: string;
@@ -19,6 +20,7 @@ interface BatteryWidgetProps {
 export default function BatteryWidget({ patientId, compact = false }: BatteryWidgetProps) {
   const [devicesBattery, setDevicesBattery] = useState<DeviceBattery[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadBatteryData();
@@ -95,18 +97,18 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
   };
 
   const getBatteryStatus = (level: number, isCharging: boolean) => {
-    if (isCharging) return { status: 'Charging', color: 'bg-green-100 text-green-800' };
-    if (level <= 10) return { status: 'Critical', color: 'bg-red-100 text-red-800' };
-    if (level <= 20) return { status: 'Low', color: 'bg-yellow-100 text-yellow-800' };
-    if (level >= 90) return { status: 'Full', color: 'bg-blue-100 text-blue-800' };
-    return { status: 'Good', color: 'bg-green-100 text-green-800' };
+    if (isCharging) return { status: t('charging'), color: 'bg-green-100 text-green-800' };
+    if (level <= 10) return { status: t('critical'), color: 'bg-red-100 text-red-800' };
+    if (level <= 20) return { status: t('low'), color: 'bg-yellow-100 text-yellow-800' };
+    if (level >= 90) return { status: t('full'), color: 'bg-blue-100 text-blue-800' };
+    return { status: t('good'), color: 'bg-green-100 text-green-800' };
   };
 
   const getDeviceName = (deviceId: string) => {
     const names: Record<string, string> = {
-      'HC03-001': 'Glucose Monitor',
-      'HC03-002': 'Blood Pressure',
-      'HC03-003': 'ECG Monitor'
+      'HC03-001': t('glucoseMonitor'),
+      'HC03-002': t('bloodPressureMonitor'),
+      'HC03-003': t('ecgMonitor')
     };
     return names[deviceId] || deviceId;
   };
@@ -117,7 +119,7 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center text-sm font-medium">
             <Battery className="w-4 h-4 mr-2 text-green-600" />
-            Device Battery
+            {t('deviceBattery')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -141,7 +143,7 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center text-sm font-medium">
             <Battery className="w-4 h-4 mr-2 text-green-600" />
-            Device Battery
+            {t('deviceBattery')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -153,7 +155,7 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
                 </span>
                 <div className="flex items-center">
                   {lowestBattery.isCharging && <Zap className="w-4 h-4 text-green-600 mr-1" />}
-                  <span className="text-sm text-gray-500">Lowest</span>
+                  <span className="text-sm text-gray-500">{t('lowest')}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between mt-1">
@@ -161,13 +163,13 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
                   {getBatteryStatus(lowestBattery.batteryLevel, lowestBattery.isCharging).status}
                 </Badge>
                 <span className="text-xs text-gray-500">
-                  {devicesBattery.length} devices
+                  {devicesBattery.length} {t('devices')}
                 </span>
               </div>
             </div>
           ) : (
             <div className="text-center text-gray-500">
-              <p className="text-sm">No devices</p>
+              <p className="text-sm">{t('noDevicesFound')}</p>
             </div>
           )}
         </CardContent>
@@ -181,10 +183,10 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <Battery className="w-5 h-5 mr-2 text-green-600" />
-            Device Battery Status
+            {t('deviceBatteryStatus')}
           </div>
           <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            {devicesBattery.length} Devices
+            {devicesBattery.length} {t('devices')}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -252,7 +254,7 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
                     variant={device.isCharging ? "destructive" : "default"}
                     onClick={() => simulateCharging(device.deviceId, !device.isCharging)}
                   >
-                    {device.isCharging ? 'Stop Charging' : 'Start Charging'}
+                    {device.isCharging ? t('stopCharging') : t('startCharging')}
                   </Button>
                 </div>
               </div>
@@ -262,8 +264,8 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
           {devicesBattery.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <Battery className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No devices found</p>
-              <p className="text-sm mt-1">Connect HC03 devices to monitor battery status</p>
+              <p>{t('noDevicesFound')}</p>
+              <p className="text-sm mt-1">{t('connectHC03Devices')}</p>
             </div>
           )}
         </div>
