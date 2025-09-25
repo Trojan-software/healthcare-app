@@ -17,6 +17,8 @@ export const users = pgTable("users", {
   hospitalId: text("hospital_id"),
   isVerified: boolean("is_verified").default(false).notNull(),
   role: text("role").default("patient").notNull(),
+  resetCode: text("reset_code"),
+  resetCodeExpires: timestamp("reset_code_expires"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -167,6 +169,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   role: true,
   isVerified: true,
   password: true,
+  resetCode: true,
+  resetCodeExpires: true,
 });
 
 export const adminCreatePatientSchema = createInsertSchema(users).pick({

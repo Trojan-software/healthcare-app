@@ -504,6 +504,16 @@ For questions, contact: support@24x7teleh.com
               <div className="space-y-4">
                 <div className={`text-center ${isRTL ? 'text-right' : 'text-left'}`}>
                   <button
+                    onClick={() => setState(prev => ({ ...prev, view: 'forgot-password' }))}
+                    className="text-blue-600 hover:text-blue-800 font-medium transition-colors mb-4"
+                    data-testid="button-forgot-password"
+                  >
+                    {isRTL ? 'هل نسيت كلمة المرور؟' : 'Forgot Password?'}
+                  </button>
+                </div>
+                
+                <div className={`text-center ${isRTL ? 'text-right' : 'text-left'}`}>
+                  <button
                     onClick={() => setState(prev => ({ ...prev, view: 'register' }))}
                     className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
                     data-testid="button-go-to-register"

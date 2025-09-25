@@ -462,6 +462,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Forgot Password and Reset Password endpoints
+  app.post("/api/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if user exists or not for security
+        return res.json({ 
+          message: "If an account with this email exists, a reset code has been sent" 
+        });
+      }
+
+      // Generate a 6-digit reset code
+      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      // Store reset code (in production, this would be in a separate table)
+      await storage.updateUser(user.id, {
+        resetCode,
+        resetCodeExpires: expiresAt
+      });
+
+      // In production, send email with reset code
+      console.log(`Password reset code for ${email}: ${resetCode} (expires at ${expiresAt})`);
+      
+      res.json({ 
+        message: "If an account with this email exists, a reset code has been sent" 
+      });
+    } catch (error) {
+      console.error("Error in forgot password:", error);
+      res.status(500).json({ message: "Failed to process forgot password request" });
+    }
+  });
+
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { email, code, newPassword } = req.body;
+      
+      if (!email || !code || !newPassword) {
+        return res.status(400).json({ message: "Email, code, and new password are required" });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).json({ message: "Invalid reset code or expired" });
+      }
+
+      // Check if reset code matches and hasn't expired
+      if (user.resetCode !== code || !user.resetCodeExpires || new Date() > user.resetCodeExpires) {
+        return res.status(400).json({ message: "Invalid reset code or expired" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password and clear reset code
+      await storage.updateUser(user.id, {
+        password: hashedPassword,
+        resetCode: null,
+        resetCodeExpires: null
+      });
+
+      console.log(`Password successfully reset for user: ${email}`);
+      
+      res.json({ 
+        message: "Password reset successfully" 
+      });
+    } catch (error) {
+      console.error("Error in reset password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // Dashboard endpoints
   app.get("/api/dashboard/admin", async (req, res) => {
     try {
