@@ -355,6 +355,32 @@ export interface Translation {
   // Table Headers
   dateTime: string;
   oxygen: string;
+  
+  // Admin Dashboard Specific
+  systemAdministrator: string;
+  teleHAdmin247: string;
+  healthcareManagementDashboard: string;
+  administrator: string;
+  activeMonitoring: string;
+  deviceMonitoring: string;
+  faqAndSupport: string;
+  advancedAnalytics: string;
+  enhancedScheduling: string;
+  deviceGuidesAndHelp: string;
+  hc03StatusAndBattery: string;
+  aiInsightsAndTrends: string;
+  oneToFourHourIntervals: string;
+  exportCSV: string;
+  clickToViewAllPatients: string;
+  clickToViewActivePatients: string;
+  clickToViewCriticalPatients: string;
+  clickToViewAnalytics: string;
+  searchPatientsDots: string;
+  allStatus: string;
+  allHospitals: string;
+  patient: string;
+  actions: string;
+  vitals: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -707,6 +733,32 @@ export const translations: Record<Language, Translation> = {
     // Table Headers
     dateTime: 'Date & Time',
     oxygen: 'Oxygen',
+    
+    // Admin Dashboard Specific
+    systemAdministrator: 'System Administrator',
+    teleHAdmin247: '24/7 Tele H Admin',
+    healthcareManagementDashboard: 'Healthcare Management Dashboard',
+    administrator: 'Administrator',
+    activeMonitoring: 'Active Monitoring',
+    deviceMonitoring: 'Device Monitoring',
+    faqAndSupport: 'FAQ & Support',
+    advancedAnalytics: 'Advanced Analytics',
+    enhancedScheduling: 'Enhanced Scheduling',
+    deviceGuidesAndHelp: 'Device guides & help',
+    hc03StatusAndBattery: 'HC03 status & battery',
+    aiInsightsAndTrends: 'AI insights & trends',
+    oneToFourHourIntervals: '1-4 hour intervals',
+    exportCSV: 'Export CSV',
+    clickToViewAllPatients: 'Click to view all patients',
+    clickToViewActivePatients: 'Click to view active patients',
+    clickToViewCriticalPatients: 'Click to view critical patients',
+    clickToViewAnalytics: 'Click to view analytics',
+    searchPatientsDots: 'Search patients...',
+    allStatus: 'All Status',
+    allHospitals: 'All Hospitals',
+    patient: 'Patient',
+    actions: 'Actions',
+    vitals: 'Vitals',
   },
   ar: {
     // Navigation
@@ -1059,6 +1111,32 @@ export const translations: Record<Language, Translation> = {
     // Table Headers
     dateTime: 'التاريخ والوقت',
     oxygen: 'الأكسجين',
+    
+    // Admin Dashboard Specific
+    systemAdministrator: 'مدير النظام',
+    teleHAdmin247: 'إدارة تليه 24/7',
+    healthcareManagementDashboard: 'لوحة إدارة الرعاية الصحية',
+    administrator: 'مدير',
+    activeMonitoring: 'المراقبة النشطة',
+    deviceMonitoring: 'مراقبة الأجهزة',
+    faqAndSupport: 'الأسئلة الشائعة والدعم',
+    advancedAnalytics: 'التحليلات المتقدمة',
+    enhancedScheduling: 'الجدولة المحسنة',
+    deviceGuidesAndHelp: 'أدلة الأجهزة والمساعدة',
+    hc03StatusAndBattery: 'حالة HC03 والبطارية',
+    aiInsightsAndTrends: 'رؤى الذكاء الاصطناعي والاتجاهات',
+    oneToFourHourIntervals: 'فترات 1-4 ساعات',
+    exportCSV: 'تصدير CSV',
+    clickToViewAllPatients: 'اضغط لعرض جميع المرضى',
+    clickToViewActivePatients: 'اضغط لعرض المرضى النشطين',
+    clickToViewCriticalPatients: 'اضغط لعرض المرضى الحرجين',
+    clickToViewAnalytics: 'اضغط لعرض التحليلات',
+    searchPatientsDots: 'البحث عن المرضى...',
+    allStatus: 'جميع الحالات',
+    allHospitals: 'جميع المستشفيات',
+    patient: 'المريض',
+    actions: 'الإجراءات',
+    vitals: 'العلامات الحيوية',
   },
 };
 
