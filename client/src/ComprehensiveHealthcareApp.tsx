@@ -1202,14 +1202,41 @@ For questions, contact: support@24x7teleh.com
                             Edit
                           </button>
                           <button 
-                            className="text-red-600 hover:text-red-900 px-3 py-1 rounded border border-red-600 hover:bg-red-50"
-                            onClick={() => {
+                            className="text-red-600 hover:text-red-900 px-3 py-1 rounded border border-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={async () => {
                               if (confirm(`Are you sure you want to remove patient ${patient.firstName} ${patient.lastName} (${patient.patientId})? This action cannot be undone.`)) {
-                                setAdminData(prev => ({
-                                  ...prev,
-                                  patients: prev.patients.filter(p => p.id !== patient.id)
-                                }));
-                                alert(`Patient ${patient.firstName} ${patient.lastName} has been removed successfully.`);
+                                try {
+                                  const button = document.querySelector(`[data-testid="button-remove-patient-${patient.id}"]`) as HTMLButtonElement;
+                                  if (button) button.disabled = true;
+                                  
+                                  const response = await fetch(`/api/users/${patient.id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                      'Content-Type': 'application/json'
+                                    }
+                                  });
+
+                                  if (!response.ok) {
+                                    const errorData = await response.json();
+                                    throw new Error(errorData.message || 'Failed to delete patient');
+                                  }
+
+                                  const result = await response.json();
+                                  
+                                  // Only update the frontend state if database deletion was successful
+                                  setAdminData(prev => ({
+                                    ...prev,
+                                    patients: prev.patients.filter(p => p.id !== patient.id)
+                                  }));
+                                  
+                                  alert(`Patient ${result.deletedUser.firstName} ${result.deletedUser.lastName} has been removed successfully.`);
+                                } catch (error) {
+                                  console.error('Error deleting patient:', error);
+                                  alert(`Error: ${error instanceof Error ? error.message : 'Failed to delete patient'}. Please try again.`);
+                                } finally {
+                                  const button = document.querySelector(`[data-testid="button-remove-patient-${patient.id}"]`) as HTMLButtonElement;
+                                  if (button) button.disabled = false;
+                                }
                               }
                             }}
                             data-testid={`button-remove-patient-${patient.id}`}
