@@ -138,6 +138,16 @@ export default function PatientManagementModule() {
   const stats: PatientStats = (statsData as any)?.stats || { total: 0, active: 0, inactive: 0, registeredToday: 0, byHospital: {} };
   const allPatients: Patient[] = Array.isArray(patientsData) ? patientsData : [];
 
+  // Debug logging
+  console.log('PatientManagement Debug:', {
+    patientsData,
+    allPatients: allPatients.slice(0, 2), // Show first 2 patients
+    allPatientsCount: allPatients.length,
+    statusFilter,
+    selectedHospital,
+    searchQuery
+  });
+
   // Filter patients based on search query, hospital, and status
   const filteredPatients = allPatients.filter(patient => {
     const fullName = `${patient.firstName} ${patient.middleName || ''} ${patient.lastName}`.toLowerCase().trim();
@@ -152,10 +162,10 @@ export default function PatientManagementModule() {
     // Hospital filter
     const matchesHospital = selectedHospital === 'all' || patient.hospitalId === selectedHospital;
     
-    // Status filter
+    // Status filter - handle missing isActive field
     const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && patient.isActive) ||
-      (statusFilter === 'inactive' && !patient.isActive);
+      (statusFilter === 'active' && (patient.isActive === true || patient.isActive === undefined)) ||
+      (statusFilter === 'inactive' && patient.isActive === false);
     
     return matchesSearch && matchesHospital && matchesStatus;
   });
