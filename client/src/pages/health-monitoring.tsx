@@ -18,8 +18,10 @@ import HC03DeviceManager from '@/components/HC03DeviceManager';
 import ECGReport from '@/components/ECGReport';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useLanguage } from '@/lib/i18n';
 
 export default function HealthMonitoringPage() {
+  const { t, isRTL } = useLanguage();
   const patientId = "DEMO001"; // In real app, get from auth context
   const [showECGReport, setShowECGReport] = useState(false);
 
@@ -59,22 +61,22 @@ export default function HealthMonitoringPage() {
   const getVitalStatus = (type: string, value: number) => {
     switch (type) {
       case 'heartRate':
-        if (value >= 60 && value <= 100) return { status: 'normal', color: 'text-green-600' };
-        if (value > 100) return { status: 'high', color: 'text-red-600' };
-        return { status: 'low', color: 'text-yellow-600' };
+        if (value >= 60 && value <= 100) return { status: t('normal'), color: 'text-green-600' };
+        if (value > 100) return { status: t('high'), color: 'text-red-600' };
+        return { status: t('elevated'), color: 'text-yellow-600' };
       case 'bloodOxygen':
-        if (value >= 95) return { status: 'normal', color: 'text-green-600' };
-        if (value >= 90) return { status: 'low', color: 'text-yellow-600' };
-        return { status: 'critical', color: 'text-red-600' };
+        if (value >= 95) return { status: t('normal'), color: 'text-green-600' };
+        if (value >= 90) return { status: t('elevated'), color: 'text-yellow-600' };
+        return { status: t('critical'), color: 'text-red-600' };
       case 'temperature':
-        if (value >= 36.1 && value <= 37.2) return { status: 'normal', color: 'text-green-600' };
-        return { status: 'abnormal', color: 'text-orange-600' };
+        if (value >= 36.1 && value <= 37.2) return { status: t('normal'), color: 'text-green-600' };
+        return { status: t('elevated'), color: 'text-orange-600' };
       case 'systolic':
-        if (value < 120) return { status: 'normal', color: 'text-green-600' };
-        if (value < 140) return { status: 'elevated', color: 'text-yellow-600' };
-        return { status: 'high', color: 'text-red-600' };
+        if (value < 120) return { status: t('normal'), color: 'text-green-600' };
+        if (value < 140) return { status: t('elevated'), color: 'text-yellow-600' };
+        return { status: t('high'), color: 'text-red-600' };
       default:
-        return { status: 'unknown', color: 'text-gray-600' };
+        return { status: t('unknown'), color: 'text-gray-600' };
     }
   };
 
@@ -91,8 +93,8 @@ export default function HealthMonitoringPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">ECG Analysis Report</h1>
-            <p className="text-gray-600 mt-1">Detailed ECG analysis and medical interpretation</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('ecgAnalysisReport')}</h1>
+            <p className="text-gray-600 mt-1">{t('detailedEcgAnalysis')}</p>
           </div>
           <Button 
             onClick={() => setShowECGReport(false)}
@@ -100,7 +102,7 @@ export default function HealthMonitoringPage() {
             className="flex items-center gap-2"
           >
             <Activity className="w-4 h-4" />
-            Back to Dashboard
+            {t('backToDashboard')}
           </Button>
         </div>
         
@@ -115,8 +117,8 @@ export default function HealthMonitoringPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Health Monitoring</h1>
-          <p className="text-gray-600 mt-1">Real-time vital signs from HC03 devices</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('healthMonitoring')}</h1>
+          <p className="text-gray-600 mt-1">{t('realtimeVitalSigns')}</p>
         </div>
         <div className="flex items-center gap-4">
           <Button 

@@ -4,6 +4,7 @@ import { handleApiError, handleDeviceError } from '@/lib/errorHandler';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Heart, Play, Square, Fingerprint, Zap, Wind, TrendingUp, AlertTriangle, Download, Share, History } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n';
 
 interface EcgWavePoint {
   timestamp: number;
@@ -50,6 +51,7 @@ interface EcgWidgetProps {
 }
 
 export default function EcgWidget({ deviceId, patientId, compact = false, showControls = false }: EcgWidgetProps) {
+  const { t, isRTL } = useLanguage();
   const [ecgData, setEcgData] = useState<EcgData | null>(null);
   const [stats, setStats] = useState<EcgStats>({
     heartRate: 0,
@@ -519,7 +521,7 @@ For immediate assistance, contact emergency services or your healthcare provider
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center text-sm font-medium">
             <Activity className="w-4 h-4 mr-2 text-green-600" />
-            ECG Monitor
+            {t('ecgMonitor')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -539,7 +541,7 @@ For immediate assistance, contact emergency services or your healthcare provider
           <CardTitle className="flex items-center justify-between text-sm font-medium">
             <div className="flex items-center">
               <Activity className="w-4 h-4 mr-2 text-green-600" />
-              ECG Monitor
+              {t('ecgMonitor')}
             </div>
             <Badge variant={isRecording ? "default" : "secondary"} 
                    className={isRecording ? "bg-green-100 text-green-800" : ""}>
@@ -570,7 +572,7 @@ For immediate assistance, contact emergency services or your healthcare provider
               <div className="flex items-center space-x-1">
                 <Fingerprint className="w-3 h-3" />
                 <span className={stats.isContactDetected ? 'text-green-600' : 'text-red-600'}>
-                  {stats.isContactDetected ? 'Contact' : 'No Contact'}
+                  {stats.isContactDetected ? t('contact') : t('noContact')}
                 </span>
               </div>
               <div className="flex items-center space-x-1">
@@ -590,12 +592,12 @@ For immediate assistance, contact emergency services or your healthcare provider
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <Activity className="w-5 h-5 mr-2 text-green-600" />
-            ECG Monitor - {deviceId}
+            {t('ecgMonitor')} - {deviceId}
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant={stats.isContactDetected ? "default" : "destructive"} 
                    className={stats.isContactDetected ? "bg-green-100 text-green-800" : ""}>
-              {stats.isContactDetected ? `Contact: ${stats.contactQuality}` : 'No Contact'}
+              {stats.isContactDetected ? `${t('contact')}: ${stats.contactQuality}` : t('noContact')}
             </Badge>
             <div className="flex items-center space-x-2">
               {showControls && (
@@ -606,19 +608,19 @@ For immediate assistance, contact emergency services or your healthcare provider
                     variant={isRecording ? "destructive" : "default"}
                   >
                     {isRecording ? <Square className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
-                    {isRecording ? 'Stop' : 'Start'}
+                    {isRecording ? t('stop') : t('start')}
                   </Button>
                   <Button size="sm" variant="outline" onClick={handleExport}>
                     <Download className="w-4 h-4 mr-1" />
-                    Export
+                    {t('export')}
                   </Button>
                   <Button size="sm" variant="outline" onClick={handleShare}>
                     <Share className="w-4 h-4 mr-1" />
-                    Share
+                    {t('share')}
                   </Button>
                   <Button size="sm" variant="outline" onClick={handleHistory}>
                     <History className="w-4 h-4 mr-1" />
-                    History
+                    {t('history')}
                   </Button>
                 </>
               )}
@@ -782,7 +784,7 @@ For immediate assistance, contact emergency services or your healthcare provider
               </Button>
               <Button size="sm" variant="outline" className="bg-white" onClick={handleCriticalExport}>
                 <Download className="w-3 h-3 mr-1" />
-                Export Report
+                {t('export')} {t('reportSummary')}
               </Button>
             </div>
           </div>

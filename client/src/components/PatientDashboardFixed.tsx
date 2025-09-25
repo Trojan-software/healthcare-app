@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { handleApiError } from '@/lib/errorHandler';
+import { useLanguage } from '@/lib/i18n';
 
 interface User {
   id: number;
@@ -20,6 +21,7 @@ interface PatientDashboardProps {
 }
 
 export default function PatientDashboardFixed({ user, onLogout }: PatientDashboardProps = {}) {
+  const { t, isRTL } = useLanguage();
   // Component verification logs removed for production
 
   // Local state for vital signs with default values
@@ -83,23 +85,23 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
     switch (type) {
       case 'heartRate':
         const hr = value as number;
-        if (hr < 60 || hr > 100) return { status: 'Warning', color: '#f59e0b' };
-        return { status: 'Normal', color: '#10b981' };
+        if (hr < 60 || hr > 100) return { status: t('elevated'), color: '#f59e0b' };
+        return { status: t('normal'), color: '#10b981' };
       case 'bloodPressure':
         const bp = value as { systolic: number; diastolic: number };
-        if (bp.systolic > 140 || bp.diastolic > 90) return { status: 'High', color: '#ef4444' };
-        if (bp.systolic < 90 || bp.diastolic < 60) return { status: 'Low', color: '#f59e0b' };
-        return { status: 'Normal', color: '#10b981' };
+        if (bp.systolic > 140 || bp.diastolic > 90) return { status: t('high'), color: '#ef4444' };
+        if (bp.systolic < 90 || bp.diastolic < 60) return { status: t('elevated'), color: '#f59e0b' };
+        return { status: t('normal'), color: '#10b981' };
       case 'temperature':
         const temp = value as number;
-        if (temp > 37.5 || temp < 36.0) return { status: 'Abnormal', color: '#f59e0b' };
-        return { status: 'Normal', color: '#10b981' };
+        if (temp > 37.5 || temp < 36.0) return { status: t('elevated'), color: '#f59e0b' };
+        return { status: t('normal'), color: '#10b981' };
       case 'bloodOxygen':
         const oxygen = value as number;
-        if (oxygen < 95) return { status: 'Low', color: '#ef4444' };
-        return { status: 'Normal', color: '#10b981' };
+        if (oxygen < 95) return { status: t('elevated'), color: '#ef4444' };
+        return { status: t('normal'), color: '#10b981' };
       default:
-        return { status: 'Normal', color: '#10b981' };
+        return { status: t('normal'), color: '#10b981' };
     }
   };
 
@@ -199,13 +201,13 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
               </div>
               <div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
-                  {selectedMetric === 'heartRate' && 'Heart Rate Monitor'}
-                  {selectedMetric === 'bloodPressure' && 'Blood Pressure Monitor'}
-                  {selectedMetric === 'temperature' && 'Temperature Monitor'}
-                  {selectedMetric === 'bloodOxygen' && 'Blood Oxygen Monitor'}
+                  {selectedMetric === 'heartRate' && t('heartRate')}
+                  {selectedMetric === 'bloodPressure' && t('bloodPressure')}
+                  {selectedMetric === 'temperature' && t('temperature')}
+                  {selectedMetric === 'bloodOxygen' && t('oxygenLevel')}
                 </h2>
                 <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
-                  Real-time monitoring with 24-hour trends
+                  {t('vitalSigns')}
                 </p>
               </div>
             </div>
@@ -356,7 +358,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             animation: 'spin 1s linear infinite',
             margin: '0 auto 1rem'
           }}></div>
-          <p style={{ color: '#64748b', fontSize: '1rem' }}>Loading your health dashboard...</p>
+          <p style={{ color: '#64748b', fontSize: '1rem' }}>{t('loading')}</p>
         </div>
       </div>
     );
@@ -398,16 +400,16 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
-              24/7 Tele H - Health Monitoring Dashboard
+              24/7 Tele H - {t('dashboard')}
             </h1>
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
-              Welcome back, {user?.firstName} {user?.lastName} - Real-time health monitoring active
+              {t('welcomeBack')}, {user?.firstName} {user?.lastName}
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ textAlign: 'right' }}>
               <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1e293b', margin: 0 }}>
-                Patient ID: {user?.patientId || 'N/A'}
+                {t('patientId')}: {user?.patientId || 'N/A'}
               </p>
               <div style={{ 
                 display: 'flex', 
@@ -418,7 +420,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
                 color: '#10b981' 
               }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></div>
-                Device Connected
+                {t('connected')}
               </div>
             </div>
             <button 
@@ -435,7 +437,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
                 transition: 'background-color 0.2s'
               }}
             >
-              Logout
+              {t('logout')}
             </button>
           </div>
         </div>
@@ -459,11 +461,11 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             data-testid="card-heart-rate"
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Heart Rate</h3>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>{t('heartRate')}</h3>
               <span style={{ fontSize: '1.5rem' }}>💓</span>
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0', color: getVitalStatus('heartRate', vitals.heartRate).color }}>
-              {vitals.heartRate} <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>bpm</span>
+              {vitals.heartRate} <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>{t('bpm')}</span>
             </div>
             <div style={{
               display: 'inline-flex',
@@ -495,12 +497,12 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             data-testid="card-blood-pressure"
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Blood Pressure</h3>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>{t('bloodPressure')}</h3>
               <span style={{ fontSize: '1.5rem' }}>🩸</span>
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0', color: getVitalStatus('bloodPressure', vitals.bloodPressure).color }}>
               {vitals.bloodPressure.systolic}/{vitals.bloodPressure.diastolic}
-              <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}> mmHg</span>
+              <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}> {t('mmhg')}</span>
             </div>
             <div style={{
               display: 'inline-flex',
@@ -532,11 +534,11 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             data-testid="card-temperature"
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Temperature</h3>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>{t('temperature')}</h3>
               <span style={{ fontSize: '1.5rem' }}>🌡️</span>
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0', color: getVitalStatus('temperature', vitals.temperature).color }}>
-              {vitals.temperature.toFixed(1)} <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>°C</span>
+              {vitals.temperature.toFixed(1)} <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>{t('celsius')}</span>
             </div>
             <div style={{
               display: 'inline-flex',
@@ -568,11 +570,11 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             data-testid="card-blood-oxygen"
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Blood Oxygen</h3>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>{t('oxygenLevel')}</h3>
               <span style={{ fontSize: '1.5rem' }}>🫁</span>
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0', color: getVitalStatus('bloodOxygen', vitals.bloodOxygen).color }}>
-              {vitals.bloodOxygen} <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>%</span>
+              {vitals.bloodOxygen} <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 'normal' }}>{t('percentage')}</span>
             </div>
             <div style={{
               display: 'inline-flex',
@@ -609,7 +611,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
                 📅
               </div>
               <div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Last Checkup</h3>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>{t('lastActivity')}</h3>
                 <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>{formatDate(metrics.lastCheckup)}</p>
               </div>
             </div>
@@ -631,7 +633,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
                 🏥
               </div>
               <div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Next Appointment</h3>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>{t('nextAppointment')}</h3>
                 <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>{formatDate(metrics.nextAppointment)}</p>
               </div>
             </div>
@@ -653,7 +655,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
                 ⭐
               </div>
               <div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Health Score</h3>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>{t('healthTrends')}</h3>
                 <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10b981', margin: 0 }}>{metrics.healthScore}/100</p>
               </div>
             </div>
@@ -662,7 +664,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
 
         {/* Quick Actions */}
         <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem' }}>Quick Actions</h3>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem' }}>{t('devices')}</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
             <button style={{
               padding: '1rem',
@@ -687,7 +689,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             }}
             >
               <span>📊</span>
-              View Health History
+              {t('viewHistory')}
             </button>
             
             <button style={{
@@ -713,7 +715,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             }}
             >
               <span>🔗</span>
-              Connect Device
+              {t('connectDevice')}
             </button>
             
             <button style={{
@@ -739,7 +741,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
             }}
             >
               <span>⚙️</span>
-              Settings
+              {t('settings')}
             </button>
           </div>
         </div>

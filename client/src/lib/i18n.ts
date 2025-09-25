@@ -205,6 +205,22 @@ export interface Translation {
   celsius: string; // °C
   percentage: string; // %
   mgdl: string; // mg/dL
+  
+  // Additional Missing Keys
+  unknown: string;
+  ecgAnalysisReport: string;
+  detailedEcgAnalysis: string;
+  backToDashboard: string;
+  healthMonitoring: string;
+  realtimeVitalSigns: string;
+  ecgMonitor: string;
+  contact: string;
+  noContact: string;
+  start: string;
+  stop: string;
+  export: string;
+  share: string;
+  history: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -411,6 +427,22 @@ export const translations: Record<Language, Translation> = {
     celsius: '°C',
     percentage: '%',
     mgdl: 'mg/dL',
+    
+    // Additional Missing Keys
+    unknown: 'Unknown',
+    ecgAnalysisReport: 'ECG Analysis Report',
+    detailedEcgAnalysis: 'Detailed ECG analysis and medical interpretation',
+    backToDashboard: 'Back to Dashboard',
+    healthMonitoring: 'Health Monitoring',
+    realtimeVitalSigns: 'Real-time vital signs from HC03 devices',
+    ecgMonitor: 'ECG Monitor',
+    contact: 'Contact',
+    noContact: 'No Contact',
+    start: 'Start',
+    stop: 'Stop',
+    export: 'Export',
+    share: 'Share',
+    history: 'History',
   },
   ar: {
     // Navigation
@@ -615,6 +647,22 @@ export const translations: Record<Language, Translation> = {
     celsius: '°م',
     percentage: '%',
     mgdl: 'ملغ/دل',
+    
+    // Additional Missing Keys
+    unknown: 'غير معروف',
+    ecgAnalysisReport: 'تقرير تحليل تخطيط القلب',
+    detailedEcgAnalysis: 'تحليل مفصل لتخطيط القلب والتفسير الطبي',
+    backToDashboard: 'العودة إلى لوحة القيادة',
+    healthMonitoring: 'مراقبة الصحة',
+    realtimeVitalSigns: 'العلامات الحيوية في الوقت الفعلي من أجهزة HC03',
+    ecgMonitor: 'مراقب تخطيط القلب',
+    contact: 'متصل',
+    noContact: 'غير متصل',
+    start: 'بدء',
+    stop: 'إيقاف',
+    export: 'تصدير',
+    share: 'مشاركة',
+    history: 'السجل',
   },
 };
 
