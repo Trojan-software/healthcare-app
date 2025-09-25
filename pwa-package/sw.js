@@ -2,20 +2,34 @@ const CACHE_NAME = 'teleh-health-monitor-v1';
 const urlsToCache = [
   '/',
   '/mobile-dashboard',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png'
 ];
 
-// Install event
+// Install event with error handling
 self.addEventListener('install', (event) => {
+  console.log('Service worker installing...');
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        
+        // Cache URLs individually to handle failures gracefully
+        return Promise.allSettled(
+          urlsToCache.map(url => 
+            cache.add(url).catch(err => {
+              console.warn(`Failed to cache ${url}:`, err);
+              return null; // Continue with other URLs
+            })
+          )
+        );
+      })
+      .then(() => {
+        console.log('Service worker installed successfully');
+        // Force activation of new service worker
+        self.skipWaiting();
       })
   );
 });
@@ -91,16 +105,26 @@ self.addEventListener('fetch', (event) => {
 
 // Activate event
 self.addEventListener('activate', (event) => {
+  console.log('Service worker activating...');
+  
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheWhitelist.indexOf(cacheName) === -1) {
+              console.log('Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Take control of all clients immediately
+      clients.claim()
+    ]).then(() => {
+      console.log('Service worker activated and ready');
     })
   );
 });
