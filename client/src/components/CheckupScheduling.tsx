@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { handleApiError } from '@/lib/errorHandler';
+import { useLanguage } from '@/lib/i18n';
 
 interface ScheduleSettings {
   patientId: string;
@@ -16,6 +17,7 @@ interface CheckupSchedulingProps {
 }
 
 export default function CheckupScheduling({ patientId, onClose }: CheckupSchedulingProps) {
+  const { t, isRTL } = useLanguage();
   const [schedules, setSchedules] = useState<ScheduleSettings[]>([]);
   const [selectedPatient, setSelectedPatient] = useState(patientId || '');
   const [newSchedule, setNewSchedule] = useState<Partial<ScheduleSettings>>({
@@ -28,22 +30,22 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
   const [loading, setLoading] = useState(false);
 
   const availableVitals = [
-    { id: 'heartRate', name: 'Heart Rate', icon: '❤️' },
-    { id: 'bloodPressure', name: 'Blood Pressure', icon: '🩺' },
-    { id: 'temperature', name: 'Temperature', icon: '🌡️' },
-    { id: 'oxygenLevel', name: 'Oxygen Level', icon: '🫁' },
-    { id: 'bloodGlucose', name: 'Blood Glucose', icon: '🩸' }
+    { id: 'heartRate', name: t('heartRate'), icon: '❤️' },
+    { id: 'bloodPressure', name: t('bloodPressure'), icon: '🩺' },
+    { id: 'temperature', name: t('temperature'), icon: '🌡️' },
+    { id: 'oxygenLevel', name: t('oxygenLevel'), icon: '🫁' },
+    { id: 'bloodGlucose', name: t('bloodGlucose'), icon: '🩸' }
   ];
 
   const intervalOptions = [
-    { value: 1, label: '1 Hour' },
-    { value: 2, label: '2 Hours' },
-    { value: 3, label: '3 Hours' },
-    { value: 4, label: '4 Hours' },
-    { value: 6, label: '6 Hours' },
-    { value: 8, label: '8 Hours' },
-    { value: 12, label: '12 Hours' },
-    { value: 24, label: '24 Hours' }
+    { value: 1, label: `1 ${t('hour')}` },
+    { value: 2, label: `2 ${t('hours')}` },
+    { value: 3, label: `3 ${t('hours')}` },
+    { value: 4, label: `4 ${t('hours')}` },
+    { value: 6, label: `6 ${t('hours')}` },
+    { value: 8, label: `8 ${t('hours')}` },
+    { value: 12, label: `12 ${t('hours')}` },
+    { value: 24, label: `24 ${t('hours')}` }
   ];
 
   useEffect(() => {
@@ -92,7 +94,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
 
   const createSchedule = async () => {
     if (!selectedPatient || !newSchedule.vitalsToMonitor?.length) {
-      alert('Please select a patient and at least one vital sign to monitor');
+      alert(t('pleaseSelectPatientAndVitals'));
       return;
     }
 
@@ -119,10 +121,10 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
       });
       setSelectedPatient('');
 
-      alert('Checkup schedule created successfully!');
+      alert(t('checkupScheduleCreated'));
     } catch (error) {
       handleApiError('CheckupScheduling', 'createSchedule', error as Error);
-      alert('Failed to create schedule');
+      alert(t('failedToCreateSchedule'));
     } finally {
       setLoading(false);
     }
@@ -137,7 +139,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
   };
 
   const deleteSchedule = async (patientId: string) => {
-    if (confirm('Are you sure you want to delete this schedule?')) {
+    if (confirm(t('confirmDeleteSchedule'))) {
       setSchedules(prev => prev.filter(schedule => schedule.patientId !== patientId));
     }
   };
@@ -152,10 +154,10 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
     const now = new Date();
     const diffHours = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60));
     
-    if (diffHours < 1) return 'Due now';
-    if (diffHours < 24) return `In ${diffHours} hours`;
+    if (diffHours < 1) return t('dueNow');
+    if (diffHours < 24) return t('inHours').replace('{hours}', diffHours.toString());
     const diffDays = Math.floor(diffHours / 24);
-    return `In ${diffDays} days`;
+    return t('inDays').replace('{days}', diffDays.toString());
   };
 
   const renderContent = () => (
@@ -163,19 +165,19 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Create New Schedule */}
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Create Checkup Schedule</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">{t('createCheckupSchedule')}</h3>
           
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Patient
+                {t('selectPatient')}
               </label>
               <select
                 value={selectedPatient}
                 onChange={(e) => setSelectedPatient(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Choose a patient...</option>
+                <option value="">{t('choosePatient')}</option>
                 {patients.map((patient) => (
                   <option key={patient.patientId} value={patient.patientId}>
                     {patient.firstName} {patient.lastName} ({patient.patientId})
@@ -186,7 +188,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Vitals to Monitor
+                {t('vitalsToMonitor')}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {availableVitals.map((vital) => (
@@ -218,7 +220,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Checkup Interval
+                {t('checkupInterval')}
               </label>
               <select
                 value={newSchedule.checkupInterval}
@@ -230,7 +232,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
               >
                 {intervalOptions.map((option) => (
                   <option key={option.value} value={option.value}>
-                    Every {option.label}
+                    {t('every')} {option.label}
                   </option>
                 ))}
               </select>
@@ -238,7 +240,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reminder Preference
+                {t('reminderPreference')}
               </label>
               <select
                 value={newSchedule.reminderPreference}
@@ -248,9 +250,9 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
                 }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="email">Email Only</option>
-                <option value="sms">SMS Only</option>
-                <option value="both">Email & SMS</option>
+                <option value="email">{t('emailOnly')}</option>
+                <option value="sms">{t('smsOnly')}</option>
+                <option value="both">{t('emailAndSms')}</option>
               </select>
             </div>
 
@@ -259,20 +261,20 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
               disabled={loading || !selectedPatient}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-2 px-4 rounded-lg font-medium transition-all"
             >
-              {loading ? 'Creating...' : 'Create Schedule'}
+              {loading ? t('creating') : t('createSchedule')}
             </button>
           </div>
         </div>
 
         {/* Existing Schedules */}
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Active Schedules ({schedules.length})</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">{t('activeSchedules')} ({schedules.length})</h3>
           
           <div className="space-y-4">
             {schedules.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <div className="text-4xl mb-2">📅</div>
-                <p>No schedules created yet</p>
+                <p>{t('noSchedulesCreated')}</p>
               </div>
             ) : (
               schedules.map((schedule) => (
@@ -298,7 +300,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
                             : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                         }`}
                       >
-                        {schedule.isActive ? 'Active' : 'Paused'}
+                        {schedule.isActive ? t('active') : t('paused')}
                       </button>
                       <button
                         onClick={() => deleteSchedule(schedule.patientId)}
@@ -311,17 +313,17 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Interval:</span>
-                      <p className="font-medium">Every {schedule.checkupInterval} hours</p>
+                      <span className="text-gray-500">{t('interval')}</span>
+                      <p className="font-medium">{t('every')} {schedule.checkupInterval} {t('hours')}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Next Checkup:</span>
+                      <span className="text-gray-500">{t('nextCheckup')}</span>
                       <p className="font-medium">{formatNextCheckup(schedule.nextCheckup)}</p>
                     </div>
                   </div>
 
                   <div className="mt-3">
-                    <span className="text-gray-500 text-sm">Monitoring:</span>
+                    <span className="text-gray-500 text-sm">{t('monitoring')}</span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {schedule.vitalsToMonitor.map((vitalId) => {
                         const vital = availableVitals.find(v => v.id === vitalId);
@@ -338,7 +340,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
                   </div>
 
                   <div className="mt-3 text-sm">
-                    <span className="text-gray-500">Reminders:</span>
+                    <span className="text-gray-500">{t('reminders')}</span>
                     <span className="ml-1 font-medium capitalize">{schedule.reminderPreference}</span>
                   </div>
                 </div>
@@ -357,8 +359,8 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
           <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-3xl font-bold mb-2">Checkup Scheduling</h2>
-                <p className="text-green-100">Manage patient monitoring schedules</p>
+                <h2 className="text-3xl font-bold mb-2">{t('checkupScheduling')}</h2>
+                <p className="text-green-100">{t('managePatientMonitoringSchedules')}</p>
               </div>
               <button
                 onClick={onClose}

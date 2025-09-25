@@ -392,6 +392,41 @@ export interface Translation {
   
   // Search and Filters
   searchPatients: string;
+  
+  // Time Units  
+  hour: string;
+  hours: string;
+  
+  // Checkup Scheduling
+  checkupScheduling: string;
+  managePatientMonitoringSchedules: string;
+  createCheckupSchedule: string;
+  selectPatient: string;
+  choosePatient: string;
+  vitalsToMonitor: string;
+  checkupInterval: string;
+  reminderPreference: string;
+  emailOnly: string;
+  smsOnly: string;
+  emailAndSms: string;
+  creating: string;
+  createSchedule: string;
+  activeSchedules: string;
+  noSchedulesCreated: string;
+  active: string;
+  paused: string;
+  interval: string;
+  nextCheckup: string;
+  monitoring: string;
+  reminders: string;
+  dueNow: string;
+  inHours: string;
+  inDays: string;
+  every: string;
+  pleaseSelectPatientAndVitals: string;
+  checkupScheduleCreated: string;
+  failedToCreateSchedule: string;
+  confirmDeleteSchedule: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -830,6 +865,39 @@ export const translations: Record<Language, Translation> = {
     saveChanges: 'Save Changes',
     cancel: 'Cancel',
     close: 'Close',
+    
+    // Checkup Scheduling Modal
+    checkupScheduling: 'Checkup Scheduling',
+    managePatientMonitoringSchedules: 'Manage patient monitoring schedules',
+    createCheckupSchedule: 'Create Checkup Schedule',
+    selectPatient: 'Select Patient',
+    choosePatient: 'Choose a patient...',
+    vitalsToMonitor: 'Vitals to Monitor',
+    checkupInterval: 'Checkup Interval',
+    reminderPreference: 'Reminder Preference',
+    emailOnly: 'Email Only',
+    smsOnly: 'SMS Only',
+    emailAndSms: 'Email & SMS',
+    creating: 'Creating...',
+    createSchedule: 'Create Schedule',
+    activeSchedules: 'Active Schedules',
+    noSchedulesCreated: 'No schedules created yet',
+    active: 'Active',
+    paused: 'Paused',
+    interval: 'Interval:',
+    nextCheckup: 'Next Checkup:',
+    monitoring: 'Monitoring:',
+    reminders: 'Reminders:',
+    dueNow: 'Due now',
+    inHours: 'In {hours} hours',
+    inDays: 'In {days} days',
+    every: 'Every',
+    hour: 'Hour',
+    hours: 'Hours',
+    pleaseSelectPatientAndVitals: 'Please select a patient and at least one vital sign to monitor',
+    checkupScheduleCreated: 'Checkup schedule created successfully!',
+    failedToCreateSchedule: 'Failed to create schedule',
+    confirmDeleteSchedule: 'Are you sure you want to delete this schedule?',
   },
   ar: {
     // Navigation
@@ -1268,6 +1336,39 @@ export const translations: Record<Language, Translation> = {
     saveChanges: 'حفظ التغييرات',
     cancel: 'إلغاء',
     close: 'إغلاق',
+    
+    // Checkup Scheduling Modal
+    checkupScheduling: 'جدولة الفحوصات',
+    managePatientMonitoringSchedules: 'إدارة جداول مراقبة المرضى',
+    createCheckupSchedule: 'إنشاء جدول فحص',
+    selectPatient: 'اختر مريض',
+    choosePatient: 'اختر مريضاً...',
+    vitalsToMonitor: 'العلامات الحيوية للمراقبة',
+    checkupInterval: 'فترة الفحص',
+    reminderPreference: 'تفضيل التذكير',
+    emailOnly: 'البريد الإلكتروني فقط',
+    smsOnly: 'رسائل نصية فقط',
+    emailAndSms: 'بريد إلكتروني ورسائل نصية',
+    creating: 'جاري الإنشاء...',
+    createSchedule: 'إنشاء جدول',
+    activeSchedules: 'الجداول النشطة',
+    noSchedulesCreated: 'لم يتم إنشاء جداول بعد',
+    active: 'نشط',
+    paused: 'متوقف',
+    interval: 'الفترة:',
+    nextCheckup: 'الفحص التالي:',
+    monitoring: 'المراقبة:',
+    reminders: 'التذكيرات:',
+    dueNow: 'مستحق الآن',
+    inHours: 'خلال {hours} ساعة',
+    inDays: 'خلال {days} يوم',
+    every: 'كل',
+    hour: 'ساعة',
+    hours: 'ساعات',
+    pleaseSelectPatientAndVitals: 'يرجى اختيار مريض وعلامة حيوية واحدة على الأقل للمراقبة',
+    checkupScheduleCreated: 'تم إنشاء جدول الفحص بنجاح!',
+    failedToCreateSchedule: 'فشل في إنشاء الجدول',
+    confirmDeleteSchedule: 'هل أنت متأكد من رغبتك في حذف هذا الجدول؟',
   },
 };
 
