@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Search, UserPlus, Users, UserCheck, UserX, Calendar, Download, Key, MoreHorizontal } from 'lucide-react';
+import { Search, Users, UserCheck, UserX, Calendar, Download, Key, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Patient {
@@ -61,7 +61,6 @@ export default function PatientManagementModule() {
   const [selectedHospital, setSelectedHospital] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [hospitalFilter, setHospitalFilter] = useState('all');
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -170,31 +169,6 @@ export default function PatientManagementModule() {
   const patients = filteredPatients;
 
   // Create patient mutation
-  const createPatientMutation = useMutation({
-    mutationFn: async (patientData: PatientFormData) => {
-      return await apiRequest('/api/admin/patients', 'POST', patientData);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/patients'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/patients/stats'] });
-      setShowCreateForm(false);
-      toast({
-        title: "Success",
-        description: "Patient account created successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create patient account",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleCreatePatient = (formData: PatientFormData) => {
-    createPatientMutation.mutate(formData);
-  };
 
   // Export patient data as JSON
   const handleExportPatient = (patient: Patient) => {
@@ -357,24 +331,6 @@ export default function PatientManagementModule() {
               Patient Management
             </CardTitle>
             
-            <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-              <DialogTrigger asChild>
-                <Button data-testid="button-add-patient">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Add Patient
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Create New Patient Account</DialogTitle>
-                </DialogHeader>
-                <CreatePatientForm
-                  hospitals={hospitals}
-                  onSubmit={handleCreatePatient}
-                  isLoading={createPatientMutation.isPending}
-                />
-              </DialogContent>
-            </Dialog>
           </div>
         </CardHeader>
         
