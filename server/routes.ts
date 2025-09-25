@@ -166,6 +166,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Route to match frontend call for patient access toggle
+  app.put("/api/admin/patient/:patientId/access", async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const { isActive } = req.body;
+
+      if (typeof isActive !== 'boolean') {
+        return res.status(400).json({ message: "isActive must be a boolean value" });
+      }
+
+      await storage.updatePatientAccess(patientId, isActive);
+      res.json({ 
+        success: true,
+        message: `Patient access ${isActive ? 'activated' : 'deactivated'} successfully` 
+      });
+    } catch (error) {
+      console.error("Error updating patient access:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to update patient access" 
+      });
+    }
+  });
+
   // Vital signs endpoints
   app.post("/api/vital-signs", async (req, res) => {
     try {
