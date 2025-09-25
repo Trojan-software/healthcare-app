@@ -465,7 +465,6 @@ For questions, contact: support@24x7teleh.com
                   <input
                     type="text"
                     name="email"
-                    defaultValue="admin@24x7teleh.com"
                     required
                     className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
                     placeholder={isRTL ? 'أدخل بريدك الإلكتروني أو رقم المريض' : 'Enter your email or patient ID'}
@@ -480,7 +479,6 @@ For questions, contact: support@24x7teleh.com
                   <input
                     type="password"
                     name="password"
-                    defaultValue="admin123"
                     required
                     className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
                     placeholder={isRTL ? 'أدخل كلمة المرور' : 'Enter your password'}
@@ -514,15 +512,6 @@ For questions, contact: support@24x7teleh.com
                   </button>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <p className={`text-gray-600 text-sm mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>
-                    {isRTL ? 'بيانات تجريبية' : 'Demo Credentials'}
-                  </p>
-                  <div className={`text-gray-800 font-medium text-sm space-y-1 ${isRTL ? 'text-right' : 'text-left'}`}>
-                    <div>{isRTL ? 'مدير:' : 'Admin:'} admin@24x7teleh.com / admin123</div>
-                    <div>{isRTL ? 'مريض:' : 'Patient:'} patient.demo@example.com / patient123</div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
