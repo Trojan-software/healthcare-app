@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Droplets, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { handleApiError, handleDeviceError } from '@/lib/errorHandler';
+import { useLanguage } from '@/lib/i18n';
 
 interface BloodGlucoseReading {
   id: number;
@@ -25,6 +26,7 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
   const [glucoseData, setGlucoseData] = useState<BloodGlucoseReading[]>([]);
   const [loading, setLoading] = useState(true);
   const [measuring, setMeasuring] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadGlucoseData();
@@ -78,24 +80,24 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
 
   const getGlucoseStatus = (level: number, type: string) => {
     if (type === 'fasting') {
-      if (level < 70) return { status: 'Low', color: 'bg-red-100 text-red-800', icon: TrendingDown };
-      if (level <= 100) return { status: 'Normal', color: 'bg-green-100 text-green-800', icon: Minus };
-      if (level <= 125) return { status: 'Prediabetic', color: 'bg-yellow-100 text-yellow-800', icon: TrendingUp };
-      return { status: 'High', color: 'bg-red-100 text-red-800', icon: TrendingUp };
+      if (level < 70) return { status: t('low'), color: 'bg-red-100 text-red-800', icon: TrendingDown };
+      if (level <= 100) return { status: t('normal'), color: 'bg-green-100 text-green-800', icon: Minus };
+      if (level <= 125) return { status: t('prediabetic'), color: 'bg-yellow-100 text-yellow-800', icon: TrendingUp };
+      return { status: t('high'), color: 'bg-red-100 text-red-800', icon: TrendingUp };
     } else {
-      if (level < 70) return { status: 'Low', color: 'bg-red-100 text-red-800', icon: TrendingDown };
-      if (level <= 140) return { status: 'Normal', color: 'bg-green-100 text-green-800', icon: Minus };
-      if (level <= 180) return { status: 'Elevated', color: 'bg-yellow-100 text-yellow-800', icon: TrendingUp };
-      return { status: 'High', color: 'bg-red-100 text-red-800', icon: TrendingUp };
+      if (level < 70) return { status: t('low'), color: 'bg-red-100 text-red-800', icon: TrendingDown };
+      if (level <= 140) return { status: t('normal'), color: 'bg-green-100 text-green-800', icon: Minus };
+      if (level <= 180) return { status: t('elevated'), color: 'bg-yellow-100 text-yellow-800', icon: TrendingUp };
+      return { status: t('high'), color: 'bg-red-100 text-red-800', icon: TrendingUp };
     }
   };
 
   const formatMeasurementType = (type: string) => {
     const types: Record<string, string> = {
-      'fasting': 'Fasting',
-      'post_meal': 'Post-Meal',
-      'random': 'Random',
-      'bedtime': 'Bedtime'
+      'fasting': t('fasting'),
+      'post_meal': t('postMeal'),
+      'random': t('random'),
+      'bedtime': t('bedtime')
     };
     return types[type] || type;
   };
@@ -120,7 +122,7 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center text-sm font-medium">
             <Droplets className="w-4 h-4 mr-2 text-blue-600" />
-            Blood Glucose
+            {t('bloodGlucose')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -139,7 +141,7 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center text-sm font-medium">
             <Droplets className="w-4 h-4 mr-2 text-blue-600" />
-            Blood Glucose
+            {t('bloodGlucose')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -162,7 +164,7 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
             </div>
           ) : (
             <div className="text-center text-gray-500">
-              <p className="text-sm">No readings</p>
+              <p className="text-sm">{t('noReadings')}</p>
             </div>
           )}
         </CardContent>
@@ -176,7 +178,7 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <Droplets className="w-5 h-5 mr-2 text-blue-600" />
-            Blood Glucose Monitor
+            {t('bloodGlucoseMonitor')}
           </div>
           {showControls && (
             <Button 
@@ -185,7 +187,7 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
               size="sm"
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {measuring ? 'Measuring...' : 'Start Test'}
+              {measuring ? t('measuring') : t('startTest')}
             </Button>
           )}
         </CardTitle>
@@ -207,14 +209,14 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
               </div>
             </div>
             <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>Latest Reading</span>
+              <span>{t('latestReading')}</span>
               <span>{formatTimestamp(latestReading.timestamp)}</span>
             </div>
           </div>
         )}
 
         <div className="space-y-3">
-          <h4 className="font-medium text-gray-800">Recent Readings</h4>
+          <h4 className="font-medium text-gray-800">{t('recentReadings')}</h4>
           {glucoseData.slice(0, 5).map((reading) => {
             const status = getGlucoseStatus(reading.glucoseLevel, reading.measurementType);
             const IconComponent = status.icon;
@@ -247,9 +249,9 @@ export default function BloodGlucoseWidget({ patientId, showControls = false, co
           {glucoseData.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <Droplets className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No glucose readings available</p>
+              <p>{t('noGlucoseReadings')}</p>
               {showControls && (
-                <p className="text-sm mt-1">Start a measurement to see data</p>
+                <p className="text-sm mt-1">{t('startMeasurementToSeeData')}</p>
               )}
             </div>
           )}
