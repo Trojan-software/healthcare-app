@@ -83,21 +83,22 @@ export default function AdminPage() {
   });
 
   // Fetch all patients
-  const { data: patientsResponse, isLoading } = useQuery({
-    queryKey: ['/api/patients'],
+  const { data: patients = [], isLoading } = useQuery({
+    queryKey: ['/api/admin/patients'],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/patients', {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch patients');
+      }
+      return response.json();
+    },
     enabled: !!user,
-  });
-
-  // Handle data parsing - API returns direct array
-  const patients: Patient[] = Array.isArray(patientsResponse) ? patientsResponse : [];
-
-  // Debug logging
-  console.log('Admin Dashboard Debug:', {
-    patientsResponse,
-    patients,
-    patientsCount: patients.length,
-    isLoading,
-    user
   });
 
   // Create patient mutation
@@ -123,7 +124,7 @@ export default function AdminPage() {
         title: "Patient access created",
         description: "Patient dashboard access has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/patients'] });
       setCreateDialogOpen(false);
       form.reset();
     },
@@ -158,7 +159,7 @@ export default function AdminPage() {
         title: "Access updated",
         description: "Patient access status has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/patients'] });
     },
     onError: (error: any) => {
       toast({
@@ -436,7 +437,7 @@ export default function AdminPage() {
                   <div className="text-center py-8">
                     <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 dark:text-gray-400">No patients found</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500">Debug: Data={JSON.stringify(patientsResponse)?.substring(0, 100)}...</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-500">Create patient dashboard access to get started</p>
                   </div>
                 ) : (
                   <div className="space-y-4">

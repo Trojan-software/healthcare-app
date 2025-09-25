@@ -84,13 +84,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Enforce JWT secret for production security
-  if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-    console.error('FATAL: JWT_SECRET environment variable must be set for production deployment');
-    console.error('This is required for secure user authentication and device monitoring.');
-    process.exit(1);
-  }
-
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

@@ -26,15 +26,11 @@ import {
   XCircle,
   Battery,
   Signal,
-  LogOut,
-  Monitor,
-  Bluetooth,
-  BatteryLow
+  LogOut
 } from 'lucide-react';
 import { useLanguage, LanguageSwitcher } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { handleApiError } from '@/lib/errorHandler';
-import { apiRequest } from '@/lib/queryClient';
 import WeeklyReportDashboard from './WeeklyReportDashboard';
 import CheckupScheduling from './CheckupScheduling';
 import HealthHistoryOverview from './HealthHistoryOverview';
@@ -95,21 +91,36 @@ export default function EnhancedAdminDashboard() {
 
   // Fetch dashboard statistics
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/dashboard/admin']
+    queryKey: ['/api/admin/dashboard'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/dashboard');
+      if (!response.ok) throw new Error('Failed to fetch dashboard stats');
+      return response.json();
+    }
   });
 
   // Fetch patients data
   const { data: patientsData, isLoading: patientsLoading } = useQuery({
-    queryKey: ['/api/patients']
+    queryKey: ['/api/admin/patients'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/patients');
+      if (!response.ok) throw new Error('Failed to fetch patients');
+      return response.json();
+    }
   });
 
   // Fetch devices data
   const { data: devicesData, isLoading: devicesLoading } = useQuery({
-    queryKey: ['/api/admin/devices']
+    queryKey: ['/api/admin/devices'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/devices');
+      if (!response.ok) throw new Error('Failed to fetch devices');
+      return response.json();
+    }
   });
 
   // Default stats to avoid undefined errors
-  const mockStats: DashboardStats = (dashboardStats as any)?.stats || {
+  const mockStats: DashboardStats = dashboardStats?.stats || {
     totalPatients: 0,
     activeMonitoring: 0,
     criticalAlerts: 0,
@@ -118,8 +129,8 @@ export default function EnhancedAdminDashboard() {
     complianceRate: 0
   };
 
-  const mockPatients: PatientRecord[] = Array.isArray(patientsData) ? patientsData : [];
-  const mockDevices: DeviceInfo[] = (devicesData as any)?.devices || [];
+  const mockPatients: PatientRecord[] = patientsData?.patients || [];
+  const mockDevices: DeviceInfo[] = devicesData?.devices || [];
   const mockHospitals = ['Sheikh Khalifa Medical City', 'Cleveland Clinic Abu Dhabi', 'Mediclinic City Hospital'];
 
   const getStatusColor = (status: string) => {
@@ -431,157 +442,65 @@ export default function EnhancedAdminDashboard() {
 
         {/* Device Monitoring Tab */}
         <TabsContent value="devices" className="space-y-6">
-          <div className="grid gap-6">
-            {/* Device Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Devices</p>
-                      <p className="text-2xl font-bold text-gray-900">{mockDevices.length}</p>
-                    </div>
-                    <Monitor className="w-8 h-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Connected</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {mockDevices.filter(d => d.connectionStatus === 'connected').length}
-                      </p>
-                    </div>
-                    <Bluetooth className="w-8 h-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Low Battery</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {mockDevices.filter(d => d.batteryLevel <= 20).length}
-                      </p>
-                    </div>
-                    <BatteryLow className="w-8 h-8 text-red-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Device List */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Monitor className="w-5 h-5" />
-                  HC03 Device Registry
-                </CardTitle>
-                <p className="text-sm text-gray-600">
-                  Real-time status of all registered HC03 monitoring devices
-                </p>
-              </CardHeader>
-              <CardContent>
-                {devicesLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="p-4 border border-gray-200 rounded-lg animate-pulse">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
-                          <div className="space-y-2 flex-1">
-                            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wifi className="w-5 h-5" />
+                Device Monitoring Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mockDevices.map(device => (
+                  <div key={device.deviceId} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-100 rounded-lg">
+                          <Signal className="w-6 h-6 text-blue-600" />
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{device.deviceId}</h4>
+                          <p className="text-sm text-gray-600">
+                            Patient: {device.patientName} ({device.patientId})
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Firmware: {device.firmwareVersion}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : mockDevices.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Monitor className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-2">No devices registered</p>
-                    <p className="text-sm text-gray-500">Devices will appear here once patients connect their HC03 monitors</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {mockDevices.map(device => (
-                      <div key={device.deviceId} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-lg ${device.connectionStatus === 'connected' ? 'bg-green-100' : device.connectionStatus === 'disconnected' ? 'bg-red-100' : 'bg-yellow-100'}`}>
-                              <Monitor className={`w-6 h-6 ${device.connectionStatus === 'connected' ? 'text-green-600' : device.connectionStatus === 'disconnected' ? 'text-red-600' : 'text-yellow-600'}`} />
-                            </div>
-                            
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-semibold text-gray-900">{device.deviceId}</h4>
-                                <Badge variant="outline" className="text-xs">HC03</Badge>
-                              </div>
-                              <p className="text-sm text-gray-600 font-medium">
-                                {device.patientName}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                Patient ID: {device.patientId}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {device.patientName}
-                              </p>
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className={getStatusColor(device.connectionStatus)}>
+                              {device.connectionStatus}
+                            </Badge>
+                            <div className="flex items-center gap-1">
+                              {getBatteryIcon(device.batteryLevel)}
+                              <span className="text-sm">{device.batteryLevel}%</span>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-6">
-                            <div className="text-right">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge className={getStatusColor(device.connectionStatus)}>
-                                  {device.connectionStatus === 'connected' ? 'Online' : 
-                                   device.connectionStatus === 'disconnected' ? 'Offline' : device.connectionStatus}
-                                </Badge>
-                              </div>
-                              
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="flex items-center gap-1">
-                                  {device.batteryLevel <= 20 ? (
-                                    <BatteryLow className="w-4 h-4 text-red-500" />
-                                  ) : (
-                                    <Battery className="w-4 h-4 text-green-500" />
-                                  )}
-                                  <span className={`text-sm font-medium ${device.batteryLevel <= 20 ? 'text-red-600' : 'text-green-600'}`}>
-                                    {device.batteryLevel}%
-                                  </span>
-                                  {device.batteryLevel < 20 && (
-                                    <span className="text-xs text-blue-600 ml-1">Charging</span>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="text-xs text-gray-500 mb-1">
-                                {device.lastSync ? `Last seen: ${getTimeAgo(new Date(device.lastSync))}` : 'Never connected'}
-                              </div>
-                              
-                              {device.firmwareVersion && (
-                                <div className="text-xs text-gray-500">
-                                  Firmware: v{device.firmwareVersion}
-                                </div>
-                              )}
-                            </div>
-                            
-                            <Button variant="ghost" size="sm" data-testid={`button-device-${device.deviceId}`}>
-                              <Settings className="w-4 h-4" />
-                            </Button>
+                          <div className="text-sm text-gray-600">
+                            Last sync: {getTimeAgo(device.lastSync)}
+                          </div>
+                          
+                          <div className="text-xs text-gray-500">
+                            Supports: {device.vitalTypesSupported.length} vital types
                           </div>
                         </div>
+                        
+                        <Button variant="ghost" size="sm">
+                          <Settings className="w-4 h-4" />
+                        </Button>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Critical Alerts Tab */}

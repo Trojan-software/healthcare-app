@@ -21,11 +21,6 @@ import {
 import BloodGlucoseWidget from './BloodGlucoseWidget';
 import BatteryWidget from './BatteryWidget';
 import EcgWidget from './EcgWidget';
-import HC03DeviceManager from './HC03DeviceManager';
-import HeartRateModal from './HeartRateModal';
-import BloodPressureModal from './BloodPressureModal';
-import TemperatureModal from './TemperatureModal';
-import OxygenLevelModal from './OxygenLevelModal';
 
 interface VitalSigns {
   id: number;
@@ -88,12 +83,6 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     return new Date().toISOString().split('T')[0];
   });
   const [error, setError] = useState('');
-
-  // Modal states
-  const [heartRateModalOpen, setHeartRateModalOpen] = useState(false);
-  const [bloodPressureModalOpen, setBloodPressureModalOpen] = useState(false);
-  const [temperatureModalOpen, setTemperatureModalOpen] = useState(false);
-  const [oxygenLevelModalOpen, setOxygenLevelModalOpen] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -277,22 +266,45 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
 
   const handleVitalMonitor = (vitalType: string) => {
-    switch (vitalType) {
-      case 'heartRate':
-        setHeartRateModalOpen(true);
-        break;
-      case 'bloodPressure':
-        setBloodPressureModalOpen(true);
-        break;
-      case 'temperature':
-        setTemperatureModalOpen(true);
-        break;
-      case 'oxygenLevel':
-        setOxygenLevelModalOpen(true);
-        break;
-      default:
-        break;
-    }
+    const vitalDetails = {
+      heartRate: {
+        name: 'Heart Rate Monitor',
+        current: dashboardData?.vitals?.heartRate + ' BPM',
+        normal: '60-100 BPM',
+        status: (dashboardData?.vitals?.heartRate ?? 0) >= 60 && (dashboardData?.vitals?.heartRate ?? 0) <= 100 ? 'Normal' : 'Abnormal',
+        trend: getVitalTrend('heartRate'),
+        device: 'HC03-002'
+      },
+      bloodPressure: {
+        name: 'Blood Pressure Monitor',
+        current: dashboardData?.vitals?.bloodPressure,
+        normal: '120/80 mmHg',
+        status: 'Normal',
+        trend: getVitalTrend('bloodPressure'),
+        device: 'HC03-001'
+      },
+      temperature: {
+        name: 'Temperature Monitor',
+        current: dashboardData?.vitals?.temperature + '°C',
+        normal: '36.1-37.2°C',
+        status: parseFloat(String(dashboardData?.vitals?.temperature || '0')) >= 36.1 && parseFloat(String(dashboardData?.vitals?.temperature || '0')) <= 37.2 ? 'Normal' : 'Abnormal',
+        trend: getVitalTrend('temperature'),
+        device: 'HC03-004'
+      },
+      oxygenLevel: {
+        name: 'Oxygen Level Monitor',
+        current: dashboardData?.vitals?.oxygenLevel + '%',
+        normal: '95-100%',
+        status: (dashboardData?.vitals?.oxygenLevel ?? 0) >= 95 ? 'Normal' : 'Low',
+        trend: getVitalTrend('oxygenLevel'),
+        device: 'HC03-003'
+      }
+    };
+
+    const vital = (vitalDetails as any)[vitalType];
+    if (!vital) return;
+
+    alert(`${vital.name}\nCurrent: ${vital.current}\nStatus: ${vital.status}\nDevice: ${vital.device}`);
   };
 
   if (loading) {
@@ -454,30 +466,8 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           </div>
         </div>
 
-        {/* Device Connection Status Banner */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                <Monitor className="w-5 h-5" />
-                HC03 Device Connection Status
-              </h3>
-              <p className="text-blue-700">Your assigned medical monitoring device</p>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-blue-600 mb-1">Patient ID</div>
-              <div className="font-mono text-lg font-bold text-blue-900">{dashboardData?.user?.patientId}</div>
-            </div>
-          </div>
-        </div>
-
         {/* Health Monitoring Widgets */}
         <div className="space-y-6 mt-6">
-          {/* HC03 Device Connection Manager - Full Width */}
-          <HC03DeviceManager 
-            patientId={dashboardData?.user?.patientId || ''} 
-          />
-          
           {/* ECG Monitor - Full Width */}
           <EcgWidget 
             deviceId="HC03-003"
@@ -618,39 +608,6 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           </div>
         </div>
       </main>
-
-      {/* Vital Sign Modals */}
-      <HeartRateModal
-        isOpen={heartRateModalOpen}
-        onClose={() => setHeartRateModalOpen(false)}
-        currentHeartRate={dashboardData?.vitals?.heartRate || 0}
-        vitalsHistory={vitalsHistory}
-        deviceId="HC03-002"
-      />
-      
-      <BloodPressureModal
-        isOpen={bloodPressureModalOpen}
-        onClose={() => setBloodPressureModalOpen(false)}
-        currentBloodPressure={dashboardData?.vitals?.bloodPressure || '120/80'}
-        vitalsHistory={vitalsHistory}
-        deviceId="HC03-001"
-      />
-      
-      <TemperatureModal
-        isOpen={temperatureModalOpen}
-        onClose={() => setTemperatureModalOpen(false)}
-        currentTemperature={dashboardData?.vitals?.temperature || 36.5}
-        vitalsHistory={vitalsHistory}
-        deviceId="HC03-004"
-      />
-      
-      <OxygenLevelModal
-        isOpen={oxygenLevelModalOpen}
-        onClose={() => setOxygenLevelModalOpen(false)}
-        currentOxygenLevel={dashboardData?.vitals?.oxygenLevel || 98}
-        vitalsHistory={vitalsHistory}
-        deviceId="HC03-003"
-      />
     </div>
   );
 }

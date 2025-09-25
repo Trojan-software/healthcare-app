@@ -15,9 +15,7 @@ import {
   BluetoothOff,
   Battery,
   BatteryLow,
-  Gauge,
-  AlertTriangle,
-  RefreshCw
+  Gauge
 } from 'lucide-react';
 import { hc03Sdk, Detection, type ECGData, type BloodOxygenData, type BloodPressureData, type TemperatureData, type BatteryData } from '@/lib/hc03-sdk';
 import { apiRequest } from '@/lib/queryClient';
@@ -49,79 +47,12 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
   const [vitalReadings, setVitalReadings] = useState<VitalReading[]>([]);
   const [latestReadings, setLatestReadings] = useState<Record<Detection, VitalReading>>({} as Record<Detection, VitalReading>);
   const [devices, setDevices] = useState<HC03Device[]>([]);
-  const [connectionHealth, setConnectionHealth] = useState({
-    isHealthy: false,
-    lastHeartbeat: null as Date | null,
-    reconnectAttempts: 0,
-    signalStrength: 0
-  });
-  const [realTimeStatus, setRealTimeStatus] = useState({
-    connected: false,
-    deviceName: '',
-    deviceId: '',
-    signalStrength: 0
-  });
-  const [connectionError, setConnectionError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Load patient's HC03 devices
   useEffect(() => {
     loadPatientDevices();
   }, [patientId]);
-
-  // Monitor connection health and update real-time status
-  useEffect(() => {
-    const healthCheckInterval = setInterval(() => {
-      if (hc03Sdk.isDeviceConnected()) {
-        const status = hc03Sdk.getConnectionStatus();
-        const activeDetectionsList = hc03Sdk.getActiveDetections();
-        
-        setRealTimeStatus({
-          connected: status.connected,
-          deviceName: status.deviceName || 'HC03 Device',
-          deviceId: status.deviceId || '',
-          signalStrength: status.signalStrength || 0
-        });
-        
-        setConnectionHealth(prev => ({
-          isHealthy: status.connected && activeDetectionsList.length > 0,
-          lastHeartbeat: status.connected ? new Date() : prev.lastHeartbeat,
-          reconnectAttempts: status.connected ? 0 : prev.reconnectAttempts,
-          signalStrength: status.signalStrength || 0
-        }));
-        
-        // Update active detections
-        setActiveDetections(new Set(activeDetectionsList));
-      } else {
-        // Connection lost - just update status, let SDK handle reconnection
-        setRealTimeStatus({
-          connected: false,
-          deviceName: connectedDevice?.deviceName || '',
-          deviceId: connectedDevice?.deviceId || '',
-          signalStrength: 0
-        });
-        
-        setConnectionHealth(prev => ({
-          isHealthy: false,
-          lastHeartbeat: prev.lastHeartbeat,
-          reconnectAttempts: prev.reconnectAttempts + (prev.reconnectAttempts > 0 ? 0 : 1),
-          signalStrength: 0
-        }));
-        
-        // Show connection lost message if we had a connected device
-        if (connectedDevice) {
-          setConnectionError('Connection lost. Please reconnect manually.');
-          // Update backend with disconnected status
-          updateDeviceConnectionStatus(connectedDevice.deviceId, 'disconnected').catch(() => {
-            console.log('Failed to update device connection status on disconnect');
-          });
-        }
-      }
-    }, 2000); // Check every 2 seconds
-
-    return () => clearInterval(healthCheckInterval);
-  }, [connectedDevice]);
-
 
   const loadPatientDevices = async () => {
     try {
@@ -132,17 +63,10 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
     }
   };
 
-  // Connect to HC03 device with enhanced error handling
+  // Connect to HC03 device
   const connectToDevice = useCallback(async () => {
     setIsConnecting(true);
-    setConnectionError(null);
-    
     try {
-      // Check if Bluetooth is available
-      if (!navigator.bluetooth) {
-        throw new Error('Bluetooth not supported on this device');
-      }
-
       await hc03Sdk.initialize();
       const device = await hc03Sdk.connectDevice();
       
@@ -157,11 +81,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       // Register device with backend
       const registeredDevice = await apiRequest('/api/hc03/devices', 'POST', deviceData) as unknown as HC03Device;
 
-      // Update device connection status to 'connected'
-      await updateDeviceConnectionStatus(registeredDevice.deviceId, 'connected');
-
       setConnectedDevice(registeredDevice);
-      setConnectionError(null);
       
       // Set up data callbacks
       setupDataCallbacks();
@@ -172,37 +92,17 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       });
       
       await loadPatientDevices();
-      
     } catch (error) {
-      const err = error as Error;
-      let errorMessage = "Failed to connect to HC03 device";
-      
-      // Provide specific error messages based on DOMException names
-      if (err.name === 'NotSupportedError' || err.message.includes('Bluetooth not supported')) {
-        errorMessage = "Bluetooth is not supported on this device";
-      } else if (err.name === 'NotAllowedError' || err.message.includes('not allowed')) {
-        errorMessage = "Bluetooth permission denied. Please allow Bluetooth access.";
-      } else if (err.name === 'NotFoundError' || err.message.includes('not found')) {
-        errorMessage = "No HC03 device found nearby. Please make sure device is turned on.";
-      } else if (err.name === 'NetworkError' || err.message.includes('GATT')) {
-        errorMessage = "Failed to connect to device. Please try again.";
-      } else if (err.name === 'SecurityError') {
-        errorMessage = "Secure context required. Please use HTTPS.";
-      }
-      
-      setConnectionError(errorMessage);
-      handleDeviceError('HC03DeviceManager', 'connectDevice', err, { patientId });
-      
+      handleDeviceError('HC03DeviceManager', 'connectDevice', error as Error, { patientId });
       toast({
         title: "Connection Failed",
-        description: errorMessage,
+        description: "Failed to connect to HC03 device. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsConnecting(false);
     }
   }, [patientId, toast]);
-
 
   // Set up data callbacks for different detection types
   const setupDataCallbacks = () => {
@@ -354,16 +254,6 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
     }
   };
 
-  const updateDeviceConnectionStatus = async (deviceId: string, status: 'connected' | 'disconnected' | 'syncing') => {
-    try {
-      await apiRequest(`/api/hc03/devices/${deviceId}/status`, 'PATCH', { status });
-      
-      setConnectedDevice(prev => prev ? { ...prev, connectionStatus: status, lastConnected: new Date().toISOString() } : null);
-    } catch (error) {
-      handleDeviceError('HC03DeviceManager', 'updateDeviceConnectionStatus', error as Error, { deviceId, status });
-    }
-  };
-
   // Start detection
   const startDetection = useCallback(async (detection: Detection) => {
     if (!hc03Sdk.isDeviceConnected()) {
@@ -505,78 +395,13 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
             <div className="text-center py-6">
               <BluetoothOff className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-4">No HC03 device connected</p>
-              
-              <div className="space-y-3">
-                <Button onClick={connectToDevice} disabled={isConnecting}>
-                  {isConnecting ? 'Connecting...' : 'Connect Device'}
-                </Button>
-                {connectionError && (
-                  <Alert className="text-left">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>{connectionError}</AlertDescription>
-                  </Alert>
-                )}
-              </div>
+              <Button onClick={connectToDevice} disabled={isConnecting}>
+                {isConnecting ? 'Connecting...' : 'Connect Device'}
+              </Button>
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Real-Time Connection Health */}
-      {realTimeStatus.connected && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${connectionHealth.isHealthy ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
-              Connection Health Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-sm text-gray-600">Device</div>
-                <div className="font-semibold">{realTimeStatus.deviceName}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm text-gray-600">Signal Strength</div>
-                <div className="flex items-center justify-center gap-1">
-                  <span className="font-semibold">{realTimeStatus.signalStrength}%</span>
-                  <div className="flex space-x-1">
-                    {[1, 2, 3, 4].map((bar) => (
-                      <div
-                        key={bar}
-                        className={`w-1 h-3 rounded-sm ${
-                          bar <= (realTimeStatus.signalStrength / 25) ? 'bg-green-500' : 'bg-gray-300'
-                        }`}
-                      ></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm text-gray-600">Active Detections</div>
-                <div className="font-semibold">{activeDetections.size}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm text-gray-600">Last Heartbeat</div>
-                <div className="text-sm">
-                  {connectionHealth.lastHeartbeat ? 
-                    connectionHealth.lastHeartbeat.toLocaleTimeString() : 'N/A'}
-                </div>
-              </div>
-            </div>
-            
-            {connectionHealth.reconnectAttempts > 0 && (
-              <Alert className="mt-4">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Connection unstable. Reconnection attempts: {connectionHealth.reconnectAttempts}
-                </AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Detection Controls */}
       {connectedDevice && (

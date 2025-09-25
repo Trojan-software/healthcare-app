@@ -125,7 +125,14 @@ export default function PatientManagementModule() {
 
   // Fetch patients with filters
   const { data: patientsData, isLoading: loadingPatients, error: patientsError } = useQuery({
-    queryKey: ['/api/patients'],
+    queryKey: ['/api/admin/patients'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/patients');
+      if (!response.ok) {
+        throw new Error('Failed to fetch patients');
+      }
+      return response.json();
+    },
     retry: false
   });
 
@@ -136,21 +143,7 @@ export default function PatientManagementModule() {
   });
 
   const stats: PatientStats = (statsData as any)?.stats || { total: 0, active: 0, inactive: 0, registeredToday: 0, byHospital: {} };
-  const allPatients: Patient[] = Array.isArray(patientsData) ? patientsData : [];
-
-  // Debug logging to identify data loading issue
-  console.log('PatientManagement Debug:', {
-    patientsData,
-    patientsDataType: typeof patientsData,
-    isArray: Array.isArray(patientsData),
-    allPatients: allPatients.slice(0, 2), // Show first 2 patients
-    allPatientsCount: allPatients.length,
-    loadingPatients,
-    patientsError,
-    statusFilter,
-    selectedHospital,
-    searchQuery
-  });
+  const allPatients: Patient[] = Array.isArray(patientsData) ? patientsData : (patientsData as any)?.patients || [];
 
   // Filter patients based on search query, hospital, and status
   const filteredPatients = allPatients.filter(patient => {
@@ -166,10 +159,10 @@ export default function PatientManagementModule() {
     // Hospital filter
     const matchesHospital = selectedHospital === 'all' || patient.hospitalId === selectedHospital;
     
-    // Status filter - handle missing isActive field
+    // Status filter
     const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && (patient.isActive === true || patient.isActive === undefined)) ||
-      (statusFilter === 'inactive' && patient.isActive === false);
+      (statusFilter === 'active' && patient.isActive) ||
+      (statusFilter === 'inactive' && !patient.isActive);
     
     return matchesSearch && matchesHospital && matchesStatus;
   });

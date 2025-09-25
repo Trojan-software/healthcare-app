@@ -201,11 +201,6 @@ function AppContent() {
 
       if (response.ok) {
         const data = await response.json();
-        
-        // Store authentication token and user data in localStorage
-        localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('auth_user', JSON.stringify(data.user));
-        
         setState(prev => ({
           ...prev,
           user: data.user,
