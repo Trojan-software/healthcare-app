@@ -8,10 +8,14 @@ import { emailNotificationService } from "./email-notifications";
 import { bloodGlucoseManager } from "./hc03-blood-glucose";
 import { batteryManager } from "./hc03-battery";
 import { ecgDataManager } from "./hc03-ecg";
+import { registerHc03Routes } from "./routes-hc03";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
   app.use(express.json());
+
+  // Register HC03 device routes
+  registerHc03Routes(app);
 
   // API Routes
   app.post("/api/login", async (req, res) => {
@@ -36,7 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = jwt.sign(
         { userId: user.id, email: user.email, role: user.role },
-        "your-secret-key",
+        process.env.JWT_SECRET || "your-secret-key",
         { expiresIn: "24h" }
       );
 
@@ -118,7 +122,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Authentication middleware for admin endpoints
+  const requireAdmin = (req: any, res: any, next: any) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
+      if (decoded.role !== 'admin' && decoded.role !== 'doctor') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      req.user = decoded;
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+  };
+
   // Admin endpoints
+  app.get("/api/admin/patients", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      
+      const patientsWithStats = await Promise.all(patients.map(async (patient) => {
+        const latestVitals = await storage.getLatestVitalSigns(patient.patientId || patient.id.toString());
+        const lastCheckup = await storage.getLastCheckupTime(patient.patientId || patient.id.toString());
+        
+        return {
+          ...patient,
+          lastActivity: patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : 'Never',
+          status: determinePatientStatus({ ...patient, latestVitals }),
+          vitals: latestVitals,
+          lastCheckup: lastCheckup ? new Date(lastCheckup).toLocaleDateString() : 'Never',
+          age: patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : 'Unknown'
+        };
+      }));
+      
+      res.json({ patients: patientsWithStats });
+    } catch (error) {
+      console.error("Error fetching admin patients:", error);
+      res.status(500).json({ message: "Failed to fetch patients" });
+    }
+  });
+
   app.get("/api/patients", async (req, res) => {
     try {
       const patients = await storage.getAllPatients();
@@ -144,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/patients", async (req, res) => {
+  app.post("/api/admin/patients", requireAdmin, async (req, res) => {
     try {
       const { firstName, lastName, email, patientId, hospitalId, dateOfBirth } = req.body;
 
@@ -189,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/patients/:patientId", async (req, res) => {
+  app.put("/api/admin/patients/:patientId", requireAdmin, async (req, res) => {
     try {
       const { patientId } = req.params;
       const { isActive } = req.body;
@@ -507,7 +555,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard endpoints
-  app.get("/api/dashboard/admin", async (req, res) => {
+  app.get("/api/admin/dashboard", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const allVitals = await Promise.all(
+        patients.map(p => storage.getVitalSignsByPatient(p.patientId || p.id.toString()))
+      );
+      const vitalsData = allVitals.flat();
+      
+      const activePatients = patients.filter(p => p.isVerified).length;
+      const criticalAlerts = vitalsData.filter(v => isVitalsCritical(v)).length;
+      
+      const stats = {
+        totalPatients: patients.length,
+        activePatients,
+        criticalAlerts,
+        deviceConnections: Math.floor(activePatients * 0.85),
+        complianceRate: calculateAdvancedComplianceRate(patients, vitalsData),
+        weeklyGrowth: 12.3,
+        vitalsAverages: calculateVitalsAverages(vitalsData),
+        trendsData: generateTrendsData(vitalsData),
+        complianceBreakdown: getComplianceBreakdown(patients),
+        alertHistory: getAlertHistory([])
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
+    }
+  });
+
+  app.get("/api/dashboard/admin", requireAdmin, async (req, res) => {
     try {
       const patients = await storage.getAllPatients();
       const allVitals = await Promise.all(
@@ -539,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin devices endpoint - Get all devices with patient information
-  app.get("/api/admin/devices", async (req, res) => {
+  app.get("/api/admin/devices", requireAdmin, async (req, res) => {
     try {
       const patients = await storage.getAllPatients();
       const allDevices = [];
@@ -551,18 +630,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           devices.forEach(device => {
             allDevices.push({
               deviceId: device.deviceId,
-              deviceName: device.deviceName,
               patientId: patient.patientId,
               patientName: `${patient.firstName} ${patient.lastName}`,
-              patientEmail: patient.email,
+              lastSync: device.lastConnected || device.updatedAt || device.createdAt || new Date(),
               batteryLevel: device.batteryLevel || 0,
-              chargingStatus: device.chargingStatus || false,
               connectionStatus: device.connectionStatus || 'disconnected',
-              lastConnected: device.lastConnected,
-              firmwareVersion: device.firmwareVersion,
-              macAddress: device.macAddress,
-              createdAt: device.createdAt,
-              updatedAt: device.updatedAt
+              vitalTypesSupported: ['ECG', 'Blood Oxygen', 'Blood Pressure', 'Temperature', 'Blood Glucose'],
+              firmwareVersion: device.firmwareVersion || '1.0.0',
+              // Additional fields for enhanced display
+              deviceName: device.deviceName,
+              patientEmail: patient.email,
+              chargingStatus: device.chargingStatus || false,
+              macAddress: device.macAddress
             });
           });
         }

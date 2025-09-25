@@ -72,7 +72,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
   // Monitor connection health and update real-time status
   useEffect(() => {
     const healthCheckInterval = setInterval(() => {
-      if (hc03Sdk.isConnectedDevice()) {
+      if (hc03Sdk.isDeviceConnected()) {
         const status = hc03Sdk.getConnectionStatus();
         const activeDetectionsList = hc03Sdk.getActiveDetections();
         
@@ -111,6 +111,10 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
         // Show connection lost message if we had a connected device
         if (connectedDevice) {
           setConnectionError('Connection lost. Please reconnect manually.');
+          // Update backend with disconnected status
+          updateDeviceConnectionStatus(connectedDevice.deviceId, 'disconnected').catch(() => {
+            console.log('Failed to update device connection status on disconnect');
+          });
         }
       }
     }, 2000); // Check every 2 seconds
@@ -152,6 +156,9 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
 
       // Register device with backend
       const registeredDevice = await apiRequest('/api/hc03/devices', 'POST', deviceData) as unknown as HC03Device;
+
+      // Update device connection status to 'connected'
+      await updateDeviceConnectionStatus(registeredDevice.deviceId, 'connected');
 
       setConnectedDevice(registeredDevice);
       setConnectionError(null);
@@ -344,6 +351,16 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       setConnectedDevice(prev => prev ? { ...prev, batteryLevel, chargingStatus } : null);
     } catch (error) {
       handleDeviceError('HC03DeviceManager', 'updateDeviceBattery', error as Error, { deviceId });
+    }
+  };
+
+  const updateDeviceConnectionStatus = async (deviceId: string, status: 'connected' | 'disconnected' | 'syncing') => {
+    try {
+      await apiRequest(`/api/hc03/devices/${deviceId}/status`, 'PATCH', { status });
+      
+      setConnectedDevice(prev => prev ? { ...prev, connectionStatus: status, lastConnected: new Date().toISOString() } : null);
+    } catch (error) {
+      handleDeviceError('HC03DeviceManager', 'updateDeviceConnectionStatus', error as Error, { deviceId, status });
     }
   };
 
