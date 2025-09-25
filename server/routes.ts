@@ -480,10 +480,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Store user info for logging
       const userInfo = `${user.firstName} ${user.lastName} (${user.patientId})`;
-      const newStatus = !user.isActive;
+      const newStatus = !user.isVerified;
 
-      // Toggle the user's active status
-      const updatedUser = await storage.updateUser(userId, { isActive: newStatus });
+      // Toggle the user's active status (using isVerified as active status)
+      const updatedUser = await storage.updateUser(userId, { isVerified: newStatus });
       
       if (!updatedUser) {
         return res.status(500).json({ message: "Failed to update user status" });
@@ -498,7 +498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: updatedUser.firstName,
           lastName: updatedUser.lastName,
           patientId: updatedUser.patientId,
-          isActive: updatedUser.isActive
+          isActive: updatedUser.isVerified // Map isVerified to isActive for frontend
         }
       });
     } catch (error) {

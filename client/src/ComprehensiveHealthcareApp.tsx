@@ -161,8 +161,15 @@ function AppContent() {
       ]);
 
       if (patientsRes.ok && statsRes.ok) {
-        const patients = await patientsRes.json();
+        const patientsData = await patientsRes.json();
         const stats = await statsRes.json();
+        
+        // Map backend data to frontend Patient interface
+        const patients = patientsData.map((patient: any) => ({
+          ...patient,
+          isActive: patient.isVerified // Map isVerified to isActive for frontend
+        }));
+        
         setAdminData(prev => ({ ...prev, patients, dashboardStats: stats }));
       }
     } catch (error) {
