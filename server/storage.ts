@@ -16,6 +16,7 @@ export interface IStorage {
   getUserByPatientId(patientId: string): Promise<User | undefined>;
   createUser(insertUser: InsertUser): Promise<User>;
   updateUser(id: number, updateData: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<User | undefined>;
   markUserAsVerified(email: string): Promise<void>;
   
   // Admin methods
@@ -116,6 +117,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+
+  async deleteUser(id: number): Promise<User | undefined> {
+    const [deletedUser] = await db
+      .delete(users)
+      .where(eq(users.id, id))
+      .returning();
+    return deletedUser;
   }
 
   async markUserAsVerified(email: string): Promise<void> {

@@ -462,6 +462,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete User endpoint
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = parseInt(id);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Check if user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Store user info for logging
+      const userInfo = `${user.firstName} ${user.lastName} (${user.patientId})`;
+
+      // Delete the user from the database
+      const deletedUser = await storage.deleteUser(userId);
+      
+      if (!deletedUser) {
+        return res.status(500).json({ message: "Failed to delete user" });
+      }
+
+      console.log(`User deleted: ${userInfo} - ID: ${userId}`);
+      
+      res.json({ 
+        message: "User deleted successfully",
+        deletedUser: {
+          id: deletedUser.id,
+          firstName: deletedUser.firstName,
+          lastName: deletedUser.lastName,
+          patientId: deletedUser.patientId
+        }
+      });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Forgot Password and Reset Password endpoints
   app.post("/api/forgot-password", async (req, res) => {
     try {
