@@ -138,15 +138,19 @@ export default function PatientManagementModule() {
   const stats: PatientStats = (statsData as any)?.stats || { total: 0, active: 0, inactive: 0, registeredToday: 0, byHospital: {} };
   const allPatients: Patient[] = Array.isArray(patientsData) ? patientsData : [];
 
-  // Debug logging (cleaned up for production)
-  // console.log('PatientManagement Debug:', {
-  //   patientsData,
-  //   allPatients: allPatients.slice(0, 2), // Show first 2 patients
-  //   allPatientsCount: allPatients.length,
-  //   statusFilter,
-  //   selectedHospital,
-  //   searchQuery
-  // });
+  // Debug logging to identify data loading issue
+  console.log('PatientManagement Debug:', {
+    patientsData,
+    patientsDataType: typeof patientsData,
+    isArray: Array.isArray(patientsData),
+    allPatients: allPatients.slice(0, 2), // Show first 2 patients
+    allPatientsCount: allPatients.length,
+    loadingPatients,
+    patientsError,
+    statusFilter,
+    selectedHospital,
+    searchQuery
+  });
 
   // Filter patients based on search query, hospital, and status
   const filteredPatients = allPatients.filter(patient => {
