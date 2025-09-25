@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, TrendingUp, TrendingDown, AlertTriangle, Calendar, Clock, Lung } from 'lucide-react';
+import { Activity, TrendingUp, TrendingDown, AlertTriangle, Calendar, Clock, Droplets } from 'lucide-react';
 
 interface VitalSigns {
   id: number;
@@ -181,7 +181,7 @@ export default function OxygenLevelModal({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="modal-oxygen-level">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
-            <Lung className="w-6 h-6 text-blue-500" />
+            <Droplets className="w-6 h-6 text-blue-500" />
             <span>Oxygen Level Monitor</span>
             <Badge variant="outline" className="ml-2">{deviceId}</Badge>
           </DialogTitle>
@@ -265,7 +265,7 @@ export default function OxygenLevelModal({
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
-                <Lung className="w-5 h-5 mr-2" />
+                <Droplets className="w-5 h-5 mr-2" />
                 Breathing Insights
               </CardTitle>
             </CardHeader>
