@@ -343,6 +343,100 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     }
   };
 
+  const handleExportData = () => {
+    if (!selectedMetric || !dashboardData) return;
+
+    try {
+      // Get current and historical data
+      const currentValue = selectedMetric === 'heartRate' ? dashboardData.vitals.heartRate 
+        : selectedMetric === 'bloodPressure' ? dashboardData.vitals.bloodPressure
+        : selectedMetric === 'temperature' ? dashboardData.vitals.temperature
+        : dashboardData.vitals.oxygenLevel;
+
+      const historicalData = generateHistoricalData(selectedMetric, currentValue);
+      const metricName = selectedMetric === 'heartRate' ? 'Heart Rate' 
+        : selectedMetric === 'bloodPressure' ? 'Blood Pressure'
+        : selectedMetric === 'temperature' ? 'Temperature'
+        : 'Blood Oxygen';
+
+      const unit = selectedMetric === 'heartRate' ? 'bpm'
+        : selectedMetric === 'bloodPressure' ? 'mmHg'
+        : selectedMetric === 'temperature' ? '°C'
+        : '%';
+
+      // Create CSV content
+      let csvContent = `${metricName} Data Export\n`;
+      csvContent += `Patient: ${dashboardData.user.firstName} ${dashboardData.user.lastName}\n`;
+      csvContent += `Patient ID: ${dashboardData.user.patientId}\n`;
+      csvContent += `Export Date: ${new Date().toLocaleString()}\n`;
+      csvContent += `Current Reading: ${currentValue}${unit}\n\n`;
+      csvContent += `Time,Value (${unit}),Status\n`;
+
+      // Add 24-hour trend data
+      historicalData.forEach((data, index) => {
+        const time = new Date();
+        time.setHours(time.getHours() - (23 - index));
+        const timeStr = time.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+        
+        let valueStr;
+        let status;
+        
+        if (selectedMetric === 'bloodPressure' && typeof data.value === 'object') {
+          valueStr = `${data.value.systolic}/${data.value.diastolic}`;
+          status = data.value.systolic > 140 || data.value.diastolic > 90 ? 'High' 
+                 : data.value.systolic < 90 || data.value.diastolic < 60 ? 'Low' : 'Normal';
+        } else {
+          valueStr = data.value.toString();
+          if (selectedMetric === 'heartRate') {
+            status = data.value > 100 || data.value < 60 ? 'Abnormal' : 'Normal';
+          } else if (selectedMetric === 'temperature') {
+            status = data.value > 37.5 || data.value < 36.0 ? 'Abnormal' : 'Normal';
+          } else if (selectedMetric === 'oxygenLevel') {
+            status = data.value < 95 ? 'Low' : 'Normal';
+          } else {
+            status = 'Normal';
+          }
+        }
+        
+        csvContent += `${timeStr},${valueStr},${status}\n`;
+      });
+
+      // Add temperature ranges if it's temperature data
+      if (selectedMetric === 'temperature') {
+        csvContent += `\nTemperature Reference Ranges:\n`;
+        csvContent += `Range,Classification\n`;
+        csvContent += `< 36.0°C (96.8°F),Hypothermia\n`;
+        csvContent += `36.0-37.2°C (96.8-99.0°F),Normal\n`;
+        csvContent += `37.3-37.9°C (99.1-100.2°F),Mild Fever\n`;
+        csvContent += `38.0-39.0°C (100.3-102.2°F),Fever\n`;
+        csvContent += `39.1-41.0°C (102.3-105.8°F),High Fever\n`;
+        csvContent += `> 41.0°C (105.8°F),Hyperthermia\n`;
+      }
+
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${metricName.toLowerCase().replace(' ', '_')}_data_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Show success message
+      alert(`${metricName} data exported successfully!`);
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('Failed to export data. Please try again.');
+    }
+  };
+
   const renderDetailedView = () => {
     if (!selectedMetric || !dashboardData) return null;
 
@@ -515,12 +609,58 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             </div>
           </div>
 
+          {/* Temperature Ranges (only for temperature metric) */}
+          {selectedMetric === 'temperature' && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem', textAlign: 'center' }}>
+                Temperature Ranges
+              </h3>
+              <div style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '1rem' }}>
+                {[
+                  { range: '< 36.0°C (96.8°F)', label: 'Hypothermia', color: '#3b82f6', icon: '🥶' },
+                  { range: '36.0-37.2°C (96.8-99.0°F)', label: 'Normal', color: '#10b981', icon: '😊' },
+                  { range: '37.3-37.9°C (99.1-100.2°F)', label: 'Mild Fever', color: '#f59e0b', icon: '😐' },
+                  { range: '38.0-39.0°C (100.3-102.2°F)', label: 'Fever', color: '#f97316', icon: '🔥' },
+                  { range: '39.1-41.0°C (102.3-105.8°F)', label: 'High Fever', color: '#ef4444', icon: '🚨' },
+                  { range: '> 41.0°C (105.8°F)', label: 'Hyperthermia', color: '#991b1b', icon: '⚠️' }
+                ].map((item, index) => (
+                  <div key={index} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.75rem',
+                    marginBottom: index < 5 ? '0.5rem' : 0,
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <span style={{ fontSize: '0.875rem', color: '#374151' }}>{item.range}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1rem' }}>{item.icon}</span>
+                      <span style={{ 
+                        fontSize: '0.875rem', 
+                        fontWeight: '500', 
+                        color: item.color,
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '4px',
+                        backgroundColor: item.color + '20'
+                      }}>
+                        {item.label}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Health Tips */}
           <div style={{
             backgroundColor: '#f0fdf4',
             borderRadius: '8px',
             padding: '1rem',
-            border: '1px solid #bbf7d0'
+            border: '1px solid #bbf7d0',
+            marginBottom: '1.5rem'
           }}>
             <h4 style={{ fontSize: '1rem', fontWeight: '600', color: '#059669', marginBottom: '0.5rem' }}>
               💡 Health Tips
@@ -531,6 +671,51 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               {selectedMetric === 'temperature' && 'Body temperature can vary throughout the day. Normal range is 36.1-37.2°C. Stay hydrated and dress appropriately for the weather.'}
               {selectedMetric === 'oxygenLevel' && 'Maintain healthy oxygen levels with deep breathing exercises and good posture. Normal oxygen saturation is 95-100%.'}
             </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+            <button
+              onClick={handleExportData}
+              style={{
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.75rem 1.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+              data-testid="button-export-data"
+            >
+              📊 Export Data
+            </button>
+            <button
+              onClick={() => setSelectedMetric(null)}
+              style={{
+                backgroundColor: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.75rem 1.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6b7280'}
+              data-testid="button-close-modal"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
