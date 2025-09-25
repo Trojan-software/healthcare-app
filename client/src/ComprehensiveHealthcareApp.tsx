@@ -77,6 +77,7 @@ function AppContent() {
     mobileNumber: '',
     patientId: '',
     hospitalId: '',
+    customHospitalName: '',
     dateOfBirth: '',
     acceptTerms: false
   });
@@ -239,6 +240,11 @@ function AppContent() {
       return;
     }
 
+    if (formData.hospitalId === 'other' && !formData.customHospitalName.trim()) {
+      setState(prev => ({ ...prev, error: 'Please enter the name of your hospital/clinic' }));
+      return;
+    }
+
     setState(prev => ({ ...prev, loading: true, error: '' }));
 
     try {
@@ -254,6 +260,7 @@ function AppContent() {
           mobile: formData.mobileNumber,
           patientId: formData.patientId,
           hospitalId: formData.hospitalId,
+          customHospitalName: formData.hospitalId === 'other' ? formData.customHospitalName : '',
           dateOfBirth: formData.dateOfBirth
         })
       });
@@ -659,9 +666,16 @@ For questions, contact: support@24x7teleh.com
                 </label>
                 <select
                   value={formData.hospitalId}
-                  onChange={(e) => setFormData(prev => ({ ...prev, hospitalId: e.target.value }))}
+                  onChange={(e) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      hospitalId: e.target.value,
+                      customHospitalName: e.target.value !== 'other' ? '' : prev.customHospitalName
+                    }))
+                  }}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  data-testid="select-hospital"
                 >
                   <option value="">Select your hospital/clinic</option>
                   {hospitals.map((hospital) => (
@@ -669,8 +683,27 @@ For questions, contact: support@24x7teleh.com
                       {hospital.name} - {hospital.location} ({hospital.type})
                     </option>
                   ))}
+                  <option value="other">Other</option>
                 </select>
               </div>
+
+              {/* Custom Hospital Name Field */}
+              {formData.hospitalId === 'other' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Name of Hospital/Clinic *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.customHospitalName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, customHospitalName: e.target.value }))}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter hospital/clinic name"
+                    data-testid="input-custom-hospital"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -689,6 +722,7 @@ For questions, contact: support@24x7teleh.com
                     type="button"
                     onClick={generatePatientId}
                     className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    data-testid="button-generate-patient-id"
                   >
                     Generate
                   </button>
