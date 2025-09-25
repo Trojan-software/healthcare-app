@@ -799,6 +799,276 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "Server running", time: new Date().toISOString() });
   });
 
+  // HC03 Device Management Endpoints
+  app.post("/api/hc03/devices/register", async (req, res) => {
+    try {
+      const { deviceId, deviceName, macAddress, firmwareVersion, patientId } = req.body;
+      
+      if (!deviceId || !patientId) {
+        return res.status(400).json({ message: "Device ID and Patient ID are required" });
+      }
+
+      const deviceData = {
+        deviceId,
+        deviceName: deviceName || `HC03-${deviceId}`,
+        macAddress,
+        firmwareVersion,
+        patientId,
+        batteryLevel: 100,
+        chargingStatus: false
+      };
+
+      const registeredDevice = await storage.registerHc03Device(deviceData);
+      console.log(`HC03 device registered: ${deviceId} for patient ${patientId}`);
+      
+      res.json({
+        message: "Device registered successfully",
+        device: registeredDevice
+      });
+    } catch (error) {
+      console.error("Error registering HC03 device:", error);
+      res.status(500).json({ message: "Failed to register device" });
+    }
+  });
+
+  app.get("/api/hc03/devices/patient/:patientId", async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const devices = await storage.getHc03DevicesByPatient(patientId);
+      res.json(devices);
+    } catch (error) {
+      console.error("Error fetching patient devices:", error);
+      res.status(500).json({ message: "Failed to fetch devices" });
+    }
+  });
+
+  app.patch("/api/hc03/devices/:deviceId/status", async (req, res) => {
+    try {
+      const { deviceId } = req.params;
+      const { status } = req.body;
+      
+      if (!status || !['connected', 'disconnected', 'scanning'].includes(status)) {
+        return res.status(400).json({ message: "Valid status required (connected, disconnected, scanning)" });
+      }
+
+      await storage.updateDeviceStatus(deviceId, status);
+      console.log(`Device ${deviceId} status updated to: ${status}`);
+      
+      res.json({ message: "Device status updated successfully" });
+    } catch (error) {
+      console.error("Error updating device status:", error);
+      res.status(500).json({ message: "Failed to update device status" });
+    }
+  });
+
+  app.patch("/api/hc03/devices/:deviceId/battery", async (req, res) => {
+    try {
+      const { deviceId } = req.params;
+      const { batteryLevel, chargingStatus } = req.body;
+      
+      if (batteryLevel === undefined || chargingStatus === undefined) {
+        return res.status(400).json({ message: "Battery level and charging status are required" });
+      }
+
+      await storage.updateDeviceBattery(deviceId, batteryLevel, chargingStatus);
+      
+      res.json({ message: "Device battery updated successfully" });
+    } catch (error) {
+      console.error("Error updating device battery:", error);
+      res.status(500).json({ message: "Failed to update device battery" });
+    }
+  });
+
+  // Blood Oxygen Measurement Endpoints
+  app.get("/api/hc03/blood-oxygen/:patientId", async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const bloodOxygenData = await storage.getBloodOxygenDataByPatient(patientId, limit);
+      res.json(bloodOxygenData);
+    } catch (error) {
+      console.error("Error fetching blood oxygen data:", error);
+      res.status(500).json({ message: "Failed to fetch blood oxygen data" });
+    }
+  });
+
+  app.post("/api/hc03/blood-oxygen", async (req, res) => {
+    try {
+      const { patientId, deviceId, bloodOxygen, heartRate, fingerDetected, waveData } = req.body;
+      
+      if (!patientId || !deviceId || bloodOxygen === undefined) {
+        return res.status(400).json({ message: "Patient ID, Device ID, and blood oxygen level are required" });
+      }
+
+      const savedData = await storage.saveBloodOxygenData({
+        patientId,
+        deviceId,
+        bloodOxygen,
+        heartRate,
+        fingerDetection: fingerDetected,
+        bloodOxygenWaveData: waveData
+      });
+
+      res.json({
+        message: "Blood oxygen data saved successfully",
+        data: savedData
+      });
+    } catch (error) {
+      console.error("Error saving blood oxygen data:", error);
+      res.status(500).json({ message: "Failed to save blood oxygen data" });
+    }
+  });
+
+  // Blood Pressure Measurement Endpoints
+  app.get("/api/hc03/blood-pressure/:patientId", async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const bloodPressureData = await storage.getBloodPressureDataByPatient(patientId, limit);
+      res.json(bloodPressureData);
+    } catch (error) {
+      console.error("Error fetching blood pressure data:", error);
+      res.status(500).json({ message: "Failed to fetch blood pressure data" });
+    }
+  });
+
+  app.post("/api/hc03/blood-pressure", async (req, res) => {
+    try {
+      const { patientId, deviceId, systolic, diastolic, heartRate, measurementProgress, cuffPressure } = req.body;
+      
+      if (!patientId || !deviceId || !systolic || !diastolic) {
+        return res.status(400).json({ message: "Patient ID, Device ID, systolic, and diastolic pressures are required" });
+      }
+
+      const savedData = await storage.saveBloodPressureData({
+        patientId,
+        deviceId,
+        ps: systolic,
+        pd: diastolic,
+        hr: heartRate,
+        progress: measurementProgress,
+        cuffPressure
+      });
+
+      res.json({
+        message: "Blood pressure data saved successfully",
+        data: savedData
+      });
+    } catch (error) {
+      console.error("Error saving blood pressure data:", error);
+      res.status(500).json({ message: "Failed to save blood pressure data" });
+    }
+  });
+
+  // Temperature Measurement Endpoints
+  app.get("/api/hc03/temperature/:patientId", async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const temperatureData = await storage.getTemperatureDataByPatient(patientId, limit);
+      res.json(temperatureData);
+    } catch (error) {
+      console.error("Error fetching temperature data:", error);
+      res.status(500).json({ message: "Failed to fetch temperature data" });
+    }
+  });
+
+  app.post("/api/hc03/temperature", async (req, res) => {
+    try {
+      const { patientId, deviceId, temperature, measurementSite } = req.body;
+      
+      if (!patientId || !deviceId || temperature === undefined) {
+        return res.status(400).json({ message: "Patient ID, Device ID, and temperature are required" });
+      }
+
+      const savedData = await storage.saveTemperatureData({
+        patientId,
+        deviceId,
+        temperature,
+        measurementSite: measurementSite || 'forehead'
+      });
+
+      res.json({
+        message: "Temperature data saved successfully",
+        data: savedData
+      });
+    } catch (error) {
+      console.error("Error saving temperature data:", error);
+      res.status(500).json({ message: "Failed to save temperature data" });
+    }
+  });
+
+  // ECG Data Endpoints (enhanced for HC03)
+  app.post("/api/hc03/ecg", async (req, res) => {
+    try {
+      const { patientId, deviceId, waveData, heartRate, moodIndex, rrInterval, hrv, respiratoryRate, fingerDetected, recordingDuration } = req.body;
+      
+      if (!patientId || !deviceId) {
+        return res.status(400).json({ message: "Patient ID and Device ID are required" });
+      }
+
+      const savedData = await storage.saveEcgData({
+        patientId,
+        deviceId,
+        waveData,
+        hr: heartRate,
+        moodIndex,
+        rr: rrInterval,
+        hrv,
+        respiratoryRate,
+        touch: fingerDetected,
+        recordingDuration
+      });
+
+      res.json({
+        message: "ECG data saved successfully",
+        data: savedData
+      });
+    } catch (error) {
+      console.error("Error saving ECG data:", error);
+      res.status(500).json({ message: "Failed to save ECG data" });
+    }
+  });
+
+  app.get("/api/hc03/ecg/:patientId", async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const ecgData = await storage.getEcgDataByPatient(patientId, limit);
+      res.json(ecgData);
+    } catch (error) {
+      console.error("Error fetching ECG data:", error);
+      res.status(500).json({ message: "Failed to fetch ECG data" });
+    }
+  });
+
+  // Blood Glucose Data (enhanced for HC03)
+  app.post("/api/hc03/blood-glucose", async (req, res) => {
+    try {
+      const { patientId, deviceId, glucoseLevel, testStripStatus, measurementType } = req.body;
+      
+      if (!patientId || !deviceId || glucoseLevel === undefined) {
+        return res.status(400).json({ message: "Patient ID, Device ID, and glucose level are required" });
+      }
+
+      const savedData = await storage.saveBloodGlucoseData({
+        patientId,
+        deviceId,
+        bloodGlucosePaperData: glucoseLevel,
+        bloodGlucosePaperState: testStripStatus || 'inserted',
+        measurementType: measurementType || 'fingerstick'
+      });
+
+      res.json({
+        message: "Blood glucose data saved successfully",
+        data: savedData
+      });
+    } catch (error) {
+      console.error("Error saving blood glucose data:", error);
+      res.status(500).json({ message: "Failed to save blood glucose data" });
+    }
+  });
+
   // Helper functions
   function determinePatientStatus(vitals: any) {
     if (!vitals.latestVitals) return 'No Data';
