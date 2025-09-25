@@ -118,7 +118,7 @@ export default function EnhancedAdminDashboard() {
     complianceRate: 0
   };
 
-  const mockPatients: PatientRecord[] = (patientsData as any)?.patients || patientsData || [];
+  const mockPatients: PatientRecord[] = Array.isArray(patientsData) ? patientsData : [];
   const mockDevices: DeviceInfo[] = (devicesData as any)?.devices || [];
   const mockHospitals = ['Sheikh Khalifa Medical City', 'Cleveland Clinic Abu Dhabi', 'Mediclinic City Hospital'];
 
