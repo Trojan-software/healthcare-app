@@ -84,20 +84,7 @@ export default function AdminPage() {
 
   // Fetch all patients
   const { data: patients = [], isLoading } = useQuery({
-    queryKey: ['/api/admin/patients'],
-    queryFn: async () => {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/patients', {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch patients');
-      }
-      return response.json();
-    },
+    queryKey: ['/api/patients'],
     enabled: !!user,
   });
 
@@ -124,7 +111,7 @@ export default function AdminPage() {
         title: "Patient access created",
         description: "Patient dashboard access has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/patients'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
       setCreateDialogOpen(false);
       form.reset();
     },
@@ -159,7 +146,7 @@ export default function AdminPage() {
         title: "Access updated",
         description: "Patient access status has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/patients'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/patients'] });
     },
     onError: (error: any) => {
       toast({
