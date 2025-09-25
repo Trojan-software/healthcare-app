@@ -324,6 +324,37 @@ export interface Translation {
   history: string;
   from: string;
   to: string;
+  
+  // Health Monitor Modals
+  heartRateMonitor: string;
+  temperatureMonitor: string;
+  bloodOxygenMonitor: string;
+  realtimeMonitoring: string;
+  currentReading: string;
+  hourTrend24: string;
+  temperatureRanges: string;
+  healthTips: string;
+  
+  // Temperature Classifications
+  hypothermia: string;
+  mildFever: string;
+  fever: string;
+  highFever: string;
+  hyperthermia: string;
+  
+  // Health Tips
+  heartRateHealthTip: string;
+  bloodPressureHealthTip: string;
+  temperatureHealthTip: string;
+  oxygenLevelHealthTip: string;
+  
+  // Additional Status Labels
+  warning: string;
+  attention: string;
+  
+  // Table Headers
+  dateTime: string;
+  oxygen: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -645,6 +676,37 @@ export const translations: Record<Language, Translation> = {
     history: 'History',
     from: 'From',
     to: 'To',
+    
+    // Health Monitor Modals
+    heartRateMonitor: 'Heart Rate Monitor',
+    temperatureMonitor: 'Temperature Monitor',
+    bloodOxygenMonitor: 'Blood Oxygen Monitor',
+    realtimeMonitoring: 'Real-time monitoring with 24-hour trends',
+    currentReading: 'Current Reading',
+    hourTrend24: '24-Hour Trend',
+    temperatureRanges: 'Temperature Ranges',
+    healthTips: 'Health Tips',
+    
+    // Temperature Classifications
+    hypothermia: 'Hypothermia',
+    mildFever: 'Mild Fever',
+    fever: 'Fever',
+    highFever: 'High Fever',
+    hyperthermia: 'Hyperthermia',
+    
+    // Health Tips
+    heartRateHealthTip: 'Maintain a healthy heart rate through regular exercise, stress management, and adequate sleep. Normal resting heart rate is 60-100 bpm.',
+    bloodPressureHealthTip: 'Keep blood pressure in check with a balanced diet, regular exercise, limited sodium, and stress reduction. Normal BP is less than 120/80 mmHg.',
+    temperatureHealthTip: 'Body temperature can vary throughout the day. Normal range is 36.1-37.2°C. Stay hydrated and dress appropriately for the weather.',
+    oxygenLevelHealthTip: 'Maintain healthy oxygen levels with deep breathing exercises and good posture. Normal oxygen saturation is 95-100%.',
+    
+    // Additional Status Labels
+    warning: 'Warning',
+    attention: 'Attention',
+    
+    // Table Headers
+    dateTime: 'Date & Time',
+    oxygen: 'Oxygen',
   },
   ar: {
     // Navigation
@@ -966,6 +1028,37 @@ export const translations: Record<Language, Translation> = {
     history: 'السجل',
     from: 'من',
     to: 'إلى',
+    
+    // Health Monitor Modals
+    heartRateMonitor: 'مراقب معدل ضربات القلب',
+    temperatureMonitor: 'مراقب درجة الحرارة',
+    bloodOxygenMonitor: 'مراقب الأكسجين في الدم',
+    realtimeMonitoring: 'مراقبة في الوقت الفعلي مع اتجاهات 24 ساعة',
+    currentReading: 'القراءة الحالية',
+    hourTrend24: 'اتجاه 24 ساعة',
+    temperatureRanges: 'نطاقات درجة الحرارة',
+    healthTips: 'نصائح صحية',
+    
+    // Temperature Classifications
+    hypothermia: 'انخفاض حرارة الجسم',
+    mildFever: 'حمى خفيفة',
+    fever: 'حمى',
+    highFever: 'حمى عالية',
+    hyperthermia: 'ارتفاع حرارة الجسم',
+    
+    // Health Tips
+    heartRateHealthTip: 'حافظ على معدل ضربات قلب صحي من خلال التمارين المنتظمة وإدارة التوتر والنوم الكافي. معدل ضربات القلب الطبيعي أثناء الراحة هو 60-100 نبضة في الدقيقة.',
+    bloodPressureHealthTip: 'حافظ على ضغط الدم تحت السيطرة بنظام غذائي متوازن وتمارين منتظمة وتقليل الصوديوم وتقليل التوتر. ضغط الدم الطبيعي أقل من 120/80 ممHg.',
+    temperatureHealthTip: 'يمكن أن تختلف درجة حرارة الجسم على مدار اليوم. النطاق الطبيعي هو 36.1-37.2°م. حافظ على رطوبة جسمك والبس ملابس مناسبة للطقس.',
+    oxygenLevelHealthTip: 'حافظ على مستويات أكسجين صحية بتمارين التنفس العميق والوضعية الجيدة. تشبع الأكسجين الطبيعي هو 95-100%.',
+    
+    // Additional Status Labels
+    warning: 'تحذير',
+    attention: 'انتباه',
+    
+    // Table Headers
+    dateTime: 'التاريخ والوقت',
+    oxygen: 'الأكسجين',
   },
 };
 
