@@ -409,29 +409,28 @@ For questions, contact: support@24x7teleh.com
                   </svg>
                 </div>
                 <h1 className="text-4xl font-bold mb-4">24/7 Tele H</h1>
-                <p className="text-xl text-blue-100 mb-8">Technology Services</p>
+                <p className="text-xl text-blue-100 mb-8">{t('technologyServices')}</p>
                 <p className="text-lg text-blue-100/90 leading-relaxed">
-                  Advanced Healthcare Management System providing comprehensive patient monitoring, 
-                  real-time analytics, and seamless integration with medical devices.
+                  {t('advancedHealthcareSystem')}
                 </p>
               </div>
               
               <div className="grid grid-cols-2 gap-6 mt-8">
                 <div className="bg-white/10 rounded-lg p-4">
                   <div className="text-2xl font-bold">156+</div>
-                  <div className="text-blue-100">Active Patients</div>
+                  <div className="text-blue-100">{t('activePatients')}</div>
                 </div>
                 <div className="bg-white/10 rounded-lg p-4">
                   <div className="text-2xl font-bold">24/7</div>
-                  <div className="text-blue-100">Monitoring</div>
+                  <div className="text-blue-100">{t('monitoring247')}</div>
                 </div>
                 <div className="bg-white/10 rounded-lg p-4">
                   <div className="text-2xl font-bold">98%</div>
-                  <div className="text-blue-100">Uptime</div>
+                  <div className="text-blue-100">{t('uptime')}</div>
                 </div>
                 <div className="bg-white/10 rounded-lg p-4">
                   <div className="text-2xl font-bold">30+</div>
-                  <div className="text-blue-100">Hospitals</div>
+                  <div className="text-blue-100">{t('hospitals')}</div>
                 </div>
               </div>
             </div>

@@ -791,6 +791,14 @@ export const translations: Record<Language, Translation> = {
     activate: 'Activate',
     patientDetails: 'Patient Details',
     completePatientInfo: 'Complete patient information and health records',
+    
+    // Login Screen Branding
+    technologyServices: 'Technology Services',
+    advancedHealthcareSystem: 'Advanced Healthcare Management System providing comprehensive patient monitoring, real-time analytics, and seamless integration with medical devices.',
+    activePatients: 'Active Patients',
+    monitoring247: 'Monitoring',
+    uptime: 'Uptime',
+    hospitals: 'Hospitals',
   },
   ar: {
     // Navigation
@@ -1190,6 +1198,14 @@ export const translations: Record<Language, Translation> = {
     activate: 'تفعيل',
     patientDetails: 'تفاصيل المريض',
     completePatientInfo: 'معلومات المريض الكاملة والسجلات الصحية',
+    
+    // Login Screen Branding
+    technologyServices: 'خدمات التكنولوجيا',
+    advancedHealthcareSystem: 'نظام إدارة الرعاية الصحية المتقدم الذي يوفر مراقبة شاملة للمرضى، وتحليلات في الوقت الفعلي، وتكامل سلس مع الأجهزة الطبية.',
+    activePatients: 'المرضى النشطون',
+    monitoring247: 'المراقبة',
+    uptime: 'وقت التشغيل',
+    hospitals: 'المستشفيات',
   },
 };
 
