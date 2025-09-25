@@ -102,6 +102,36 @@ export interface Translation {
   lowRisk: string;
   criticalEcgFindings: string;
   
+  // Blood Glucose Monitor
+  bloodGlucoseMonitor: string;
+  startTest: string;
+  measuring: string;
+  noGlucoseReadings: string;
+  startMeasurementToSeeData: string;
+  latestReading: string;
+  recentReadings: string;
+  noReadings: string;
+  prediabetic: string;
+  
+  // Device Battery Status
+  deviceBattery: string;
+  deviceBatteryStatus: string;
+  devices: string;
+  noDevicesFound: string;
+  connectHC03Devices: string;
+  lowest: string;
+  charging: string;
+  critical: string;
+  full: string;
+  good: string;
+  startCharging: string;
+  stopCharging: string;
+  
+  // Device Names
+  glucoseMonitor: string;
+  bloodPressureMonitor: string;
+  ecgMonitor: string;
+  
   // Dashboard
   welcomeBack: string;
   totalPatients: string;
@@ -397,6 +427,36 @@ export const translations: Record<Language, Translation> = {
     lowRisk: 'Low Risk',
     criticalEcgFindings: 'Critical ECG Findings',
     
+    // Blood Glucose Monitor
+    bloodGlucoseMonitor: 'Blood Glucose Monitor',
+    startTest: 'Start Test',
+    measuring: 'Measuring...',
+    noGlucoseReadings: 'No glucose readings available',
+    startMeasurementToSeeData: 'Start a measurement to see data',
+    latestReading: 'Latest Reading',
+    recentReadings: 'Recent Readings',
+    noReadings: 'No readings',
+    prediabetic: 'Prediabetic',
+    
+    // Device Battery Status
+    deviceBattery: 'Device Battery',
+    deviceBatteryStatus: 'Device Battery Status',
+    devices: 'Devices',
+    noDevicesFound: 'No devices found',
+    connectHC03Devices: 'Connect HC03 devices to monitor battery status',
+    lowest: 'Lowest',
+    charging: 'Charging',
+    critical: 'Critical',
+    full: 'Full',
+    good: 'Good',
+    startCharging: 'Start Charging',
+    stopCharging: 'Stop Charging',
+    
+    // Device Names
+    glucoseMonitor: 'Glucose Monitor',
+    bloodPressureMonitor: 'Blood Pressure',
+    ecgMonitor: 'ECG Monitor',
+    
     // Dashboard
     welcomeBack: 'Welcome Back',
     totalPatients: 'Total Patients',
@@ -685,6 +745,36 @@ export const translations: Record<Language, Translation> = {
     highRisk: 'عالي المخاطر',
     lowRisk: 'منخفض المخاطر',
     criticalEcgFindings: 'نتائج حرجة في تخطيط القلب',
+    
+    // Blood Glucose Monitor
+    bloodGlucoseMonitor: 'مراقب الجلوكوز في الدم',
+    startTest: 'بدء الاختبار',
+    measuring: 'جاري القياس...',
+    noGlucoseReadings: 'لا توجد قراءات للجلوكوز',
+    startMeasurementToSeeData: 'ابدأ قياساً لرؤية البيانات',
+    latestReading: 'آخر قراءة',
+    recentReadings: 'القراءات الحديثة',
+    noReadings: 'لا توجد قراءات',
+    prediabetic: 'مقدمات السكري',
+    
+    // Device Battery Status
+    deviceBattery: 'بطارية الجهاز',
+    deviceBatteryStatus: 'حالة بطارية الجهاز',
+    devices: 'الأجهزة',
+    noDevicesFound: 'لم يتم العثور على أجهزة',
+    connectHC03Devices: 'اربط أجهزة HC03 لمراقبة حالة البطارية',
+    lowest: 'الأقل',
+    charging: 'يشحن',
+    critical: 'حرج',
+    full: 'ممتلئة',
+    good: 'جيدة',
+    startCharging: 'بدء الشحن',
+    stopCharging: 'إيقاف الشحن',
+    
+    // Device Names
+    glucoseMonitor: 'مراقب الجلوكوز',
+    bloodPressureMonitor: 'مراقب ضغط الدم',
+    ecgMonitor: 'مراقب تخطيط القلب',
     
     // Dashboard
     welcomeBack: 'مرحباً بعودتك',
