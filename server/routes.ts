@@ -8,6 +8,7 @@ import { emailNotificationService } from "./email-notifications";
 import { bloodGlucoseManager } from "./hc03-blood-glucose";
 import { batteryManager } from "./hc03-battery";
 import { ecgDataManager } from "./hc03-ecg";
+import { HC03WebSocketService } from "./websocket";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
@@ -1199,6 +1200,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Setup Vite development server or static file serving
   const server = createServer(app);
+  
+  // Initialize HC03 WebSocket service
+  const wsService = new HC03WebSocketService(server);
+  console.log('HC03 WebSocket service initialized');
   
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
