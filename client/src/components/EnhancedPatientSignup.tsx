@@ -284,9 +284,9 @@ export default function EnhancedPatientSignup() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              24/7 Tele H Technology Services
+              {t('appTitle')}
             </h1>
-            <p className="text-gray-600">Healthcare Monitoring Registration</p>
+            <p className="text-gray-600">{t('healthcareMonitoringRegistration')}</p>
           </div>
 
           {/* Progress Steps */}
@@ -318,7 +318,7 @@ export default function EnhancedPatientSignup() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5" />
-                  Patient Registration
+                  {t('patientRegistration')}
                 </CardTitle>
               </CardHeader>
               <CardContent>

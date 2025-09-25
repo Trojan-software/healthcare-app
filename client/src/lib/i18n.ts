@@ -43,6 +43,10 @@ export interface Translation {
   rememberMe: string;
   signingIn: string;
   
+  // Signup Form
+  healthcareMonitoringRegistration: string;
+  patientRegistration: string;
+  
   // Dashboard
   welcomeBack: string;
   totalPatients: string;
@@ -279,6 +283,10 @@ export const translations: Record<Language, Translation> = {
     rememberMe: 'Remember me',
     signingIn: 'Signing in...',
     
+    // Signup Form
+    healthcareMonitoringRegistration: 'Healthcare Monitoring Registration',
+    patientRegistration: 'Patient Registration',
+    
     // Dashboard
     welcomeBack: 'Welcome Back',
     totalPatients: 'Total Patients',
@@ -512,6 +520,10 @@ export const translations: Record<Language, Translation> = {
     enterPassword: 'أدخل كلمة المرور',
     rememberMe: 'تذكرني',
     signingIn: 'جارٍ تسجيل الدخول...',
+    
+    // Signup Form
+    healthcareMonitoringRegistration: 'تسجيل مراقبة الرعاية الصحية',
+    patientRegistration: 'تسجيل المريض',
     
     // Dashboard
     welcomeBack: 'مرحباً بعودتك',
