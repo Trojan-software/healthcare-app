@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n';
 import { 
   Bluetooth, 
   BluetoothConnected,
@@ -71,6 +72,7 @@ export default function AdminHC03DeviceManager({ onDeviceSelect }: AdminHC03Devi
   const [selectedPatient, setSelectedPatient] = useState<string>('all');
   
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     loadData();

@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/lib/i18n';
 import { 
   Bluetooth, 
   BluetoothConnected,
@@ -58,6 +59,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
   
   const wsConnection = useRef<WebSocket | null>(null);
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     loadDevices();
@@ -84,7 +86,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       console.log('HC03 SDK initialized successfully');
     } catch (error) {
       console.error('Failed to initialize HC03 SDK:', error);
-      setError('Bluetooth not supported in this browser');
+      setError(t('error'));
     }
   };
 
@@ -111,14 +113,14 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
     } else if (event.type === 'measurementStarted') {
       setMeasurementInProgress(Detection.ECG);
       toast({
-        title: "ECG Measurement Started",
-        description: "Please place your finger on the device sensor",
+        title: t('measurementStarted'),
+        description: t('placeFinger'),
       });
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
       toast({
-        title: "ECG Measurement Complete",
-        description: "ECG measurement completed successfully",
+        title: t('measurementCompleted'),
+        description: t('measurementCompleted'),
       });
     }
   };
@@ -658,7 +660,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
                   {selectedDevice.batteryLevel}%
                 </span>
                 {selectedDevice.chargingStatus && (
-                  <Badge variant="secondary">Charging</Badge>
+                  <Badge variant="secondary">{t('chargingStatus')}</Badge>
                 )}
               </div>
             </div>
@@ -797,7 +799,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
               className="w-full"
               data-testid="button-disconnect"
             >
-              Disconnect Device
+              {t('disconnectDevice')}
             </Button>
           </div>
         )}
@@ -806,28 +808,28 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
         <Dialog open={showDeviceDetails} onOpenChange={setShowDeviceDetails}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Device Details</DialogTitle>
+              <DialogTitle>{t('viewDetails')}</DialogTitle>
             </DialogHeader>
             {selectedDevice && deviceInfo && (
               <div className="space-y-4">
                 <div>
-                  <label className="font-medium text-gray-600">Device Name</label>
+                  <label className="font-medium text-gray-600">{t('deviceName')}</label>
                   <p>{selectedDevice.deviceName}</p>
                 </div>
                 <div>
-                  <label className="font-medium text-gray-600">Device ID</label>
+                  <label className="font-medium text-gray-600">{t('patientId')}</label>
                   <p>{selectedDevice.deviceId}</p>
                 </div>
                 <div>
-                  <label className="font-medium text-gray-600">Connection Status</label>
+                  <label className="font-medium text-gray-600">{t('deviceConnection')}</label>
                   <p>{selectedDevice.connectionStatus}</p>
                 </div>
                 <div>
-                  <label className="font-medium text-gray-600">Battery Level</label>
+                  <label className="font-medium text-gray-600">{t('batteryLevel')}</label>
                   <p>{selectedDevice.batteryLevel}% {selectedDevice.chargingStatus && '(Charging)'}</p>
                 </div>
                 <div>
-                  <label className="font-medium text-gray-600">Last Connected</label>
+                  <label className="font-medium text-gray-600">{t('lastActivity')}</label>
                   <p>{new Date(selectedDevice.lastConnected).toLocaleString()}</p>
                 </div>
                 <div>
