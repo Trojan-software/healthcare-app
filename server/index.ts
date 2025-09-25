@@ -5,6 +5,51 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const app = express();
+
+// Trust proxy for proper HTTPS detection behind load balancers
+app.set('trust proxy', true);
+
+// Security headers middleware for production
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Only apply security middleware in production
+  if (process.env.NODE_ENV !== 'production') {
+    return next();
+  }
+
+  // Force HTTPS in production with proper redirect
+  if (req.header('x-forwarded-proto') !== 'https') {
+    const publicBaseUrl = process.env.PUBLIC_BASE_URL || 'https://247tech.net';
+    return res.redirect(301, `${publicBaseUrl}${req.url}`);
+  }
+
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // HSTS header (without preload initially for safety)
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  
+  // Content Security Policy for healthcare app (production-ready)
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self'", // Removed unsafe-inline and unsafe-eval for production
+    "style-src 'self' 'unsafe-inline'", // Style inline needed for dynamic theming
+    "img-src 'self' data: https:",
+    "font-src 'self'",
+    "connect-src 'self' wss:", // Only secure websockets in production
+    "manifest-src 'self'",
+    "worker-src 'self'",
+    "frame-ancestors 'none'", // Modern alternative to X-Frame-Options
+    "upgrade-insecure-requests", // Automatically upgrade HTTP to HTTPS
+    "block-all-mixed-content" // Block mixed content for security
+  ].join('; ');
+  
+  res.setHeader('Content-Security-Policy', cspDirectives);
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
