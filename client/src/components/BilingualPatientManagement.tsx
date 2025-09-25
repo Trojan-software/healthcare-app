@@ -13,7 +13,6 @@ import {
   Users, 
   Search, 
   Filter, 
-  Plus,
   User,
   Phone,
   Mail,
@@ -288,15 +287,11 @@ export default function BilingualPatientManagement() {
   return (
     <div className={`space-y-6 ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Header */}
-      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
         <div className={`flex items-center space-x-3 ${isRTL ? 'space-x-reverse' : ''}`}>
           <Users className="w-6 h-6 text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-900">{t('patientManagement')}</h2>
         </div>
-        <Button className={`flex items-center space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
-          <Plus className="w-4 h-4" />
-          <span>{t('addPatient')}</span>
-        </Button>
       </div>
 
       {/* Search and Filters */}
