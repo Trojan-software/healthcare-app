@@ -264,9 +264,9 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       issues.push('Oxygen Level');
     }
 
-    if (issues.length === 0) return { status: 'Normal', color: 'bg-green-100 text-green-800' };
-    if (issues.length === 1) return { status: 'Attention', color: 'bg-yellow-100 text-yellow-800' };
-    return { status: 'Critical', color: 'bg-red-100 text-red-800' };
+    if (issues.length === 0) return { status: t('normal'), color: 'bg-green-100 text-green-800' };
+    if (issues.length === 1) return { status: t('attention'), color: 'bg-yellow-100 text-yellow-800' };
+    return { status: t('critical'), color: 'bg-red-100 text-red-800' };
   };
 
 
@@ -314,8 +314,8 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     switch (type) {
       case 'heartRate':
         const hr = value as number;
-        if (hr < 60 || hr > 100) return { status: 'Warning', color: '#f59e0b' };
-        return { status: 'Normal', color: '#10b981' };
+        if (hr < 60 || hr > 100) return { status: t('warning'), color: '#f59e0b' };
+        return { status: t('normal'), color: '#10b981' };
       case 'bloodPressure':
         // Handle both object and string formats
         let systolic, diastolic;
@@ -330,19 +330,19 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           systolic = 120;
           diastolic = 80;
         }
-        if (systolic > 140 || diastolic > 90) return { status: 'High', color: '#ef4444' };
-        if (systolic < 90 || diastolic < 60) return { status: 'Low', color: '#f59e0b' };
-        return { status: 'Normal', color: '#10b981' };
+        if (systolic > 140 || diastolic > 90) return { status: t('high'), color: '#ef4444' };
+        if (systolic < 90 || diastolic < 60) return { status: t('low'), color: '#f59e0b' };
+        return { status: t('normal'), color: '#10b981' };
       case 'temperature':
         const temp = typeof value === 'number' ? value : parseFloat(String(value));
-        if (temp > 37.5 || temp < 36.0) return { status: 'Abnormal', color: '#f59e0b' };
-        return { status: 'Normal', color: '#10b981' };
+        if (temp > 37.5 || temp < 36.0) return { status: t('abnormal'), color: '#f59e0b' };
+        return { status: t('normal'), color: '#10b981' };
       case 'oxygenLevel':
         const oxygen = value as number;
-        if (oxygen < 95) return { status: 'Low', color: '#ef4444' };
-        return { status: 'Normal', color: '#10b981' };
+        if (oxygen < 95) return { status: t('low'), color: '#ef4444' };
+        return { status: t('normal'), color: '#10b981' };
       default:
-        return { status: 'Normal', color: '#10b981' };
+        return { status: t('normal'), color: '#10b981' };
     }
   };
 
@@ -497,13 +497,13 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               </div>
               <div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
-                  {selectedMetric === 'heartRate' && 'Heart Rate Monitor'}
-                  {selectedMetric === 'bloodPressure' && 'Blood Pressure Monitor'}
-                  {selectedMetric === 'temperature' && 'Temperature Monitor'}
-                  {selectedMetric === 'oxygenLevel' && 'Blood Oxygen Monitor'}
+                  {selectedMetric === 'heartRate' && t('heartRateMonitor')}
+                  {selectedMetric === 'bloodPressure' && t('bloodPressureMonitor')}
+                  {selectedMetric === 'temperature' && t('temperatureMonitor')}
+                  {selectedMetric === 'oxygenLevel' && t('bloodOxygenMonitor')}
                 </h2>
                 <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
-                  Real-time monitoring with 24-hour trends
+                  {t('realtimeMonitoring')}
                 </p>
               </div>
             </div>
@@ -536,7 +536,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             border: '1px solid ' + status.color + '20'
           }}>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>Current Reading</p>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>{t('currentReading')}</p>
               <div style={{ fontSize: '3rem', fontWeight: 'bold', color: status.color, margin: '0.5rem 0' }}>
                 {selectedMetric === 'heartRate' && `${currentValue}`}
                 {selectedMetric === 'bloodPressure' && `${currentValue}`}
@@ -569,7 +569,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           {/* 24-Hour Trend */}
           <div style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem' }}>
-              24-Hour Trend
+              {t('hourTrend24')}
             </h3>
             <div style={{
               backgroundColor: '#f8fafc',
@@ -616,16 +616,16 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           {selectedMetric === 'temperature' && (
             <div style={{ marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem', textAlign: 'center' }}>
-                Temperature Ranges
+                {t('temperatureRanges')}
               </h3>
               <div style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '1rem' }}>
                 {[
-                  { range: '< 36.0°C (96.8°F)', label: 'Hypothermia', color: '#3b82f6', icon: '🥶' },
-                  { range: '36.0-37.2°C (96.8-99.0°F)', label: 'Normal', color: '#10b981', icon: '😊' },
-                  { range: '37.3-37.9°C (99.1-100.2°F)', label: 'Mild Fever', color: '#f59e0b', icon: '😐' },
-                  { range: '38.0-39.0°C (100.3-102.2°F)', label: 'Fever', color: '#f97316', icon: '🔥' },
-                  { range: '39.1-41.0°C (102.3-105.8°F)', label: 'High Fever', color: '#ef4444', icon: '🚨' },
-                  { range: '> 41.0°C (105.8°F)', label: 'Hyperthermia', color: '#991b1b', icon: '⚠️' }
+                  { range: '< 36.0°C (96.8°F)', label: t('hypothermia'), color: '#3b82f6', icon: '🥶' },
+                  { range: '36.0-37.2°C (96.8-99.0°F)', label: t('normal'), color: '#10b981', icon: '😊' },
+                  { range: '37.3-37.9°C (99.1-100.2°F)', label: t('mildFever'), color: '#f59e0b', icon: '😐' },
+                  { range: '38.0-39.0°C (100.3-102.2°F)', label: t('fever'), color: '#f97316', icon: '🔥' },
+                  { range: '39.1-41.0°C (102.3-105.8°F)', label: t('highFever'), color: '#ef4444', icon: '🚨' },
+                  { range: '> 41.0°C (105.8°F)', label: t('hyperthermia'), color: '#991b1b', icon: '⚠️' }
                 ].map((item, index) => (
                   <div key={index} style={{
                     display: 'flex',
@@ -666,13 +666,13 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             marginBottom: '1.5rem'
           }}>
             <h4 style={{ fontSize: '1rem', fontWeight: '600', color: '#059669', marginBottom: '0.5rem' }}>
-              💡 Health Tips
+              💡 {t('healthTips')}
             </h4>
             <p style={{ fontSize: '0.875rem', color: '#047857', margin: 0, lineHeight: '1.5' }}>
-              {selectedMetric === 'heartRate' && 'Maintain a healthy heart rate through regular exercise, stress management, and adequate sleep. Normal resting heart rate is 60-100 bpm.'}
-              {selectedMetric === 'bloodPressure' && 'Keep blood pressure in check with a balanced diet, regular exercise, limited sodium, and stress reduction. Normal BP is less than 120/80 mmHg.'}
-              {selectedMetric === 'temperature' && 'Body temperature can vary throughout the day. Normal range is 36.1-37.2°C. Stay hydrated and dress appropriately for the weather.'}
-              {selectedMetric === 'oxygenLevel' && 'Maintain healthy oxygen levels with deep breathing exercises and good posture. Normal oxygen saturation is 95-100%.'}
+              {selectedMetric === 'heartRate' && t('heartRateHealthTip')}
+              {selectedMetric === 'bloodPressure' && t('bloodPressureHealthTip')}
+              {selectedMetric === 'temperature' && t('temperatureHealthTip')}
+              {selectedMetric === 'oxygenLevel' && t('oxygenLevelHealthTip')}
             </p>
           </div>
 
@@ -698,7 +698,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
               data-testid="button-export-data"
             >
-              📊 Export Data
+              📊 {t('exportData')}
             </button>
             <button
               onClick={() => setSelectedMetric(null)}
@@ -717,7 +717,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6b7280'}
               data-testid="button-close-modal"
             >
-              Close
+              {t('close')}
             </button>
           </div>
         </div>
@@ -978,25 +978,25 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date & Time
+                    {t('dateTime')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Heart Rate
+                    {t('heartRate')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Blood Pressure
+                    {t('bloodPressure')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Temperature
+                    {t('temperature')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Oxygen
+                    {t('oxygen')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Blood Glucose
+                    {t('bloodGlucose')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    {t('status')}
                   </th>
                 </tr>
               </thead>
