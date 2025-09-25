@@ -890,28 +890,29 @@ For questions, contact: support@24x7teleh.com
         <header className="bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg">
           <div className="max-w-7xl mx-auto px-4 py-6">
             <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
+              <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-4`}>
                 <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4H9l3-4 3 4h-1v4z"/>
                   </svg>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold">24/7 Tele H Admin</h1>
-                  <p className="text-blue-100">Healthcare Management Dashboard</p>
+                <div className={isRTL ? 'text-right' : 'text-left'}>
+                  <h1 className="text-2xl font-bold">{t('teleHAdmin247')}</h1>
+                  <p className="text-blue-100">{t('healthcareManagementDashboard')}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="text-right">
+              <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-4`}>
+                <LanguageSwitcher />
+                <div className={isRTL ? 'text-left' : 'text-right'}>
                   <p className="font-medium">{state.user.firstName} {state.user.lastName}</p>
-                  <p className="text-blue-100 text-sm">Administrator</p>
+                  <p className="text-blue-100 text-sm">{t('administrator')}</p>
                 </div>
                 <button
                   onClick={() => setState({ view: 'login', user: null, loading: false, error: '' })}
                   className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
                   data-testid="button-logout-admin"
                 >
-                  Logout
+                  {t('logout')}
                 </button>
               </div>
             </div>
@@ -931,10 +932,10 @@ For questions, contact: support@24x7teleh.com
                 data-testid="button-dashboard-total-patients"
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-gray-600 text-sm font-medium">Total Patients</p>
+                  <div className={isRTL ? 'text-right' : 'text-left'}>
+                    <p className="text-gray-600 text-sm font-medium">{t('totalPatients')}</p>
                     <p className="text-3xl font-bold text-gray-800 mt-2">{adminData.dashboardStats.totalPatients}</p>
-                    <p className="text-blue-600 text-xs mt-1">Click to view all patients</p>
+                    <p className="text-blue-600 text-xs mt-1">{t('clickToViewAllPatients')}</p>
                   </div>
                   <div className="p-2 bg-blue-100 rounded-lg">
                     👥
@@ -951,10 +952,10 @@ For questions, contact: support@24x7teleh.com
                 data-testid="button-dashboard-active-patients"
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-gray-600 text-sm font-medium">Active Monitoring</p>
+                  <div className={isRTL ? 'text-right' : 'text-left'}>
+                    <p className="text-gray-600 text-sm font-medium">{t('activeMonitoring')}</p>
                     <p className="text-3xl font-bold text-gray-800 mt-2">{adminData.dashboardStats.activePatients}</p>
-                    <p className="text-green-600 text-xs mt-1">Click to view active patients</p>
+                    <p className="text-green-600 text-xs mt-1">{t('clickToViewActivePatients')}</p>
                   </div>
                   <div className="p-2 bg-green-100 rounded-lg">
                     📊
@@ -971,10 +972,10 @@ For questions, contact: support@24x7teleh.com
                 data-testid="button-dashboard-critical-alerts"
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-gray-600 text-sm font-medium">Critical Alerts</p>
+                  <div className={isRTL ? 'text-right' : 'text-left'}>
+                    <p className="text-gray-600 text-sm font-medium">{t('criticalAlert')}</p>
                     <p className="text-3xl font-bold text-gray-800 mt-2">{adminData.dashboardStats.criticalAlerts}</p>
-                    <p className="text-yellow-600 text-xs mt-1">Click to view critical patients</p>
+                    <p className="text-yellow-600 text-xs mt-1">{t('clickToViewCriticalPatients')}</p>
                   </div>
                   <div className="p-2 bg-yellow-100 rounded-lg">
                     ⚠️
@@ -990,10 +991,10 @@ For questions, contact: support@24x7teleh.com
                 data-testid="button-dashboard-analytics"
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-gray-600 text-sm font-medium">Compliance Rate</p>
+                  <div className={isRTL ? 'text-right' : 'text-left'}>
+                    <p className="text-gray-600 text-sm font-medium">{t('complianceRate')}</p>
                     <p className="text-3xl font-bold text-gray-800 mt-2">{adminData.dashboardStats.complianceRate}%</p>
-                    <p className="text-purple-600 text-xs mt-1">Click to view analytics</p>
+                    <p className="text-purple-600 text-xs mt-1">{t('clickToViewAnalytics')}</p>
                   </div>
                   <div className="p-2 bg-purple-100 rounded-lg">
                     📈
@@ -1010,8 +1011,8 @@ For questions, contact: support@24x7teleh.com
               className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-xl font-semibold transition-all hover:from-indigo-700 hover:to-purple-700 shadow-lg"
             >
               <div className="text-3xl mb-2">❓</div>
-              <div>FAQ & Support</div>
-              <div className="text-sm text-indigo-100 mt-1">Device guides & help</div>
+              <div>{t('faqAndSupport')}</div>
+              <div className="text-sm text-indigo-100 mt-1">{t('deviceGuidesAndHelp')}</div>
             </button>
 
             <button
@@ -1019,8 +1020,8 @@ For questions, contact: support@24x7teleh.com
               className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-xl font-semibold transition-all hover:from-purple-700 hover:to-pink-700 shadow-lg"
             >
               <div className="text-3xl mb-2">📱</div>
-              <div>Device Monitoring</div>
-              <div className="text-sm text-purple-100 mt-1">HC03 status & battery</div>
+              <div>{t('deviceMonitoring')}</div>
+              <div className="text-sm text-purple-100 mt-1">{t('hc03StatusAndBattery')}</div>
             </button>
 
             <button
@@ -1028,8 +1029,8 @@ For questions, contact: support@24x7teleh.com
               className="bg-gradient-to-r from-green-600 to-teal-600 text-white p-6 rounded-xl font-semibold transition-all hover:from-green-700 hover:to-teal-700 shadow-lg"
             >
               <div className="text-3xl mb-2">📊</div>
-              <div>Advanced Analytics</div>
-              <div className="text-sm text-green-100 mt-1">AI insights & trends</div>
+              <div>{t('advancedAnalytics')}</div>
+              <div className="text-sm text-green-100 mt-1">{t('aiInsightsAndTrends')}</div>
             </button>
 
             <button
@@ -1037,29 +1038,29 @@ For questions, contact: support@24x7teleh.com
               className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6 rounded-xl font-semibold transition-all hover:from-blue-700 hover:to-cyan-700 shadow-lg"
             >
               <div className="text-3xl mb-2">⏰</div>
-              <div>Enhanced Scheduling</div>
-              <div className="text-sm text-blue-100 mt-1">1-4 hour intervals</div>
+              <div>{t('enhancedScheduling')}</div>
+              <div className="text-sm text-blue-100 mt-1">{t('oneToFourHourIntervals')}</div>
             </button>
           </div>
 
           {/* Patient Management */}
           <div id="patient-management-section" className="bg-white rounded-xl shadow-md p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Patient Management</h2>
-              <div className="flex space-x-4">
+              <h2 className={`text-2xl font-bold text-gray-800 ${isRTL ? 'text-right' : 'text-left'}`}>{t('patientManagement')}</h2>
+              <div className={`flex ${isRTL ? 'space-x-reverse' : ''} space-x-4`}>
                 <button
                   onClick={exportPatientData}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
                   data-testid="button-export-csv"
                 >
-                  Export CSV
+                  {t('exportCSV')}
                 </button>
                 <button
                   onClick={generateWeeklyReport}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
                   data-testid="button-weekly-report"
                 >
-                  Weekly Report
+                  {t('weeklyReport')}
                 </button>
               </div>
             </div>
@@ -1068,17 +1069,18 @@ For questions, contact: support@24x7teleh.com
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <input
                 type="text"
-                placeholder="Search patients..."
+                placeholder={t('searchPatientsDots')}
                 value={adminData.searchTerm}
                 onChange={(e) => setAdminData(prev => ({ ...prev, searchTerm: e.target.value }))}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isRTL ? 'text-right' : 'text-left'}`}
+                dir={isRTL ? 'rtl' : 'ltr'}
               />
               <select
                 value={adminData.filterStatus}
                 onChange={(e) => setAdminData(prev => ({ ...prev, filterStatus: e.target.value }))}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Status</option>
+                <option value="all">{t('allStatus')}</option>
                 <option value="normal">Normal</option>
                 <option value="critical">Critical</option>
                 <option value="attention">Attention</option>
@@ -1088,7 +1090,7 @@ For questions, contact: support@24x7teleh.com
                 onChange={(e) => setAdminData(prev => ({ ...prev, filterHospital: e.target.value }))}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">All Hospitals</option>
+                <option value="all">{t('allHospitals')}</option>
                 {hospitals.map(hospital => (
                   <option key={hospital.id} value={hospital.id}>{hospital.name}</option>
                 ))}
@@ -1100,13 +1102,13 @@ For questions, contact: support@24x7teleh.com
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Birth</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Activity</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vitals</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('patient')}</th>
+                    <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('patientId')}</th>
+                    <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('dateOfBirth')}</th>
+                    <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('status')}</th>
+                    <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('lastActivity')}</th>
+                    <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('vitals')}</th>
+                    <th className={`px-6 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}>{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
