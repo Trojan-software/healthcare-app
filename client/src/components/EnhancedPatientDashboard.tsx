@@ -327,6 +327,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             <button 
               onClick={loadDashboardData}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              data-testid="button-retry-dashboard"
             >
               Retry
             </button>
@@ -361,6 +362,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               <button
                 onClick={onLogout}
                 className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
+                data-testid="button-logout-patient"
               >
                 Logout
               </button>
