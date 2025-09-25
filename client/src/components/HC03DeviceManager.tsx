@@ -47,12 +47,67 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
   const [vitalReadings, setVitalReadings] = useState<VitalReading[]>([]);
   const [latestReadings, setLatestReadings] = useState<Record<Detection, VitalReading>>({} as Record<Detection, VitalReading>);
   const [devices, setDevices] = useState<HC03Device[]>([]);
+  const [connectionHealth, setConnectionHealth] = useState({
+    isHealthy: false,
+    lastHeartbeat: null as Date | null,
+    reconnectAttempts: 0,
+    signalStrength: 0
+  });
+  const [realTimeStatus, setRealTimeStatus] = useState({
+    connected: false,
+    deviceName: '',
+    deviceId: '',
+    signalStrength: 0
+  });
   const { toast } = useToast();
 
   // Load patient's HC03 devices
   useEffect(() => {
     loadPatientDevices();
   }, [patientId]);
+
+  // Monitor connection health and update real-time status
+  useEffect(() => {
+    const healthCheckInterval = setInterval(() => {
+      if (hc03Sdk.isConnectedDevice()) {
+        const status = hc03Sdk.getConnectionStatus();
+        const activeDetectionsList = hc03Sdk.getActiveDetections();
+        
+        setRealTimeStatus({
+          connected: status.connected,
+          deviceName: status.deviceName || 'HC03 Device',
+          deviceId: status.deviceId || '',
+          signalStrength: status.signalStrength || 0
+        });
+        
+        setConnectionHealth(prev => ({
+          isHealthy: status.connected && activeDetectionsList.length > 0,
+          lastHeartbeat: status.connected ? new Date() : prev.lastHeartbeat,
+          reconnectAttempts: status.connected ? 0 : prev.reconnectAttempts,
+          signalStrength: status.signalStrength || 0
+        }));
+        
+        // Update active detections
+        setActiveDetections(new Set(activeDetectionsList));
+      } else {
+        setRealTimeStatus({
+          connected: false,
+          deviceName: '',
+          deviceId: '',
+          signalStrength: 0
+        });
+        
+        setConnectionHealth(prev => ({
+          isHealthy: false,
+          lastHeartbeat: prev.lastHeartbeat,
+          reconnectAttempts: prev.reconnectAttempts,
+          signalStrength: 0
+        }));
+      }
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(healthCheckInterval);
+  }, []);
 
   const loadPatientDevices = async () => {
     try {
@@ -402,6 +457,62 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
           )}
         </CardContent>
       </Card>
+
+      {/* Real-Time Connection Health */}
+      {realTimeStatus.connected && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${connectionHealth.isHealthy ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
+              Connection Health Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-sm text-gray-600">Device</div>
+                <div className="font-semibold">{realTimeStatus.deviceName}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-gray-600">Signal Strength</div>
+                <div className="flex items-center justify-center gap-1">
+                  <span className="font-semibold">{realTimeStatus.signalStrength}%</span>
+                  <div className="flex space-x-1">
+                    {[1, 2, 3, 4].map((bar) => (
+                      <div
+                        key={bar}
+                        className={`w-1 h-3 rounded-sm ${
+                          bar <= (realTimeStatus.signalStrength / 25) ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-gray-600">Active Detections</div>
+                <div className="font-semibold">{activeDetections.size}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-gray-600">Last Heartbeat</div>
+                <div className="text-sm">
+                  {connectionHealth.lastHeartbeat ? 
+                    connectionHealth.lastHeartbeat.toLocaleTimeString() : 'N/A'}
+                </div>
+              </div>
+            </div>
+            
+            {connectionHealth.reconnectAttempts > 0 && (
+              <Alert className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Connection unstable. Reconnection attempts: {connectionHealth.reconnectAttempts}
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Detection Controls */}
       {connectedDevice && (
