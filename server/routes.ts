@@ -462,8 +462,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete User endpoint
-  app.delete("/api/users/:id", async (req, res) => {
+  // Toggle User Status endpoint
+  app.patch("/api/users/:id/toggle-status", async (req, res) => {
     try {
       const { id } = req.params;
       const userId = parseInt(id);
@@ -480,28 +480,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Store user info for logging
       const userInfo = `${user.firstName} ${user.lastName} (${user.patientId})`;
+      const newStatus = !user.isActive;
 
-      // Delete the user from the database
-      const deletedUser = await storage.deleteUser(userId);
+      // Toggle the user's active status
+      const updatedUser = await storage.updateUser(userId, { isActive: newStatus });
       
-      if (!deletedUser) {
-        return res.status(500).json({ message: "Failed to delete user" });
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user status" });
       }
 
-      console.log(`User deleted: ${userInfo} - ID: ${userId}`);
+      console.log(`User status changed: ${userInfo} - ID: ${userId}, New Status: ${newStatus ? 'Active' : 'Inactive'}`);
       
       res.json({ 
-        message: "User deleted successfully",
-        deletedUser: {
-          id: deletedUser.id,
-          firstName: deletedUser.firstName,
-          lastName: deletedUser.lastName,
-          patientId: deletedUser.patientId
+        message: "User status updated successfully",
+        updatedUser: {
+          id: updatedUser.id,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          patientId: updatedUser.patientId,
+          isActive: updatedUser.isActive
         }
       });
     } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ message: "Failed to delete user" });
+      console.error("Error updating user status:", error);
+      res.status(500).json({ message: "Failed to update user status" });
     }
   });
 

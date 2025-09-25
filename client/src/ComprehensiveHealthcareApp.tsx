@@ -49,6 +49,7 @@ interface Patient {
   vitals?: VitalSigns;
   age: number;
   dateOfBirth?: string;
+  isActive: boolean;
 }
 
 interface AppState {
