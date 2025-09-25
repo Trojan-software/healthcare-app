@@ -21,6 +21,7 @@ import {
 import BloodGlucoseWidget from './BloodGlucoseWidget';
 import BatteryWidget from './BatteryWidget';
 import EcgWidget from './EcgWidget';
+import HC03DeviceManager from './HC03DeviceManager';
 
 interface VitalSigns {
   id: number;
@@ -468,6 +469,11 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
         {/* Health Monitoring Widgets */}
         <div className="space-y-6 mt-6">
+          {/* HC03 Device Connection Manager - Full Width */}
+          <HC03DeviceManager 
+            patientId={dashboardData?.user?.patientId || ''} 
+          />
+          
           {/* ECG Monitor - Full Width */}
           <EcgWidget 
             deviceId="HC03-003"

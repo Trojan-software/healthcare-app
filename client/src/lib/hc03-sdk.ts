@@ -100,27 +100,84 @@ export class Hc03Sdk {
         filters: [
           { namePrefix: 'HC03' },
           { namePrefix: 'Health' },
-          { services: ['heart_rate'] }
+          { services: ['0000fff0-0000-1000-8000-00805f9b34fb'] } // HC03 service UUID
         ],
         optionalServices: [
           'battery_service',
           'device_information',
-          'health_thermometer'
+          'health_thermometer',
+          '0000fff1-0000-1000-8000-00805f9b34fb', // HC03 data service
+          '0000fff2-0000-1000-8000-00805f9b34fb'  // HC03 control service
         ]
       });
 
       this.server = await this.device.gatt!.connect();
       this.isConnected = true;
 
-      // Set up disconnect handler
+      // Set up disconnect handler with reconnection attempt
       this.device.addEventListener('gattserverdisconnected', () => {
         this.isConnected = false;
         this.server = null;
+        
+        // Attempt automatic reconnection after 3 seconds
+        setTimeout(() => {
+          this.attemptReconnection();
+        }, 3000);
       });
+
+      // Start connection health monitoring
+      this.startConnectionHealthCheck();
 
       return this.device;
     } catch (error) {
       throw new Error(`Failed to connect to HC03 device: ${error}`);
+    }
+  }
+
+  // Connection health monitoring
+  private healthCheckInterval: NodeJS.Timeout | null = null;
+  
+  private startConnectionHealthCheck(): void {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+    }
+    
+    this.healthCheckInterval = setInterval(() => {
+      if (!this.isConnected || !this.device) {
+        return;
+      }
+      
+      // Check if device is still connected
+      if (!this.device.gatt.connected) {
+        this.isConnected = false;
+        this.server = null;
+      }
+    }, 10000); // Check every 10 seconds
+  }
+
+  // Automatic reconnection logic
+  private async attemptReconnection(): Promise<void> {
+    if (this.isConnected || !this.device) {
+      return;
+    }
+
+    try {
+      console.log('Attempting to reconnect to HC03 device...');
+      this.server = await this.device.gatt!.connect();
+      this.isConnected = true;
+      console.log('HC03 device reconnected successfully');
+      
+      // Restart active detections
+      for (const detection of Array.from(this.activeDetections)) {
+        await this.startDetect(detection);
+      }
+    } catch (error) {
+      console.error('Failed to reconnect to HC03 device:', error);
+      
+      // Try again in 30 seconds
+      setTimeout(() => {
+        this.attemptReconnection();
+      }, 30000);
     }
   }
 
@@ -191,7 +248,20 @@ export class Hc03Sdk {
 
   // ECG Detection Methods
   private async startECGDetection(): Promise<void> {
-    // Implementation for ECG characteristic subscription
+    if (!this.server) return;
+    
+    try {
+      const service = await this.server.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
+      const characteristic = await service.getCharacteristic('0000fff3-0000-1000-8000-00805f9b34fb'); // ECG data characteristic
+      
+      await characteristic.startNotifications();
+      characteristic.addEventListener('characteristicvaluechanged', (event: any) => {
+        this.parseECGData(event.target.value.buffer);
+      });
+    } catch (error) {
+      console.error('Failed to start ECG detection:', error);
+      throw error;
+    }
   }
 
   public getEcgData(): ECGData | null {
@@ -201,25 +271,56 @@ export class Hc03Sdk {
 
   private parseECGData(data: ArrayBuffer): void {
     // Parse ECG data according to HC03 protocol
-    const ecgData: ECGData = {
-      wave: [], // Parse wave data
-      hr: 0,    // Parse heart rate
-      moodIndex: 0, // Parse mood index (1-100)
-      rr: 0,    // Parse RR interval
-      hrv: 0,   // Parse HRV
-      respiratoryRate: 0, // Parse respiratory rate
-      touch: false // Parse finger detection
-    };
+    const view = new DataView(data);
+    const waveData: number[] = [];
+    
+    // HC03 ECG data format (adjust based on actual device protocol)
+    if (data.byteLength >= 20) {
+      const hr = view.getUint16(0, true); // Heart rate (little endian)
+      const moodIndex = view.getUint8(2); // Mood index
+      const rr = view.getUint16(3, true); // RR interval
+      const hrv = view.getUint16(5, true); // HRV
+      const respiratoryRate = view.getUint8(7); // Respiratory rate
+      const touch = view.getUint8(8) === 1; // Finger detection
+      
+      // Parse wave data (remaining bytes)
+      for (let i = 9; i < data.byteLength; i++) {
+        waveData.push(view.getUint8(i));
+      }
+      
+      const ecgData: ECGData = {
+        wave: waveData,
+        hr: hr,
+        moodIndex: Math.min(100, Math.max(1, moodIndex)),
+        rr: rr,
+        hrv: hrv,
+        respiratoryRate: respiratoryRate,
+        touch: touch
+      };
 
-    const callback = this.callbacks.get(Detection.ECG);
-    if (callback) {
-      callback(ecgData);
+      const callback = this.callbacks.get(Detection.ECG);
+      if (callback) {
+        callback(ecgData);
+      }
     }
   }
 
   // Blood Oxygen Detection Methods
   private async startBloodOxygenDetection(): Promise<void> {
-    // Implementation for blood oxygen characteristic subscription
+    if (!this.server) return;
+    
+    try {
+      const service = await this.server.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
+      const characteristic = await service.getCharacteristic('0000fff4-0000-1000-8000-00805f9b34fb'); // Blood oxygen characteristic
+      
+      await characteristic.startNotifications();
+      characteristic.addEventListener('characteristicvaluechanged', (event: any) => {
+        this.parseBloodOxygenData(event.target.value.buffer);
+      });
+    } catch (error) {
+      console.error('Failed to start blood oxygen detection:', error);
+      throw error;
+    }
   }
 
   public getBloodOxygen(): BloodOxygenData | null {
@@ -228,22 +329,50 @@ export class Hc03Sdk {
   }
 
   private parseBloodOxygenData(data: ArrayBuffer): void {
-    const bloodOxygenData: BloodOxygenData = {
-      bloodOxygen: 0,
-      heartRate: 0,
-      fingerDetection: false,
-      bloodOxygenWaveData: []
-    };
+    const view = new DataView(data);
+    const waveData: number[] = [];
+    
+    // HC03 Blood Oxygen data format
+    if (data.byteLength >= 8) {
+      const bloodOxygen = view.getUint8(0); // SpO2 percentage
+      const heartRate = view.getUint16(1, true); // Heart rate
+      const fingerDetection = view.getUint8(3) === 1; // Finger detection
+      
+      // Parse wave data (remaining bytes)
+      for (let i = 4; i < data.byteLength; i++) {
+        waveData.push(view.getUint8(i));
+      }
+      
+      const bloodOxygenData: BloodOxygenData = {
+        bloodOxygen: Math.min(100, Math.max(0, bloodOxygen)),
+        heartRate: heartRate,
+        fingerDetection: fingerDetection,
+        bloodOxygenWaveData: waveData
+      };
 
-    const callback = this.callbacks.get(Detection.OX);
-    if (callback) {
-      callback(bloodOxygenData);
+      const callback = this.callbacks.get(Detection.OX);
+      if (callback) {
+        callback(bloodOxygenData);
+      }
     }
   }
 
   // Blood Pressure Detection Methods
   private async startBloodPressureDetection(): Promise<void> {
-    // Implementation for blood pressure characteristic subscription
+    if (!this.server) return;
+    
+    try {
+      const service = await this.server.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
+      const characteristic = await service.getCharacteristic('0000fff5-0000-1000-8000-00805f9b34fb'); // Blood pressure characteristic
+      
+      await characteristic.startNotifications();
+      characteristic.addEventListener('characteristicvaluechanged', (event: any) => {
+        this.parseBloodPressureData(event.target.value.buffer);
+      });
+    } catch (error) {
+      console.error('Failed to start blood pressure detection:', error);
+      throw error;
+    }
   }
 
   public getBloodPressureData(): BloodPressureData | null {
@@ -252,15 +381,26 @@ export class Hc03Sdk {
   }
 
   private parseBloodPressureData(data: ArrayBuffer): void {
-    const bloodPressureData: BloodPressureData = {
-      ps: 0, // Systolic
-      pd: 0, // Diastolic
-      hr: 0  // Heart rate
-    };
+    const view = new DataView(data);
+    
+    // HC03 Blood Pressure data format
+    if (data.byteLength >= 8) {
+      const systolic = view.getUint16(0, true); // Systolic pressure
+      const diastolic = view.getUint16(2, true); // Diastolic pressure
+      const heartRate = view.getUint16(4, true); // Heart rate
+      const progress = view.getUint8(6); // Measurement progress (0-100)
+      
+      const bloodPressureData: BloodPressureData = {
+        ps: systolic,
+        pd: diastolic,
+        hr: heartRate,
+        progress: progress
+      };
 
-    const callback = this.callbacks.get(Detection.BP);
-    if (callback) {
-      callback(bloodPressureData);
+      const callback = this.callbacks.get(Detection.BP);
+      if (callback) {
+        callback(bloodPressureData);
+      }
     }
   }
 
@@ -289,7 +429,20 @@ export class Hc03Sdk {
 
   // Temperature Detection Methods
   private async startTemperatureDetection(): Promise<void> {
-    // Implementation for temperature characteristic subscription
+    if (!this.server) return;
+    
+    try {
+      const service = await this.server.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
+      const characteristic = await service.getCharacteristic('0000fff6-0000-1000-8000-00805f9b34fb'); // Temperature characteristic
+      
+      await characteristic.startNotifications();
+      characteristic.addEventListener('characteristicvaluechanged', (event: any) => {
+        this.parseTemperatureData(event.target.value.buffer);
+      });
+    } catch (error) {
+      console.error('Failed to start temperature detection:', error);
+      throw error;
+    }
   }
 
   public getTemperature(): TemperatureData | null {
@@ -298,19 +451,56 @@ export class Hc03Sdk {
   }
 
   private parseTemperatureData(data: ArrayBuffer): void {
-    const temperatureData: TemperatureData = {
-      temperature: 0
-    };
+    const view = new DataView(data);
+    
+    // HC03 Temperature data format
+    if (data.byteLength >= 4) {
+      // Temperature in Celsius * 100 (e.g., 3650 = 36.50°C)
+      const tempRaw = view.getUint16(0, true);
+      const temperature = tempRaw / 100;
+      
+      const temperatureData: TemperatureData = {
+        temperature: Math.round(temperature * 10) / 10 // Round to 1 decimal
+      };
 
-    const callback = this.callbacks.get(Detection.BT);
-    if (callback) {
-      callback(temperatureData);
+      const callback = this.callbacks.get(Detection.BT);
+      if (callback) {
+        callback(temperatureData);
+      }
     }
   }
 
   // Battery Detection Methods
   private async startBatteryDetection(): Promise<void> {
-    // Implementation for battery characteristic subscription
+    if (!this.server) return;
+    
+    try {
+      const service = await this.server.getPrimaryService('battery_service');
+      const characteristic = await service.getCharacteristic('battery_level');
+      
+      const batteryLevel = await characteristic.readValue();
+      const level = batteryLevel.getUint8(0);
+      
+      // Also set up notifications for battery changes
+      await characteristic.startNotifications();
+      characteristic.addEventListener('characteristicvaluechanged', (event: any) => {
+        this.parseBatteryData(event.target.value.buffer);
+      });
+      
+      // Initial battery data
+      const initialBatteryData: BatteryData = {
+        batteryLevel: level,
+        chargingStatus: false // Will be updated by notifications
+      };
+      
+      const callback = this.callbacks.get(Detection.BATTERY);
+      if (callback) {
+        callback(initialBatteryData);
+      }
+    } catch (error) {
+      console.error('Failed to start battery detection:', error);
+      throw error;
+    }
   }
 
   public getBattery(): BatteryData | null {
@@ -319,14 +509,22 @@ export class Hc03Sdk {
   }
 
   private parseBatteryData(data: ArrayBuffer): void {
-    const batteryData: BatteryData = {
-      batteryLevel: 0,
-      chargingStatus: false
-    };
+    const view = new DataView(data);
+    
+    // Battery data format
+    if (data.byteLength >= 2) {
+      const batteryLevel = view.getUint8(0); // Battery percentage
+      const chargingStatus = view.getUint8(1) === 1; // Charging status
+      
+      const batteryData: BatteryData = {
+        batteryLevel: Math.min(100, Math.max(0, batteryLevel)),
+        chargingStatus: chargingStatus
+      };
 
-    const callback = this.callbacks.get(Detection.BATTERY);
-    if (callback) {
-      callback(batteryData);
+      const callback = this.callbacks.get(Detection.BATTERY);
+      if (callback) {
+        callback(batteryData);
+      }
     }
   }
 
@@ -345,13 +543,42 @@ export class Hc03Sdk {
   }
 
   public async disconnect(): Promise<void> {
+    // Stop health check monitoring
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+      this.healthCheckInterval = null;
+    }
+    
+    // Stop all active detections
+    this.activeDetections.clear();
+    
     if (this.server) {
       this.server.disconnect();
     }
+    
     this.isConnected = false;
     this.device = null;
     this.server = null;
-    this.activeDetections.clear();
+  }
+
+  // Get connection status with details
+  public getConnectionStatus(): {
+    connected: boolean;
+    deviceName?: string;
+    deviceId?: string;
+    signalStrength?: number;
+  } {
+    return {
+      connected: this.isConnected,
+      deviceName: this.device?.name || undefined,
+      deviceId: this.device?.id || undefined,
+      signalStrength: this.isConnected ? 100 : 0 // Placeholder - BLE doesn't provide signal strength directly
+    };
+  }
+
+  // Get active detections
+  public getActiveDetections(): Detection[] {
+    return Array.from(this.activeDetections);
   }
 
   // Mood index interpretation as per API documentation
