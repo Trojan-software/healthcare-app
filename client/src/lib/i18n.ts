@@ -140,6 +140,71 @@ export interface Translation {
   updated: string;
   connectionEstablished: string;
   connectionFailed: string;
+  
+  // HC03 Device Specific
+  scanningForDevices: string;
+  startMeasurement: string;
+  stopMeasurement: string;
+  measurementStarted: string;
+  measurementCompleted: string;
+  measurementInProgress: string;
+  placeFinger: string;
+  removeFingerAndWait: string;
+  deviceBatteryLow: string;
+  syncNow: string;
+  viewDetails: string;
+  viewHistory: string;
+  exportData: string;
+  chargingStatus: string;
+  firmwareVersion: string;
+  macAddress: string;
+  lastSync: string;
+  
+  // Measurement Types
+  ecgMeasurement: string;
+  bloodOxygenMeasurement: string;
+  bloodPressureMeasurement: string;
+  temperatureMeasurement: string;
+  bloodGlucoseMeasurement: string;
+  batteryStatus: string;
+  
+  // Status Labels
+  scanning: string;
+  connecting: string;
+  ready: string;
+  measuring: string;
+  complete: string;
+  failed: string;
+  
+  // Mood Index Terms (HC03 specific)
+  chill: string;
+  relax: string;
+  balance: string;
+  excitation: string;
+  excitementAnxiety: string;
+  
+  // Blood Pressure Specific
+  systolic: string;
+  diastolic: string;
+  
+  // Blood Glucose Specific
+  fasting: string;
+  postMeal: string;
+  random: string;
+  bedtime: string;
+  
+  // Data Headers
+  patientName: string;
+  deviceName: string;
+  lastMeasurement: string;
+  measurementCount: string;
+  
+  // Units
+  bpm: string; // beats per minute
+  mmhg: string; // mmHg
+  celsius: string; // °C
+  percentage: string; // %
+  mgdl: string; // mg/dL
 }
 
 export const translations: Record<Language, Translation> = {
@@ -281,6 +346,71 @@ export const translations: Record<Language, Translation> = {
     updated: 'Updated successfully',
     connectionEstablished: 'Connection established',
     connectionFailed: 'Connection failed',
+    
+    // HC03 Device Specific
+    scanningForDevices: 'Scanning for devices...',
+    startMeasurement: 'Start Measurement',
+    stopMeasurement: 'Stop Measurement',
+    measurementStarted: 'Measurement Started',
+    measurementCompleted: 'Measurement Completed',
+    measurementInProgress: 'Measurement in Progress',
+    placeFinger: 'Please place your finger on the device sensor',
+    removeFingerAndWait: 'Remove finger and wait',
+    deviceBatteryLow: 'Device battery is low',
+    syncNow: 'Sync Now',
+    viewDetails: 'View Details',
+    viewHistory: 'View History',
+    exportData: 'Export Data',
+    chargingStatus: 'Charging Status',
+    firmwareVersion: 'Firmware Version',
+    macAddress: 'MAC Address',
+    lastSync: 'Last Sync',
+    
+    // Measurement Types
+    ecgMeasurement: 'ECG Measurement',
+    bloodOxygenMeasurement: 'Blood Oxygen Measurement',
+    bloodPressureMeasurement: 'Blood Pressure Measurement',
+    temperatureMeasurement: 'Temperature Measurement',
+    bloodGlucoseMeasurement: 'Blood Glucose Measurement',
+    batteryStatus: 'Battery Status',
+    
+    // Status Labels
+    scanning: 'Scanning',
+    connecting: 'Connecting',
+    ready: 'Ready',
+    measuring: 'Measuring',
+    complete: 'Complete',
+    failed: 'Failed',
+    
+    // Mood Index Terms (HC03 specific)
+    chill: 'Chill',
+    relax: 'Relax',
+    balance: 'Balance',
+    excitation: 'Excitation',
+    excitementAnxiety: 'Excitement/Anxiety',
+    
+    // Blood Pressure Specific
+    systolic: 'Systolic',
+    diastolic: 'Diastolic',
+    
+    // Blood Glucose Specific
+    fasting: 'Fasting',
+    postMeal: 'Post-Meal',
+    random: 'Random',
+    bedtime: 'Bedtime',
+    
+    // Data Headers
+    patientName: 'Patient Name',
+    deviceName: 'Device Name',
+    lastMeasurement: 'Last Measurement',
+    measurementCount: 'Measurement Count',
+    
+    // Units
+    bpm: 'bpm',
+    mmhg: 'mmHg',
+    celsius: '°C',
+    percentage: '%',
+    mgdl: 'mg/dL',
   },
   ar: {
     // Navigation
@@ -420,6 +550,71 @@ export const translations: Record<Language, Translation> = {
     updated: 'تم التحديث بنجاح',
     connectionEstablished: 'تم تأسيس الاتصال',
     connectionFailed: 'فشل الاتصال',
+    
+    // HC03 Device Specific
+    scanningForDevices: 'البحث عن الأجهزة...',
+    startMeasurement: 'بدء القياس',
+    stopMeasurement: 'إيقاف القياس',
+    measurementStarted: 'تم بدء القياس',
+    measurementCompleted: 'تم الانتهاء من القياس',
+    measurementInProgress: 'القياس قيد التقدم',
+    placeFinger: 'يرجى وضع إصبعك على مستشعر الجهاز',
+    removeFingerAndWait: 'قم بإزالة الإصبع والانتظار',
+    deviceBatteryLow: 'بطارية الجهاز منخفضة',
+    syncNow: 'مزامنة الآن',
+    viewDetails: 'عرض التفاصيل',
+    viewHistory: 'عرض التاريخ',
+    exportData: 'تصدير البيانات',
+    chargingStatus: 'حالة الشحن',
+    firmwareVersion: 'إصدار البرنامج الثابت',
+    macAddress: 'عنوان MAC',
+    lastSync: 'آخر مزامنة',
+    
+    // Measurement Types
+    ecgMeasurement: 'قياس تخطيط القلب',
+    bloodOxygenMeasurement: 'قياس الأكسجين في الدم',
+    bloodPressureMeasurement: 'قياس ضغط الدم',
+    temperatureMeasurement: 'قياس درجة الحرارة',
+    bloodGlucoseMeasurement: 'قياس الجلوكوز في الدم',
+    batteryStatus: 'حالة البطارية',
+    
+    // Status Labels
+    scanning: 'بحث',
+    connecting: 'اتصال',
+    ready: 'جاهز',
+    measuring: 'قياس',
+    complete: 'مكتمل',
+    failed: 'فشل',
+    
+    // Mood Index Terms (HC03 specific)
+    chill: 'هادئ',
+    relax: 'استرخاء',
+    balance: 'توازن',
+    excitation: 'إثارة',
+    excitementAnxiety: 'إثارة/قلق',
+    
+    // Blood Pressure Specific
+    systolic: 'انقباضي',
+    diastolic: 'انبساطي',
+    
+    // Blood Glucose Specific
+    fasting: 'صيام',
+    postMeal: 'بعد الوجبة',
+    random: 'عشوائي',
+    bedtime: 'وقت النوم',
+    
+    // Data Headers
+    patientName: 'اسم المريض',
+    deviceName: 'اسم الجهاز',
+    lastMeasurement: 'آخر قياس',
+    measurementCount: 'عدد القياسات',
+    
+    // Units
+    bpm: 'نبضة/دقيقة',
+    mmhg: 'ممHg',
+    celsius: '°م',
+    percentage: '%',
+    mgdl: 'ملغ/دل',
   },
 };
 
