@@ -500,72 +500,172 @@ export default function BilingualPatientManagement() {
         </CardContent>
       </Card>
 
-      {/* View Patient Dialog */}
+      {/* Enhanced View Patient Dialog */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className={`sm:max-w-2xl ${isRTL ? 'rtl' : ''}`}>
-          <DialogHeader>
-            <DialogTitle className={isRTL ? 'text-right' : 'text-left'}>
-              {t('patientDetails')}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className={`sm:max-w-4xl max-h-[90vh] overflow-y-auto ${isRTL ? 'rtl' : ''}`}>
           {selectedPatient && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className={`text-sm font-medium text-gray-600 ${isRTL ? 'text-right' : 'text-left'} block`}>
-                    {t('fullName')}
-                  </Label>
-                  <p className={`text-lg font-semibold ${isRTL ? 'text-right' : 'text-left'}`}>
-                    {selectedPatient.firstName} {selectedPatient.middleName || ''} {selectedPatient.lastName}
-                  </p>
-                </div>
-                <div>
-                  <Label className={`text-sm font-medium text-gray-600 ${isRTL ? 'text-right' : 'text-left'} block`}>
-                    {t('patientId')}
-                  </Label>
-                  <p className={`text-lg font-semibold ${isRTL ? 'text-right' : 'text-left'}`}>
-                    {selectedPatient.patientId}
-                  </p>
-                </div>
-                <div>
-                  <Label className={`text-sm font-medium text-gray-600 ${isRTL ? 'text-right' : 'text-left'} block`}>
-                    {t('email')}
-                  </Label>
-                  <p className={`text-lg ${isRTL ? 'text-right' : 'text-left'}`}>
-                    {selectedPatient.email}
-                  </p>
-                </div>
-                <div>
-                  <Label className={`text-sm font-medium text-gray-600 ${isRTL ? 'text-right' : 'text-left'} block`}>
-                    {t('mobileNumber')}
-                  </Label>
-                  <p className={`text-lg ${isRTL ? 'text-right' : 'text-left'}`}>
-                    {selectedPatient.mobileNumber}
-                  </p>
-                </div>
-                <div>
-                  <Label className={`text-sm font-medium text-gray-600 ${isRTL ? 'text-right' : 'text-left'} block`}>
-                    {t('hospital')}
-                  </Label>
-                  <p className={`text-lg ${isRTL ? 'text-right' : 'text-left'}`}>
-                    {hospitals.find(h => h.id === selectedPatient.hospitalId)?.name || selectedPatient.hospitalId}
-                  </p>
-                </div>
-                <div>
-                  <Label className={`text-sm font-medium text-gray-600 ${isRTL ? 'text-right' : 'text-left'} block`}>
-                    {t('status')}
-                  </Label>
-                  {getPatientStatusBadge(selectedPatient.isActive)}
+            <div className="space-y-0">
+              {/* Header Section with Avatar */}
+              <div className={`relative bg-gradient-to-r from-blue-600 to-purple-600 -m-6 mb-6 p-6 text-white ${isRTL ? 'rounded-tr-lg rounded-tl-lg' : 'rounded-tl-lg rounded-tr-lg'}`}>
+                <div className={`flex items-center space-x-4 ${isRTL ? 'space-x-reverse flex-row-reverse' : ''}`}>
+                  <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold backdrop-blur-sm">
+                    {selectedPatient.firstName.charAt(0)}{selectedPatient.lastName.charAt(0)}
+                  </div>
+                  <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <h2 className="text-2xl font-bold mb-1">
+                      {selectedPatient.firstName} {selectedPatient.middleName || ''} {selectedPatient.lastName}
+                    </h2>
+                    <div className={`flex items-center space-x-2 text-blue-100 ${isRTL ? 'space-x-reverse flex-row-reverse' : ''}`}>
+                      <User className="w-4 h-4" />
+                      <span className="text-lg font-medium">{selectedPatient.patientId}</span>
+                    </div>
+                    <div className="mt-2">
+                      {selectedPatient.isActive ? (
+                        <div className={`inline-flex items-center px-3 py-1 rounded-full bg-green-500/20 text-green-100 text-sm ${isRTL ? 'space-x-reverse' : ''}`}>
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          {t('active')}
+                        </div>
+                      ) : (
+                        <div className={`inline-flex items-center px-3 py-1 rounded-full bg-red-500/20 text-red-100 text-sm ${isRTL ? 'space-x-reverse' : ''}`}>
+                          <XCircle className="w-4 h-4 mr-1" />
+                          {t('inactive')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className={`flex justify-end gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <Button variant="outline" onClick={() => setShowViewDialog(false)}>
+
+              {/* Content Sections */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Personal Information Card */}
+                <Card className="border-0 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className={`flex items-center space-x-2 text-lg text-gray-800 ${isRTL ? 'space-x-reverse flex-row-reverse text-right' : ''}`}>
+                      <User className="w-5 h-5 text-blue-600" />
+                      <span>{isRTL ? 'المعلومات الشخصية' : 'Personal Information'}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className={`flex items-center space-x-2 mb-1 ${isRTL ? 'space-x-reverse flex-row-reverse' : ''}`}>
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <Label className="text-sm font-medium text-gray-600">
+                          {isRTL ? 'تاريخ الميلاد' : 'Date of Birth'}
+                        </Label>
+                      </div>
+                      <p className={`text-base font-medium text-gray-900 ${isRTL ? 'text-right' : 'text-left'} pl-6`}>
+                        {selectedPatient.dateOfBirth ? 
+                          new Date(selectedPatient.dateOfBirth).toLocaleDateString(isRTL ? 'ar-AE' : 'en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) : 
+                          (isRTL ? 'غير محدد' : 'Not specified')
+                        }
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <div className={`flex items-center space-x-2 mb-1 ${isRTL ? 'space-x-reverse flex-row-reverse' : ''}`}>
+                        <Activity className="w-4 h-4 text-gray-400" />
+                        <Label className="text-sm font-medium text-gray-600">
+                          {isRTL ? 'تاريخ التسجيل' : 'Registration Date'}
+                        </Label>
+                      </div>
+                      <p className={`text-base font-medium text-gray-900 ${isRTL ? 'text-right' : 'text-left'} pl-6`}>
+                        {new Date(selectedPatient.createdAt).toLocaleDateString(isRTL ? 'ar-AE' : 'en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Contact Information Card */}
+                <Card className="border-0 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className={`flex items-center space-x-2 text-lg text-gray-800 ${isRTL ? 'space-x-reverse flex-row-reverse text-right' : ''}`}>
+                      <Mail className="w-5 h-5 text-green-600" />
+                      <span>{isRTL ? 'معلومات الاتصال' : 'Contact Information'}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className={`flex items-center space-x-2 mb-1 ${isRTL ? 'space-x-reverse flex-row-reverse' : ''}`}>
+                        <Mail className="w-4 h-4 text-gray-400" />
+                        <Label className="text-sm font-medium text-gray-600">
+                          {isRTL ? 'البريد الإلكتروني' : 'Email Address'}
+                        </Label>
+                      </div>
+                      <p className={`text-base font-medium text-blue-600 ${isRTL ? 'text-right' : 'text-left'} pl-6 hover:underline cursor-pointer`}>
+                        {selectedPatient.email}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <div className={`flex items-center space-x-2 mb-1 ${isRTL ? 'space-x-reverse flex-row-reverse' : ''}`}>
+                        <Phone className="w-4 h-4 text-gray-400" />
+                        <Label className="text-sm font-medium text-gray-600">
+                          {isRTL ? 'رقم الهاتف المحمول' : 'Mobile Number'}
+                        </Label>
+                      </div>
+                      <p className={`text-base font-medium text-gray-900 ${isRTL ? 'text-right' : 'text-left'} pl-6`}>
+                        {selectedPatient.mobileNumber || (isRTL ? 'غير محدد' : 'Not provided')}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Hospital Information - Full Width */}
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className={`flex items-center space-x-2 text-lg text-gray-800 ${isRTL ? 'space-x-reverse flex-row-reverse text-right' : ''}`}>
+                    <Hospital className="w-5 h-5 text-purple-600" />
+                    <span>{isRTL ? 'معلومات المستشفى' : 'Hospital Information'}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className={`bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      {hospitals.find(h => h.id === selectedPatient.hospitalId)?.name || selectedPatient.hospitalId}
+                    </h3>
+                    {hospitals.find(h => h.id === selectedPatient.hospitalId) && (
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">{isRTL ? 'الموقع: ' : 'Location: '}</span>
+                          {hospitals.find(h => h.id === selectedPatient.hospitalId)?.location}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">{isRTL ? 'النوع: ' : 'Type: '}</span>
+                          {hospitals.find(h => h.id === selectedPatient.hospitalId)?.type}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className={`flex justify-end gap-3 pt-4 border-t ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowViewDialog(false)}
+                  className="px-6 py-2 border-gray-300 hover:bg-gray-50"
+                >
                   {t('close')}
                 </Button>
-                <Button onClick={() => {
-                  setShowViewDialog(false);
-                  setShowEditDialog(true);
-                }}>
+                <Button 
+                  onClick={() => {
+                    setShowViewDialog(false);
+                    setShowEditDialog(true);
+                  }}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <User className="w-4 h-4 mr-2" />
                   {t('editPatient')}
                 </Button>
               </div>
