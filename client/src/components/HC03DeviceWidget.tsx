@@ -370,6 +370,12 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
     setError('');
     
     try {
+      // Check if device is available first
+      const isAvailable = await hc03Sdk.isDeviceAvailable();
+      if (!isAvailable) {
+        throw new Error('HC03 device is already connected to another application. Please disconnect it from other apps and try again.');
+      }
+      
       // Use HC03 SDK to connect to device
       const device = await hc03Sdk.connectDevice();
       

@@ -185,14 +185,29 @@ export class Hc03Sdk {
   // Connect to HC03 device via BLE
   public async connectDevice(): Promise<BluetoothDevice> {
     try {
-      // Request HC03 device with proper service UUIDs
+      // Check if already connected
+      if (this.isConnected && this.device && this.server?.connected) {
+        console.log('Device already connected');
+        return this.device;
+      }
+      
+      // Disconnect any existing connection first
+      if (this.device && this.server?.connected) {
+        await this.disconnect();
+      }
+      
+      // Request HC03 device with flexible filters
       this.device = await navigator.bluetooth.requestDevice({
         filters: [
           { namePrefix: 'HC03' },
           { namePrefix: 'Health' },
+          { namePrefix: 'HC-03' },
+          { namePrefix: 'hc03' },
+          { name: 'HC03' },
           { services: [HC03_SERVICE_UUID] }
         ],
         optionalServices: [
+          HC03_SERVICE_UUID,
           BATTERY_SERVICE_UUID,
           'device_information'
         ]
@@ -258,8 +273,8 @@ export class Hc03Sdk {
 
   // Start detection as per HC03 API
   public async startDetect(detection: Detection): Promise<void> {
-    if (!this.isConnected || !this.writeCharacteristic) {
-      throw new Error('Device not connected or characteristics not available');
+    if (!this.getConnectionStatus() || !this.writeCharacteristic) {
+      throw new Error('Device not connected or characteristics not available. Please connect to your HC03 device first.');
     }
 
     try {
@@ -312,19 +327,38 @@ export class Hc03Sdk {
   // Disconnect from device
   public async disconnect(): Promise<void> {
     try {
-      // Stop all active detections
-      for (const detection of Array.from(this.activeDetections)) {
-        await this.stopDetect(detection);
+      console.log('Disconnecting from HC03 device...');
+      
+      // Stop all active detections first
+      const detectionsToStop = Array.from(this.activeDetections);
+      for (const detection of detectionsToStop) {
+        try {
+          await this.stopDetect(detection);
+        } catch (e) {
+          console.warn(`Failed to stop ${detection} detection:`, e);
+        }
       }
       
+      // Note: Web Bluetooth API doesn't support removeEventListener
+      // Event listeners will be cleaned up when device is disconnected
+      
+      // Disconnect GATT server
       if (this.device && this.device.gatt && this.device.gatt.connected) {
         this.device.gatt.disconnect();
       }
       
+      // Clear all references
       this.isConnected = false;
-      console.log('HC03 device disconnected manually');
+      this.server = null;
+      this.service = null;
+      this.writeCharacteristic = null;
+      this.notifyCharacteristic = null;
+      this.activeDetections.clear();
+      
+      console.log('HC03 device disconnected successfully');
     } catch (error) {
       console.error('Error disconnecting HC03 device:', error);
+      this.isConnected = false; // Ensure we mark as disconnected even if cleanup fails
     }
   }
 
@@ -391,7 +425,16 @@ export class Hc03Sdk {
 
   // Get connection status
   public getConnectionStatus(): boolean {
-    return this.isConnected;
+    const isActuallyConnected = this.device?.gatt?.connected === true;
+    const isMarkedConnected = this.isConnected;
+    
+    // Sync internal state with actual connection state
+    if (isMarkedConnected && !isActuallyConnected) {
+      console.warn('Device marked as connected but GATT is disconnected, fixing state');
+      this.isConnected = false;
+    }
+    
+    return isActuallyConnected && isMarkedConnected;
   }
 
   // Get active detections
@@ -644,14 +687,40 @@ export class Hc03Sdk {
   }
 
   // Get device information
-  public getDeviceInfo(): { name?: string; id: string; connected: boolean } | null {
+  public getDeviceInfo(): { name?: string; id: string; connected: boolean; gattConnected?: boolean; activeDetections?: Detection[] } | null {
     if (!this.device) return null;
     
     return {
       name: this.device.name,
       id: this.device.id,
-      connected: this.isConnected
+      connected: this.getConnectionStatus(),
+      gattConnected: this.device.gatt?.connected || false,
+      activeDetections: Array.from(this.activeDetections)
     };
+  }
+  
+  // Check if device is available (for handling 'already open' issues)
+  public async isDeviceAvailable(): Promise<boolean> {
+    try {
+      // Try to get already paired devices if supported
+      if ('getDevices' in navigator.bluetooth) {
+        const devices = await (navigator.bluetooth as any).getDevices();
+        const hc03Device = devices.find((device: any) => 
+          device.name?.toLowerCase().includes('hc03') || 
+          device.name?.toLowerCase().includes('health')
+        );
+        
+        if (hc03Device) {
+          console.log('Found previously paired HC03 device:', hc03Device.name);
+          return !hc03Device.gatt?.connected; // Available if not connected
+        }
+      }
+      
+      return true; // No paired device found or method not supported, assume available
+    } catch (error) {
+      console.warn('Unable to check device availability:', error);
+      return true; // Assume available if we can't check
+    }
   }
 }
 
