@@ -1202,15 +1202,22 @@ For questions, contact: support@24x7teleh.com
                             Edit
                           </button>
                           <button 
-                            className="text-red-600 hover:text-red-900 px-3 py-1 rounded border border-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={`px-3 py-1 rounded border disabled:opacity-50 disabled:cursor-not-allowed ${
+                              patient.isActive 
+                                ? 'text-orange-600 hover:text-orange-900 border-orange-600 hover:bg-orange-50' 
+                                : 'text-green-600 hover:text-green-900 border-green-600 hover:bg-green-50'
+                            }`}
                             onClick={async () => {
-                              if (confirm(`Are you sure you want to remove patient ${patient.firstName} ${patient.lastName} (${patient.patientId})? This action cannot be undone.`)) {
+                              const actionText = patient.isActive ? 'deactivate' : 'activate';
+                              const statusText = patient.isActive ? 'inactive' : 'active';
+                              
+                              if (confirm(`Are you sure you want to ${actionText} patient ${patient.firstName} ${patient.lastName} (${patient.patientId})?`)) {
                                 try {
-                                  const button = document.querySelector(`[data-testid="button-remove-patient-${patient.id}"]`) as HTMLButtonElement;
+                                  const button = document.querySelector(`[data-testid="button-toggle-status-${patient.id}"]`) as HTMLButtonElement;
                                   if (button) button.disabled = true;
                                   
-                                  const response = await fetch(`/api/users/${patient.id}`, {
-                                    method: 'DELETE',
+                                  const response = await fetch(`/api/users/${patient.id}/toggle-status`, {
+                                    method: 'PATCH',
                                     headers: {
                                       'Content-Type': 'application/json'
                                     }
@@ -1218,30 +1225,34 @@ For questions, contact: support@24x7teleh.com
 
                                   if (!response.ok) {
                                     const errorData = await response.json();
-                                    throw new Error(errorData.message || 'Failed to delete patient');
+                                    throw new Error(errorData.message || 'Failed to update patient status');
                                   }
 
                                   const result = await response.json();
                                   
-                                  // Only update the frontend state if database deletion was successful
+                                  // Update the frontend state with the new status
                                   setAdminData(prev => ({
                                     ...prev,
-                                    patients: prev.patients.filter(p => p.id !== patient.id)
+                                    patients: prev.patients.map(p => 
+                                      p.id === patient.id 
+                                        ? { ...p, isActive: result.updatedUser.isActive }
+                                        : p
+                                    )
                                   }));
                                   
-                                  alert(`Patient ${result.deletedUser.firstName} ${result.deletedUser.lastName} has been removed successfully.`);
+                                  alert(`Patient ${result.updatedUser.firstName} ${result.updatedUser.lastName} has been set to ${statusText}.`);
                                 } catch (error) {
-                                  console.error('Error deleting patient:', error);
-                                  alert(`Error: ${error instanceof Error ? error.message : 'Failed to delete patient'}. Please try again.`);
+                                  console.error('Error updating patient status:', error);
+                                  alert(`Error: ${error instanceof Error ? error.message : 'Failed to update patient status'}. Please try again.`);
                                 } finally {
-                                  const button = document.querySelector(`[data-testid="button-remove-patient-${patient.id}"]`) as HTMLButtonElement;
+                                  const button = document.querySelector(`[data-testid="button-toggle-status-${patient.id}"]`) as HTMLButtonElement;
                                   if (button) button.disabled = false;
                                 }
                               }
                             }}
-                            data-testid={`button-remove-patient-${patient.id}`}
+                            data-testid={`button-toggle-status-${patient.id}`}
                           >
-                            Remove
+                            {patient.isActive ? 'Deactivate' : 'Activate'}
                           </button>
                         </div>
                       </td>
