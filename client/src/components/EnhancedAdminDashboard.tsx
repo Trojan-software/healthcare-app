@@ -95,12 +95,12 @@ export default function EnhancedAdminDashboard() {
 
   // Fetch dashboard statistics
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/admin/dashboard']
+    queryKey: ['/api/dashboard/admin']
   });
 
   // Fetch patients data
   const { data: patientsData, isLoading: patientsLoading } = useQuery({
-    queryKey: ['/api/admin/patients']
+    queryKey: ['/api/patients']
   });
 
   // Fetch devices data
