@@ -417,7 +417,6 @@ export const translations: Record<Language, Translation> = {
     fullName: 'Full Name',
     contactInfo: 'Contact Information',
     status: 'Status',
-    active: 'Active',
     inactive: 'Inactive',
     registrationDate: 'Registration Date',
     lastActivity: 'Last Activity',
@@ -432,7 +431,6 @@ export const translations: Record<Language, Translation> = {
     ecg: 'ECG',
     normal: 'Normal',
     elevated: 'Elevated',
-    high: 'High',
     critical: 'Critical',
     
     // HC03 Devices
@@ -441,7 +439,6 @@ export const translations: Record<Language, Translation> = {
     connected: 'Connected',
     disconnected: 'Disconnected',
     batteryLevel: 'Battery Level',
-    signalStrength: 'Signal Strength',
     addDevice: 'Add Device',
     connectDevice: 'Connect Device',
     disconnectDevice: 'Disconnect Device',
@@ -545,7 +542,6 @@ export const translations: Record<Language, Translation> = {
     // Mood Index Terms (HC03 specific)
     chill: 'Chill',
     relax: 'Relax',
-    balance: 'Balance',
     excitation: 'Excitation',
     excitementAnxiety: 'Excitement/Anxiety',
     
@@ -710,7 +706,6 @@ export const translations: Record<Language, Translation> = {
     fullName: 'الاسم الكامل',
     contactInfo: 'معلومات الاتصال',
     status: 'الحالة',
-    active: 'نشط',
     inactive: 'غير نشط',
     registrationDate: 'تاريخ التسجيل',
     lastActivity: 'آخر نشاط',
@@ -734,7 +729,6 @@ export const translations: Record<Language, Translation> = {
     connected: 'متصل',
     disconnected: 'منقطع',
     batteryLevel: 'مستوى البطارية',
-    signalStrength: 'قوة الإشارة',
     addDevice: 'إضافة جهاز',
     connectDevice: 'ربط الجهاز',
     disconnectDevice: 'قطع الجهاز',
