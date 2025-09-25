@@ -538,6 +538,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin devices endpoint - Get all devices with patient information
+  app.get("/api/admin/devices", async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const allDevices = [];
+
+      for (const patient of patients) {
+        if (patient.patientId) {
+          const devices = await storage.getHc03DevicesByPatient(patient.patientId);
+          
+          devices.forEach(device => {
+            allDevices.push({
+              deviceId: device.deviceId,
+              deviceName: device.deviceName,
+              patientId: patient.patientId,
+              patientName: `${patient.firstName} ${patient.lastName}`,
+              patientEmail: patient.email,
+              batteryLevel: device.batteryLevel || 0,
+              chargingStatus: device.chargingStatus || false,
+              connectionStatus: device.connectionStatus || 'disconnected',
+              lastConnected: device.lastConnected,
+              firmwareVersion: device.firmwareVersion,
+              macAddress: device.macAddress,
+              createdAt: device.createdAt,
+              updatedAt: device.updatedAt
+            });
+          });
+        }
+      }
+
+      res.json({ devices: allDevices });
+    } catch (error) {
+      console.error("Error fetching admin devices:", error);
+      res.status(500).json({ message: "Failed to fetch devices data" });
+    }
+  });
+
   app.get("/api/dashboard/patient/:userId", async (req, res) => {
     try {
       const { userId } = req.params;

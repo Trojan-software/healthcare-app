@@ -467,6 +467,23 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           </div>
         </div>
 
+        {/* Device Connection Status Banner */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <Monitor className="w-5 h-5" />
+                HC03 Device Connection Status
+              </h3>
+              <p className="text-blue-700">Your assigned medical monitoring device</p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-blue-600 mb-1">Patient ID</div>
+              <div className="font-mono text-lg font-bold text-blue-900">{dashboardData?.user?.patientId}</div>
+            </div>
+          </div>
+        </div>
+
         {/* Health Monitoring Widgets */}
         <div className="space-y-6 mt-6">
           {/* HC03 Device Connection Manager - Full Width */}
