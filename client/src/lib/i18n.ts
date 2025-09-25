@@ -381,6 +381,17 @@ export interface Translation {
   patient: string;
   actions: string;
   vitals: string;
+  
+  // Additional Table Headers
+  lastActivity: string;
+  patientIdHeader: string;
+  
+  // Status Values
+  noData: string;
+  normalStatus: string;
+  
+  // Search and Filters
+  searchPatients: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -759,6 +770,17 @@ export const translations: Record<Language, Translation> = {
     patient: 'Patient',
     actions: 'Actions',
     vitals: 'Vitals',
+    
+    // Additional Table Headers
+    lastActivity: 'Last Activity',
+    patientIdHeader: 'Patient ID',
+    
+    // Status Values
+    noData: 'No Data',
+    normalStatus: 'Normal',
+    
+    // Search and Filters
+    searchPatients: 'Search patients',
   },
   ar: {
     // Navigation
@@ -1137,6 +1159,17 @@ export const translations: Record<Language, Translation> = {
     patient: 'المريض',
     actions: 'الإجراءات',
     vitals: 'العلامات الحيوية',
+    
+    // Additional Table Headers
+    lastActivity: 'آخر نشاط',
+    patientIdHeader: 'رقم المريض',
+    
+    // Status Values
+    noData: 'لا توجد بيانات',
+    normalStatus: 'طبيعي',
+    
+    // Search and Filters
+    searchPatients: 'البحث عن المرضى',
   },
 };
 
