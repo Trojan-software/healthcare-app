@@ -83,6 +83,9 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     return new Date().toISOString().split('T')[0];
   });
   const [error, setError] = useState('');
+  
+  // Modal state for detailed views
+  const [selectedMetric, setSelectedMetric] = useState<'heartRate' | 'bloodPressure' | 'temperature' | 'oxygenLevel' | null>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -265,46 +268,273 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
 
 
-  const handleVitalMonitor = (vitalType: string) => {
-    const vitalDetails = {
-      heartRate: {
-        name: 'Heart Rate Monitor',
-        current: dashboardData?.vitals?.heartRate + ' BPM',
-        normal: '60-100 BPM',
-        status: (dashboardData?.vitals?.heartRate ?? 0) >= 60 && (dashboardData?.vitals?.heartRate ?? 0) <= 100 ? 'Normal' : 'Abnormal',
-        trend: getVitalTrend('heartRate'),
-        device: 'HC03-002'
-      },
-      bloodPressure: {
-        name: 'Blood Pressure Monitor',
-        current: dashboardData?.vitals?.bloodPressure,
-        normal: '120/80 mmHg',
-        status: 'Normal',
-        trend: getVitalTrend('bloodPressure'),
-        device: 'HC03-001'
-      },
-      temperature: {
-        name: 'Temperature Monitor',
-        current: dashboardData?.vitals?.temperature + '°C',
-        normal: '36.1-37.2°C',
-        status: parseFloat(String(dashboardData?.vitals?.temperature || '0')) >= 36.1 && parseFloat(String(dashboardData?.vitals?.temperature || '0')) <= 37.2 ? 'Normal' : 'Abnormal',
-        trend: getVitalTrend('temperature'),
-        device: 'HC03-004'
-      },
-      oxygenLevel: {
-        name: 'Oxygen Level Monitor',
-        current: dashboardData?.vitals?.oxygenLevel + '%',
-        normal: '95-100%',
-        status: (dashboardData?.vitals?.oxygenLevel ?? 0) >= 95 ? 'Normal' : 'Low',
-        trend: getVitalTrend('oxygenLevel'),
-        device: 'HC03-003'
+  // Generate sample historical data for detailed views
+  const generateHistoricalData = (type: string, currentValue: any) => {
+    const hours = [];
+    const now = new Date();
+    
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+      let value;
+      
+      switch (type) {
+        case 'heartRate':
+          value = Math.floor(Math.random() * 20) + (currentValue - 10);
+          break;
+        case 'bloodPressure':
+          // Parse blood pressure string like "120/80" 
+          const parts = String(currentValue).split('/');
+          const systolic = parseInt(parts[0]) || 120;
+          const diastolic = parseInt(parts[1]) || 80;
+          value = {
+            systolic: Math.floor(Math.random() * 20) + (systolic - 10),
+            diastolic: Math.floor(Math.random() * 20) + (diastolic - 10)
+          };
+          break;
+        case 'temperature':
+          value = Math.round((Math.random() * 1.5 + (currentValue - 0.75)) * 10) / 10;
+          break;
+        case 'oxygenLevel':
+          value = Math.floor(Math.random() * 5) + (currentValue - 2);
+          break;
+        default:
+          value = currentValue;
       }
-    };
+      
+      hours.push({ time: time.getHours(), value });
+    }
+    
+    return hours;
+  };
 
-    const vital = (vitalDetails as any)[vitalType];
-    if (!vital) return;
+  const getVitalStatusForModal = (type: string, value: number | string | { systolic: number; diastolic: number }) => {
+    switch (type) {
+      case 'heartRate':
+        const hr = value as number;
+        if (hr < 60 || hr > 100) return { status: 'Warning', color: '#f59e0b' };
+        return { status: 'Normal', color: '#10b981' };
+      case 'bloodPressure':
+        // Handle both object and string formats
+        let systolic, diastolic;
+        if (typeof value === 'object' && value !== null && 'systolic' in value) {
+          systolic = value.systolic;
+          diastolic = value.diastolic;
+        } else if (typeof value === 'string') {
+          const parts = value.split('/');
+          systolic = parseInt(parts[0]) || 120;
+          diastolic = parseInt(parts[1]) || 80;
+        } else {
+          systolic = 120;
+          diastolic = 80;
+        }
+        if (systolic > 140 || diastolic > 90) return { status: 'High', color: '#ef4444' };
+        if (systolic < 90 || diastolic < 60) return { status: 'Low', color: '#f59e0b' };
+        return { status: 'Normal', color: '#10b981' };
+      case 'temperature':
+        const temp = typeof value === 'number' ? value : parseFloat(String(value));
+        if (temp > 37.5 || temp < 36.0) return { status: 'Abnormal', color: '#f59e0b' };
+        return { status: 'Normal', color: '#10b981' };
+      case 'oxygenLevel':
+        const oxygen = value as number;
+        if (oxygen < 95) return { status: 'Low', color: '#ef4444' };
+        return { status: 'Normal', color: '#10b981' };
+      default:
+        return { status: 'Normal', color: '#10b981' };
+    }
+  };
 
-    alert(`${vital.name}\nCurrent: ${vital.current}\nStatus: ${vital.status}\nDevice: ${vital.device}`);
+  const renderDetailedView = () => {
+    if (!selectedMetric || !dashboardData) return null;
+
+    const currentValue = selectedMetric === 'heartRate' ? dashboardData.vitals.heartRate 
+      : selectedMetric === 'bloodPressure' ? dashboardData.vitals.bloodPressure
+      : selectedMetric === 'temperature' ? dashboardData.vitals.temperature
+      : dashboardData.vitals.oxygenLevel;
+
+    const historicalData = generateHistoricalData(selectedMetric, currentValue);
+    const status = getVitalStatusForModal(selectedMetric, currentValue);
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '1rem'
+      }} onClick={() => setSelectedMetric(null)}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          padding: '2rem',
+          maxWidth: '800px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          animation: 'modalSlideIn 0.3s ease-out'
+        }} onClick={(e) => e.stopPropagation()}>
+          
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '16px',
+                backgroundColor: status.color + '20',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '2rem'
+              }}>
+                {selectedMetric === 'heartRate' && '💓'}
+                {selectedMetric === 'bloodPressure' && '🩸'}
+                {selectedMetric === 'temperature' && '🌡️'}
+                {selectedMetric === 'oxygenLevel' && '🫁'}
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
+                  {selectedMetric === 'heartRate' && 'Heart Rate Monitor'}
+                  {selectedMetric === 'bloodPressure' && 'Blood Pressure Monitor'}
+                  {selectedMetric === 'temperature' && 'Temperature Monitor'}
+                  {selectedMetric === 'oxygenLevel' && 'Blood Oxygen Monitor'}
+                </h2>
+                <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
+                  Real-time monitoring with 24-hour trends
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setSelectedMetric(null)}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: '#f8fafc',
+                color: '#64748b',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.25rem'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Current Reading */}
+          <div style={{
+            backgroundColor: status.color + '10',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            border: '1px solid ' + status.color + '20'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>Current Reading</p>
+              <div style={{ fontSize: '3rem', fontWeight: 'bold', color: status.color, margin: '0.5rem 0' }}>
+                {selectedMetric === 'heartRate' && `${currentValue}`}
+                {selectedMetric === 'bloodPressure' && `${currentValue}`}
+                {selectedMetric === 'temperature' && `${currentValue}`}
+                {selectedMetric === 'oxygenLevel' && `${currentValue}`}
+                <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 'normal', marginLeft: '0.5rem' }}>
+                  {selectedMetric === 'heartRate' && 'bpm'}
+                  {selectedMetric === 'bloodPressure' && 'mmHg'}
+                  {selectedMetric === 'temperature' && '°C'}
+                  {selectedMetric === 'oxygenLevel' && '%'}
+                </span>
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                padding: '0.5rem 1rem',
+                borderRadius: '9999px',
+                backgroundColor: status.color + '20',
+                color: status.color
+              }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: status.color }}></div>
+                {status.status}
+              </div>
+            </div>
+          </div>
+
+          {/* 24-Hour Trend */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem' }}>
+              24-Hour Trend
+            </h3>
+            <div style={{
+              backgroundColor: '#f8fafc',
+              borderRadius: '8px',
+              padding: '1rem',
+              height: '200px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <svg width="100%" height="100%" viewBox="0 0 600 150">
+                {/* Grid lines */}
+                {[0, 1, 2, 3, 4].map(i => (
+                  <line key={i} x1="0" y1={30 * i} x2="600" y2={30 * i} stroke="#e2e8f0" strokeWidth="1"/>
+                ))}
+                {/* Data line */}
+                <polyline
+                  fill="none"
+                  stroke={status.color}
+                  strokeWidth="3"
+                  points={historicalData.map((data, index) => {
+                    const x = (index / 23) * 580 + 10;
+                    let y;
+                    if (selectedMetric === 'bloodPressure') {
+                      y = 150 - ((data.value.systolic - 80) / 80) * 120;
+                    } else {
+                      const minVal = selectedMetric === 'heartRate' ? 50 : selectedMetric === 'temperature' ? 35 : selectedMetric === 'oxygenLevel' ? 90 : 0;
+                      const maxVal = selectedMetric === 'heartRate' ? 100 : selectedMetric === 'temperature' ? 40 : selectedMetric === 'oxygenLevel' ? 100 : 100;
+                      y = 150 - ((data.value - minVal) / (maxVal - minVal)) * 120;
+                    }
+                    return `${x},${Math.max(15, Math.min(135, y))}`;
+                  }).join(' ')}
+                />
+                {/* Time labels */}
+                {[0, 6, 12, 18, 24].map(hour => (
+                  <text key={hour} x={(hour / 24) * 580 + 10} y="145" textAnchor="middle" fontSize="10" fill="#64748b">
+                    {hour === 24 ? '00' : hour.toString().padStart(2, '0')}:00
+                  </text>
+                ))}
+              </svg>
+            </div>
+          </div>
+
+          {/* Health Tips */}
+          <div style={{
+            backgroundColor: '#f0fdf4',
+            borderRadius: '8px',
+            padding: '1rem',
+            border: '1px solid #bbf7d0'
+          }}>
+            <h4 style={{ fontSize: '1rem', fontWeight: '600', color: '#059669', marginBottom: '0.5rem' }}>
+              💡 Health Tips
+            </h4>
+            <p style={{ fontSize: '0.875rem', color: '#047857', margin: 0, lineHeight: '1.5' }}>
+              {selectedMetric === 'heartRate' && 'Maintain a healthy heart rate through regular exercise, stress management, and adequate sleep. Normal resting heart rate is 60-100 bpm.'}
+              {selectedMetric === 'bloodPressure' && 'Keep blood pressure in check with a balanced diet, regular exercise, limited sodium, and stress reduction. Normal BP is less than 120/80 mmHg.'}
+              {selectedMetric === 'temperature' && 'Body temperature can vary throughout the day. Normal range is 36.1-37.2°C. Stay hydrated and dress appropriately for the weather.'}
+              {selectedMetric === 'oxygenLevel' && 'Maintain healthy oxygen levels with deep breathing exercises and good posture. Normal oxygen saturation is 95-100%.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -339,6 +569,20 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <style>
+        {`
+          @keyframes modalSlideIn {
+            0% { 
+              transform: scale(0.95) translateY(-10px);
+              opacity: 0;
+            }
+            100% { 
+              transform: scale(1) translateY(0);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
       {/* Header */}
       <header className="bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-6">
@@ -374,7 +618,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Current Vitals */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-cyan-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleVitalMonitor('heartRate')}>
+          <div className="bg-gradient-to-br from-blue-500 to-cyan-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('heartRate')} data-testid="card-heart-rate">
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.heartRate}</div>
@@ -389,7 +633,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-emerald-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleVitalMonitor('bloodPressure')}>
+          <div className="bg-gradient-to-br from-green-500 to-emerald-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('bloodPressure')} data-testid="card-blood-pressure">
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.bloodPressure}</div>
@@ -404,7 +648,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleVitalMonitor('temperature')}>
+          <div className="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('temperature')} data-testid="card-temperature">
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.temperature}°C</div>
@@ -419,7 +663,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-violet-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleVitalMonitor('oxygenLevel')}>
+          <div className="bg-gradient-to-br from-purple-500 to-violet-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('oxygenLevel')} data-testid="card-oxygen-level">
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">{dashboardData.vitals.oxygenLevel}%</div>
@@ -608,6 +852,9 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           </div>
         </div>
       </main>
+
+      {/* Detailed Modal Views */}
+      {renderDetailedView()}
     </div>
   );
 }

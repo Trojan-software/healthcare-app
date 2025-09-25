@@ -31,6 +31,9 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
     timestamp: new Date()
   });
 
+  // Modal state for detailed views
+  const [selectedMetric, setSelectedMetric] = useState<'heartRate' | 'bloodPressure' | 'temperature' | 'bloodOxygen' | null>(null);
+
   const [metrics, setMetrics] = useState({
     lastCheckup: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     nextAppointment: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
@@ -109,6 +112,230 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
     });
   };
 
+  // Generate sample historical data for detailed views
+  const generateHistoricalData = (type: string, currentValue: any) => {
+    const hours = [];
+    const now = new Date();
+    
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+      let value;
+      
+      switch (type) {
+        case 'heartRate':
+          value = Math.floor(Math.random() * 20) + (currentValue - 10);
+          break;
+        case 'bloodPressure':
+          value = {
+            systolic: Math.floor(Math.random() * 20) + (currentValue.systolic - 10),
+            diastolic: Math.floor(Math.random() * 20) + (currentValue.diastolic - 10)
+          };
+          break;
+        case 'temperature':
+          value = Math.round((Math.random() * 1.5 + (currentValue - 0.75)) * 10) / 10;
+          break;
+        case 'bloodOxygen':
+          value = Math.floor(Math.random() * 5) + (currentValue - 2);
+          break;
+        default:
+          value = currentValue;
+      }
+      
+      hours.push({ time: time.getHours(), value });
+    }
+    
+    return hours;
+  };
+
+  const renderDetailedView = () => {
+    if (!selectedMetric) return null;
+
+    const historicalData = generateHistoricalData(selectedMetric, vitals[selectedMetric]);
+    const status = getVitalStatus(selectedMetric, vitals[selectedMetric]);
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '1rem'
+      }} onClick={() => setSelectedMetric(null)}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          padding: '2rem',
+          maxWidth: '800px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          animation: 'modalSlideIn 0.3s ease-out'
+        }} onClick={(e) => e.stopPropagation()}>
+          
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '16px',
+                backgroundColor: status.color + '20',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '2rem'
+              }}>
+                {selectedMetric === 'heartRate' && '💓'}
+                {selectedMetric === 'bloodPressure' && '🩸'}
+                {selectedMetric === 'temperature' && '🌡️'}
+                {selectedMetric === 'bloodOxygen' && '🫁'}
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
+                  {selectedMetric === 'heartRate' && 'Heart Rate Monitor'}
+                  {selectedMetric === 'bloodPressure' && 'Blood Pressure Monitor'}
+                  {selectedMetric === 'temperature' && 'Temperature Monitor'}
+                  {selectedMetric === 'bloodOxygen' && 'Blood Oxygen Monitor'}
+                </h2>
+                <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
+                  Real-time monitoring with 24-hour trends
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setSelectedMetric(null)}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: '#f8fafc',
+                color: '#64748b',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.25rem'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Current Reading */}
+          <div style={{
+            backgroundColor: 'linear-gradient(135deg, ' + status.color + '10, ' + status.color + '05)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            border: '1px solid ' + status.color + '20'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.5rem 0' }}>Current Reading</p>
+              <div style={{ fontSize: '3rem', fontWeight: 'bold', color: status.color, margin: '0.5rem 0' }}>
+                {selectedMetric === 'heartRate' && `${vitals.heartRate}`}
+                {selectedMetric === 'bloodPressure' && `${vitals.bloodPressure.systolic}/${vitals.bloodPressure.diastolic}`}
+                {selectedMetric === 'temperature' && `${vitals.temperature.toFixed(1)}`}
+                {selectedMetric === 'bloodOxygen' && `${vitals.bloodOxygen}`}
+                <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 'normal', marginLeft: '0.5rem' }}>
+                  {selectedMetric === 'heartRate' && 'bpm'}
+                  {selectedMetric === 'bloodPressure' && 'mmHg'}
+                  {selectedMetric === 'temperature' && '°C'}
+                  {selectedMetric === 'bloodOxygen' && '%'}
+                </span>
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                padding: '0.5rem 1rem',
+                borderRadius: '9999px',
+                backgroundColor: status.color + '20',
+                color: status.color
+              }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: status.color }}></div>
+                {status.status}
+              </div>
+            </div>
+          </div>
+
+          {/* 24-Hour Trend */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', marginBottom: '1rem' }}>
+              24-Hour Trend
+            </h3>
+            <div style={{
+              backgroundColor: '#f8fafc',
+              borderRadius: '8px',
+              padding: '1rem',
+              height: '200px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <svg width="100%" height="100%" viewBox="0 0 600 150">
+                {/* Grid lines */}
+                {[0, 1, 2, 3, 4].map(i => (
+                  <line key={i} x1="0" y1={30 * i} x2="600" y2={30 * i} stroke="#e2e8f0" strokeWidth="1"/>
+                ))}
+                {/* Data line */}
+                <polyline
+                  fill="none"
+                  stroke={status.color}
+                  strokeWidth="3"
+                  points={historicalData.map((data, index) => {
+                    const x = (index / 23) * 580 + 10;
+                    let y;
+                    if (selectedMetric === 'bloodPressure') {
+                      y = 150 - ((data.value.systolic - 80) / 80) * 120;
+                    } else {
+                      const minVal = selectedMetric === 'heartRate' ? 50 : selectedMetric === 'temperature' ? 35 : selectedMetric === 'bloodOxygen' ? 90 : 0;
+                      const maxVal = selectedMetric === 'heartRate' ? 100 : selectedMetric === 'temperature' ? 40 : selectedMetric === 'bloodOxygen' ? 100 : 100;
+                      y = 150 - ((data.value - minVal) / (maxVal - minVal)) * 120;
+                    }
+                    return `${x},${Math.max(15, Math.min(135, y))}`;
+                  }).join(' ')}
+                />
+                {/* Time labels */}
+                {[0, 6, 12, 18, 24].map(hour => (
+                  <text key={hour} x={(hour / 24) * 580 + 10} y="145" textAnchor="middle" fontSize="10" fill="#64748b">
+                    {hour === 24 ? '00' : hour.toString().padStart(2, '0')}:00
+                  </text>
+                ))}
+              </svg>
+            </div>
+          </div>
+
+          {/* Health Tips */}
+          <div style={{
+            backgroundColor: '#f0fdf4',
+            borderRadius: '8px',
+            padding: '1rem',
+            border: '1px solid #bbf7d0'
+          }}>
+            <h4 style={{ fontSize: '1rem', fontWeight: '600', color: '#059669', marginBottom: '0.5rem' }}>
+              💡 Health Tips
+            </h4>
+            <p style={{ fontSize: '0.875rem', color: '#047857', margin: 0, lineHeight: '1.5' }}>
+              {selectedMetric === 'heartRate' && 'Maintain a healthy heart rate through regular exercise, stress management, and adequate sleep. Normal resting heart rate is 60-100 bpm.'}
+              {selectedMetric === 'bloodPressure' && 'Keep blood pressure in check with a balanced diet, regular exercise, limited sodium, and stress reduction. Normal BP is less than 120/80 mmHg.'}
+              {selectedMetric === 'temperature' && 'Body temperature can vary throughout the day. Normal range is 36.1-37.2°C. Stay hydrated and dress appropriately for the weather.'}
+              {selectedMetric === 'bloodOxygen' && 'Maintain healthy oxygen levels with deep breathing exercises and good posture. Normal oxygen saturation is 95-100%.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div style={{ 
@@ -144,6 +371,24 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+          }
+          @keyframes modalSlideIn {
+            0% { 
+              transform: scale(0.95) translateY(-10px);
+              opacity: 0;
+            }
+            100% { 
+              transform: scale(1) translateY(0);
+              opacity: 1;
+            }
+          }
+          .metric-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+          }
+          .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
           }
         `}
       </style>
@@ -201,7 +446,18 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
         {/* Vital Signs Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           {/* Heart Rate */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+          <div 
+            className="metric-card"
+            onClick={() => setSelectedMetric('heartRate')}
+            style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem', 
+              boxShadow: '0 4px 6px rgba(0,0,0,0.07)', 
+              border: '1px solid #e2e8f0' 
+            }}
+            data-testid="card-heart-rate"
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Heart Rate</h3>
               <span style={{ fontSize: '1.5rem' }}>💓</span>
@@ -226,7 +482,18 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
           </div>
 
           {/* Blood Pressure */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+          <div 
+            className="metric-card"
+            onClick={() => setSelectedMetric('bloodPressure')}
+            style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem', 
+              boxShadow: '0 4px 6px rgba(0,0,0,0.07)', 
+              border: '1px solid #e2e8f0' 
+            }}
+            data-testid="card-blood-pressure"
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Blood Pressure</h3>
               <span style={{ fontSize: '1.5rem' }}>🩸</span>
@@ -252,7 +519,18 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
           </div>
 
           {/* Temperature */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+          <div 
+            className="metric-card"
+            onClick={() => setSelectedMetric('temperature')}
+            style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem', 
+              boxShadow: '0 4px 6px rgba(0,0,0,0.07)', 
+              border: '1px solid #e2e8f0' 
+            }}
+            data-testid="card-temperature"
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Temperature</h3>
               <span style={{ fontSize: '1.5rem' }}>🌡️</span>
@@ -277,7 +555,18 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
           </div>
 
           {/* Blood Oxygen */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.07)', border: '1px solid #e2e8f0' }}>
+          <div 
+            className="metric-card"
+            onClick={() => setSelectedMetric('bloodOxygen')}
+            style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '1.5rem', 
+              boxShadow: '0 4px 6px rgba(0,0,0,0.07)', 
+              border: '1px solid #e2e8f0' 
+            }}
+            data-testid="card-blood-oxygen"
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>Blood Oxygen</h3>
               <span style={{ fontSize: '1.5rem' }}>🫁</span>
@@ -455,6 +744,9 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
           </div>
         </div>
       </main>
+
+      {/* Detailed Modal Views */}
+      {renderDetailedView()}
     </div>
   );
 }
