@@ -33,6 +33,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      // Check if user account is active (verified)
+      if (!user.isVerified) {
+        return res.status(403).json({ 
+          message: "Account is inactive. Please contact your administrator to activate your account." 
+        });
+      }
+
       console.log(`User login - role: ${user.role} email: ${user.email}`);
 
       const token = jwt.sign(
