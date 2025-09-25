@@ -158,6 +158,14 @@ export class Hc03Sdk {
   private activeDetections: Set<Detection> = new Set();
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 3;
+  
+  // Store latest measurement data as per Flutter SDK API
+  private latestEcgData: ECGData | null = null;
+  private latestBloodOxygenData: BloodOxygenData | null = null;
+  private latestBloodPressureData: BloodPressureData | null = null;
+  private latestBloodGlucoseData: BloodGlucoseData | null = null;
+  private latestTemperatureData: TemperatureData | null = null;
+  private latestBatteryData: BatteryData | null = null;
 
   private constructor() {
     // Bind methods to preserve context
@@ -476,6 +484,9 @@ export class Hc03Sdk {
         touch: fingerDetected
       };
       
+      // Store latest data for getter methods
+      this.latestEcgData = ecgData;
+      
       console.log('ECG Data:', ecgData);
       
       const callback = this.callbacks.get(Detection.ECG);
@@ -514,6 +525,9 @@ export class Hc03Sdk {
         bloodOxygenWaveData: waveData
       };
       
+      // Store latest data for getter methods
+      this.latestBloodOxygenData = bloodOxygenData;
+      
       console.log('Blood Oxygen Data:', bloodOxygenData);
       
       const callback = this.callbacks.get(Detection.OX);
@@ -546,6 +560,9 @@ export class Hc03Sdk {
         hr: heartRate,
         progress: progress
       };
+      
+      // Store latest data for getter methods
+      this.latestBloodPressureData = bloodPressureData;
       
       console.log('Blood Pressure Data:', bloodPressureData);
       
@@ -586,6 +603,9 @@ export class Hc03Sdk {
         bloodGlucosePaperData: glucoseLevel
       };
       
+      // Store latest data for getter methods
+      this.latestBloodGlucoseData = bloodGlucoseData;
+      
       console.log('Blood Glucose Data:', bloodGlucoseData);
       
       const callback = this.callbacks.get(Detection.BG);
@@ -612,6 +632,9 @@ export class Hc03Sdk {
       const temperatureData: TemperatureData = {
         temperature: temperature
       };
+      
+      // Store latest data for getter methods
+      this.latestTemperatureData = temperatureData;
       
       console.log('Temperature Data:', temperatureData);
       
@@ -642,6 +665,9 @@ export class Hc03Sdk {
         chargingStatus: chargingStatus
       };
       
+      // Store latest data for getter methods
+      this.latestBatteryData = batteryData;
+      
       console.log('Battery Data:', batteryData);
       
       const callback = this.callbacks.get(Detection.BATTERY);
@@ -671,14 +697,14 @@ export class Hc03Sdk {
     }
   }
 
-  // Get mood index text representation as per HC03 API documentation
+  // Get mood index text representation as per HC03 Flutter SDK API Guide
   public getMoodText(moodIndex: number): string {
-    if (moodIndex >= 1 && moodIndex <= 20) return 'Chill';
-    if (moodIndex >= 21 && moodIndex <= 40) return 'Relax';
-    if (moodIndex >= 41 && moodIndex <= 60) return 'Balance';
-    if (moodIndex >= 61 && moodIndex <= 80) return 'Excitation';
-    if (moodIndex >= 81 && moodIndex <= 100) return 'Excitement/Anxiety';
-    return 'Unknown';
+    if (moodIndex >= 1 && moodIndex <= 20) return 'chill';
+    if (moodIndex >= 21 && moodIndex <= 40) return 'relax';
+    if (moodIndex >= 41 && moodIndex <= 60) return 'balance';
+    if (moodIndex >= 61 && moodIndex <= 80) return 'excitation';
+    if (moodIndex >= 81 && moodIndex <= 100) return 'excitement/anxiety/excitement';
+    return 'unknown';
   }
 
   // Check if device supports a specific detection type
@@ -721,6 +747,50 @@ export class Hc03Sdk {
       console.warn('Unable to check device availability:', error);
       return true; // Assume available if we can't check
     }
+  }
+  
+  // Getter methods as per Flutter SDK API Guide
+  
+  /**
+   * Get latest ECG data - getEcgData equivalent from Flutter SDK
+   */
+  public getEcgData(): ECGData | null {
+    return this.latestEcgData;
+  }
+  
+  /**
+   * Get latest blood oxygen data 
+   */
+  public getBloodOxygenData(): BloodOxygenData | null {
+    return this.latestBloodOxygenData;
+  }
+  
+  /**
+   * Get latest blood pressure data
+   */
+  public getBloodPressureData(): BloodPressureData | null {
+    return this.latestBloodPressureData;
+  }
+  
+  /**
+   * Get latest blood glucose data
+   */
+  public getBloodGlucoseData(): BloodGlucoseData | null {
+    return this.latestBloodGlucoseData;
+  }
+  
+  /**
+   * Get latest temperature data
+   */
+  public getTemperatureData(): TemperatureData | null {
+    return this.latestTemperatureData;
+  }
+  
+  /**
+   * Get latest battery data
+   */
+  public getBatteryData(): BatteryData | null {
+    return this.latestBatteryData;
   }
 }
 
