@@ -781,6 +781,16 @@ export const translations: Record<Language, Translation> = {
     
     // Search and Filters
     searchPatients: 'Search patients',
+    
+    // Additional Status Values and Actions
+    notSpecified: 'Not specified',
+    noRecentData: 'No recent data',
+    viewAction: 'View',
+    editAction: 'Edit',
+    deactivate: 'Deactivate',
+    activate: 'Activate',
+    patientDetails: 'Patient Details',
+    completePatientInfo: 'Complete patient information and health records',
   },
   ar: {
     // Navigation
@@ -1170,6 +1180,16 @@ export const translations: Record<Language, Translation> = {
     
     // Search and Filters
     searchPatients: 'البحث عن المرضى',
+    
+    // Additional Status Values and Actions
+    notSpecified: 'غير محدد',
+    noRecentData: 'لا توجد بيانات حديثة',
+    viewAction: 'عرض',
+    editAction: 'تعديل',
+    deactivate: 'إلغاء التفعيل',
+    activate: 'تفعيل',
+    patientDetails: 'تفاصيل المريض',
+    completePatientInfo: 'معلومات المريض الكاملة والسجلات الصحية',
   },
 };
 

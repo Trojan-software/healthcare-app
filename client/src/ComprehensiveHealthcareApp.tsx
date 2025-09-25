@@ -1081,9 +1081,9 @@ For questions, contact: support@24x7teleh.com
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">{t('allStatus')}</option>
-                <option value="normal">Normal</option>
-                <option value="critical">Critical</option>
-                <option value="attention">Attention</option>
+                <option value="normal">{t('normalStatus')}</option>
+                <option value="critical">{t('critical')}</option>
+                <option value="attention">{t('attention')}</option>
               </select>
               <select
                 value={adminData.filterHospital}
@@ -1157,12 +1157,12 @@ For questions, contact: support@24x7teleh.com
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {patient.dateOfBirth ? 
-                          new Date(patient.dateOfBirth).toLocaleDateString('en-US', {
+                          new Date(patient.dateOfBirth).toLocaleDateString(isRTL ? 'ar-AE' : 'en-US', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric'
                           }) : 
-                          'Not specified'
+                          t('notSpecified')
                         }
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -1172,7 +1172,11 @@ For questions, contact: support@24x7teleh.com
                           patient.status === 'Normal' ? 'bg-green-100 text-green-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
-                          {patient.status}
+                          {patient.status === 'Normal' ? t('normalStatus') : 
+                           patient.status === 'Critical' ? t('critical') : 
+                           patient.status === 'Attention' ? t('attention') : 
+                           patient.status === 'No Data' ? t('noData') : 
+                           patient.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -1186,7 +1190,7 @@ For questions, contact: support@24x7teleh.com
                             <div>O2: {patient.vitals.oxygenLevel}%</div>
                           </div>
                         ) : (
-                          'No recent data'
+                          t('noRecentData')
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -1199,7 +1203,7 @@ For questions, contact: support@24x7teleh.com
                             }}
                             data-testid={`button-view-patient-${patient.id}`}
                           >
-                            View
+                            {t('viewAction')}
                           </button>
                           <button 
                             className="text-green-600 hover:text-green-900 px-3 py-1 rounded border border-green-600 hover:bg-green-50"
@@ -1209,7 +1213,7 @@ For questions, contact: support@24x7teleh.com
                             }}
                             data-testid={`button-edit-patient-${patient.id}`}
                           >
-                            Edit
+                            {t('editAction')}
                           </button>
                           <button 
                             className={`px-3 py-1 rounded border disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -1262,7 +1266,7 @@ For questions, contact: support@24x7teleh.com
                             }}
                             data-testid={`button-toggle-status-${patient.id}`}
                           >
-                            {patient.isActive ? 'Deactivate' : 'Activate'}
+                            {patient.isActive ? t('deactivate') : t('activate')}
                           </button>
                         </div>
                       </td>
@@ -1299,9 +1303,9 @@ For questions, contact: support@24x7teleh.com
               {/* Header */}
               <div className="bg-gradient-to-r from-blue-600 to-teal-600 text-white px-6 py-4 rounded-t-lg">
                 <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-2xl font-bold">Patient Details</h2>
-                    <p className="text-blue-100">Complete patient information and health records</p>
+                  <div className={isRTL ? 'text-right' : 'text-left'}>
+                    <h2 className="text-2xl font-bold">{t('patientDetails')}</h2>
+                    <p className="text-blue-100">{t('completePatientInfo')}</p>
                   </div>
                   <button 
                     onClick={() => {
