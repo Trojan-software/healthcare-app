@@ -22,7 +22,7 @@ import BloodGlucoseWidget from './BloodGlucoseWidget';
 import BatteryWidget from './BatteryWidget';
 import EcgWidget from './EcgWidget';
 import HC03DeviceWidget from './HC03DeviceWidget';
-import { useLanguage } from '@/lib/i18n';
+import { useLanguage, LanguageSwitcher } from '@/lib/i18n';
 
 interface VitalSigns {
   id: number;
@@ -791,6 +791,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                 <p className="font-medium">{t('patientId')}: {dashboardData.user.patientId}</p>
                 <p className="text-blue-100 text-sm">Last updated: {formatTimestamp(dashboardData.vitals.timestamp)}</p>
               </div>
+              <LanguageSwitcher />
               <button
                 onClick={onLogout}
                 className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
