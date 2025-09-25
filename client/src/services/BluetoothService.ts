@@ -2,6 +2,7 @@
  * HC03 Bluetooth Service Manager
  * Handles Bluetooth connectivity and data communication with HC03 medical device
  * Based on Web Bluetooth API for PWA compatibility
+ * Adapted from Flutter HC03 SDK implementation
  */
 
 // Web Bluetooth API type declarations
@@ -116,6 +117,8 @@ export interface BatteryData {
 const HC03_SERVICE_UUID = '0000fff0-0000-1000-8000-00805f9b34fb';
 const HC03_WRITE_CHARACTERISTIC_UUID = '0000fff1-0000-1000-8000-00805f9b34fb';
 const HC03_NOTIFY_CHARACTERISTIC_UUID = '0000fff2-0000-1000-8000-00805f9b34fb';
+const BATTERY_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb';
+const BATTERY_LEVEL_CHARACTERISTIC = '00002a19-0000-1000-8000-00805f9b34fb';
 
 // Detection Types
 export enum DetectionType {
@@ -478,7 +481,7 @@ export class BluetoothService {
       console.error('Error disconnecting:', error);
       const bluetoothError = this.createError(
         BluetoothErrorType.UNKNOWN,
-        `Disconnect error: ${error.message || 'Unknown error'}`,
+        `Disconnect error: ${(error as Error).message || 'Unknown error'}`,
         error as Error,
         this.device?.id
       );
@@ -662,7 +665,7 @@ export class BluetoothService {
       console.error('Error parsing device data:', error);
       const bluetoothError = this.createError(
         BluetoothErrorType.DATA_PARSE_ERROR,
-        `Failed to parse device data: ${error.message || 'Unknown error'}`,
+        `Failed to parse device data: ${(error as Error).message || 'Unknown error'}`,
         error as Error,
         this.device?.id
       );
@@ -1046,7 +1049,7 @@ export class BluetoothService {
     return {
       id: this.device.id,
       name: this.device.name || 'HC03 Device',
-      connected: this.isConnected
+      connected: this.connectionState === ConnectionState.CONNECTED
     };
   }
 

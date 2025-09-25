@@ -22,7 +22,7 @@ import {
   Settings,
   RefreshCw
 } from 'lucide-react';
-import { BluetoothService, DetectionType } from '@/services/BluetoothService';
+import { hc03Sdk, Detection, type ECGData, type BloodOxygenData, type BloodPressureData, type TemperatureData, type BatteryData } from '@/lib/hc03-sdk';
 
 interface HC03DeviceData {
   deviceId: string;
@@ -34,7 +34,7 @@ interface HC03DeviceData {
 }
 
 interface MeasurementData {
-  type: 'ecg' | 'bloodOxygen' | 'bloodPressure' | 'bloodGlucose' | 'temperature';
+  type: 'ecg' | 'bloodOxygen' | 'bloodPressure' | 'bloodGlucose' | 'temperature' | 'battery';
   value: any;
   timestamp: string;
   deviceId: string;
@@ -51,99 +51,236 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'scanning' | 'connecting' | 'connected' | 'error'>('idle');
   const [isConnecting, setIsConnecting] = useState(false);
   const [realtimeData, setRealtimeData] = useState<MeasurementData[]>([]);
-  const [measurementInProgress, setMeasurementInProgress] = useState<string | null>(null);
+  const [measurementInProgress, setMeasurementInProgress] = useState<Detection | null>(null);
   const [error, setError] = useState<string>('');
   const [showDeviceDetails, setShowDeviceDetails] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState<any>(null);
   
-  const bluetoothService = useRef<BluetoothService | null>(null);
   const wsConnection = useRef<WebSocket | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     loadDevices();
     initializeWebSocket();
-    initializeBluetoothService();
+    initializeHC03SDK();
     
     return () => {
       cleanup();
     };
   }, [patientId]);
 
-  const initializeBluetoothService = () => {
-    bluetoothService.current = new BluetoothService();
-    
-    // Set up event listeners
-    bluetoothService.current.on('connected', (deviceInfo: any) => {
-      setConnectionStatus('connected');
-      setSelectedDevice(prev => prev ? { ...prev, connectionStatus: 'connected' } : null);
-      toast({
-        title: "Device Connected",
-        description: `Successfully connected to ${deviceInfo.name}`,
-      });
-    });
+  const initializeHC03SDK = async () => {
+    try {
+      await hc03Sdk.initialize();
+      
+      // Set up callbacks for each detection type
+      hc03Sdk.setCallback(Detection.ECG, handleECGData);
+      hc03Sdk.setCallback(Detection.OX, handleBloodOxygenData);
+      hc03Sdk.setCallback(Detection.BP, handleBloodPressureData);
+      hc03Sdk.setCallback(Detection.BT, handleTemperatureData);
+      hc03Sdk.setCallback(Detection.BG, handleBloodGlucoseData);
+      hc03Sdk.setCallback(Detection.BATTERY, handleBatteryData);
+      
+      console.log('HC03 SDK initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize HC03 SDK:', error);
+      setError('Bluetooth not supported in this browser');
+    }
+  };
 
-    bluetoothService.current.on('disconnected', () => {
-      setConnectionStatus('idle');
-      setSelectedDevice(prev => prev ? { ...prev, connectionStatus: 'disconnected' } : null);
-      toast({
-        title: "Device Disconnected",
-        description: "HC03 device has been disconnected",
-        variant: "destructive"
-      });
-    });
-
-    bluetoothService.current.on('dataReceived', (data: any) => {
+  const handleECGData = (event: any) => {
+    if (event.type === 'data') {
+      const ecgData = event.data as ECGData;
       const measurementData: MeasurementData = {
-        type: data.type,
-        value: data.value,
+        type: 'ecg',
+        value: {
+          heartRate: ecgData.hr,
+          moodIndex: ecgData.moodIndex,
+          moodText: hc03Sdk.getMoodText(ecgData.moodIndex),
+          rrInterval: ecgData.rr,
+          hrv: ecgData.hrv,
+          respiratoryRate: ecgData.respiratoryRate,
+          fingerDetected: ecgData.touch,
+          waveData: ecgData.wave
+        },
         timestamp: new Date().toISOString(),
         deviceId: selectedDevice?.deviceId || ''
       };
       
-      setRealtimeData(prev => [measurementData, ...prev.slice(0, 9)]);
-      
-      if (onDataUpdate) {
-        onDataUpdate(measurementData);
-      }
-      
-      // Send data via WebSocket for real-time updates
-      if (wsConnection.current && wsConnection.current.readyState === WebSocket.OPEN) {
-        wsConnection.current.send(JSON.stringify({
-          type: 'hc03_data',
-          measurementType: data.type,
-          deviceId: selectedDevice?.deviceId,
-          patientId,
-          data: data.value,
-          timestamp: measurementData.timestamp
-        }));
-      }
-    });
-
-    bluetoothService.current.on('measurementStarted', (type: string) => {
-      setMeasurementInProgress(type);
+      addMeasurementData(measurementData);
+    } else if (event.type === 'measurementStarted') {
+      setMeasurementInProgress(Detection.ECG);
       toast({
-        title: "Measurement Started",
-        description: `${type.toUpperCase()} measurement in progress...`,
+        title: "ECG Measurement Started",
+        description: "Please place your finger on the device sensor",
       });
-    });
-
-    bluetoothService.current.on('measurementCompleted', (type: string) => {
+    } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
       toast({
-        title: "Measurement Complete",
-        description: `${type.toUpperCase()} measurement completed successfully`,
+        title: "ECG Measurement Complete",
+        description: "ECG measurement completed successfully",
       });
-    });
+    }
+  };
 
-    bluetoothService.current.on('error', (error: any) => {
-      setError(error.message);
-      setConnectionStatus('error');
+  const handleBloodOxygenData = (event: any) => {
+    if (event.type === 'data') {
+      const oxData = event.data as BloodOxygenData;
+      const measurementData: MeasurementData = {
+        type: 'bloodOxygen',
+        value: {
+          bloodOxygen: oxData.bloodOxygen,
+          heartRate: oxData.heartRate,
+          fingerDetected: oxData.fingerDetection,
+          waveData: oxData.bloodOxygenWaveData
+        },
+        timestamp: new Date().toISOString(),
+        deviceId: selectedDevice?.deviceId || ''
+      };
+      
+      addMeasurementData(measurementData);
+    } else if (event.type === 'measurementStarted') {
+      setMeasurementInProgress(Detection.OX);
       toast({
-        title: "Device Error",
-        description: error.message,
-        variant: "destructive"
+        title: "Blood Oxygen Measurement Started",
+        description: "Please keep your finger steady on the sensor",
       });
-    });
+    } else if (event.type === 'measurementCompleted') {
+      setMeasurementInProgress(null);
+      toast({
+        title: "Blood Oxygen Measurement Complete",
+        description: "Blood oxygen measurement completed successfully",
+      });
+    }
+  };
+
+  const handleBloodPressureData = (event: any) => {
+    if (event.type === 'data') {
+      const bpData = event.data as BloodPressureData;
+      const measurementData: MeasurementData = {
+        type: 'bloodPressure',
+        value: {
+          systolic: bpData.ps,
+          diastolic: bpData.pd,
+          heartRate: bpData.hr,
+          progress: bpData.progress || 100
+        },
+        timestamp: new Date().toISOString(),
+        deviceId: selectedDevice?.deviceId || ''
+      };
+      
+      addMeasurementData(measurementData);
+    } else if (event.type === 'measurementStarted') {
+      setMeasurementInProgress(Detection.BP);
+      toast({
+        title: "Blood Pressure Measurement Started",
+        description: "Please remain still during measurement",
+      });
+    } else if (event.type === 'measurementCompleted') {
+      setMeasurementInProgress(null);
+      toast({
+        title: "Blood Pressure Measurement Complete",
+        description: "Blood pressure measurement completed successfully",
+      });
+    }
+  };
+
+  const handleTemperatureData = (event: any) => {
+    if (event.type === 'data') {
+      const tempData = event.data as TemperatureData;
+      const measurementData: MeasurementData = {
+        type: 'temperature',
+        value: {
+          temperature: tempData.temperature
+        },
+        timestamp: new Date().toISOString(),
+        deviceId: selectedDevice?.deviceId || ''
+      };
+      
+      addMeasurementData(measurementData);
+    } else if (event.type === 'measurementStarted') {
+      setMeasurementInProgress(Detection.BT);
+      toast({
+        title: "Temperature Measurement Started",
+        description: "Measuring body temperature...",
+      });
+    } else if (event.type === 'measurementCompleted') {
+      setMeasurementInProgress(null);
+      toast({
+        title: "Temperature Measurement Complete",
+        description: "Temperature measurement completed successfully",
+      });
+    }
+  };
+
+  const handleBloodGlucoseData = (event: any) => {
+    if (event.type === 'data') {
+      const measurementData: MeasurementData = {
+        type: 'bloodGlucose',
+        value: event.data,
+        timestamp: new Date().toISOString(),
+        deviceId: selectedDevice?.deviceId || ''
+      };
+      
+      addMeasurementData(measurementData);
+    } else if (event.type === 'measurementStarted') {
+      setMeasurementInProgress(Detection.BG);
+      toast({
+        title: "Blood Glucose Measurement Started",
+        description: "Please insert test strip and apply blood sample",
+      });
+    } else if (event.type === 'measurementCompleted') {
+      setMeasurementInProgress(null);
+      toast({
+        title: "Blood Glucose Measurement Complete",
+        description: "Blood glucose measurement completed successfully",
+      });
+    }
+  };
+
+  const handleBatteryData = (event: any) => {
+    if (event.type === 'data') {
+      const batteryData = event.data as BatteryData;
+      
+      // Update device battery info
+      setSelectedDevice(prev => prev ? {
+        ...prev,
+        batteryLevel: batteryData.batteryLevel,
+        chargingStatus: batteryData.chargingStatus
+      } : null);
+      
+      const measurementData: MeasurementData = {
+        type: 'battery',
+        value: {
+          batteryLevel: batteryData.batteryLevel,
+          chargingStatus: batteryData.chargingStatus
+        },
+        timestamp: new Date().toISOString(),
+        deviceId: selectedDevice?.deviceId || ''
+      };
+      
+      addMeasurementData(measurementData);
+    }
+  };
+
+  const addMeasurementData = (measurementData: MeasurementData) => {
+    setRealtimeData(prev => [measurementData, ...prev.slice(0, 9)]);
+    
+    if (onDataUpdate) {
+      onDataUpdate(measurementData);
+    }
+    
+    // Send data via WebSocket for real-time updates
+    if (wsConnection.current && wsConnection.current.readyState === WebSocket.OPEN) {
+      wsConnection.current.send(JSON.stringify({
+        type: 'hc03_data',
+        measurementType: measurementData.type,
+        deviceId: selectedDevice?.deviceId,
+        patientId,
+        data: measurementData.value,
+        timestamp: measurementData.timestamp
+      }));
+    }
   };
 
   const initializeWebSocket = () => {
@@ -228,19 +365,15 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
   };
 
   const scanForDevices = async () => {
-    if (!bluetoothService.current) return;
-    
     setIsConnecting(true);
     setConnectionStatus('scanning');
     setError('');
     
     try {
-      // First scan for devices
-      const deviceList = await bluetoothService.current.startScan();
+      // Use HC03 SDK to connect to device
+      const device = await hc03Sdk.connectDevice();
       
-      if (deviceList && deviceList.length > 0) {
-        const deviceInfo = deviceList[0]; // Use first found device
-        
+      if (device) {
         // Register device with backend
         const response = await fetch('/api/hc03/devices/register', {
           method: 'POST',
@@ -248,83 +381,85 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            deviceId: deviceInfo.id,
-            deviceName: deviceInfo.name,
-            macAddress: deviceInfo.macAddress || '',
-            firmwareVersion: deviceInfo.firmwareVersion || '1.0.0',
+            deviceId: device.id,
+            deviceName: device.name || 'HC03 Device',
+            macAddress: device.id,
+            firmwareVersion: '1.0.0',
             patientId
           })
         });
         
         if (response.ok) {
-          // Now connect to the device
-          await bluetoothService.current.connect(deviceInfo.id, patientId);
-          await loadDevices();
+          const deviceData: HC03DeviceData = {
+            deviceId: device.id,
+            deviceName: device.name || 'HC03 Device',
+            connectionStatus: 'connected',
+            batteryLevel: 85, // Will be updated when battery is queried
+            chargingStatus: false,
+            lastConnected: new Date().toISOString()
+          };
+          
+          setSelectedDevice(deviceData);
+          setDevices(prev => [deviceData, ...prev.filter(d => d.deviceId !== device.id)]);
           setConnectionStatus('connected');
+          setDeviceInfo(hc03Sdk.getDeviceInfo());
+          
+          // Query battery level
+          setTimeout(() => {
+            queryBattery();
+          }, 1000);
+          
+          toast({
+            title: "Device Connected",
+            description: `Successfully connected to ${device.name}`,
+          });
         }
       }
     } catch (error) {
       console.error('Error scanning for devices:', error);
       setError(error instanceof Error ? error.message : 'Failed to scan for devices');
       setConnectionStatus('error');
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const connectToDevice = async (device: HC03DeviceData) => {
-    if (!bluetoothService.current) return;
-    
-    setIsConnecting(true);
-    setConnectionStatus('connecting');
-    
-    try {
-      await bluetoothService.current.connect(device.deviceId, patientId);
-      setSelectedDevice(device);
-      
-      // Update device status
-      await fetch(`/api/hc03/devices/${device.deviceId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'connected' })
+      toast({
+        title: "Connection Failed",
+        description: error instanceof Error ? error.message : 'Failed to connect to HC03 device',
+        variant: "destructive"
       });
-      
-      setConnectionStatus('connected');
-    } catch (error) {
-      console.error('Error connecting to device:', error);
-      setError(error instanceof Error ? error.message : 'Failed to connect to device');
-      setConnectionStatus('error');
     } finally {
       setIsConnecting(false);
     }
   };
 
   const disconnectDevice = async () => {
-    if (!bluetoothService.current || !selectedDevice) return;
-    
     try {
-      await bluetoothService.current.disconnect();
+      await hc03Sdk.disconnect();
       
       // Update device status
-      await fetch(`/api/hc03/devices/${selectedDevice.deviceId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'disconnected' })
-      });
+      if (selectedDevice) {
+        await fetch(`/api/hc03/devices/${selectedDevice.deviceId}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'disconnected' })
+        });
+      }
       
       setConnectionStatus('idle');
       setSelectedDevice(null);
+      setDeviceInfo(null);
+      setMeasurementInProgress(null);
+      
+      toast({
+        title: "Device Disconnected",
+        description: "HC03 device has been disconnected",
+      });
     } catch (error) {
       console.error('Error disconnecting device:', error);
     }
   };
 
-  const startMeasurement = async (type: 'ecg' | 'bloodOxygen' | 'bloodPressure' | 'bloodGlucose' | 'temperature') => {
-    if (!bluetoothService.current || connectionStatus !== 'connected') {
+  const startMeasurement = async (type: Detection) => {
+    if (!hc03Sdk.getConnectionStatus()) {
       toast({
         title: "Device Not Connected",
         description: "Please connect to your HC03 device first",
@@ -334,29 +469,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
     }
     
     try {
-      let detectionType: DetectionType;
-      
-      switch (type) {
-        case 'ecg':
-          detectionType = DetectionType.ECG;
-          break;
-        case 'bloodOxygen':
-          detectionType = DetectionType.OX;
-          break;
-        case 'bloodPressure':
-          detectionType = DetectionType.BP;
-          break;
-        case 'bloodGlucose':
-          detectionType = DetectionType.BG;
-          break;
-        case 'temperature':
-          detectionType = DetectionType.BT;
-          break;
-        default:
-          throw new Error(`Unsupported measurement type: ${type}`);
-      }
-      
-      await bluetoothService.current.startMeasurement(detectionType);
+      await hc03Sdk.startDetect(type);
     } catch (error) {
       console.error(`Error starting ${type} measurement:`, error);
       toast({
@@ -367,19 +480,38 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
     }
   };
 
-  const queryBattery = async () => {
-    if (!bluetoothService.current || connectionStatus !== 'connected') return;
+  const stopMeasurement = async (type: Detection) => {
+    if (!hc03Sdk.getConnectionStatus()) return;
     
     try {
-      await bluetoothService.current.queryBattery();
+      await hc03Sdk.stopDetect(type);
+      setMeasurementInProgress(null);
+    } catch (error) {
+      console.error(`Error stopping ${type} measurement:`, error);
+    }
+  };
+
+  const queryBattery = async () => {
+    if (!hc03Sdk.getConnectionStatus()) return;
+    
+    try {
+      await hc03Sdk.startDetect(Detection.BATTERY);
+      // Also try to query from battery service directly
+      const batteryLevel = await hc03Sdk.queryBatteryLevel();
+      if (batteryLevel !== null) {
+        setSelectedDevice(prev => prev ? {
+          ...prev,
+          batteryLevel: batteryLevel
+        } : null);
+      }
     } catch (error) {
       console.error('Error querying battery:', error);
     }
   };
 
   const cleanup = () => {
-    if (bluetoothService.current) {
-      bluetoothService.current.disconnect();
+    if (hc03Sdk.getConnectionStatus()) {
+      hc03Sdk.disconnect();
     }
     if (wsConnection.current) {
       wsConnection.current.close();
@@ -403,6 +535,37 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       case 'scanning': return 'Scanning...';
       case 'error': return 'Error';
       default: return 'Disconnected';
+    }
+  };
+
+  const getMeasurementIcon = (type: string) => {
+    switch (type) {
+      case 'ecg': return <Heart className="h-4 w-4 text-red-500" />;
+      case 'bloodOxygen': return <Droplets className="h-4 w-4 text-blue-500" />;
+      case 'bloodPressure': return <Activity className="h-4 w-4 text-green-500" />;
+      case 'temperature': return <Thermometer className="h-4 w-4 text-orange-500" />;
+      case 'bloodGlucose': return <Droplets className="h-4 w-4 text-purple-500" />;
+      case 'battery': return <Battery className="h-4 w-4 text-gray-500" />;
+      default: return <Activity className="h-4 w-4" />;
+    }
+  };
+
+  const formatMeasurementValue = (type: string, value: any) => {
+    switch (type) {
+      case 'ecg':
+        return `HR: ${value.heartRate} BPM, HRV: ${value.hrv}, Mood: ${value.moodText}`;
+      case 'bloodOxygen':
+        return `SpO2: ${value.bloodOxygen}%, HR: ${value.heartRate} BPM`;
+      case 'bloodPressure':
+        return `${value.systolic}/${value.diastolic} mmHg, HR: ${value.heartRate} BPM`;
+      case 'temperature':
+        return `${value.temperature}°C`;
+      case 'bloodGlucose':
+        return typeof value === 'object' ? JSON.stringify(value) : value.toString();
+      case 'battery':
+        return `${value.batteryLevel}% ${value.chargingStatus ? '(Charging)' : ''}`;
+      default:
+        return typeof value === 'object' ? JSON.stringify(value) : value.toString();
     }
   };
 
@@ -488,6 +651,9 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
                 <span className="text-sm" data-testid="text-battery-level">
                   {selectedDevice.batteryLevel}%
                 </span>
+                {selectedDevice.chargingStatus && (
+                  <Badge variant="secondary">Charging</Badge>
+                )}
               </div>
             </div>
 
@@ -502,53 +668,53 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
                 <div className="grid grid-cols-2 gap-3">
                   <Button
                     variant="outline"
-                    onClick={() => startMeasurement('ecg')}
-                    disabled={measurementInProgress === 'ecg'}
+                    onClick={() => startMeasurement(Detection.ECG)}
+                    disabled={measurementInProgress === Detection.ECG}
                     data-testid="button-ecg-measurement"
                   >
                     <Heart className="h-4 w-4 mr-2" />
-                    {measurementInProgress === 'ecg' ? 'Recording...' : 'ECG'}
+                    {measurementInProgress === Detection.ECG ? 'Recording...' : 'ECG'}
                   </Button>
                   
                   <Button
                     variant="outline"
-                    onClick={() => startMeasurement('bloodOxygen')}
-                    disabled={measurementInProgress === 'bloodOxygen'}
+                    onClick={() => startMeasurement(Detection.OX)}
+                    disabled={measurementInProgress === Detection.OX}
                     data-testid="button-oxygen-measurement"
                   >
                     <Droplets className="h-4 w-4 mr-2" />
-                    {measurementInProgress === 'bloodOxygen' ? 'Measuring...' : 'Blood O₂'}
+                    {measurementInProgress === Detection.OX ? 'Measuring...' : 'Blood O₂'}
                   </Button>
                   
                   <Button
                     variant="outline"
-                    onClick={() => startMeasurement('bloodPressure')}
-                    disabled={measurementInProgress === 'bloodPressure'}
+                    onClick={() => startMeasurement(Detection.BP)}
+                    disabled={measurementInProgress === Detection.BP}
                     data-testid="button-pressure-measurement"
                   >
                     <Activity className="h-4 w-4 mr-2" />
-                    {measurementInProgress === 'bloodPressure' ? 'Measuring...' : 'Blood Pressure'}
+                    {measurementInProgress === Detection.BP ? 'Measuring...' : 'Blood Pressure'}
                   </Button>
                   
                   <Button
                     variant="outline"
-                    onClick={() => startMeasurement('temperature')}
-                    disabled={measurementInProgress === 'temperature'}
+                    onClick={() => startMeasurement(Detection.BT)}
+                    disabled={measurementInProgress === Detection.BT}
                     data-testid="button-temp-measurement"
                   >
                     <Thermometer className="h-4 w-4 mr-2" />
-                    {measurementInProgress === 'temperature' ? 'Measuring...' : 'Temperature'}
+                    {measurementInProgress === Detection.BT ? 'Measuring...' : 'Temperature'}
                   </Button>
                   
                   <Button
                     variant="outline"
-                    onClick={() => startMeasurement('bloodGlucose')}
-                    disabled={measurementInProgress === 'bloodGlucose'}
+                    onClick={() => startMeasurement(Detection.BG)}
+                    disabled={measurementInProgress === Detection.BG}
                     className="col-span-2"
                     data-testid="button-glucose-measurement"
                   >
                     <Droplets className="h-4 w-4 mr-2" />
-                    {measurementInProgress === 'bloodGlucose' ? 'Measuring...' : 'Blood Glucose'}
+                    {measurementInProgress === Detection.BG ? 'Measuring...' : 'Blood Glucose'}
                   </Button>
                 </div>
 
@@ -559,6 +725,13 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
                       <span className="text-sm">
                         {measurementInProgress.toUpperCase()} measurement in progress...
                       </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => stopMeasurement(measurementInProgress)}
+                      >
+                        Stop
+                      </Button>
                     </div>
                     <Progress value={50} className="w-full" />
                   </div>
@@ -591,21 +764,14 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
                         data-testid={`measurement-${data.type}-${index}`}
                       >
                         <div className="flex items-center gap-2">
-                          {data.type === 'ecg' && <Heart className="h-4 w-4" />}
-                          {data.type === 'bloodOxygen' && <Droplets className="h-4 w-4" />}
-                          {data.type === 'bloodPressure' && <Activity className="h-4 w-4" />}
-                          {data.type === 'temperature' && <Thermometer className="h-4 w-4" />}
-                          {data.type === 'bloodGlucose' && <Droplets className="h-4 w-4" />}
+                          {getMeasurementIcon(data.type)}
                           <span className="text-sm font-medium">
                             {data.type.toUpperCase()}
                           </span>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium">
-                            {typeof data.value === 'object' ? 
-                              JSON.stringify(data.value) : 
-                              data.value.toString()
-                            }
+                            {formatMeasurementValue(data.type, data.value)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {new Date(data.timestamp).toLocaleTimeString()}
@@ -630,71 +796,43 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
           </div>
         )}
 
-        {/* Available Devices */}
-        {devices.length > 0 && !selectedDevice && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Available Devices</h4>
-            {devices.map((device) => (
-              <div
-                key={device.deviceId}
-                className="flex items-center justify-between p-2 border rounded"
-              >
+        {/* Device Details Dialog */}
+        <Dialog open={showDeviceDetails} onOpenChange={setShowDeviceDetails}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Device Details</DialogTitle>
+            </DialogHeader>
+            {selectedDevice && deviceInfo && (
+              <div className="space-y-4">
                 <div>
-                  <p className="font-medium text-sm">{device.deviceName}</p>
-                  <p className="text-xs text-muted-foreground">{device.deviceId}</p>
+                  <label className="font-medium text-gray-600">Device Name</label>
+                  <p>{selectedDevice.deviceName}</p>
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => connectToDevice(device)}
-                  disabled={isConnecting}
-                  data-testid={`button-connect-${device.deviceId}`}
-                >
-                  Connect
-                </Button>
+                <div>
+                  <label className="font-medium text-gray-600">Device ID</label>
+                  <p>{selectedDevice.deviceId}</p>
+                </div>
+                <div>
+                  <label className="font-medium text-gray-600">Connection Status</label>
+                  <p>{selectedDevice.connectionStatus}</p>
+                </div>
+                <div>
+                  <label className="font-medium text-gray-600">Battery Level</label>
+                  <p>{selectedDevice.batteryLevel}% {selectedDevice.chargingStatus && '(Charging)'}</p>
+                </div>
+                <div>
+                  <label className="font-medium text-gray-600">Last Connected</label>
+                  <p>{new Date(selectedDevice.lastConnected).toLocaleString()}</p>
+                </div>
+                <div>
+                  <label className="font-medium text-gray-600">Active Measurements</label>
+                  <p>{hc03Sdk.getActiveDetections().join(', ') || 'None'}</p>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
-
-      {/* Device Details Dialog */}
-      <Dialog open={showDeviceDetails} onOpenChange={setShowDeviceDetails}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Device Details</DialogTitle>
-          </DialogHeader>
-          {selectedDevice && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Device Name</label>
-                  <p className="text-sm text-muted-foreground">{selectedDevice.deviceName}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Device ID</label>
-                  <p className="text-sm text-muted-foreground">{selectedDevice.deviceId}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Battery Level</label>
-                  <p className="text-sm text-muted-foreground">{selectedDevice.batteryLevel}%</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Charging</label>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedDevice.chargingStatus ? 'Yes' : 'No'}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <label className="text-sm font-medium">Last Connected</label>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(selectedDevice.lastConnected).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }

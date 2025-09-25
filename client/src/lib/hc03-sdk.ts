@@ -28,7 +28,7 @@ const BATTERY_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb';
 const BATTERY_LEVEL_CHARACTERISTIC = '00002a19-0000-1000-8000-00805f9b34fb';
 
 // Detection Commands as per HC03 protocol
-const DETECTION_COMMANDS = {
+const DETECTION_COMMANDS: Record<Detection, Uint8Array> = {
   [Detection.ECG]: new Uint8Array([0x01, 0x01]), // Start ECG
   [Detection.OX]: new Uint8Array([0x02, 0x01]),  // Start Blood Oxygen
   [Detection.BP]: new Uint8Array([0x03, 0x01]),  // Start Blood Pressure
@@ -37,7 +37,7 @@ const DETECTION_COMMANDS = {
   [Detection.BATTERY]: new Uint8Array([0x06, 0x01]), // Query Battery
 };
 
-const STOP_COMMANDS = {
+const STOP_COMMANDS: Partial<Record<Detection, Uint8Array>> = {
   [Detection.ECG]: new Uint8Array([0x01, 0x00]), // Stop ECG
   [Detection.OX]: new Uint8Array([0x02, 0x00]),  // Stop Blood Oxygen
   [Detection.BP]: new Uint8Array([0x03, 0x00]),  // Stop Blood Pressure
@@ -138,12 +138,11 @@ declare global {
   interface BluetoothRemoteGATTCharacteristic {
     value?: DataView;
     writeValue(value: BufferSource): Promise<void>;
+    readValue(): Promise<DataView>;
     startNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
     addEventListener(type: 'characteristicvaluechanged', listener: (event: Event) => void): void;
   }
 
-  type BluetoothServiceUUID = string;
-  type BluetoothCharacteristicUUID = string;
 }
 
 // HC03 SDK Main Class
@@ -264,7 +263,7 @@ export class Hc03Sdk {
     }
 
     try {
-      const command = DETECTION_COMMANDS[detection];
+      const command = DETECTION_COMMANDS[detection as keyof typeof DETECTION_COMMANDS];
       if (!command) {
         throw new Error(`Unknown detection type: ${detection}`);
       }
@@ -314,7 +313,7 @@ export class Hc03Sdk {
   public async disconnect(): Promise<void> {
     try {
       // Stop all active detections
-      for (const detection of this.activeDetections) {
+      for (const detection of Array.from(this.activeDetections)) {
         await this.stopDetect(detection);
       }
       
@@ -331,7 +330,7 @@ export class Hc03Sdk {
 
   // Handle characteristic value changes
   private handleCharacteristicValueChanged(event: Event): void {
-    const characteristic = event.target as BluetoothRemoteGATTCharacteristic;
+    const characteristic = (event.target as unknown) as BluetoothRemoteGATTCharacteristic;
     const data = characteristic.value;
     if (data) {
       this.parseData(data.buffer);
@@ -529,7 +528,7 @@ export class Hc03Sdk {
       const glucoseLevel = view.getUint16(2, true) / 10; // Convert to mg/dL
       const testStripStatus = view.getUint8(4);
       
-      const statusMap = {
+      const statusMap: Record<number, string> = {
         0: 'ready',
         1: 'insert_strip',
         2: 'apply_sample',
