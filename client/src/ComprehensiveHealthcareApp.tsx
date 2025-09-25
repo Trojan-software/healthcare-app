@@ -1547,7 +1547,7 @@ For questions, contact: support@24x7teleh.com
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     data-testid="button-edit-from-view"
                   >
-                    Edit Patient
+                    {t('editPatient')}
                   </button>
                   <button
                     onClick={() => {
@@ -1557,7 +1557,7 @@ For questions, contact: support@24x7teleh.com
                     className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
                     data-testid="button-close-view-modal"
                   >
-                    Close
+                    {t('close')}
                   </button>
                 </div>
               </div>
@@ -1570,7 +1570,7 @@ For questions, contact: support@24x7teleh.com
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Edit Patient</h2>
+                <h2 className="text-2xl font-bold text-gray-800">{t('editPatient')}</h2>
                 <button 
                   onClick={() => {
                     setModalState(prev => ({ ...prev, showEditPatient: false }));
@@ -1612,7 +1612,7 @@ For questions, contact: support@24x7teleh.com
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('firstName')}</label>
                     <input 
                       type="text" 
                       name="firstName"
@@ -1623,7 +1623,7 @@ For questions, contact: support@24x7teleh.com
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('lastName')}</label>
                     <input 
                       type="text" 
                       name="lastName"
@@ -1635,7 +1635,7 @@ For questions, contact: support@24x7teleh.com
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('email')}</label>
                   <input 
                     type="email" 
                     name="email"
@@ -1646,7 +1646,7 @@ For questions, contact: support@24x7teleh.com
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('dateOfBirth')}</label>
                   <input 
                     type="date" 
                     name="dateOfBirth"
@@ -1656,16 +1656,16 @@ For questions, contact: support@24x7teleh.com
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('status')}</label>
                   <select 
                     name="status"
                     defaultValue={selectedPatient.status}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="Normal">Normal</option>
-                    <option value="Attention">Attention</option>
-                    <option value="Critical">Critical</option>
-                    <option value="No Data">No Data</option>
+                    <option value="Normal">{t('normalStatus')}</option>
+                    <option value="Attention">{t('attention')}</option>
+                    <option value="Critical">{t('critical')}</option>
+                    <option value="No Data">{t('noData')}</option>
                   </select>
                 </div>
                 
@@ -1679,14 +1679,14 @@ For questions, contact: support@24x7teleh.com
                     className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
                     data-testid="button-cancel-edit"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button 
                     type="submit"
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     data-testid="button-save-patient"
                   >
-                    Save Changes
+                    {t('saveChanges')}
                   </button>
                 </div>
               </form>

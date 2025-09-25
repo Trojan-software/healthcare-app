@@ -824,6 +824,12 @@ export const translations: Record<Language, Translation> = {
     dateOfBirth: 'Date of Birth',
     age: 'Age',
     yearsOld: 'years old',
+    
+    // Edit Patient Modal
+    editPatient: 'Edit Patient',
+    saveChanges: 'Save Changes',
+    cancel: 'Cancel',
+    close: 'Close',
   },
   ar: {
     // Navigation
@@ -1256,6 +1262,12 @@ export const translations: Record<Language, Translation> = {
     dateOfBirth: 'تاريخ الميلاد',
     age: 'العمر',
     yearsOld: 'سنة',
+    
+    // Edit Patient Modal
+    editPatient: 'تعديل المريض',
+    saveChanges: 'حفظ التغييرات',
+    cancel: 'إلغاء',
+    close: 'إغلاق',
   },
 };
 
