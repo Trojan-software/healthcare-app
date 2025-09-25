@@ -162,8 +162,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "Patient ID already exists" });
       }
 
-      const defaultPassword = "patient123";
-      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+      // Generate secure random password for new patient accounts
+      const crypto = require('crypto');
+      const randomPassword = crypto.randomBytes(12).toString('base64').slice(0, 16);
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
       const patient = await storage.createPatientAccess({
         firstName,
@@ -177,7 +179,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isVerified: true
       });
 
-      res.status(201).json(patient);
+      res.status(201).json({ 
+        ...patient, 
+        temporaryPassword: randomPassword 
+      });
     } catch (error) {
       console.error("Error creating patient:", error);
       res.status(500).json({ message: "Failed to create patient" });
