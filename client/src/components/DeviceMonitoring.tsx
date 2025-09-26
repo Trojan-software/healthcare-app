@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { handleApiError } from '@/lib/errorHandler';
+import { useLanguage } from '@/lib/i18n';
 
 interface Device {
   id: string;
@@ -25,6 +26,7 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     loadDeviceData();
@@ -145,7 +147,7 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading device information...</p>
+          <p className="text-gray-600">{t('loadingDeviceInformation')}</p>
         </div>
       </div>
     );
@@ -158,8 +160,8 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Device Monitoring</h2>
-              <p className="text-purple-100">HC03 Device Status & Management</p>
+              <h2 className="text-3xl font-bold mb-2">{t('deviceMonitoring')}</h2>
+              <p className="text-purple-100">{t('hc03DeviceStatusManagement')}</p>
             </div>
             <button
               onClick={onClose}
@@ -175,7 +177,7 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
         <div className="flex h-[calc(90vh-120px)]">
           {/* Device List */}
           <div className="w-1/2 border-r border-gray-200 p-6 overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Connected Devices ({devices.length})</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('connectedDevices')} ({devices.length})</h3>
             
             <div className="space-y-4">
               {devices.map((device) => (
@@ -201,7 +203,7 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Battery:</span>
+                      <span className="text-gray-500">{t('battery')}:</span>
                       <div className="flex items-center space-x-2 mt-1">
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
@@ -214,14 +216,14 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
                       </div>
                     </div>
                     <div>
-                      <span className="text-gray-500">Last Sync:</span>
+                      <span className="text-gray-500">{t('lastSync')}:</span>
                       <p className="font-medium">{formatLastSync(device.lastSync)}</p>
                     </div>
                   </div>
 
                   <div className="mt-3 flex justify-between items-center">
                     <span className="text-sm text-gray-600">
-                      {device.totalReadings} readings
+                      {device.totalReadings} {t('readings')}
                     </span>
                     <button
                       onClick={(e) => {
@@ -231,7 +233,7 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
                       disabled={device.connectionStatus === 'syncing' || device.connectionStatus === 'disconnected'}
                       className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium transition-all"
                     >
-                      {device.connectionStatus === 'syncing' ? 'Syncing...' : 'Sync Now'}
+                      {device.connectionStatus === 'syncing' ? t('syncing') : t('syncNow')}
                     </button>
                   </div>
                 </div>
@@ -243,27 +245,27 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
           <div className="w-1/2 p-6 overflow-y-auto">
             {selectedDevice ? (
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-6">Device Details</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-6">{t('deviceDetails')}</h3>
                 
                 <div className="space-y-6">
                   {/* Device Info */}
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-800 mb-3">Device Information</h4>
+                    <h4 className="font-semibold text-gray-800 mb-3">{t('deviceInformation')}</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-500">Device ID:</span>
+                        <span className="text-gray-500">{t('deviceId')}:</span>
                         <p className="font-medium">{selectedDevice.id}</p>
                       </div>
                       <div>
-                        <span className="text-gray-500">MAC Address:</span>
+                        <span className="text-gray-500">{t('macAddress')}:</span>
                         <p className="font-medium">{selectedDevice.macAddress}</p>
                       </div>
                       <div>
-                        <span className="text-gray-500">Firmware:</span>
+                        <span className="text-gray-500">{t('firmware')}:</span>
                         <p className="font-medium">v{selectedDevice.firmwareVersion}</p>
                       </div>
                       <div>
-                        <span className="text-gray-500">Status:</span>
+                        <span className="text-gray-500">{t('status')}:</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedDevice.connectionStatus)}`}>
                           {selectedDevice.connectionStatus.charAt(0).toUpperCase() + selectedDevice.connectionStatus.slice(1)}
                         </span>
@@ -273,20 +275,20 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
 
                   {/* Patient Assignment */}
                   <div className="bg-blue-50 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-800 mb-3">Patient Assignment</h4>
+                    <h4 className="font-semibold text-gray-800 mb-3">{t('patientAssignment')}</h4>
                     <div className="text-sm">
-                      <p><span className="text-gray-500">Patient ID:</span> <span className="font-medium">{selectedDevice.patientId}</span></p>
-                      <p><span className="text-gray-500">Patient Name:</span> <span className="font-medium">{selectedDevice.patientName}</span></p>
+                      <p><span className="text-gray-500">{t('patientId')}:</span> <span className="font-medium">{selectedDevice.patientId}</span></p>
+                      <p><span className="text-gray-500">{t('patientName')}:</span> <span className="font-medium">{selectedDevice.patientName}</span></p>
                     </div>
                   </div>
 
                   {/* Battery Status */}
                   <div className="bg-green-50 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-800 mb-3">Battery Status</h4>
+                    <h4 className="font-semibold text-gray-800 mb-3">{t('batteryStatus')}</h4>
                     <div className="flex items-center space-x-4">
                       <div className="flex-1">
                         <div className="flex justify-between text-sm mb-1">
-                          <span>Battery Level</span>
+                          <span>{t('batteryLevel')}</span>
                           <span className="font-medium">{selectedDevice.batteryLevel}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-3">
@@ -299,20 +301,20 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
                       {selectedDevice.isCharging && (
                         <div className="flex items-center space-x-1 text-green-600">
                           <span>⚡</span>
-                          <span className="text-sm font-medium">Charging</span>
+                          <span className="text-sm font-medium">{t('charging')}</span>
                         </div>
                       )}
                     </div>
                     {selectedDevice.batteryLevel < 20 && (
                       <div className="mt-3 p-2 bg-red-100 border border-red-200 rounded text-red-700 text-sm">
-                        ⚠️ Low battery warning - Please charge device soon
+                        ⚠️ {t('lowBatteryWarning')}
                       </div>
                     )}
                   </div>
 
                   {/* Supported Vitals */}
                   <div className="bg-purple-50 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-800 mb-3">Supported Vital Signs</h4>
+                    <h4 className="font-semibold text-gray-800 mb-3">{t('supportedVitalSigns')}</h4>
                     <div className="grid grid-cols-2 gap-2">
                       {selectedDevice.supportedVitals.map((vital) => (
                         <div key={vital} className="flex items-center space-x-2">
@@ -325,18 +327,18 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
 
                   {/* Sync Information */}
                   <div className="bg-yellow-50 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-800 mb-3">Sync Information</h4>
+                    <h4 className="font-semibold text-gray-800 mb-3">{t('syncInformation')}</h4>
                     <div className="space-y-2 text-sm">
                       <div>
-                        <span className="text-gray-500">Last Sync:</span>
+                        <span className="text-gray-500">{t('lastSync')}:</span>
                         <span className="font-medium ml-2">{formatLastSync(selectedDevice.lastSync)}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Total Readings:</span>
+                        <span className="text-gray-500">{t('totalReadings')}:</span>
                         <span className="font-medium ml-2">{selectedDevice.totalReadings}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Last Reading:</span>
+                        <span className="text-gray-500">{t('lastReading')}:</span>
                         <span className="font-medium ml-2">{formatLastSync(selectedDevice.lastReading)}</span>
                       </div>
                     </div>
@@ -347,10 +349,10 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
                         disabled={selectedDevice.connectionStatus === 'syncing' || selectedDevice.connectionStatus === 'disconnected'}
                         className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded font-medium transition-all"
                       >
-                        {selectedDevice.connectionStatus === 'syncing' ? 'Syncing...' : 'Force Sync'}
+                        {selectedDevice.connectionStatus === 'syncing' ? t('syncing') : t('forceSync')}
                       </button>
                       <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded font-medium transition-all">
-                        View History
+                        {t('viewHistory')}
                       </button>
                     </div>
                   </div>
@@ -360,7 +362,7 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
               <div className="flex items-center justify-center h-full text-gray-500">
                 <div className="text-center">
                   <div className="text-6xl mb-4">📱</div>
-                  <p className="text-lg">Select a device to view details</p>
+                  <p className="text-lg">{t('selectDeviceToViewDetails')}</p>
                 </div>
               </div>
             )}

@@ -524,6 +524,7 @@ export interface Translation {
   unknown: string;
   justNow: string;
   retry: string;
+  loadingDeviceInformation: string;
   
   // Additional Admin Dashboard
   thisMonth: string;
@@ -534,6 +535,57 @@ export interface Translation {
   ecgMonitors: string;
   glucoseMonitors: string;
   averageHeartRate: string;
+  
+  // Device Monitoring Interface
+  deviceMonitoring: string;
+  hc03DeviceStatusManagement: string;
+  connectedDevices: string;
+  selectDeviceToViewDetails: string;
+  battery: string;
+  lastSync: string;
+  readings: string;
+  syncNow: string;
+  syncing: string;
+  connected: string;
+  disconnected: string;
+  deviceDetails: string;
+  deviceInformation: string;
+  deviceId: string;
+  macAddress: string;
+  firmware: string;
+  patientAssignment: string;
+  patientName: string;
+  batteryStatus: string;
+  batteryLevel: string;
+  charging: string;
+  lowBatteryWarning: string;
+  status: string;
+  supportedVitalSigns: string;
+  syncInformation: string;
+  totalReadings: string;
+  lastReading: string;
+  forceSync: string;
+  viewHistory: string;
+  
+  // Help & Support Interface
+  helpAndSupport: string;
+  frequentlyAskedQuestions: string;
+  searchFAQs: string;
+  allCategories: string;
+  deviceSetup: string;
+  bloodPressure: string;
+  heartRate: string;
+  generalUsage: string;
+  troubleshooting: string;
+  needMoreHelp: string;
+  contactSupportTeam: string;
+  available24x7: string;
+  noFAQsFound: string;
+  tryAdjustingSearch: string;
+  watchVideoGuide: string;
+  visualStepByStepInstructions: string;
+  lastUpdated: string;
+  healthcareSupport: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -1102,6 +1154,7 @@ export const translations: Record<Language, Translation> = {
     unknown: 'Unknown',
     justNow: 'Just now',
     retry: 'Retry',
+    loadingDeviceInformation: 'Loading device information...',
     
     // Additional Admin Dashboard
     thisMonth: 'this month',
@@ -1112,6 +1165,57 @@ export const translations: Record<Language, Translation> = {
     ecgMonitors: 'ECG Monitors',
     glucoseMonitors: 'Glucose Monitors',
     averageHeartRate: 'Average Heart Rate',
+    
+    // Device Monitoring Interface
+    deviceMonitoring: 'Device Monitoring',
+    hc03DeviceStatusManagement: 'HC03 Device Status & Management',
+    connectedDevices: 'Connected Devices',
+    selectDeviceToViewDetails: 'Select a device to view details',
+    battery: 'Battery',
+    lastSync: 'Last Sync',
+    readings: 'readings',
+    syncNow: 'Sync Now',
+    syncing: 'Syncing...',
+    connected: 'Connected',
+    disconnected: 'Disconnected',
+    deviceDetails: 'Device Details',
+    deviceInformation: 'Device Information',
+    deviceId: 'Device ID',
+    macAddress: 'MAC Address',
+    firmware: 'Firmware',
+    patientAssignment: 'Patient Assignment',
+    patientName: 'Patient Name',
+    batteryStatus: 'Battery Status',
+    batteryLevel: 'Battery Level',
+    charging: 'Charging',
+    lowBatteryWarning: 'Low battery warning - Please charge device soon',
+    status: 'Status',
+    supportedVitalSigns: 'Supported Vital Signs',
+    syncInformation: 'Sync Information',
+    totalReadings: 'Total Readings',
+    lastReading: 'Last Reading',
+    forceSync: 'Force Sync',
+    viewHistory: 'View History',
+    
+    // Help & Support Interface
+    helpAndSupport: 'Help & Support',
+    frequentlyAskedQuestions: 'Frequently Asked Questions & Device Instructions',
+    searchFAQs: 'Search FAQs...',
+    allCategories: 'All Categories',
+    deviceSetup: 'Device Setup',
+    bloodPressure: 'Blood Pressure',
+    heartRate: 'Heart Rate',
+    generalUsage: 'General Usage',
+    troubleshooting: 'Troubleshooting',
+    needMoreHelp: 'Need More Help?',
+    contactSupportTeam: 'Contact our support team',
+    available24x7: '24/7 Available',
+    noFAQsFound: 'No FAQs Found',
+    tryAdjustingSearch: 'Try adjusting your search terms or category filter.',
+    watchVideoGuide: 'Watch Video Guide',
+    visualStepByStepInstructions: 'Visual step-by-step instructions',
+    lastUpdated: 'Last updated',
+    healthcareSupport: '24/7 Tele H Technology Services - Healthcare Support',
   },
   ar: {
     // Navigation
@@ -1680,6 +1784,7 @@ export const translations: Record<Language, Translation> = {
     unknown: 'غير معروف',
     justNow: 'الآن',
     retry: 'إعادة المحاولة',
+    loadingDeviceInformation: 'جاري تحميل معلومات الأجهزة...',
     
     // Additional Admin Dashboard
     thisMonth: 'هذا الشهر',
@@ -1690,6 +1795,57 @@ export const translations: Record<Language, Translation> = {
     ecgMonitors: 'أجهزة مراقبة القلب',
     glucoseMonitors: 'أجهزة مراقبة الجلوكوز',
     averageHeartRate: 'متوسط معدل ضربات القلب',
+    
+    // Device Monitoring Interface
+    deviceMonitoring: 'مراقبة الأجهزة',
+    hc03DeviceStatusManagement: 'حالة وإدارة أجهزة HC03',
+    connectedDevices: 'الأجهزة المتصلة',
+    selectDeviceToViewDetails: 'اختر جهازاً لعرض التفاصيل',
+    battery: 'البطارية',
+    lastSync: 'آخر مزامنة',
+    readings: 'قراءات',
+    syncNow: 'مزامنة الآن',
+    syncing: 'جاري المزامنة...',
+    connected: 'متصل',
+    disconnected: 'غير متصل',
+    deviceDetails: 'تفاصيل الجهاز',
+    deviceInformation: 'معلومات الجهاز',
+    deviceId: 'معرف الجهاز',
+    macAddress: 'عنوان MAC',
+    firmware: 'البرنامج الثابت',
+    patientAssignment: 'تخصيص المريض',
+    patientName: 'اسم المريض',
+    batteryStatus: 'حالة البطارية',
+    batteryLevel: 'مستوى البطارية',
+    charging: 'يتم الشحن',
+    lowBatteryWarning: 'تحذير بطارية منخفضة - يرجى شحن الجهاز قريباً',
+    status: 'الحالة',
+    supportedVitalSigns: 'العلامات الحيوية المدعومة',
+    syncInformation: 'معلومات المزامنة',
+    totalReadings: 'إجمالي القراءات',
+    lastReading: 'آخر قراءة',
+    forceSync: 'فرض المزامنة',
+    viewHistory: 'عرض التاريخ',
+    
+    // Help & Support Interface
+    helpAndSupport: 'المساعدة والدعم',
+    frequentlyAskedQuestions: 'الأسئلة الشائعة وتعليمات الأجهزة',
+    searchFAQs: 'البحث في الأسئلة الشائعة...',
+    allCategories: 'جميع الفئات',
+    deviceSetup: 'إعداد الجهاز',
+    bloodPressure: 'ضغط الدم',
+    heartRate: 'معدل ضربات القلب',
+    generalUsage: 'الاستخدام العام',
+    troubleshooting: 'استكشاف الأخطاء',
+    needMoreHelp: 'تحتاج مساعدة أكثر؟',
+    contactSupportTeam: 'اتصل بفريق الدعم',
+    available24x7: 'متاح 24/7',
+    noFAQsFound: 'لم يتم العثور على أسئلة شائعة',
+    tryAdjustingSearch: 'جرب تعديل مصطلحات البحث أو فلتر الفئة.',
+    watchVideoGuide: 'مشاهدة دليل الفيديو',
+    visualStepByStepInstructions: 'تعليمات مرئية خطوة بخطوة',
+    lastUpdated: 'آخر تحديث',
+    healthcareSupport: 'خدمات تكنولوجيا الصحة 24/7 - دعم الرعاية الصحية',
   },
 };
 
