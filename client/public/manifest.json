@@ -2,7 +2,7 @@
   "name": "24/7 Tele H - Health Monitor",
   "short_name": "24/7 Tele H",
   "description": "Professional healthcare monitoring platform with HC03 device integration",
-  "start_url": "/mobile-dashboard",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#3b82f6",
