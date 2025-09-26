@@ -219,7 +219,7 @@ function AppContent() {
         const errorData = await response.json();
         setState(prev => ({ 
           ...prev, 
-          error: errorData.message || 'Login failed', 
+          error: errorData.message || t('loginFailed'), 
           loading: false 
         }));
       }
@@ -234,12 +234,12 @@ function AppContent() {
 
   const handleRegister = async () => {
     if (!formData.acceptTerms) {
-      setState(prev => ({ ...prev, error: 'Please accept the terms and conditions' }));
+      setState(prev => ({ ...prev, error: t('pleaseAcceptTerms') }));
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setState(prev => ({ ...prev, error: 'Passwords do not match' }));
+      setState(prev => ({ ...prev, error: t('passwordsDoNotMatch') }));
       return;
     }
 
@@ -280,12 +280,12 @@ function AppContent() {
           loading: false,
           error: ''
         }));
-        alert('Registration successful! Please login with your credentials.');
+        alert(t('registrationSuccessful'));
       } else {
         const errorData = await response.json();
         setState(prev => ({ 
           ...prev, 
-          error: errorData.message || 'Registration failed', 
+          error: errorData.message || t('registrationFailed'), 
           loading: false 
         }));
       }
@@ -444,14 +444,14 @@ For questions, contact: support@24x7teleh.com
                   <div className="lg:hidden mb-6">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">24/7 Tele H</h1>
                     <p className="text-gray-600">
-                      {isRTL ? 'خدمات التكنولوجيا' : 'Technology Services'}
+                      {t('technologyServices')}
                     </p>
                   </div>
                   <h2 className="text-3xl font-bold text-gray-900">
-                    {isRTL ? 'مرحباً بعودتك' : 'Welcome Back'}
+                    {t('welcomeBack')}
                   </h2>
                   <p className="mt-2 text-gray-600">
-                    {isRTL ? 'سجل دخولك إلى لوحة الرعاية الصحية' : 'Sign in to your healthcare dashboard'}
+                    {t('signInToHealthcareDashboard')}
                   </p>
                 </div>
                 <LanguageSwitcher />
@@ -467,28 +467,28 @@ For questions, contact: support@24x7teleh.com
               }} className="space-y-6">
                 <div>
                   <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>
-                    {isRTL ? 'البريد الإلكتروني أو رقم المريض' : 'Email Address or Patient ID'}
+                    {t('emailOrPatientId')}
                   </label>
                   <input
                     type="text"
                     name="email"
                     required
                     className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
-                    placeholder={isRTL ? 'أدخل بريدك الإلكتروني أو رقم المريض' : 'Enter your email or patient ID'}
+                    placeholder={t('enterEmailOrPatientId')}
                     dir={isRTL ? 'rtl' : 'ltr'}
                   />
                 </div>
 
                 <div>
                   <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>
-                    {isRTL ? 'كلمة المرور' : 'Password'}
+                    {t('password')}
                   </label>
                   <input
                     type="password"
                     name="password"
                     required
                     className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
-                    placeholder={isRTL ? 'أدخل كلمة المرور' : 'Enter your password'}
+                    placeholder={t('enterPassword')}
                   />
                 </div>
 
@@ -504,7 +504,7 @@ For questions, contact: support@24x7teleh.com
                   className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-teal-700 disabled:opacity-50 transition-all transform hover:scale-[1.02]"
                   data-testid="button-login-submit"
                 >
-                  {state.loading ? (isRTL ? 'جاري تسجيل الدخول...' : 'Signing In...') : (isRTL ? 'تسجيل الدخول' : 'Sign In')}
+                  {state.loading ? t('signingIn') : t('signIn')}
                 </button>
               </form>
 

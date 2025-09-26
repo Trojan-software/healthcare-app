@@ -427,6 +427,103 @@ export interface Translation {
   checkupScheduleCreated: string;
   failedToCreateSchedule: string;
   confirmDeleteSchedule: string;
+  
+  // Main App Strings
+  technologyServices: string;
+  welcomeBack: string;
+  signInToHealthcareDashboard: string;
+  emailOrPatientId: string;
+  enterEmailOrPatientId: string;
+  enterPassword: string;
+  signingIn: string;
+  signIn: string;
+  
+  // Registration Form
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  confirmPassword: string;
+  creatingAccount: string;
+  createAccountSendOtp: string;
+  
+  // Admin Dashboard
+  adminDashboard: string;
+  managePatientDashboardAccess: string;
+  totalPatients: string;
+  activeMonitors: string;
+  criticalAlerts: string;
+  complianceRate: string;
+  patientManagement: string;
+  lastReading: string;
+  monitor: string;
+  syncNow: string;
+  viewFullHistory: string;
+  
+  // Patient Dashboard
+  myHealthDashboard: string;
+  bpm: string;
+  mmHg: string;
+  celsius: string;
+  percent: string;
+  healthStatusOverview: string;
+  allVitalSignsNormal: string;
+  continueRegularMedication: string;
+  nextAppointment: string;
+  hc03Device: string;
+  startMonitoring: string;
+  viewReports: string;
+  medicationLog: string;
+  scheduleCheckup: string;
+  connectHc03Device: string;
+  
+  // Device and Health Monitoring
+  deviceRegistrationRequired: string;
+  setupPatientProfile: string;
+  newPatientRegistration: string;
+  createNewPatientProfile: string;
+  existingPatientLogin: string;
+  connectToExistingAccount: string;
+  guestMode: string;
+  abuDhabiHospital: string;
+  selectHospitalAbuDhabi: string;
+  other: string;
+  passwordMinChars: string;
+  agreeTermsConditions: string;
+  privacyPolicy: string;
+  createAccount: string;
+  
+  // Verification
+  verificationMethod: string;
+  emailVerification: string;
+  receiveOtpEmail: string;
+  smsVerification: string;
+  receiveOtpSms: string;
+  verificationCode: string;
+  enterSixDigitCode: string;
+  verifyAndConnect: string;
+  didntReceiveCode: string;
+  resendOtp: string;
+  backToRegistration: string;
+  registrationSuccessful: string;
+  accountCreatedSuccessfully: string;
+  registrationDetails: string;
+  startingHealthMonitoring: string;
+  
+  // Error Messages
+  pleaseAcceptTerms: string;
+  passwordsDoNotMatch: string;
+  loginFailed: string;
+  registrationFailed: string;
+  networkError: string;
+  failedToLoadDashboard: string;
+  failedToUpdatePatientStatus: string;
+  
+  // General UI
+  notSpecified: string;
+  notProvided: string;
+  unknown: string;
+  justNow: string;
+  retry: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -898,6 +995,103 @@ export const translations: Record<Language, Translation> = {
     checkupScheduleCreated: 'Checkup schedule created successfully!',
     failedToCreateSchedule: 'Failed to create schedule',
     confirmDeleteSchedule: 'Are you sure you want to delete this schedule?',
+    
+    // Main App Strings
+    technologyServices: 'Technology Services',
+    welcomeBack: 'Welcome Back',
+    signInToHealthcareDashboard: 'Sign in to your healthcare dashboard',
+    emailOrPatientId: 'Email Address or Patient ID',
+    enterEmailOrPatientId: 'Enter your email or patient ID',
+    enterPassword: 'Enter your password',
+    signingIn: 'Signing In...',
+    signIn: 'Sign In',
+    
+    // Registration Form
+    firstName: 'First Name',
+    middleName: 'Middle Name',
+    lastName: 'Last Name',
+    confirmPassword: 'Confirm Password',
+    creatingAccount: 'Creating Account...',
+    createAccountSendOtp: 'Create Account & Send OTP',
+    
+    // Admin Dashboard
+    adminDashboard: 'Admin Dashboard',
+    managePatientDashboardAccess: 'Manage patient dashboard access for 24/7 Tele H',
+    totalPatients: 'Total Patients',
+    activeMonitors: 'Active Monitors',
+    criticalAlerts: 'Critical Alerts',
+    complianceRate: 'Compliance Rate',
+    patientManagement: 'Patient Management',
+    lastReading: 'Last Reading',
+    monitor: 'Monitor',
+    syncNow: 'Sync Now',
+    viewFullHistory: 'View Full History',
+    
+    // Patient Dashboard
+    myHealthDashboard: '24/7 Tele H - My Health Dashboard',
+    bpm: 'bpm',
+    mmHg: 'mmHg',
+    celsius: '°C',
+    percent: '%',
+    healthStatusOverview: 'Health Status Overview',
+    allVitalSignsNormal: 'All Vital Signs Normal',
+    continueRegularMedication: 'Your latest readings are within healthy ranges. Continue your regular medication schedule.',
+    nextAppointment: 'Next Appointment',
+    hc03Device: 'HC03 Device',
+    startMonitoring: 'Start Monitoring',
+    viewReports: 'View Reports',
+    medicationLog: 'Medication Log',
+    scheduleCheckup: 'Schedule Checkup',
+    connectHc03Device: 'Connect HC03 Device',
+    
+    // Device and Health Monitoring
+    deviceRegistrationRequired: 'Device Registration Required',
+    setupPatientProfile: 'Set up your patient profile to start monitoring your health with HC03 Health Monitor Pro',
+    newPatientRegistration: 'New Patient Registration',
+    createNewPatientProfile: 'Create a new patient profile',
+    existingPatientLogin: 'Existing Patient Login',
+    connectToExistingAccount: 'Connect device to existing account',
+    guestMode: 'Use in Guest Mode (Limited Features)',
+    abuDhabiHospital: 'Abu Dhabi Hospital/Clinic *',
+    selectHospitalAbuDhabi: 'Select a hospital in Abu Dhabi',
+    other: 'Other',
+    passwordMinChars: 'Password (min. 6 characters) *',
+    agreeTermsConditions: 'I agree to the Terms and Conditions',
+    privacyPolicy: 'Privacy Policy',
+    createAccount: 'Create Account',
+    
+    // Verification
+    verificationMethod: 'Verification Method',
+    emailVerification: 'Email Verification',
+    receiveOtpEmail: 'Receive OTP via email',
+    smsVerification: 'SMS Verification',
+    receiveOtpSms: 'Receive OTP via SMS',
+    verificationCode: 'Verification Code',
+    enterSixDigitCode: 'Enter 6-digit code',
+    verifyAndConnect: 'Verify & Connect',
+    didntReceiveCode: 'Didn\'t receive the code?',
+    resendOtp: 'Resend OTP',
+    backToRegistration: 'Back to Registration',
+    registrationSuccessful: 'Registration Successful!',
+    accountCreatedSuccessfully: 'Your account has been created successfully. You can now log in to access the 24/7 Tele H healthcare monitoring system.',
+    registrationDetails: 'Your Registration Details:',
+    startingHealthMonitoring: 'Starting health monitoring session...',
+    
+    // Error Messages
+    pleaseAcceptTerms: 'Please accept the terms and conditions',
+    passwordsDoNotMatch: 'Passwords do not match',
+    loginFailed: 'Login failed',
+    registrationFailed: 'Registration failed',
+    networkError: 'Network error',
+    failedToLoadDashboard: 'Failed to load dashboard data',
+    failedToUpdatePatientStatus: 'Failed to update patient status',
+    
+    // General UI
+    notSpecified: 'Not specified',
+    notProvided: 'Not provided',
+    unknown: 'Unknown',
+    justNow: 'Just now',
+    retry: 'Retry',
   },
   ar: {
     // Navigation
@@ -1369,6 +1563,103 @@ export const translations: Record<Language, Translation> = {
     checkupScheduleCreated: 'تم إنشاء جدول الفحص بنجاح!',
     failedToCreateSchedule: 'فشل في إنشاء الجدول',
     confirmDeleteSchedule: 'هل أنت متأكد من رغبتك في حذف هذا الجدول؟',
+    
+    // Main App Strings
+    technologyServices: 'خدمات التكنولوجيا',
+    welcomeBack: 'مرحباً بعودتك',
+    signInToHealthcareDashboard: 'سجل دخولك إلى لوحة الرعاية الصحية',
+    emailOrPatientId: 'البريد الإلكتروني أو رقم المريض',
+    enterEmailOrPatientId: 'أدخل بريدك الإلكتروني أو رقم المريض',
+    enterPassword: 'أدخل كلمة المرور',
+    signingIn: 'جاري تسجيل الدخول...',
+    signIn: 'تسجيل الدخول',
+    
+    // Registration Form
+    firstName: 'الاسم الأول',
+    middleName: 'الاسم الأوسط',
+    lastName: 'اسم العائلة',
+    confirmPassword: 'تأكيد كلمة المرور',
+    creatingAccount: 'إنشاء الحساب...',
+    createAccountSendOtp: 'إنشاء الحساب وإرسال رمز التحقق',
+    
+    // Admin Dashboard
+    adminDashboard: 'لوحة الإدارة',
+    managePatientDashboardAccess: 'إدارة وصول المرضى إلى لوحة المراقبة الصحية',
+    totalPatients: 'إجمالي المرضى',
+    activeMonitors: 'الأجهزة النشطة',
+    criticalAlerts: 'تنبيهات حرجة',
+    complianceRate: 'معدل الالتزام',
+    patientManagement: 'إدارة المرضى',
+    lastReading: 'آخر قراءة',
+    monitor: 'مراقب',
+    syncNow: 'مزامنة الآن',
+    viewFullHistory: 'عرض التاريخ الكامل',
+    
+    // Patient Dashboard
+    myHealthDashboard: 'لوحة المراقبة الصحية',
+    bpm: 'ضربة/دقيقة',
+    mmHg: 'ملم زئبق',
+    celsius: 'مئوي',
+    percent: '%',
+    healthStatusOverview: 'نظرة عامة على الحالة الصحية',
+    allVitalSignsNormal: 'جميع العلامات الحيوية طبيعية',
+    continueRegularMedication: 'تابع الجدول الدوائي المنتظم',
+    nextAppointment: 'الموعد القادم',
+    hc03Device: 'جهاز HC03',
+    startMonitoring: 'بدء المراقبة',
+    viewReports: 'عرض التقارير',
+    medicationLog: 'سجل الأدوية',
+    scheduleCheckup: 'جدولة فحص',
+    connectHc03Device: 'اتصال بجهاز HC03',
+    
+    // Device and Health Monitoring
+    deviceRegistrationRequired: 'تسجيل الجهاز مطلوب',
+    setupPatientProfile: 'إعداد ملف المريض لبدء مراقبة الصحة مع جهاز HC03',
+    newPatientRegistration: 'تسجيل مريض جديد',
+    createNewPatientProfile: 'إنشاء ملف مريض جديد',
+    existingPatientLogin: 'دخول مريض موجود',
+    connectToExistingAccount: 'ربط الجهاز بحساب موجود',
+    guestMode: 'استخدام كضيف (ميزات محدودة)',
+    abuDhabiHospital: 'مستشفى أبوظبي/العيادة',
+    selectHospitalAbuDhabi: 'اختر مستشفى في أبوظبي',
+    other: 'أخرى',
+    passwordMinChars: 'كلمة المرور (6 أحرف على الأقل)',
+    agreeTermsConditions: 'أوافق على الشروط والأحكام',
+    privacyPolicy: 'سياسة الخصوصية',
+    createAccount: 'إنشاء حساب',
+    
+    // Verification
+    verificationMethod: 'طريقة التحقق',
+    emailVerification: 'تحقق بالبريد الإلكتروني',
+    receiveOtpEmail: 'استلام رمز التحقق عبر البريد الإلكتروني',
+    smsVerification: 'تحقق بالرسائل النصية',
+    receiveOtpSms: 'استلام رمز التحقق عبر الرسائل النصية',
+    verificationCode: 'رمز التحقق',
+    enterSixDigitCode: 'أدخل الرمز المكون من 6 أرقام',
+    verifyAndConnect: 'تحقق واتصال',
+    didntReceiveCode: 'لم تستلم الرمز؟',
+    resendOtp: 'إعادة إرسال رمز التحقق',
+    backToRegistration: 'العودة للتسجيل',
+    registrationSuccessful: 'تم التسجيل بنجاح!',
+    accountCreatedSuccessfully: 'تم إنشاء حسابك بنجاح. يمكنك الآن تسجيل الدخول للوصول إلى نظام المراقبة الصحية 24/7',
+    registrationDetails: 'تفاصيل التسجيل:',
+    startingHealthMonitoring: 'بدء جلسة المراقبة الصحية...',
+    
+    // Error Messages
+    pleaseAcceptTerms: 'يرجى قبول الشروط والأحكام',
+    passwordsDoNotMatch: 'كلمات المرور غير متطابقة',
+    loginFailed: 'فشل في تسجيل الدخول',
+    registrationFailed: 'فشل في التسجيل',
+    networkError: 'خطأ في الشبكة',
+    failedToLoadDashboard: 'فشل في تحميل لوحة البيانات',
+    failedToUpdatePatientStatus: 'فشل في تحديث حالة المريض',
+    
+    // General UI
+    notSpecified: 'غير محدد',
+    notProvided: 'غير متوفر',
+    unknown: 'غير معروف',
+    justNow: 'الآن',
+    retry: 'إعادة المحاولة',
   },
 };
 
