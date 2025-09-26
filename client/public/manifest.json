@@ -99,5 +99,32 @@
     }
   ],
   "prefer_related_applications": false,
-  "id": "com.teleh.healthmonitor"
+  "related_applications": [],
+  "id": "com.teleh.healthmonitor",
+  "dir": "ltr",
+  "iarc_rating_id": "",
+  "display_override": ["standalone"],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "file_handlers": [],
+  "protocol_handlers": [],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "note_taking": {
+    "new_note_url": "/new-note"
+  },
+  "widgets": [],
+  "scope_extensions": []
 }
