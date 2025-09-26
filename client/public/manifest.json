@@ -126,5 +126,21 @@
     "new_note_url": "/new-note"
   },
   "widgets": [],
-  "scope_extensions": []
+  "scope_extensions": [],
+  "screenshots": [
+    {
+      "src": "/vite.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "24/7 Tele H Dashboard - Healthcare Monitoring"
+    },
+    {
+      "src": "/vite.svg", 
+      "sizes": "750x1334",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "24/7 Tele H Mobile - Patient Monitoring"
+    }
+  ]
 }
