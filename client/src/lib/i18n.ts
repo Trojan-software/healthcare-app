@@ -524,6 +524,16 @@ export interface Translation {
   unknown: string;
   justNow: string;
   retry: string;
+  
+  // Additional Admin Dashboard
+  thisMonth: string;
+  requiresImmediateAttention: string;
+  deviceConnections: string;
+  hc03DevicesOnline: string;
+  healthMonitoringStatus: string;
+  ecgMonitors: string;
+  glucoseMonitors: string;
+  averageHeartRate: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -1092,6 +1102,16 @@ export const translations: Record<Language, Translation> = {
     unknown: 'Unknown',
     justNow: 'Just now',
     retry: 'Retry',
+    
+    // Additional Admin Dashboard
+    thisMonth: 'this month',
+    requiresImmediateAttention: 'Requires immediate attention',
+    deviceConnections: 'Device Connections',
+    hc03DevicesOnline: 'HC03 devices online',
+    healthMonitoringStatus: 'Health Monitoring Status',
+    ecgMonitors: 'ECG Monitors',
+    glucoseMonitors: 'Glucose Monitors',
+    averageHeartRate: 'Average Heart Rate',
   },
   ar: {
     // Navigation
@@ -1660,6 +1680,16 @@ export const translations: Record<Language, Translation> = {
     unknown: 'غير معروف',
     justNow: 'الآن',
     retry: 'إعادة المحاولة',
+    
+    // Additional Admin Dashboard
+    thisMonth: 'هذا الشهر',
+    requiresImmediateAttention: 'يتطلب اهتماماً فورياً',
+    deviceConnections: 'اتصالات الأجهزة',
+    hc03DevicesOnline: 'أجهزة HC03 متصلة',
+    healthMonitoringStatus: 'حالة مراقبة الصحة',
+    ecgMonitors: 'أجهزة مراقبة القلب',
+    glucoseMonitors: 'أجهزة مراقبة الجلوكوز',
+    averageHeartRate: 'متوسط معدل ضربات القلب',
   },
 };
 

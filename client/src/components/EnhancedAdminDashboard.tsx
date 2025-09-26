@@ -217,19 +217,19 @@ export default function EnhancedAdminDashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Enhanced Admin Dashboard</h1>
-        <p className="text-gray-600 mt-1">Comprehensive patient management and health monitoring system</p>
+        <h1 className="text-3xl font-bold text-gray-900">{t('adminDashboard')}</h1>
+        <p className="text-gray-600 mt-1">{t('managePatientDashboardAccess')}</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
-          <TabsTrigger value="patients" data-testid="tab-patients">Patient Management</TabsTrigger>
-          <TabsTrigger value="devices" data-testid="tab-devices">Device Monitoring</TabsTrigger>
-          <TabsTrigger value="alerts" data-testid="tab-alerts">Critical Alerts</TabsTrigger>
-          <TabsTrigger value="reports" data-testid="tab-reports">Weekly Reports</TabsTrigger>
-          <TabsTrigger value="scheduling" data-testid="tab-scheduling">Check-up Scheduling</TabsTrigger>
-          <TabsTrigger value="analytics" data-testid="tab-analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="overview" data-testid="tab-overview">{t('dashboard')}</TabsTrigger>
+          <TabsTrigger value="patients" data-testid="tab-patients">{t('patientManagement')}</TabsTrigger>
+          <TabsTrigger value="devices" data-testid="tab-devices">{t('devices')}</TabsTrigger>
+          <TabsTrigger value="alerts" data-testid="tab-alerts">{t('criticalAlerts')}</TabsTrigger>
+          <TabsTrigger value="reports" data-testid="tab-reports">{t('reports')}</TabsTrigger>
+          <TabsTrigger value="scheduling" data-testid="tab-scheduling">{t('checkupScheduling')}</TabsTrigger>
+          <TabsTrigger value="analytics" data-testid="tab-analytics">{t('analytics')}</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -244,9 +244,9 @@ export default function EnhancedAdminDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Patients</p>
+                    <p className="text-sm font-medium text-gray-600">{t('totalPatients')}</p>
                     <p className="text-3xl font-bold text-gray-900">{mockStats.totalPatients}</p>
-                    <p className="text-xs text-green-600 mt-1">+{mockStats.newRegistrations} this month</p>
+                    <p className="text-xs text-green-600 mt-1">+{mockStats.newRegistrations} {t('thisMonth')}</p>
                   </div>
                   <Users className="w-8 h-8 text-blue-500" />
                 </div>
@@ -261,9 +261,9 @@ export default function EnhancedAdminDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Active Monitoring</p>
+                    <p className="text-sm font-medium text-gray-600">{t('activeMonitors')}</p>
                     <p className="text-3xl font-bold text-gray-900">{mockStats.activeMonitoring}</p>
-                    <p className="text-xs text-gray-600 mt-1">{mockStats.complianceRate}% compliance</p>
+                    <p className="text-xs text-gray-600 mt-1">{mockStats.complianceRate}% {t('complianceRate')}</p>
                   </div>
                   <Activity className="w-8 h-8 text-green-500" />
                 </div>
@@ -278,9 +278,9 @@ export default function EnhancedAdminDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Critical Alerts</p>
+                    <p className="text-sm font-medium text-gray-600">{t('criticalAlerts')}</p>
                     <p className="text-3xl font-bold text-gray-900">{mockStats.criticalAlerts}</p>
-                    <p className="text-xs text-red-600 mt-1">Requires immediate attention</p>
+                    <p className="text-xs text-red-600 mt-1">{t('requiresImmediateAttention')}</p>
                   </div>
                   <AlertTriangle className="w-8 h-8 text-red-500" />
                 </div>
@@ -295,9 +295,9 @@ export default function EnhancedAdminDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Device Connections</p>
+                    <p className="text-sm font-medium text-gray-600">{t('deviceConnections')}</p>
                     <p className="text-3xl font-bold text-gray-900">{mockStats.deviceConnections}</p>
-                    <p className="text-xs text-gray-600 mt-1">HC03 devices online</p>
+                    <p className="text-xs text-gray-600 mt-1">{t('hc03DevicesOnline')}</p>
                   </div>
                   <Wifi className="w-8 h-8 text-purple-500" />
                 </div>
@@ -326,21 +326,21 @@ export default function EnhancedAdminDashboard() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Activity className="w-5 h-5 mr-2 text-green-600" />
-                    Health Monitoring Status
+                    {t('healthMonitoringStatus')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">ECG Monitors</span>
-                      <Badge variant="secondary" className="bg-green-100 text-green-800">2 Active</Badge>
+                      <span className="text-gray-600">{t('ecgMonitors')}</span>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">2 {t('active')}</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Glucose Monitors</span>
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">3 Devices</Badge>
+                      <span className="text-gray-600">{t('glucoseMonitors')}</span>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">3 {t('devices')}</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Average Heart Rate</span>
+                      <span className="text-gray-600">{t('averageHeartRate')}</span>
                       <span className="font-medium">72 BPM</span>
                     </div>
                     <div className="flex justify-between items-center">
