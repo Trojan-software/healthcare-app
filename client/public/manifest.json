@@ -12,14 +12,8 @@
   "categories": ["health", "medical", "productivity"],
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
@@ -91,20 +85,5 @@
   },
   "widgets": [],
   "scope_extensions": [],
-  "screenshots": [
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "24/7 Tele H Dashboard - Healthcare Monitoring"
-    },
-    {
-      "src": "/icons/icon-384x384.png", 
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "24/7 Tele H Mobile - Patient Monitoring"
-    }
-  ]
+  "screenshots": []
 }
