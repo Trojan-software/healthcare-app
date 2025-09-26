@@ -3,590 +3,467 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 export type Language = 'en' | 'ar';
 
 export interface Translation {
-  // Navigation
-  home: string;
-  dashboard: string;
-  patients: string;
-  analytics: string;
-  devices: string;
-  reports: string;
-  settings: string;
-  logout: string;
-  
-  // Authentication
-  login: string;
-  email: string;
-  password: string;
-  signIn: string;
-  signUp: string;
-  register: string;
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  mobileNumber: string;
-  patientId: string;
-  hospital: string;
-  dateOfBirth: string;
-  createAccount: string;
-  alreadyHaveAccount: string;
-  forgotPassword: string;
-  
-  // App Info
-  appTitle: string;
-  appSubtitle: string;
-  
-  // Login Form
-  patientLogin: string;
-  emailOrPatientId: string;
-  enterEmailOrPatientId: string;
-  enterPassword: string;
-  rememberMe: string;
-  signingIn: string;
-  
-  // Signup Form
-  healthcareMonitoringRegistration: string;
-  patientRegistration: string;
-  
-  // ECG Dashboard - Vital Statistics
-  breathsPerMin: string;
-  stressLevel: string;
-  moodIndex: string;
-  
-  // ECG Dashboard - Detailed Metrics
-  heartRateVariability: string;
-  rmssd: string;
-  pnn50: string;
-  sdnn: string;
-  averageRR: string;
-  hrRange: string;
-  ecgIntervals: string;
-  qrsWidth: string;
-  qtInterval: string;
-  prInterval: string;
-  stElevation: string;
-  cardiacRhythm: string;
-  statusAndAlerts: string;
-  moodCategory: string;
-  contactQuality: string;
-  arrhythmia: string;
-  signalStrength: string;
-  recordingStatus: string;
-  active: string;
-  standby: string;
-  
-  // Status Values
-  balance: string;
-  poor: string;
-  none: string;
-  detected: string;
-  wide: string;
-  yes: string;
-  no: string;
   abnormal: string;
-  
-  // Analysis Sections
-  rhythmAnalysis: string;
-  dominantRhythm: string;
-  pWavePresent: string;
-  qrsMorphology: string;
-  axisDeviation: string;
-  clinicalInterpretation: string;
-  overallAssessment: string;
-  urgencyLevel: string;
-  followupRequired: string;
-  riskStratification: string;
-  high: string;
-  low: string;
-  moderate: string;
-  highRisk: string;
-  lowRisk: string;
-  criticalEcgFindings: string;
-  
-  // Blood Glucose Monitor
-  bloodGlucoseMonitor: string;
-  startTest: string;
-  measuring: string;
-  noGlucoseReadings: string;
-  startMeasurementToSeeData: string;
-  latestReading: string;
-  recentReadings: string;
-  noReadings: string;
-  prediabetic: string;
-  
-  // Device Battery Status
-  deviceBattery: string;
-  deviceBatteryStatus: string;
-  devices: string;
-  noDevicesFound: string;
-  connectHC03Devices: string;
-  lowest: string;
-  charging: string;
-  critical: string;
-  full: string;
-  good: string;
-  startCharging: string;
-  stopCharging: string;
-  
-  // Device Names
-  glucoseMonitor: string;
-  bloodPressureMonitor: string;
-  ecgMonitor: string;
-  
-  // Dashboard
-  welcomeBack: string;
-  totalPatients: string;
-  activeAlerts: string;
-  connectedDevices: string;
-  systemStatus: string;
-  online: string;
-  offline: string;
-  
-  // Patient Management
-  patientManagement: string;
-  addPatient: string;
-  searchPatients: string;
-  viewPatient: string;
-  editPatient: string;
-  deletePatient: string;
-  patientDetails: string;
-  fullName: string;
-  contactInfo: string;
-  status: string;
-  active: string;
-  inactive: string;
-  registrationDate: string;
-  lastActivity: string;
-  
-  // Vital Signs
-  vitalSigns: string;
-  heartRate: string;
-  bloodPressure: string;
-  temperature: string;
-  oxygenLevel: string;
-  bloodGlucose: string;
-  ecg: string;
-  normal: string;
-  elevated: string;
-  high: string;
-  critical: string;
-  
-  // HC03 Devices
-  bluetoothDevices: string;
-  deviceConnection: string;
-  connected: string;
-  disconnected: string;
-  batteryLevel: string;
-  signalStrength: string;
-  addDevice: string;
-  connectDevice: string;
-  disconnectDevice: string;
-  deviceStatus: string;
-  
-  // Alerts & Notifications
-  alerts: string;
-  criticalAlert: string;
-  lowBattery: string;
-  deviceOffline: string;
   abnormalVitals: string;
-  emergencyContact: string;
-  
-  // Reports
-  weeklyReport: string;
-  exportReport: string;
-  generateReport: string;
-  reportSummary: string;
-  
-  // Common Actions
-  save: string;
-  cancel: string;
-  delete: string;
-  edit: string;
-  view: string;
-  close: string;
-  refresh: string;
-  loading: string;
-  search: string;
-  filter: string;
-  
-  // Time & Date
-  today: string;
-  yesterday: string;
-  thisWeek: string;
-  thisMonth: string;
-  lastWeek: string;
-  lastMonth: string;
-  
-  // Healthcare Specific
-  medicalHistory: string;
+  abuDhabiHospital: string;
+  accountCreatedSuccessfully: string;
+  actions: string;
+  activate: string;
+  active: string;
+  activeAlerts: string;
+  activeMonitoring: string;
+  activeMonitors: string;
+  activePatients: string;
+  activeSchedules: string;
+  addDevice: string;
+  addPatient: string;
+  adminDashboard: string;
+  administrator: string;
+  advancedAnalytics: string;
+  advancedHealthcareSystem: string;
+  age: string;
+  agreeTermsConditions: string;
+  aiInsightsAndTrends: string;
+  alerts: string;
+  allCategories: string;
+  allHospitals: string;
+  allStatus: string;
+  allVitalSignsNormal: string;
   allergies: string;
-  medications: string;
+  alreadyHaveAccount: string;
+  analytics: string;
+  appSubtitle: string;
+  appTitle: string;
+  arrhythmia: string;
+  attention: string;
+  available24x7: string;
+  averageHeartRate: string;
+  averageRR: string;
+  axisDeviation: string;
+  backToDashboard: string;
+  backToRegistration: string;
+  balance: string;
+  battery: string;
+  batteryLevel: string;
+  batteryStatus: string;
+  bedtime: string;
+  bloodGlucose: string;
+  bloodGlucoseMeasurement: string;
+  bloodGlucoseMonitor: string;
+  bloodOxygen: string;
+  bloodOxygenMeasurement: string;
+  bloodOxygenMonitor: string;
+  bloodPressure: string;
+  bloodPressureHealthTip: string;
+  bloodPressureMeasurement: string;
+  bloodPressureMonitor: string;
+  bluetoothDevices: string;
+  bpm: string;
+  breathsPerMin: string;
+  cancel: string;
+  cardiacRhythm: string;
+  celsius: string;
+  charging: string;
+  chargingStatus: string;
+  checkupInterval: string;
   checkupSchedule: string;
-  nextAppointment: string;
-  doctorNotes: string;
-  healthTrends: string;
+  checkupScheduleCreated: string;
+  checkupScheduling: string;
+  chill: string;
+  choosePatient: string;
+  clickToViewActivePatients: string;
+  clickToViewAllPatients: string;
+  clickToViewAnalytics: string;
+  clickToViewCriticalPatients: string;
+  clinicalInterpretation: string;
+  close: string;
+  complete: string;
+  completePatientInfo: string;
   complianceRate: string;
-  
-  // Validation Messages
-  required: string;
-  invalidEmail: string;
-  invalidPhone: string;
-  passwordTooShort: string;
-  passwordsNotMatch: string;
-  
-  // Success/Error Messages
-  success: string;
-  error: string;
-  saved: string;
-  deleted: string;
-  updated: string;
+  confirmDeleteSchedule: string;
+  confirmPassword: string;
+  connectDevice: string;
+  connectHC03Devices: string;
+  connectHc03Device: string;
+  connectToExistingAccount: string;
+  connected: string;
+  connectedDevices: string;
+  connecting: string;
   connectionEstablished: string;
   connectionFailed: string;
-  
-  // HC03 Device Specific
-  scanningForDevices: string;
-  startMeasurement: string;
-  stopMeasurement: string;
-  measurementStarted: string;
-  measurementCompleted: string;
-  measurementInProgress: string;
-  placeFinger: string;
-  removeFingerAndWait: string;
-  deviceBatteryLow: string;
-  syncNow: string;
-  viewDetails: string;
-  viewHistory: string;
-  exportData: string;
-  chargingStatus: string;
-  firmwareVersion: string;
-  macAddress: string;
-  lastSync: string;
-  
-  // Measurement Types
-  ecgMeasurement: string;
-  bloodOxygenMeasurement: string;
-  bloodPressureMeasurement: string;
-  temperatureMeasurement: string;
-  bloodGlucoseMeasurement: string;
-  batteryStatus: string;
-  
-  // Status Labels
-  scanning: string;
-  connecting: string;
-  ready: string;
-  measuring: string;
-  complete: string;
-  failed: string;
-  
-  // Mood Index Terms (HC03 specific)
-  chill: string;
-  relax: string;
-  balance: string;
-  excitation: string;
-  excitementAnxiety: string;
-  
-  // Blood Pressure Specific
-  systolic: string;
-  diastolic: string;
-  
-  // Blood Glucose Specific
-  fasting: string;
-  postMeal: string;
-  random: string;
-  bedtime: string;
-  
-  // Data Headers
-  patientName: string;
-  deviceName: string;
-  lastMeasurement: string;
-  measurementCount: string;
-  
-  // Units
-  bpm: string; // beats per minute
-  mmhg: string; // mmHg
-  celsius: string; // °C
-  percentage: string; // %
-  mgdl: string; // mg/dL
-  
-  // Additional Missing Keys
-  unknown: string;
-  ecgAnalysisReport: string;
-  detailedEcgAnalysis: string;
-  backToDashboard: string;
-  healthMonitoring: string;
-  realtimeVitalSigns: string;
-  ecgMonitor: string;
   contact: string;
-  noContact: string;
-  start: string;
-  stop: string;
-  export: string;
-  share: string;
-  history: string;
-  from: string;
-  to: string;
-  
-  // Health Monitor Modals
-  heartRateMonitor: string;
-  temperatureMonitor: string;
-  bloodOxygenMonitor: string;
-  realtimeMonitoring: string;
-  currentReading: string;
-  hourTrend24: string;
-  temperatureRanges: string;
-  healthTips: string;
-  
-  // Temperature Classifications
-  hypothermia: string;
-  mildFever: string;
-  fever: string;
-  highFever: string;
-  hyperthermia: string;
-  
-  // Health Tips
-  heartRateHealthTip: string;
-  bloodPressureHealthTip: string;
-  temperatureHealthTip: string;
-  oxygenLevelHealthTip: string;
-  
-  // Additional Status Labels
-  warning: string;
-  attention: string;
-  
-  // Table Headers
-  dateTime: string;
-  oxygen: string;
-  
-  // Admin Dashboard Specific
-  systemAdministrator: string;
-  teleHAdmin247: string;
-  healthcareManagementDashboard: string;
-  administrator: string;
-  activeMonitoring: string;
-  deviceMonitoring: string;
-  faqAndSupport: string;
-  advancedAnalytics: string;
-  enhancedScheduling: string;
-  deviceGuidesAndHelp: string;
-  hc03StatusAndBattery: string;
-  aiInsightsAndTrends: string;
-  oneToFourHourIntervals: string;
-  exportCSV: string;
-  clickToViewAllPatients: string;
-  clickToViewActivePatients: string;
-  clickToViewCriticalPatients: string;
-  clickToViewAnalytics: string;
-  searchPatientsDots: string;
-  allStatus: string;
-  allHospitals: string;
-  patient: string;
-  actions: string;
-  vitals: string;
-  
-  // Additional Table Headers
-  lastActivity: string;
-  patientIdHeader: string;
-  
-  // Status Values
-  noData: string;
-  normalStatus: string;
-  
-  // Search and Filters
-  searchPatients: string;
-  
-  // Time Units  
-  hour: string;
-  hours: string;
-  
-  // Checkup Scheduling
-  checkupScheduling: string;
-  managePatientMonitoringSchedules: string;
+  contactAccess: string;
+  contactInfo: string;
+  contactQuality: string;
+  contactSupportTeam: string;
+  continueRegularMedication: string;
+  createAccount: string;
+  createAccountSendOtp: string;
   createCheckupSchedule: string;
-  selectPatient: string;
-  choosePatient: string;
-  vitalsToMonitor: string;
-  checkupInterval: string;
-  reminderPreference: string;
-  emailOnly: string;
-  smsOnly: string;
-  emailAndSms: string;
-  creating: string;
+  createNewPatientProfile: string;
   createSchedule: string;
-  activeSchedules: string;
-  noSchedulesCreated: string;
-  active: string;
-  paused: string;
-  interval: string;
-  nextCheckup: string;
-  monitoring: string;
-  reminders: string;
+  creating: string;
+  creatingAccount: string;
+  critical: string;
+  criticalAlert: string;
+  criticalAlerts: string;
+  criticalEcgFindings: string;
+  currentReading: string;
+  currentStatus: string;
+  currentVitalSigns: string;
+  dashboard: string;
+  dateOfBirth: string;
+  dateTime: string;
+  deactivate: string;
+  delete: string;
+  deletePatient: string;
+  deleted: string;
+  detailedEcgAnalysis: string;
+  detected: string;
+  deviceBattery: string;
+  deviceBatteryLow: string;
+  deviceBatteryStatus: string;
+  deviceConnection: string;
+  deviceConnections: string;
+  deviceDetails: string;
+  deviceGuidesAndHelp: string;
+  deviceId: string;
+  deviceInformation: string;
+  deviceMonitoring: string;
+  deviceName: string;
+  deviceOffline: string;
+  deviceRegistrationRequired: string;
+  deviceSetup: string;
+  deviceStatus: string;
+  devices: string;
+  diastolic: string;
+  didntReceiveCode: string;
+  disconnectDevice: string;
+  disconnected: string;
+  doctorNotes: string;
+  dominantRhythm: string;
   dueNow: string;
-  inHours: string;
-  inDays: string;
-  every: string;
-  pleaseSelectPatientAndVitals: string;
-  checkupScheduleCreated: string;
-  failedToCreateSchedule: string;
-  confirmDeleteSchedule: string;
-  
-  // Main App Strings
-  technologyServices: string;
-  welcomeBack: string;
-  signInToHealthcareDashboard: string;
+  ecg: string;
+  ecgAnalysisReport: string;
+  ecgIntervals: string;
+  ecgMeasurement: string;
+  ecgMonitor: string;
+  ecgMonitors: string;
+  edit: string;
+  editAction: string;
+  editPatient: string;
+  elevated: string;
+  email: string;
+  emailAddress: string;
+  emailAndSms: string;
+  emailOnly: string;
   emailOrPatientId: string;
+  emailVerification: string;
+  emergencyContact: string;
+  enhancedScheduling: string;
   enterEmailOrPatientId: string;
   enterPassword: string;
-  signingIn: string;
-  signIn: string;
-  
-  // Registration Form
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  confirmPassword: string;
-  creatingAccount: string;
-  createAccountSendOtp: string;
-  
-  // Admin Dashboard
-  adminDashboard: string;
-  managePatientDashboardAccess: string;
-  totalPatients: string;
-  activeMonitors: string;
-  criticalAlerts: string;
-  complianceRate: string;
-  patientManagement: string;
-  lastReading: string;
-  monitor: string;
-  syncNow: string;
-  viewFullHistory: string;
-  
-  // Patient Dashboard
-  myHealthDashboard: string;
-  bpm: string;
-  mmHg: string;
-  celsius: string;
-  percent: string;
-  healthStatusOverview: string;
-  allVitalSignsNormal: string;
-  continueRegularMedication: string;
-  nextAppointment: string;
-  hc03Device: string;
-  startMonitoring: string;
-  viewReports: string;
-  medicationLog: string;
-  scheduleCheckup: string;
-  connectHc03Device: string;
-  
-  // Device and Health Monitoring
-  deviceRegistrationRequired: string;
-  setupPatientProfile: string;
-  newPatientRegistration: string;
-  createNewPatientProfile: string;
-  existingPatientLogin: string;
-  connectToExistingAccount: string;
-  guestMode: string;
-  abuDhabiHospital: string;
-  selectHospitalAbuDhabi: string;
-  other: string;
-  passwordMinChars: string;
-  agreeTermsConditions: string;
-  privacyPolicy: string;
-  createAccount: string;
-  
-  // Verification
-  verificationMethod: string;
-  emailVerification: string;
-  receiveOtpEmail: string;
-  smsVerification: string;
-  receiveOtpSms: string;
-  verificationCode: string;
   enterSixDigitCode: string;
-  verifyAndConnect: string;
-  didntReceiveCode: string;
-  resendOtp: string;
-  backToRegistration: string;
-  registrationSuccessful: string;
-  accountCreatedSuccessfully: string;
-  registrationDetails: string;
-  startingHealthMonitoring: string;
-  
-  // Error Messages
-  pleaseAcceptTerms: string;
-  passwordsDoNotMatch: string;
-  loginFailed: string;
-  registrationFailed: string;
-  networkError: string;
+  error: string;
+  every: string;
+  excitation: string;
+  excitementAnxiety: string;
+  existingPatientLogin: string;
+  export: string;
+  exportCSV: string;
+  exportData: string;
+  exportReport: string;
+  failed: string;
+  failedToCreateSchedule: string;
   failedToLoadDashboard: string;
   failedToUpdatePatientStatus: string;
-  
-  // General UI
-  notSpecified: string;
-  notProvided: string;
-  unknown: string;
-  justNow: string;
-  retry: string;
-  loadingDeviceInformation: string;
-  
-  // Additional Admin Dashboard
-  thisMonth: string;
-  requiresImmediateAttention: string;
-  deviceConnections: string;
-  hc03DevicesOnline: string;
-  healthMonitoringStatus: string;
-  ecgMonitors: string;
-  glucoseMonitors: string;
-  averageHeartRate: string;
-  
-  // Device Monitoring Interface
-  deviceMonitoring: string;
-  hc03DeviceStatusManagement: string;
-  connectedDevices: string;
-  selectDeviceToViewDetails: string;
-  battery: string;
-  lastSync: string;
-  readings: string;
-  syncNow: string;
-  syncing: string;
-  connected: string;
-  disconnected: string;
-  deviceDetails: string;
-  deviceInformation: string;
-  deviceId: string;
-  macAddress: string;
+  faqAndSupport: string;
+  fasting: string;
+  fever: string;
+  filter: string;
   firmware: string;
-  patientAssignment: string;
-  patientName: string;
-  batteryStatus: string;
-  batteryLevel: string;
-  charging: string;
+  firmwareVersion: string;
+  firstName: string;
+  followupRequired: string;
+  forceSync: string;
+  forgotPassword: string;
+  frequentlyAskedQuestions: string;
+  from: string;
+  full: string;
+  fullName: string;
+  generalUsage: string;
+  generateReport: string;
+  glucoseMonitor: string;
+  glucoseMonitors: string;
+  good: string;
+  guestMode: string;
+  hc03Device: string;
+  hc03DeviceStatusManagement: string;
+  hc03DevicesOnline: string;
+  hc03StatusAndBattery: string;
+  healthMonitoring: string;
+  healthMonitoringStatus: string;
+  healthOverview: string;
+  healthStatus: string;
+  healthStatusOverview: string;
+  healthTips: string;
+  healthTrends: string;
+  healthcareDashboardEnabled: string;
+  healthcareManagementDashboard: string;
+  healthcareMonitoringRegistration: string;
+  healthcareSupport: string;
+  heartRate: string;
+  heartRateBPM: string;
+  heartRateHealthTip: string;
+  heartRateMonitor: string;
+  heartRateVariability: string;
+  helpAndSupport: string;
+  high: string;
+  highFever: string;
+  highRisk: string;
+  history: string;
+  home: string;
+  hospital: string;
+  hospitalAffiliation: string;
+  hospitals: string;
+  hour: string;
+  hourTrend24: string;
+  hours: string;
+  hrRange: string;
+  hyperthermia: string;
+  hypothermia: string;
+  inDays: string;
+  inHours: string;
+  inactive: string;
+  interval: string;
+  invalidEmail: string;
+  invalidPhone: string;
+  justNow: string;
+  lastActivity: string;
+  lastMeasurement: string;
+  lastMonth: string;
+  lastName: string;
+  lastReading: string;
+  lastSync: string;
+  lastUpdated: string;
+  lastWeek: string;
+  latestReading: string;
+  loading: string;
+  loadingDeviceInformation: string;
+  login: string;
+  loginFailed: string;
+  logout: string;
+  low: string;
+  lowBattery: string;
   lowBatteryWarning: string;
+  lowRisk: string;
+  lowest: string;
+  macAddress: string;
+  managePatientDashboardAccess: string;
+  managePatientMonitoringSchedules: string;
+  measurementCompleted: string;
+  measurementCount: string;
+  measurementInProgress: string;
+  measurementStarted: string;
+  measuring: string;
+  medicalHistory: string;
+  medicationLog: string;
+  medications: string;
+  mgdl: string;
+  middleName: string;
+  mildFever: string;
+  mmHg: string;
+  mmhg: string;
+  mobileNumber: string;
+  moderate: string;
+  monitor: string;
+  monitoring: string;
+  monitoring247: string;
+  moodCategory: string;
+  moodIndex: string;
+  myHealthDashboard: string;
+  needMoreHelp: string;
+  networkError: string;
+  newPatientRegistration: string;
+  nextAppointment: string;
+  nextCheckup: string;
+  no: string;
+  noContact: string;
+  noData: string;
+  noDevicesFound: string;
+  noFAQsFound: string;
+  noGlucoseReadings: string;
+  noReadings: string;
+  noRecentData: string;
+  noSchedulesCreated: string;
+  none: string;
+  normal: string;
+  normalStatus: string;
+  notAssigned: string;
+  notProvided: string;
+  notSpecified: string;
+  offline: string;
+  oneToFourHourIntervals: string;
+  online: string;
+  other: string;
+  overallAssessment: string;
+  oxygen: string;
+  oxygenLevel: string;
+  oxygenLevelHealthTip: string;
+  pWavePresent: string;
+  password: string;
+  passwordMinChars: string;
+  passwordTooShort: string;
+  passwordsDoNotMatch: string;
+  passwordsNotMatch: string;
+  patient: string;
+  patientAssignment: string;
+  patientDetails: string;
+  patientId: string;
+  patientIdHeader: string;
+  patientLogin: string;
+  patientManagement: string;
+  patientName: string;
+  patientRegistration: string;
+  patients: string;
+  paused: string;
+  pendingVerification: string;
+  percent: string;
+  percentage: string;
+  placeFinger: string;
+  pleaseAcceptTerms: string;
+  pleaseSelectPatientAndVitals: string;
+  pnn50: string;
+  poor: string;
+  portalAccess: string;
+  postMeal: string;
+  prInterval: string;
+  prediabetic: string;
+  privacyPolicy: string;
+  qrsMorphology: string;
+  qrsWidth: string;
+  qtInterval: string;
+  random: string;
+  readings: string;
+  ready: string;
+  realtimeMonitoring: string;
+  realtimeVitalSigns: string;
+  receiveOtpEmail: string;
+  receiveOtpSms: string;
+  recentActivity: string;
+  recentReadings: string;
+  recordingStatus: string;
+  refresh: string;
+  register: string;
+  registrationDate: string;
+  registrationDetails: string;
+  registrationFailed: string;
+  registrationStatus: string;
+  registrationSuccessful: string;
+  relax: string;
+  rememberMe: string;
+  reminderPreference: string;
+  reminders: string;
+  removeFingerAndWait: string;
+  reportSummary: string;
+  reports: string;
+  required: string;
+  requiresImmediateAttention: string;
+  resendOtp: string;
+  retry: string;
+  rhythmAnalysis: string;
+  riskStratification: string;
+  rmssd: string;
+  save: string;
+  saveChanges: string;
+  saved: string;
+  scanning: string;
+  scanningForDevices: string;
+  scheduleCheckup: string;
+  sdnn: string;
+  search: string;
+  searchFAQs: string;
+  searchPatients: string;
+  searchPatientsDots: string;
+  selectDeviceToViewDetails: string;
+  selectHospitalAbuDhabi: string;
+  selectPatient: string;
+  settings: string;
+  setupPatientProfile: string;
+  share: string;
+  signIn: string;
+  signInToHealthcareDashboard: string;
+  signUp: string;
+  signalStrength: string;
+  signingIn: string;
+  smsOnly: string;
+  smsVerification: string;
+  stElevation: string;
+  standby: string;
+  start: string;
+  startCharging: string;
+  startMeasurement: string;
+  startMeasurementToSeeData: string;
+  startMonitoring: string;
+  startTest: string;
+  startingHealthMonitoring: string;
   status: string;
+  statusAndAlerts: string;
+  stop: string;
+  stopCharging: string;
+  stopMeasurement: string;
+  stressLevel: string;
+  success: string;
   supportedVitalSigns: string;
   syncInformation: string;
-  totalReadings: string;
-  lastReading: string;
-  forceSync: string;
-  viewHistory: string;
-  
-  // Help & Support Interface
-  helpAndSupport: string;
-  frequentlyAskedQuestions: string;
-  searchFAQs: string;
-  allCategories: string;
-  deviceSetup: string;
-  bloodPressure: string;
-  heartRate: string;
-  generalUsage: string;
-  troubleshooting: string;
-  needMoreHelp: string;
-  contactSupportTeam: string;
-  available24x7: string;
-  noFAQsFound: string;
-  tryAdjustingSearchTerms: string;
-  watchVideoGuide: string;
-  visualStepByStepInstructions: string;
-  lastUpdated: string;
+  syncNow: string;
+  syncing: string;
+  systemAdministrator: string;
+  systemStatus: string;
+  systolic: string;
+  technologyServices: string;
   technologyServicesHealthcareSupport: string;
-  healthcareSupport: string;
+  teleHAdmin247: string;
+  temperature: string;
+  temperatureHealthTip: string;
+  temperatureMeasurement: string;
+  temperatureMonitor: string;
+  temperatureRanges: string;
+  thisMonth: string;
+  thisWeek: string;
+  to: string;
+  today: string;
+  totalPatients: string;
+  totalReadings: string;
+  troubleshooting: string;
+  tryAdjustingSearchTerms: string;
+  unknown: string;
+  updated: string;
+  uptime: string;
+  urgencyLevel: string;
+  verificationCode: string;
+  verificationMethod: string;
+  verified: string;
+  verifyAndConnect: string;
+  view: string;
+  viewAction: string;
+  viewDetails: string;
+  viewFullHistory: string;
+  viewHistory: string;
+  viewPatient: string;
+  viewReports: string;
+  visualStepByStepInstructions: string;
+  vitalSigns: string;
+  vitals: string;
+  vitalsToMonitor: string;
+  warning: string;
+  watchVideoGuide: string;
+  weeklyReport: string;
+  welcomeBack: string;
+  wide: string;
+  yearsOld: string;
+  yes: string;
+  yesterday: string;
 }
 
 export const translations: Record<Language, Translation> = {
@@ -614,10 +491,10 @@ export const translations: Record<Language, Translation> = {
     aiInsightsAndTrends: 'AI insights & trends',
     alerts: 'Alerts',
     allCategories: 'All Categories',
-    allergies: 'Allergies',
     allHospitals: 'All Hospitals',
     allStatus: 'All Status',
     allVitalSignsNormal: 'All Vital Signs Normal',
+    allergies: 'Allergies',
     alreadyHaveAccount: 'Already have an account?',
     analytics: 'Analytics',
     appSubtitle: 'Healthcare Monitoring Portal',
@@ -671,14 +548,14 @@ export const translations: Record<Language, Translation> = {
     confirmDeleteSchedule: 'Are you sure you want to delete this schedule?',
     confirmPassword: 'Confirm Password',
     connectDevice: 'Connect Device',
+    connectHC03Devices: 'Connect HC03 devices to monitor battery status',
+    connectHc03Device: 'Connect HC03 Device',
+    connectToExistingAccount: 'Connect device to existing account',
     connected: 'Connected',
     connectedDevices: 'Connected Devices',
-    connectHc03Device: 'Connect HC03 Device',
-    connectHC03Devices: 'Connect HC03 devices to monitor battery status',
     connecting: 'Connecting',
     connectionEstablished: 'Connection established',
     connectionFailed: 'Connection failed',
-    connectToExistingAccount: 'Connect device to existing account',
     contact: 'Contact',
     contactAccess: 'Contact & Access',
     contactInfo: 'Contact Information',
@@ -704,8 +581,8 @@ export const translations: Record<Language, Translation> = {
     dateTime: 'Date & Time',
     deactivate: 'Deactivate',
     delete: 'Delete',
-    deleted: 'Deleted successfully',
     deletePatient: 'Delete Patient',
+    deleted: 'Deleted successfully',
     detailedEcgAnalysis: 'Detailed ECG analysis and medical interpretation',
     detected: 'Detected',
     deviceBattery: 'Device Battery',
@@ -721,9 +598,9 @@ export const translations: Record<Language, Translation> = {
     deviceName: 'Device Name',
     deviceOffline: 'Device Offline',
     deviceRegistrationRequired: 'Device Registration Required',
-    devices: 'Devices',
     deviceSetup: 'Device Setup',
     deviceStatus: 'Device Status',
+    devices: 'Devices',
     diastolic: 'Diastolic',
     didntReceiveCode: 'Didn\'t receive the code?',
     disconnectDevice: 'Disconnect Device',
@@ -786,13 +663,9 @@ export const translations: Record<Language, Translation> = {
     good: 'Good',
     guestMode: 'Use in Guest Mode (Limited Features)',
     hc03Device: 'HC03 Device',
-    hc03DevicesOnline: 'HC03 devices online',
     hc03DeviceStatusManagement: 'HC03 Device Status & Management',
+    hc03DevicesOnline: 'HC03 devices online',
     hc03StatusAndBattery: 'HC03 status & battery',
-    healthcareDashboardEnabled: 'Healthcare Dashboard Enabled',
-    healthcareManagementDashboard: 'Healthcare Management Dashboard',
-    healthcareMonitoringRegistration: 'Healthcare Monitoring Registration',
-    healthcareSupport: '24/7 Tele H Technology Services - Healthcare Support',
     healthMonitoring: 'Health Monitoring',
     healthMonitoringStatus: 'Health Monitoring Status',
     healthOverview: 'Health Overview',
@@ -800,6 +673,10 @@ export const translations: Record<Language, Translation> = {
     healthStatusOverview: 'Health Status Overview',
     healthTips: 'Health Tips',
     healthTrends: 'Health Trends',
+    healthcareDashboardEnabled: 'Healthcare Dashboard Enabled',
+    healthcareManagementDashboard: 'Healthcare Management Dashboard',
+    healthcareMonitoringRegistration: 'Healthcare Monitoring Registration',
+    healthcareSupport: '24/7 Tele H Technology Services - Healthcare Support',
     heartRate: 'Heart Rate',
     heartRateBPM: 'Heart Rate (BPM)',
     heartRateHealthTip: 'Maintain a healthy heart rate through regular exercise, stress management, and adequate sleep. Normal resting heart rate is 60-100 bpm.',
@@ -815,14 +692,14 @@ export const translations: Record<Language, Translation> = {
     hospitalAffiliation: 'Hospital Affiliation',
     hospitals: 'Hospitals',
     hour: 'Hour',
-    hours: 'Hours',
     hourTrend24: '24-Hour Trend',
+    hours: 'Hours',
     hrRange: 'HR Range',
     hyperthermia: 'Hyperthermia',
     hypothermia: 'Hypothermia',
-    inactive: 'Inactive',
     inDays: 'In {days} days',
     inHours: 'In {hours} hours',
+    inactive: 'Inactive',
     interval: 'Interval:',
     invalidEmail: 'Please enter a valid email address',
     invalidPhone: 'Please enter a valid phone number',
@@ -844,8 +721,8 @@ export const translations: Record<Language, Translation> = {
     low: 'Low',
     lowBattery: 'Low Battery',
     lowBatteryWarning: 'Low battery warning - Please charge device soon',
-    lowest: 'Lowest',
     lowRisk: 'Low Risk',
+    lowest: 'Lowest',
     macAddress: 'MAC Address',
     managePatientDashboardAccess: 'Manage patient dashboard access for 24/7 Tele H',
     managePatientMonitoringSchedules: 'Manage patient monitoring schedules',
@@ -860,8 +737,8 @@ export const translations: Record<Language, Translation> = {
     mgdl: 'mg/dL',
     middleName: 'Middle Name',
     mildFever: 'Mild Fever',
-    mmhg: 'mmHg',
     mmHg: 'mmHg',
+    mmhg: 'mmHg',
     mobileNumber: 'Mobile Number',
     moderate: 'Moderate',
     monitor: 'Monitor',
@@ -881,12 +758,12 @@ export const translations: Record<Language, Translation> = {
     noDevicesFound: 'No devices found',
     noFAQsFound: 'No FAQs Found',
     noGlucoseReadings: 'No glucose readings available',
-    none: 'None',
     noReadings: 'No readings',
     noRecentData: 'No recent data',
+    noSchedulesCreated: 'No schedules created yet',
+    none: 'None',
     normal: 'Normal',
     normalStatus: 'Normal',
-    noSchedulesCreated: 'No schedules created yet',
     notAssigned: 'Not assigned',
     notProvided: 'Not provided',
     notSpecified: 'Not specified',
@@ -898,11 +775,12 @@ export const translations: Record<Language, Translation> = {
     oxygen: 'Oxygen',
     oxygenLevel: 'Oxygen Level',
     oxygenLevelHealthTip: 'Maintain healthy oxygen levels with deep breathing exercises and good posture. Normal oxygen saturation is 95-100%.',
+    pWavePresent: 'P-Wave Present',
     password: 'Password',
     passwordMinChars: 'Password (min. 6 characters) *',
+    passwordTooShort: 'Password must be at least 8 characters',
     passwordsDoNotMatch: 'Passwords do not match',
     passwordsNotMatch: 'Passwords do not match',
-    passwordTooShort: 'Password must be at least 8 characters',
     patient: 'Patient',
     patientAssignment: 'Patient Assignment',
     patientDetails: 'Patient Details',
@@ -924,10 +802,9 @@ export const translations: Record<Language, Translation> = {
     poor: 'poor',
     portalAccess: 'Portal Access',
     postMeal: 'Post-Meal',
-    prediabetic: 'Prediabetic',
     prInterval: 'PR Interval',
+    prediabetic: 'Prediabetic',
     privacyPolicy: 'Privacy Policy',
-    pWavePresent: 'P-Wave Present',
     qrsMorphology: 'QRS Morphology',
     qrsWidth: 'QRS Width',
     qtInterval: 'QT Interval',
@@ -953,8 +830,8 @@ export const translations: Record<Language, Translation> = {
     reminderPreference: 'Reminder Preference',
     reminders: 'Reminders:',
     removeFingerAndWait: 'Remove finger and wait',
-    reports: 'Reports',
     reportSummary: 'Report Summary',
+    reports: 'Reports',
     required: 'This field is required',
     requiresImmediateAttention: 'Requires immediate attention',
     resendOtp: 'Resend OTP',
@@ -979,24 +856,24 @@ export const translations: Record<Language, Translation> = {
     settings: 'Settings',
     setupPatientProfile: 'Set up your patient profile to start monitoring your health with HC03 Health Monitor Pro',
     share: 'Share',
-    signalStrength: 'Signal Strength',
     signIn: 'Sign In',
-    signingIn: 'Signing In...',
     signInToHealthcareDashboard: 'Sign in to your healthcare dashboard',
     signUp: 'Sign Up',
+    signalStrength: 'Signal Strength',
+    signingIn: 'Signing In...',
     smsOnly: 'SMS Only',
     smsVerification: 'SMS Verification',
+    stElevation: 'ST Elevation',
     standby: 'Standby',
     start: 'Start',
     startCharging: 'Start Charging',
-    startingHealthMonitoring: 'Starting health monitoring session...',
     startMeasurement: 'Start Measurement',
     startMeasurementToSeeData: 'Start a measurement to see data',
     startMonitoring: 'Start Monitoring',
     startTest: 'Start Test',
+    startingHealthMonitoring: 'Starting health monitoring session...',
     status: 'Status',
     statusAndAlerts: 'Status & Alerts',
-    stElevation: 'ST Elevation',
     stop: 'Stop',
     stopCharging: 'Stop Charging',
     stopMeasurement: 'Stop Measurement',
@@ -1004,8 +881,8 @@ export const translations: Record<Language, Translation> = {
     success: 'Success',
     supportedVitalSigns: 'Supported Vital Signs',
     syncInformation: 'Sync Information',
-    syncing: 'Syncing...',
     syncNow: 'Sync Now',
+    syncing: 'Syncing...',
     systemAdministrator: 'System Administrator',
     systemStatus: 'System Status',
     systolic: 'Systolic',
@@ -1041,8 +918,8 @@ export const translations: Record<Language, Translation> = {
     viewPatient: 'View Patient',
     viewReports: 'View Reports',
     visualStepByStepInstructions: 'Visual step-by-step instructions',
-    vitals: 'Vitals',
     vitalSigns: 'Vital Signs',
+    vitals: 'Vitals',
     vitalsToMonitor: 'Vitals to Monitor',
     warning: 'Warning',
     watchVideoGuide: 'Watch Video Guide',
@@ -1077,10 +954,10 @@ export const translations: Record<Language, Translation> = {
     aiInsightsAndTrends: 'رؤى الذكاء الاصطناعي والاتجاهات',
     alerts: 'التنبيهات',
     allCategories: 'جميع الفئات',
-    allergies: 'الحساسية',
     allHospitals: 'جميع المستشفيات',
     allStatus: 'جميع الحالات',
     allVitalSignsNormal: 'جميع العلامات الحيوية طبيعية',
+    allergies: 'الحساسية',
     alreadyHaveAccount: 'لديك حساب بالفعل؟',
     analytics: 'التحليلات',
     appSubtitle: 'بوابة مراقبة الرعاية الصحية',
@@ -1134,14 +1011,14 @@ export const translations: Record<Language, Translation> = {
     confirmDeleteSchedule: 'هل أنت متأكد من رغبتك في حذف هذا الجدول؟',
     confirmPassword: 'تأكيد كلمة المرور',
     connectDevice: 'ربط الجهاز',
+    connectHC03Devices: 'اربط أجهزة HC03 لمراقبة حالة البطارية',
+    connectHc03Device: 'اتصال بجهاز HC03',
+    connectToExistingAccount: 'ربط الجهاز بحساب موجود',
     connected: 'متصل',
     connectedDevices: 'الأجهزة المتصلة',
-    connectHc03Device: 'اتصال بجهاز HC03',
-    connectHC03Devices: 'اربط أجهزة HC03 لمراقبة حالة البطارية',
     connecting: 'اتصال',
     connectionEstablished: 'تم تأسيس الاتصال',
     connectionFailed: 'فشل الاتصال',
-    connectToExistingAccount: 'ربط الجهاز بحساب موجود',
     contact: 'متصل',
     contactAccess: 'الاتصال والوصول',
     contactInfo: 'معلومات الاتصال',
@@ -1167,8 +1044,8 @@ export const translations: Record<Language, Translation> = {
     dateTime: 'التاريخ والوقت',
     deactivate: 'إلغاء التفعيل',
     delete: 'حذف',
-    deleted: 'تم الحذف بنجاح',
     deletePatient: 'حذف المريض',
+    deleted: 'تم الحذف بنجاح',
     detailedEcgAnalysis: 'تحليل مفصل لتخطيط القلب والتفسير الطبي',
     detected: 'مكتشف',
     deviceBattery: 'بطارية الجهاز',
@@ -1184,9 +1061,9 @@ export const translations: Record<Language, Translation> = {
     deviceName: 'اسم الجهاز',
     deviceOffline: 'الجهاز غير متصل',
     deviceRegistrationRequired: 'تسجيل الجهاز مطلوب',
-    devices: 'الأجهزة',
     deviceSetup: 'إعداد الجهاز',
     deviceStatus: 'حالة الجهاز',
+    devices: 'الأجهزة',
     diastolic: 'انبساطي',
     didntReceiveCode: 'لم تستلم الرمز؟',
     disconnectDevice: 'قطع الجهاز',
@@ -1249,13 +1126,9 @@ export const translations: Record<Language, Translation> = {
     good: 'جيدة',
     guestMode: 'استخدام كضيف (ميزات محدودة)',
     hc03Device: 'جهاز HC03',
-    hc03DevicesOnline: 'أجهزة HC03 متصلة',
     hc03DeviceStatusManagement: 'حالة وإدارة أجهزة HC03',
+    hc03DevicesOnline: 'أجهزة HC03 متصلة',
     hc03StatusAndBattery: 'حالة HC03 والبطارية',
-    healthcareDashboardEnabled: 'لوحة الرعاية الصحية مفعلة',
-    healthcareManagementDashboard: 'لوحة إدارة الرعاية الصحية',
-    healthcareMonitoringRegistration: 'تسجيل مراقبة الرعاية الصحية',
-    healthcareSupport: 'خدمات تكنولوجيا الصحة 24/7 - دعم الرعاية الصحية',
     healthMonitoring: 'مراقبة الصحة',
     healthMonitoringStatus: 'حالة مراقبة الصحة',
     healthOverview: 'نظرة عامة على الصحة',
@@ -1263,6 +1136,10 @@ export const translations: Record<Language, Translation> = {
     healthStatusOverview: 'نظرة عامة على الحالة الصحية',
     healthTips: 'نصائح صحية',
     healthTrends: 'اتجاهات الصحة',
+    healthcareDashboardEnabled: 'لوحة الرعاية الصحية مفعلة',
+    healthcareManagementDashboard: 'لوحة إدارة الرعاية الصحية',
+    healthcareMonitoringRegistration: 'تسجيل مراقبة الرعاية الصحية',
+    healthcareSupport: 'خدمات تكنولوجيا الصحة 24/7 - دعم الرعاية الصحية',
     heartRate: 'معدل ضربات القلب',
     heartRateBPM: 'معدل ضربات القلب (ضربة/دقيقة)',
     heartRateHealthTip: 'حافظ على معدل ضربات قلب صحي من خلال التمارين المنتظمة وإدارة التوتر والنوم الكافي. معدل ضربات القلب الطبيعي أثناء الراحة هو 60-100 نبضة في الدقيقة.',
@@ -1278,14 +1155,14 @@ export const translations: Record<Language, Translation> = {
     hospitalAffiliation: 'الانتماء للمستشفى',
     hospitals: 'المستشفيات',
     hour: 'ساعة',
-    hours: 'ساعات',
     hourTrend24: 'اتجاه 24 ساعة',
+    hours: 'ساعات',
     hrRange: 'نطاق معدل القلب',
     hyperthermia: 'ارتفاع حرارة الجسم',
     hypothermia: 'انخفاض حرارة الجسم',
-    inactive: 'غير نشط',
     inDays: 'خلال {days} يوم',
     inHours: 'خلال {hours} ساعة',
+    inactive: 'غير نشط',
     interval: 'الفترة:',
     invalidEmail: 'يرجى إدخال عنوان بريد إلكتروني صحيح',
     invalidPhone: 'يرجى إدخال رقم هاتف صحيح',
@@ -1307,8 +1184,8 @@ export const translations: Record<Language, Translation> = {
     low: 'منخفض',
     lowBattery: 'بطارية منخفضة',
     lowBatteryWarning: 'تحذير بطارية منخفضة - يرجى شحن الجهاز قريباً',
-    lowest: 'الأقل',
     lowRisk: 'منخفض المخاطر',
+    lowest: 'الأقل',
     macAddress: 'عنوان MAC',
     managePatientDashboardAccess: 'إدارة وصول المرضى إلى لوحة المراقبة الصحية',
     managePatientMonitoringSchedules: 'إدارة جداول مراقبة المرضى',
@@ -1323,8 +1200,8 @@ export const translations: Record<Language, Translation> = {
     mgdl: 'ملغ/دل',
     middleName: 'الاسم الأوسط',
     mildFever: 'حمى خفيفة',
-    mmhg: 'ممHg',
     mmHg: 'ملم زئبق',
+    mmhg: 'ممHg',
     mobileNumber: 'رقم الجوال',
     moderate: 'متوسط',
     monitor: 'مراقب',
@@ -1344,12 +1221,12 @@ export const translations: Record<Language, Translation> = {
     noDevicesFound: 'لم يتم العثور على أجهزة',
     noFAQsFound: 'لم يتم العثور على أسئلة شائعة',
     noGlucoseReadings: 'لا توجد قراءات للجلوكوز',
-    none: 'لا يوجد',
     noReadings: 'لا توجد قراءات',
     noRecentData: 'لا توجد بيانات حديثة',
+    noSchedulesCreated: 'لم يتم إنشاء جداول بعد',
+    none: 'لا يوجد',
     normal: 'طبيعي',
     normalStatus: 'طبيعي',
-    noSchedulesCreated: 'لم يتم إنشاء جداول بعد',
     notAssigned: 'غير مخصص',
     notProvided: 'غير متوفر',
     notSpecified: 'غير محدد',
@@ -1361,11 +1238,12 @@ export const translations: Record<Language, Translation> = {
     oxygen: 'الأكسجين',
     oxygenLevel: 'مستوى الأكسجين',
     oxygenLevelHealthTip: 'حافظ على مستويات أكسجين صحية بتمارين التنفس العميق والوضعية الجيدة. تشبع الأكسجين الطبيعي هو 95-100%.',
+    pWavePresent: 'وجود موجة P',
     password: 'كلمة المرور',
     passwordMinChars: 'كلمة المرور (6 أحرف على الأقل)',
+    passwordTooShort: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
     passwordsDoNotMatch: 'كلمات المرور غير متطابقة',
     passwordsNotMatch: 'كلمات المرور غير متطابقة',
-    passwordTooShort: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
     patient: 'المريض',
     patientAssignment: 'تخصيص المريض',
     patientDetails: 'تفاصيل المريض',
@@ -1387,10 +1265,9 @@ export const translations: Record<Language, Translation> = {
     poor: 'ضعيف',
     portalAccess: 'الوصول إلى البوابة',
     postMeal: 'بعد الوجبة',
-    prediabetic: 'مقدمات السكري',
     prInterval: 'فترة PR',
+    prediabetic: 'مقدمات السكري',
     privacyPolicy: 'سياسة الخصوصية',
-    pWavePresent: 'وجود موجة P',
     qrsMorphology: 'شكل QRS',
     qrsWidth: 'عرض QRS',
     qtInterval: 'فترة QT',
@@ -1416,8 +1293,8 @@ export const translations: Record<Language, Translation> = {
     reminderPreference: 'تفضيل التذكير',
     reminders: 'التذكيرات:',
     removeFingerAndWait: 'قم بإزالة الإصبع والانتظار',
-    reports: 'التقارير',
     reportSummary: 'ملخص التقرير',
+    reports: 'التقارير',
     required: 'هذا الحقل مطلوب',
     requiresImmediateAttention: 'يتطلب اهتماماً فورياً',
     resendOtp: 'إعادة إرسال رمز التحقق',
@@ -1442,24 +1319,24 @@ export const translations: Record<Language, Translation> = {
     settings: 'الإعدادات',
     setupPatientProfile: 'إعداد ملف المريض لبدء مراقبة الصحة مع جهاز HC03',
     share: 'مشاركة',
-    signalStrength: 'قوة الإشارة',
     signIn: 'تسجيل الدخول',
-    signingIn: 'جاري تسجيل الدخول...',
     signInToHealthcareDashboard: 'سجل دخولك إلى لوحة الرعاية الصحية',
     signUp: 'إنشاء حساب',
+    signalStrength: 'قوة الإشارة',
+    signingIn: 'جاري تسجيل الدخول...',
     smsOnly: 'رسائل نصية فقط',
     smsVerification: 'تحقق بالرسائل النصية',
+    stElevation: 'ارتفاع ST',
     standby: 'في الانتظار',
     start: 'بدء',
     startCharging: 'بدء الشحن',
-    startingHealthMonitoring: 'بدء جلسة المراقبة الصحية...',
     startMeasurement: 'بدء القياس',
     startMeasurementToSeeData: 'ابدأ قياساً لرؤية البيانات',
     startMonitoring: 'بدء المراقبة',
     startTest: 'بدء الاختبار',
+    startingHealthMonitoring: 'بدء جلسة المراقبة الصحية...',
     status: 'الحالة',
     statusAndAlerts: 'الحالة والتنبيهات',
-    stElevation: 'ارتفاع ST',
     stop: 'إيقاف',
     stopCharging: 'إيقاف الشحن',
     stopMeasurement: 'إيقاف القياس',
@@ -1467,8 +1344,8 @@ export const translations: Record<Language, Translation> = {
     success: 'نجح',
     supportedVitalSigns: 'العلامات الحيوية المدعومة',
     syncInformation: 'معلومات المزامنة',
-    syncing: 'جاري المزامنة...',
     syncNow: 'مزامنة الآن',
+    syncing: 'جاري المزامنة...',
     systemAdministrator: 'مدير النظام',
     systemStatus: 'حالة النظام',
     systolic: 'انقباضي',
@@ -1504,8 +1381,8 @@ export const translations: Record<Language, Translation> = {
     viewPatient: 'عرض المريض',
     viewReports: 'عرض التقارير',
     visualStepByStepInstructions: 'تعليمات مرئية خطوة بخطوة',
-    vitals: 'العلامات الحيوية',
     vitalSigns: 'العلامات الحيوية',
+    vitals: 'العلامات الحيوية',
     vitalsToMonitor: 'العلامات الحيوية للمراقبة',
     warning: 'تحذير',
     watchVideoGuide: 'شاهد دليل الفيديو',
