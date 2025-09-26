@@ -581,10 +581,11 @@ export interface Translation {
   contactSupportTeam: string;
   available24x7: string;
   noFAQsFound: string;
-  tryAdjustingSearch: string;
+  tryAdjustingSearchTerms: string;
   watchVideoGuide: string;
   visualStepByStepInstructions: string;
   lastUpdated: string;
+  technologyServicesHealthcareSupport: string;
   healthcareSupport: string;
 }
 
@@ -1211,10 +1212,11 @@ export const translations: Record<Language, Translation> = {
     contactSupportTeam: 'Contact our support team',
     available24x7: '24/7 Available',
     noFAQsFound: 'No FAQs Found',
-    tryAdjustingSearch: 'Try adjusting your search terms or category filter.',
+    tryAdjustingSearchTerms: 'Try adjusting your search terms or category filter.',
     watchVideoGuide: 'Watch Video Guide',
     visualStepByStepInstructions: 'Visual step-by-step instructions',
     lastUpdated: 'Last updated',
+    technologyServicesHealthcareSupport: '24/7 Tele H Technology Services - Healthcare Support',
     healthcareSupport: '24/7 Tele H Technology Services - Healthcare Support',
   },
   ar: {
@@ -1837,14 +1839,15 @@ export const translations: Record<Language, Translation> = {
     heartRate: 'معدل ضربات القلب',
     generalUsage: 'الاستخدام العام',
     troubleshooting: 'استكشاف الأخطاء',
-    needMoreHelp: 'تحتاج مساعدة أكثر؟',
+    needMoreHelp: 'تحتاج للمزيد من المساعدة؟',
     contactSupportTeam: 'اتصل بفريق الدعم',
     available24x7: 'متاح 24/7',
     noFAQsFound: 'لم يتم العثور على أسئلة شائعة',
-    tryAdjustingSearch: 'جرب تعديل مصطلحات البحث أو فلتر الفئة.',
-    watchVideoGuide: 'مشاهدة دليل الفيديو',
+    tryAdjustingSearchTerms: 'حاول تعديل مصطلحات البحث أو فلتر الفئة.',
+    watchVideoGuide: 'شاهد دليل الفيديو',
     visualStepByStepInstructions: 'تعليمات مرئية خطوة بخطوة',
     lastUpdated: 'آخر تحديث',
+    technologyServicesHealthcareSupport: '24/7 Tele H خدمات التكنولوجيا - دعم الرعاية الصحية',
     healthcareSupport: 'خدمات تكنولوجيا الصحة 24/7 - دعم الرعاية الصحية',
   },
 };

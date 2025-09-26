@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../lib/i18n';
 
 interface FAQItem {
   id: string;
@@ -13,6 +14,7 @@ interface FAQSectionProps {
 }
 
 export default function FAQSection({ onClose }: FAQSectionProps) {
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState('setup');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -109,11 +111,11 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
   ];
 
   const categories = [
-    { id: 'setup', name: 'Device Setup', icon: '⚙️' },
-    { id: 'blood-pressure', name: 'Blood Pressure', icon: '🩺' },
-    { id: 'heart-rate', name: 'Heart Rate', icon: '❤️' },
-    { id: 'usage', name: 'General Usage', icon: '📱' },
-    { id: 'troubleshooting', name: 'Troubleshooting', icon: '🔧' }
+    { id: 'setup', name: t('deviceSetup'), icon: '⚙️' },
+    { id: 'blood-pressure', name: t('bloodPressure'), icon: '🩺' },
+    { id: 'heart-rate', name: t('heartRate'), icon: '❤️' },
+    { id: 'usage', name: t('generalUsage'), icon: '📱' },
+    { id: 'troubleshooting', name: t('troubleshooting'), icon: '🔧' }
   ];
 
   const filteredFAQs = faqData.filter(faq => {
@@ -131,8 +133,8 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
         <div className="bg-gradient-to-r from-blue-600 to-teal-600 text-white p-6">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Help & Support</h2>
-              <p className="text-blue-100">Frequently Asked Questions & Device Instructions</p>
+              <h2 className="text-3xl font-bold mb-2">{t('helpAndSupport')}</h2>
+              <p className="text-blue-100">{t('frequentlyAskedQuestions')}</p>
             </div>
             <button
               onClick={onClose}
@@ -151,7 +153,7 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
             <div className="mb-4">
               <input
                 type="text"
-                placeholder="Search FAQs..."
+                placeholder={t('searchFAQs')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -169,7 +171,7 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
               >
                 <div className="flex items-center space-x-3">
                   <span>📚</span>
-                  <span className="font-medium">All Categories</span>
+                  <span className="font-medium">{t('allCategories')}</span>
                 </div>
               </button>
 
@@ -193,8 +195,8 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
 
             {/* Quick Contact */}
             <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">Need More Help?</h4>
-              <p className="text-blue-700 text-sm mb-3">Contact our support team</p>
+              <h4 className="font-semibold text-blue-900 mb-2">{t('needMoreHelp')}</h4>
+              <p className="text-blue-700 text-sm mb-3">{t('contactSupportTeam')}</p>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <span>📞</span>
@@ -206,7 +208,7 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
                 </div>
                 <div className="flex items-center space-x-2">
                   <span>🕒</span>
-                  <span>24/7 Available</span>
+                  <span>{t('available24x7')}</span>
                 </div>
               </div>
             </div>
@@ -218,8 +220,8 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
               {filteredFAQs.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">🔍</div>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No FAQs Found</h3>
-                  <p className="text-gray-500">Try adjusting your search terms or category filter.</p>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">{t('noFAQsFound')}</h3>
+                  <p className="text-gray-500">{t('tryAdjustingSearchTerms')}</p>
                 </div>
               ) : (
                 filteredFAQs.map((faq) => (
@@ -250,9 +252,9 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z"/>
                           </svg>
-                          <span>Watch Video Guide</span>
+                          <span>{t('watchVideoGuide')}</span>
                         </button>
-                        <span className="text-gray-500 text-sm">Visual step-by-step instructions</span>
+                        <span className="text-gray-500 text-sm">{t('visualStepByStepInstructions')}</span>
                       </div>
                     )}
                   </div>
@@ -265,8 +267,8 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
         {/* Footer */}
         <div className="bg-gray-50 border-t border-gray-200 p-4">
           <div className="flex justify-between items-center text-sm text-gray-600">
-            <div>Last updated: {new Date().toLocaleDateString()}</div>
-            <div>24/7 Tele H Technology Services - Healthcare Support</div>
+            <div>{t('lastUpdated')}: {new Date().toLocaleDateString()}</div>
+            <div>{t('technologyServicesHealthcareSupport')}</div>
           </div>
         </div>
       </div>
