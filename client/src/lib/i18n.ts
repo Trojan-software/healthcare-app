@@ -590,8 +590,8 @@ export interface Translation {
 }
 
 export const translations: Record<Language, Translation> = {
-  en: 
-abnormal: 'Abnormal',
+  en: {
+    abnormal: 'Abnormal',
     abnormalVitals: 'Abnormal Vitals',
     abuDhabiHospital: 'Abu Dhabi Hospital/Clinic *',
     accountCreatedSuccessfully: 'Your account has been created successfully. You can now log in to access the 24/7 Tele H healthcare monitoring system.',
@@ -1054,7 +1054,7 @@ abnormal: 'Abnormal',
     yesterday: 'Yesterday',
   },
   ar: {
-abnormal: 'غير طبيعي',
+    abnormal: 'غير طبيعي',
     abnormalVitals: 'علامات حيوية غير طبيعية',
     abuDhabiHospital: 'مستشفى أبوظبي/العيادة',
     accountCreatedSuccessfully: 'تم إنشاء حسابك بنجاح. يمكنك الآن تسجيل الدخول للوصول إلى نظام المراقبة الصحية 24/7',
@@ -1515,7 +1515,37 @@ abnormal: 'غير طبيعي',
     yearsOld: 'سنة',
     yes: 'نعم',
     yesterday: 'أمس',
-  }};
+  }
+};
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: keyof Translation) => string;
+  isRTL: boolean;
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [language, setLanguage] = useState<Language>('en');
+
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') as Language;
+    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'ar')) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('language', language);
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+  }, [language]);
+
+  const t = (key: keyof Translation): string => {
+    return translations[language][key] || key as string;
+  };
 
   const isRTL = language === 'ar';
 
