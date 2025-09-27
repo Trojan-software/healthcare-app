@@ -9,6 +9,7 @@ import { bloodGlucoseManager } from "./hc03-blood-glucose";
 import { batteryManager } from "./hc03-battery";
 import { ecgDataManager } from "./hc03-ecg";
 import { HC03WebSocketService } from "./websocket";
+import { authenticateToken, requireAdmin, requirePatientOrAdmin } from "./auth-middleware";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
@@ -44,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = jwt.sign(
         { userId: user.id, email: user.email, role: user.role },
-        "your-secret-key",
+        process.env.JWT_SECRET || "your-secret-key",
         { expiresIn: "24h" }
       );
 
@@ -127,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin endpoints
-  app.get("/api/patients", async (req, res) => {
+  app.get("/api/patients", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const patients = await storage.getAllPatients();
       
@@ -145,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       }));
       
-      res.json(patientsWithStats);
+      res.json({ patients: patientsWithStats });
     } catch (error) {
       console.error("Error fetching patients:", error);
       res.status(500).json({ message: "Failed to fetch patients" });
@@ -153,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  app.put("/api/admin/patients/:patientId", async (req, res) => {
+  app.put("/api/admin/patients/:patientId", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { patientId } = req.params;
       const { isActive } = req.body;
@@ -167,7 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Route to match frontend call for patient access toggle
-  app.put("/api/admin/patient/:patientId/access", async (req, res) => {
+  app.put("/api/admin/patient/:patientId/access", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { patientId } = req.params;
       const { isActive } = req.body;
@@ -191,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vital signs endpoints
-  app.post("/api/vital-signs", async (req, res) => {
+  app.post("/api/vital-signs", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { patientId, heartRate, bloodPressure, temperature, oxygenLevel, bloodGlucose } = req.body;
 
@@ -229,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/vital-signs/:patientId", async (req, res) => {
+  app.get("/api/vital-signs/:patientId", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { patientId } = req.params;
       const vitalSigns = await storage.getVitalSignsByPatient(patientId);
@@ -241,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Blood Glucose API Endpoints
-  app.get("/api/blood-glucose/:patientId", async (req, res) => {
+  app.get("/api/blood-glucose/:patientId", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { patientId } = req.params;
       const limit = parseInt(req.query.limit as string) || 50;
@@ -253,7 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/blood-glucose/start-measurement", async (req, res) => {
+  app.post("/api/blood-glucose/start-measurement", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { patientId, deviceId } = req.body;
       if (!patientId || !deviceId) {
@@ -272,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/blood-glucose/simulate", async (req, res) => {
+  app.post("/api/blood-glucose/simulate", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { patientId, deviceId, glucoseLevel } = req.body;
       if (!patientId || !deviceId || !glucoseLevel) {
@@ -288,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Battery API Endpoints
-  app.get("/api/battery/:deviceId", async (req, res) => {
+  app.get("/api/battery/:deviceId", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { deviceId } = req.params;
       const batteryInfo = await batteryManager.getBattery(deviceId);
@@ -304,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/battery/patient/:patientId", async (req, res) => {
+  app.get("/api/battery/patient/:patientId", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { patientId } = req.params;
       const devicesBattery = await batteryManager.getPatientDevicesBattery(patientId);
@@ -315,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/battery/simulate-level", async (req, res) => {
+  app.post("/api/battery/simulate-level", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { deviceId, patientId, batteryLevel } = req.body;
       if (!deviceId || !patientId || batteryLevel === undefined) {
@@ -334,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/battery/simulate-charging", async (req, res) => {
+  app.post("/api/battery/simulate-charging", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { deviceId, patientId, isCharging, method } = req.body;
       if (!deviceId || !patientId || isCharging === undefined) {
@@ -350,7 +351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ECG API Endpoints
-  app.get("/api/ecg/:deviceId", async (req, res) => {
+  app.get("/api/ecg/:deviceId", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { deviceId } = req.params;
       const ecgData = await ecgDataManager.getEcgData(deviceId);
@@ -366,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/ecg/wave/:deviceId", async (req, res) => {
+  app.get("/api/ecg/wave/:deviceId", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { deviceId } = req.params;
       const waveData = ecgDataManager.getCurrentWaveData(deviceId);
@@ -377,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/ecg/start-recording", async (req, res) => {
+  app.post("/api/ecg/start-recording", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { deviceId, patientId } = req.body;
       if (!deviceId || !patientId) {
@@ -396,7 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/ecg/stop-recording", async (req, res) => {
+  app.post("/api/ecg/stop-recording", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { deviceId, patientId } = req.body;
       if (!deviceId || !patientId) {
@@ -415,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/ecg/simulate", async (req, res) => {
+  app.post("/api/ecg/simulate", authenticateToken, requirePatientOrAdmin, async (req, res) => {
     try {
       const { deviceId, patientId } = req.body;
       if (!deviceId || !patientId) {
@@ -431,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Patient update endpoint for edit functionality
-  app.put("/api/patients/:id", async (req, res) => {
+  app.put("/api/patients/:id", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -454,7 +455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reset patient password
-  app.post("/api/patients/:id/reset-password", async (req, res) => {
+  app.post("/api/patients/:id/reset-password", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       
@@ -495,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Toggle User Status endpoint
-  app.patch("/api/users/:id/toggle-status", async (req, res) => {
+  app.patch("/api/users/:id/toggle-status", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const userId = parseInt(id);
@@ -622,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard endpoints
-  app.get("/api/dashboard/admin", async (req, res) => {
+  app.get("/api/dashboard/admin", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const patients = await storage.getAllPatients();
       const allVitals = await Promise.all(

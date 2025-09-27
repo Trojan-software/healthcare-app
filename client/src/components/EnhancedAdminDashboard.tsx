@@ -91,9 +91,14 @@ export default function EnhancedAdminDashboard() {
 
   // Fetch dashboard statistics
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/admin/dashboard'],
+    queryKey: ['/api/dashboard/admin'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/dashboard');
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/dashboard/admin', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch dashboard stats');
       return response.json();
     }
@@ -101,23 +106,23 @@ export default function EnhancedAdminDashboard() {
 
   // Fetch patients data
   const { data: patientsData, isLoading: patientsLoading } = useQuery({
-    queryKey: ['/api/admin/patients'],
+    queryKey: ['/api/patients'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/patients');
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/patients', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch patients');
       return response.json();
     }
   });
 
-  // Fetch devices data
-  const { data: devicesData, isLoading: devicesLoading } = useQuery({
-    queryKey: ['/api/admin/devices'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/devices');
-      if (!response.ok) throw new Error('Failed to fetch devices');
-      return response.json();
-    }
-  });
+  // Devices data temporarily disabled - endpoint does not exist
+  // TODO: Implement /api/admin/devices endpoint or use patient-specific device data
+  const devicesData = { devices: [] };
+  const devicesLoading = false;
 
   // Default stats to avoid undefined errors
   const mockStats: DashboardStats = dashboardStats?.stats || {
