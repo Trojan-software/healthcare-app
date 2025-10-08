@@ -190,15 +190,17 @@ export const insertOtpCodeSchema = createInsertSchema(otpCodes).pick({
   expiresAt: true,
 });
 
+// Allow partial vital signs for Bluetooth device measurements
 export const insertVitalSignsSchema = createInsertSchema(vitalSigns).pick({
   patientId: true,
+  deviceId: true,
   heartRate: true,
   bloodPressureSystolic: true,
   bloodPressureDiastolic: true,
   temperature: true,
   oxygenLevel: true,
   bloodGlucose: true,
-});
+}).partial().required({ patientId: true }); // Only patientId is required, rest optional
 
 export const insertCheckupLogSchema = createInsertSchema(checkupLogs).pick({
   patientId: true,
