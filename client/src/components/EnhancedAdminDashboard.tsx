@@ -82,7 +82,7 @@ interface DeviceInfo {
 }
 
 export default function EnhancedAdminDashboard() {
-  const [activeTab, setActiveTab] = useState('patients');
+  const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
   const [hospitalFilter, setHospitalFilter] = useState('all');
@@ -443,7 +443,7 @@ export default function EnhancedAdminDashboard() {
 
         {/* Patient Management Tab */}
         <TabsContent value="patients" className="space-y-6">
-          <PatientManagementModule />
+          {activeTab === 'patients' && <PatientManagementModule />}
         </TabsContent>
 
         {/* Device Monitoring Tab */}
