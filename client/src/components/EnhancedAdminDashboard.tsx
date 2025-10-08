@@ -96,7 +96,9 @@ export default function EnhancedAdminDashboard() {
       const response = await fetch('/api/admin/dashboard');
       if (!response.ok) throw new Error('Failed to fetch dashboard stats');
       return response.json();
-    }
+    },
+    staleTime: 300000,
+    retry: false
   });
 
   // Fetch patients data
@@ -106,7 +108,9 @@ export default function EnhancedAdminDashboard() {
       const response = await fetch('/api/admin/patients');
       if (!response.ok) throw new Error('Failed to fetch patients');
       return response.json();
-    }
+    },
+    staleTime: 300000,
+    retry: false
   });
 
   // Fetch devices data
@@ -116,7 +120,9 @@ export default function EnhancedAdminDashboard() {
       const response = await fetch('/api/admin/devices');
       if (!response.ok) throw new Error('Failed to fetch devices');
       return response.json();
-    }
+    },
+    staleTime: 300000,
+    retry: false
   });
 
   // Default stats to avoid undefined errors
