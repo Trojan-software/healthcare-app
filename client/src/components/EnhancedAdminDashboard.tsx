@@ -82,46 +82,41 @@ interface DeviceInfo {
 }
 
 export default function EnhancedAdminDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('patients');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState({ startDate: '', endDate: '' });
   const [hospitalFilter, setHospitalFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const { t, isRTL } = useLanguage();
 
-  // Fetch dashboard statistics only for overview tab
+  // Fetch dashboard statistics
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/admin/dashboard'],
     queryFn: async () => {
       const response = await fetch('/api/admin/dashboard');
       if (!response.ok) throw new Error('Failed to fetch dashboard stats');
       return response.json();
-    },
-    enabled: activeTab === 'overview',
-    staleTime: 300000,
-    retry: false
+    }
   });
 
-  // Fetch patients data - disabled to prevent infinite loop
+  // Fetch patients data
   const { data: patientsData, isLoading: patientsLoading } = useQuery({
-    queryKey: ['/api/admin/patients-overview'],
+    queryKey: ['/api/admin/patients'],
     queryFn: async () => {
-      return { patients: [] }; // Return empty data
-    },
-    enabled: false, // Disabled to prevent infinite loop
-    staleTime: 300000,
-    retry: false
+      const response = await fetch('/api/admin/patients');
+      if (!response.ok) throw new Error('Failed to fetch patients');
+      return response.json();
+    }
   });
 
-  // Fetch devices data - disabled to prevent infinite loop
-  const { data: devicesData } = useQuery({
-    queryKey: ['/api/admin/devices-overview'],
+  // Fetch devices data
+  const { data: devicesData, isLoading: devicesLoading } = useQuery({
+    queryKey: ['/api/admin/devices'],
     queryFn: async () => {
-      return { devices: [] }; // Return empty data
-    },
-    enabled: false, // Disabled to prevent infinite loop
-    staleTime: 300000,
-    retry: false
+      const response = await fetch('/api/admin/devices');
+      if (!response.ok) throw new Error('Failed to fetch devices');
+      return response.json();
+    }
   });
 
   // Default stats to avoid undefined errors
@@ -226,93 +221,19 @@ export default function EnhancedAdminDashboard() {
         <p className="text-gray-600 mt-1">{t('managePatientDashboardAccess')}</p>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === 'overview'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            data-testid="tab-overview"
-          >
-            {t('dashboard')}
-          </button>
-          <button
-            onClick={() => setActiveTab('patients')}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === 'patients'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            data-testid="tab-patients"
-          >
-            {t('patientManagement')}
-          </button>
-          <button
-            onClick={() => setActiveTab('devices')}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === 'devices'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            data-testid="tab-devices"
-          >
-            {t('devices')}
-          </button>
-          <button
-            onClick={() => setActiveTab('alerts')}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === 'alerts'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            data-testid="tab-alerts"
-          >
-            {t('criticalAlerts')}
-          </button>
-          <button
-            onClick={() => setActiveTab('reports')}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === 'reports'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            data-testid="tab-reports"
-          >
-            {t('reports')}
-          </button>
-          <button
-            onClick={() => setActiveTab('scheduling')}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === 'scheduling'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            data-testid="tab-scheduling"
-          >
-            {t('checkupScheduling')}
-          </button>
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === 'analytics'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-            data-testid="tab-analytics"
-          >
-            {t('analytics')}
-          </button>
-        </div>
-      </div>
-      
-      <div className="space-y-6">{/* Tab Content - Only active tab renders */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="overview" data-testid="tab-overview">{t('dashboard')}</TabsTrigger>
+          <TabsTrigger value="patients" data-testid="tab-patients">{t('patientManagement')}</TabsTrigger>
+          <TabsTrigger value="devices" data-testid="tab-devices">{t('devices')}</TabsTrigger>
+          <TabsTrigger value="alerts" data-testid="tab-alerts">{t('criticalAlerts')}</TabsTrigger>
+          <TabsTrigger value="reports" data-testid="tab-reports">{t('reports')}</TabsTrigger>
+          <TabsTrigger value="scheduling" data-testid="tab-scheduling">{t('checkupScheduling')}</TabsTrigger>
+          <TabsTrigger value="analytics" data-testid="tab-analytics">{t('analytics')}</TabsTrigger>
+        </TabsList>
 
         {/* Overview Tab */}
-        {activeTab === 'overview' && (<div className="space-y-6">
+        <TabsContent value="overview" className="space-y-6">
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card 
@@ -512,86 +433,96 @@ export default function EnhancedAdminDashboard() {
               </div>
             </CardContent>
           </Card>
-        </div>)}
+        </TabsContent>
 
         {/* Patient Management Tab */}
-        {activeTab === 'patients' && <PatientManagementModule />}
+        <TabsContent value="patients" className="space-y-6">
+          <PatientManagementModule />
+        </TabsContent>
 
         {/* Device Monitoring Tab */}
-        {activeTab === 'devices' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wifi className="w-5 h-5" />
-                  Device Monitoring Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockDevices.map(device => (
-                    <div key={device.deviceId} className="p-4 border border-gray-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-blue-100 rounded-lg">
-                            <Signal className="w-6 h-6 text-blue-600" />
+        <TabsContent value="devices" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wifi className="w-5 h-5" />
+                Device Monitoring Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mockDevices.map(device => (
+                  <div key={device.deviceId} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-100 rounded-lg">
+                          <Signal className="w-6 h-6 text-blue-600" />
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{device.deviceId}</h4>
+                          <p className="text-sm text-gray-600">
+                            Patient: {device.patientName} ({device.patientId})
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Firmware: {device.firmwareVersion}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className={getStatusColor(device.connectionStatus)}>
+                              {device.connectionStatus}
+                            </Badge>
+                            <div className="flex items-center gap-1">
+                              {getBatteryIcon(device.batteryLevel)}
+                              <span className="text-sm">{device.batteryLevel}%</span>
+                            </div>
                           </div>
                           
-                          <div>
-                            <h4 className="font-semibold text-gray-900">{device.deviceId}</h4>
-                            <p className="text-sm text-gray-600">
-                              Patient: {device.patientName} ({device.patientId})
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Firmware: {device.firmwareVersion}
-                            </p>
+                          <div className="text-sm text-gray-600">
+                            Last sync: {getTimeAgo(device.lastSync)}
+                          </div>
+                          
+                          <div className="text-xs text-gray-500">
+                            Supports: {device.vitalTypesSupported.length} vital types
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge className={getStatusColor(device.connectionStatus)}>
-                                {device.connectionStatus}
-                              </Badge>
-                              <div className="flex items-center gap-1">
-                                {getBatteryIcon(device.batteryLevel)}
-                                <span className="text-sm">{device.batteryLevel}%</span>
-                              </div>
-                            </div>
-                            
-                            <div className="text-sm text-gray-600">
-                              Last sync: {getTimeAgo(device.lastSync)}
-                            </div>
-                            
-                            <div className="text-xs text-gray-500">
-                              Supports: {device.vitalTypesSupported.length} vital types
-                            </div>
-                          </div>
-                          
-                          <Button variant="ghost" size="sm">
-                            <Settings className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <Button variant="ghost" size="sm">
+                          <Settings className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Critical Alerts Tab */}
-        {activeTab === 'alerts' && <CriticalAlertsSystem />}
+        <TabsContent value="alerts">
+          <CriticalAlertsSystem />
+        </TabsContent>
 
         {/* Weekly Reports Tab */}
-        {activeTab === 'reports' && <WeeklyReportDashboard />}
+        <TabsContent value="reports">
+          <WeeklyReportDashboard />
+        </TabsContent>
 
         {/* Check-up Scheduling Tab */}
-        {activeTab === 'scheduling' && <CheckupScheduling />}
+        <TabsContent value="scheduling">
+          <CheckupScheduling />
+        </TabsContent>
 
         {/* Analytics Tab */}
-        {activeTab === 'analytics' && <AdvancedHealthAnalytics />}
-      </div>
+        <TabsContent value="analytics">
+          <AdvancedHealthAnalytics />
+        </TabsContent>
+      </Tabs>
       
       {/* Privacy Policy Footer */}
       <PrivacyPolicyFooter />

@@ -5,7 +5,6 @@ import DeviceMonitoring from './components/DeviceMonitoring';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
 import CheckupScheduling from './components/CheckupScheduling';
 import EnhancedPatientDashboard from './components/EnhancedPatientDashboard';
-import EnhancedAdminDashboard from './components/EnhancedAdminDashboard';
 import ForgotPasswordForm from './components/ForgotPasswordForm';
 import { LanguageProvider, useLanguage, LanguageSwitcher } from './lib/i18n';
 
@@ -210,23 +209,13 @@ function AppContent() {
 
       if (response.ok) {
         const data = await response.json();
-        
-        // Store authentication data in localStorage
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-        }
-        if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user));
-        }
-        
-        // Set view based on user role (admin or patient)
         setState(prev => ({
           ...prev,
           user: data.user,
           view: data.user.role === 'admin' ? 'admin' : 'patient',
           loading: false
         }));
-      } else{
+      } else {
         const errorData = await response.json();
         setState(prev => ({ 
           ...prev, 
@@ -894,10 +883,6 @@ For questions, contact: support@24x7teleh.com
   }
 
   if (state.view === 'admin' && state.user) {
-    return <EnhancedAdminDashboard />;
-  }
-
-  if (state.view === 'admin_legacy' && state.user) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Header */}

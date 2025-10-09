@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Search, Users, UserCheck, UserX, Calendar, Download, Key, MoreHorizontal, UserPlus } from 'lucide-react';
+import { Search, Users, UserCheck, UserX, Calendar, Download, Key, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Patient {
@@ -53,7 +53,6 @@ export default function PatientManagementModule() {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
-  const [showAddPatientDialog, setShowAddPatientDialog] = useState(false);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -61,7 +60,6 @@ export default function PatientManagementModule() {
   // Fetch hospitals list
   const { data: hospitalsData } = useQuery({
     queryKey: ['/api/hospitals/abudhabi'],
-    staleTime: 600000,
     retry: false
   });
 
@@ -122,14 +120,12 @@ export default function PatientManagementModule() {
       }
       return response.json();
     },
-    staleTime: 300000,
     retry: false
   });
 
   // Fetch patient statistics
   const { data: statsData } = useQuery({
     queryKey: ['/api/admin/patients/stats'],
-    staleTime: 300000,
     retry: false
   });
 
@@ -215,42 +211,6 @@ export default function PatientManagementModule() {
       toast({
         title: "Password Reset Failed",
         description: error.message || "Failed to reset patient password",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Create patient mutation
-  const createPatientMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/create-patient', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Patient Created Successfully",
-        description: "Patient dashboard access has been created.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/patients'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/patients/stats'] });
-      setShowAddPatientDialog(false);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error Creating Patient",
-        description: error.message || "Failed to create patient access",
         variant: "destructive",
       });
     },
@@ -356,14 +316,7 @@ export default function PatientManagementModule() {
               <Users className="w-5 h-5" />
               Patient Management
             </CardTitle>
-            <Button 
-              onClick={() => setShowAddPatientDialog(true)}
-              className="flex items-center gap-2"
-              data-testid="button-add-patient"
-            >
-              <UserPlus className="w-4 h-4" />
-              Add Patient
-            </Button>
+            
           </div>
         </CardHeader>
         
@@ -673,24 +626,6 @@ export default function PatientManagementModule() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Add Patient Dialog */}
-      <Dialog open={showAddPatientDialog} onOpenChange={setShowAddPatientDialog}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-blue-600" />
-              Create New Patient
-            </DialogTitle>
-          </DialogHeader>
-          <AddPatientForm 
-            hospitals={hospitals}
-            onSubmit={(data) => createPatientMutation.mutate(data)}
-            onCancel={() => setShowAddPatientDialog(false)}
-            isSubmitting={createPatientMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
@@ -804,169 +739,6 @@ function EditPatientForm({
         </Button>
         <Button type="submit" data-testid="button-update-patient">
           Update Patient
-        </Button>
-      </div>
-    </form>
-  );
-}
-
-// Add Patient Form Component
-function AddPatientForm({ 
-  hospitals, 
-  onSubmit, 
-  onCancel,
-  isSubmitting 
-}: { 
-  hospitals: Hospital[]; 
-  onSubmit: (data: any) => void; 
-  onCancel: () => void;
-  isSubmitting: boolean;
-}) {
-  const [formData, setFormData] = useState({
-    patientId: '',
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    email: '',
-    username: '',
-    mobileNumber: '',
-    hospitalId: '',
-    password: '',
-    dateOfBirth: ''
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="patientId">Patient ID *</Label>
-          <Input
-            id="patientId"
-            value={formData.patientId}
-            onChange={(e) => setFormData(prev => ({ ...prev, patientId: e.target.value }))}
-            placeholder="TH-12345"
-            required
-            data-testid="input-patientid"
-          />
-        </div>
-        <div>
-          <Label htmlFor="username">Username *</Label>
-          <Input
-            id="username"
-            value={formData.username}
-            onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-            placeholder="patient_username"
-            required
-            data-testid="input-username"
-          />
-        </div>
-        <div>
-          <Label htmlFor="firstName">First Name *</Label>
-          <Input
-            id="firstName"
-            value={formData.firstName}
-            onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-            placeholder="John"
-            required
-            data-testid="input-firstname"
-          />
-        </div>
-        <div>
-          <Label htmlFor="middleName">Middle Name</Label>
-          <Input
-            id="middleName"
-            value={formData.middleName}
-            onChange={(e) => setFormData(prev => ({ ...prev, middleName: e.target.value }))}
-            placeholder="Middle name (optional)"
-            data-testid="input-middlename"
-          />
-        </div>
-        <div>
-          <Label htmlFor="lastName">Last Name *</Label>
-          <Input
-            id="lastName"
-            value={formData.lastName}
-            onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-            placeholder="Doe"
-            required
-            data-testid="input-lastname"
-          />
-        </div>
-        <div>
-          <Label htmlFor="dateOfBirth">Date of Birth</Label>
-          <Input
-            id="dateOfBirth"
-            type="date"
-            value={formData.dateOfBirth}
-            onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-            data-testid="input-dateofbirth"
-          />
-        </div>
-        <div>
-          <Label htmlFor="email">Email *</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            placeholder="patient@example.com"
-            required
-            data-testid="input-email"
-          />
-        </div>
-        <div>
-          <Label htmlFor="mobileNumber">Mobile Number *</Label>
-          <Input
-            id="mobileNumber"
-            value={formData.mobileNumber}
-            onChange={(e) => setFormData(prev => ({ ...prev, mobileNumber: e.target.value }))}
-            placeholder="+971501234567"
-            required
-            data-testid="input-mobile"
-          />
-        </div>
-        <div>
-          <Label htmlFor="hospitalId">Hospital *</Label>
-          <Select value={formData.hospitalId} onValueChange={(value) => setFormData(prev => ({ ...prev, hospitalId: value }))}>
-            <SelectTrigger data-testid="select-hospital">
-              <SelectValue placeholder="Select Hospital" />
-            </SelectTrigger>
-            <SelectContent>
-              {hospitals.map((hospital) => (
-                <SelectItem key={hospital.id} value={hospital.id}>
-                  {hospital.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="password">Password *</Label>
-          <Input
-            id="password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-            placeholder="Enter secure password"
-            required
-            minLength={8}
-            data-testid="input-password"
-          />
-          <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} data-testid="button-cancel-add">
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isSubmitting} data-testid="button-submit-patient">
-          {isSubmitting ? 'Creating...' : 'Create Patient'}
         </Button>
       </div>
     </form>

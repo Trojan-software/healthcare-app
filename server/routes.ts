@@ -190,29 +190,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Vital signs endpoints - accepts partial vital signs from HC03 Bluetooth devices
+  // Vital signs endpoints
   app.post("/api/vital-signs", async (req, res) => {
     try {
-      const { patientId, heartRate, bloodPressureSystolic, bloodPressureDiastolic, temperature, oxygenLevel, bloodGlucose } = req.body;
+      const { patientId, heartRate, bloodPressure, temperature, oxygenLevel, bloodGlucose } = req.body;
 
-      // Only patientId is required - vital signs can be partial from Bluetooth devices
-      if (!patientId) {
-        return res.status(400).json({ message: "Patient ID is required" });
+      if (!patientId || !heartRate || !bloodPressure || !temperature || !oxygenLevel) {
+        return res.status(400).json({ message: "Required vital signs data missing" });
       }
 
-      const vitalSignsData: any = {
-        patientId: String(patientId)
-      };
-
-      // Add only provided vital signs
-      if (heartRate !== undefined) vitalSignsData.heartRate = parseInt(heartRate);
-      if (bloodPressureSystolic !== undefined) vitalSignsData.bloodPressureSystolic = parseInt(bloodPressureSystolic);
-      if (bloodPressureDiastolic !== undefined) vitalSignsData.bloodPressureDiastolic = parseInt(bloodPressureDiastolic);
-      if (temperature !== undefined) vitalSignsData.temperature = temperature.toString();
-      if (oxygenLevel !== undefined) vitalSignsData.oxygenLevel = parseInt(oxygenLevel);
-      if (bloodGlucose !== undefined) vitalSignsData.bloodGlucose = parseInt(bloodGlucose);
-
-      const vitalSigns = await storage.createVitalSigns(vitalSignsData);
+      const vitalSigns = await storage.createVitalSigns({
+        patientId: String(patientId),
+        heartRate: parseInt(heartRate),
+        bloodPressureSystolic: parseInt(bloodPressure.split('/')[0]),
+        bloodPressureDiastolic: parseInt(bloodPressure.split('/')[1]),
+        temperature: temperature.toString(),
+        oxygenLevel: parseInt(oxygenLevel),
+        bloodGlucose: bloodGlucose ? parseInt(bloodGlucose) : null
+      });
 
       // Check for critical vitals and send email notifications
       if (isVitalsCritical(vitalSigns)) {
