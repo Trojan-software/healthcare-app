@@ -102,6 +102,28 @@ export default function EnhancedAdminDashboard() {
     retry: false
   });
 
+  // Fetch patients data - disabled to prevent infinite loop
+  const { data: patientsData, isLoading: patientsLoading } = useQuery({
+    queryKey: ['/api/admin/patients-overview'],
+    queryFn: async () => {
+      return { patients: [] }; // Return empty data
+    },
+    enabled: false, // Disabled to prevent infinite loop
+    staleTime: 300000,
+    retry: false
+  });
+
+  // Fetch devices data - disabled to prevent infinite loop
+  const { data: devicesData } = useQuery({
+    queryKey: ['/api/admin/devices-overview'],
+    queryFn: async () => {
+      return { devices: [] }; // Return empty data
+    },
+    enabled: false, // Disabled to prevent infinite loop
+    staleTime: 300000,
+    retry: false
+  });
+
   // Default stats to avoid undefined errors
   const mockStats: DashboardStats = dashboardStats?.stats || {
     totalPatients: 0,
@@ -493,11 +515,7 @@ export default function EnhancedAdminDashboard() {
         </div>)}
 
         {/* Patient Management Tab */}
-        {activeTab === 'patients' && (
-          <div className="p-8 text-center">
-            <p className="text-gray-600">Patient Management Module Temporarily Disabled for Debugging</p>
-          </div>
-        )}
+        {activeTab === 'patients' && <PatientManagementModule />}
 
         {/* Device Monitoring Tab */}
         {activeTab === 'devices' && (
