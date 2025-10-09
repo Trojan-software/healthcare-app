@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import ComprehensiveHealthcareApp from './ComprehensiveHealthcareApp';
-import EnhancedAdminDashboard from './components/EnhancedAdminDashboard';
+import SimpleAdminDashboard from './components/SimpleAdminDashboard';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -18,7 +18,7 @@ export default function App() {
   if (currentPath.startsWith('/admin')) {
     return (
       <div data-testid="text-admin-wired">
-        <EnhancedAdminDashboard />
+        <SimpleAdminDashboard />
       </div>
     );
   }
