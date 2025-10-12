@@ -43,30 +43,18 @@ The backend uses **Node.js** with **TypeScript** and **Express.js** for its REST
 - **drizzle-kit**: Database schema migrations.
 - **@capacitor/core**: Cross-platform native runtime for web apps.
 - **@capacitor/android**: Android platform support for Capacitor.
+- **@capacitor/ios**: iOS platform support for Capacitor.
 
 ## HC03 Native Bluetooth Implementation
-The system includes a Capacitor-based native Android plugin for reliable HC03 Bluetooth connectivity:
+The system includes Capacitor-based native plugins for reliable HC03 Bluetooth connectivity on both Android and iOS platforms:
+
+### Android Implementation
 
 **Android Components:**
 - **NskAlgoSdk.jar**: NeuroSky algorithm library for ECG signal processing (v1.0)
 - **EcgManager.java**: Singleton manager for ECG data processing with algorithm callbacks
 - **HC03BluetoothPlugin.java**: Capacitor plugin bridge between native Android and React
 - **Native Libraries**: ARM64, ARMv7, x86, x86_64 .so libraries for signal processing
-
-**TypeScript Integration:**
-- **HC03BluetoothPlugin**: Capacitor plugin TypeScript definitions
-- **HC03NativeService**: Hybrid service that uses native plugin on Android and Web Bluetooth API in browsers
-- Automatic fallback mechanism for cross-platform compatibility
-
-**Features:**
-- Real-time ECG waveform processing (512Hz sampling rate)
-- Heart rate and HRV (Heart Rate Variability) calculation
-- Mood index analysis (1-100 scale: chill to excitement/anxiety)
-- Respiratory rate detection
-- RR interval analysis for cardiac health
-- Stress level assessment
-- Finger touch detection for signal quality
-- Signal quality monitoring
 
 **Bluetooth Permissions (AndroidManifest.xml):**
 - BLUETOOTH, BLUETOOTH_ADMIN, BLUETOOTH_SCAN, BLUETOOTH_CONNECT
@@ -77,3 +65,43 @@ The system includes a Capacitor-based native Android plugin for reliable HC03 Bl
 - Native .so libraries in android/app/src/main/jniLibs/
 - Minimum SDK: 21 (Android 5.0)
 - Target SDK: Latest Android version
+
+### iOS Implementation
+
+**iOS Components:**
+- **libNSKAlgoSDKECG.a**: NeuroSky static library for ECG signal processing (3.8 MB)
+- **NSKAlgoSDKECG.h**: Objective-C header for NeuroSky SDK
+- **SDKHealthMonitor.swift**: Swift wrapper for ECG data processing and analysis
+- **HC03BluetoothPlugin.swift**: Capacitor plugin bridge between native iOS and React
+- **HC03Bluetooth-Bridging-Header.h**: Bridging header to expose Objective-C SDK to Swift
+
+**Bluetooth Permissions (Info.plist):**
+- NSBluetoothAlwaysUsageDescription: Bluetooth access for HC03 medical device
+- NSBluetoothPeripheralUsageDescription: Bluetooth peripheral access
+- UIBackgroundModes: bluetooth-central (for background Bluetooth operations)
+
+**Build Configuration:**
+- Static library integration via Podfile
+- Library search paths configured for NeuroSky SDK
+- Swift-Objective-C bridging header setup
+- Minimum iOS: 14.0
+- Target iOS: Latest iOS version
+
+### TypeScript Integration
+
+**Shared Components:**
+- **HC03BluetoothPlugin**: Capacitor plugin TypeScript definitions
+- **HC03NativeService**: Hybrid service that uses native plugin on Android/iOS and Web Bluetooth API in browsers
+- Automatic fallback mechanism for cross-platform compatibility
+
+### Features (Both Platforms)
+
+- Real-time ECG waveform processing (512Hz sampling rate)
+- Heart rate and HRV (Heart Rate Variability) calculation
+- Mood index analysis (1-100 scale: chill to excitement/anxiety)
+- Respiratory rate detection
+- RR interval analysis for cardiac health
+- Stress level assessment
+- Heart age calculation
+- Finger touch detection for signal quality
+- Signal quality monitoring
