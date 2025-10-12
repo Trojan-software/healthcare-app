@@ -18,10 +18,11 @@ The backend uses **Node.js** with **TypeScript** and **Express.js** for its REST
 **Key Features and Design Decisions:**
 - **Enhanced Patient Registration**: Comprehensive signup, UAE mobile validation, patient ID generation, Abu Dhabi hospital selection, OTP email verification, secure passwords, and role-based access.
 - **Health Monitoring**: Tracks heart rate, blood pressure, temperature, oxygen, blood glucose, and integrates with HC03 devices via Bluetooth for real-time ECG and blood oxygen monitoring. Includes health analytics and a critical event alert system.
+- **Native Android Bluetooth Integration**: Capacitor plugin with HC03 native SDK (NskAlgoSdk) for reliable Bluetooth connectivity on Android devices. Includes ECG signal processing, heart rate variability analysis, mood index calculation, and respiratory rate detection. Falls back to Web Bluetooth API for web browsers.
 - **Mobile-First Design**: PWA with offline support, mobile-optimized dashboards, device installation without app store, push notifications, and cross-platform compatibility.
-- **Data Flow**: Secure JWT authentication, real-time data capture from HC03 devices, data validation and storage, immediate alert generation for critical readings, and an analytics pipeline for insights.
+- **Data Flow**: Secure JWT authentication, real-time data capture from HC03 devices via native Android plugin or Web Bluetooth API, data validation and storage, immediate alert generation for critical readings, and an analytics pipeline for insights.
 - **Bilingual Support**: Comprehensive Arabic/English internationalization with RTL/LTR layouts across all interfaces, including forms, dashboards, and reports.
-- **Advanced Monitoring**: ECG monitoring with interval analysis, arrhythmia detection, and clinical interpretation. Comprehensive battery and blood glucose monitoring systems with real-time data and alerts.
+- **Advanced Monitoring**: ECG monitoring with interval analysis, arrhythmia detection, and clinical interpretation using NeuroSky ECG algorithms. Comprehensive battery and blood glucose monitoring systems with real-time data and alerts.
 - **Patient Management**: Full CRUD operations for patient records, advanced search and filtering, comprehensive audit trails, and enhanced patient details view with comprehensive modal interface replacing basic alert dialogs.
 - **Enhanced UI Components**: Interactive health metrics cards with detailed modal views featuring trend charts, health tips, and status indicators. Professional patient details interface with organized sections including personal information, vital signs, health overview, and recent activity timeline.
 - **Deployment**: Development on Replit (Node.js 20, PostgreSQL 16), production builds using Vite and esbuild, Drizzle for schema migrations, and self-hosted PWA distribution.
@@ -40,3 +41,39 @@ The backend uses **Node.js** with **TypeScript** and **Express.js** for its REST
 - **tsx**: TypeScript execution for development.
 - **esbuild**: JavaScript bundler.
 - **drizzle-kit**: Database schema migrations.
+- **@capacitor/core**: Cross-platform native runtime for web apps.
+- **@capacitor/android**: Android platform support for Capacitor.
+
+## HC03 Native Bluetooth Implementation
+The system includes a Capacitor-based native Android plugin for reliable HC03 Bluetooth connectivity:
+
+**Android Components:**
+- **NskAlgoSdk.jar**: NeuroSky algorithm library for ECG signal processing (v1.0)
+- **EcgManager.java**: Singleton manager for ECG data processing with algorithm callbacks
+- **HC03BluetoothPlugin.java**: Capacitor plugin bridge between native Android and React
+- **Native Libraries**: ARM64, ARMv7, x86, x86_64 .so libraries for signal processing
+
+**TypeScript Integration:**
+- **HC03BluetoothPlugin**: Capacitor plugin TypeScript definitions
+- **HC03NativeService**: Hybrid service that uses native plugin on Android and Web Bluetooth API in browsers
+- Automatic fallback mechanism for cross-platform compatibility
+
+**Features:**
+- Real-time ECG waveform processing (512Hz sampling rate)
+- Heart rate and HRV (Heart Rate Variability) calculation
+- Mood index analysis (1-100 scale: chill to excitement/anxiety)
+- Respiratory rate detection
+- RR interval analysis for cardiac health
+- Stress level assessment
+- Finger touch detection for signal quality
+- Signal quality monitoring
+
+**Bluetooth Permissions (AndroidManifest.xml):**
+- BLUETOOTH, BLUETOOTH_ADMIN, BLUETOOTH_SCAN, BLUETOOTH_CONNECT
+- ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION (required for BLE on Android)
+
+**Build Configuration:**
+- JAR library integration in android/app/build.gradle
+- Native .so libraries in android/app/src/main/jniLibs/
+- Minimum SDK: 21 (Android 5.0)
+- Target SDK: Latest Android version
