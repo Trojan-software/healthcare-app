@@ -21,4 +21,17 @@ end
 
 post_install do |installer|
   assertDeploymentTarget(installer)
+  
+  # Configure linker flags for NeuroSky SDK
+  installer.pods_project.targets.each do |target|
+    if target.name == 'App'
+      target.build_configurations.each do |config|
+        config.build_settings['OTHER_LDFLAGS'] ||= ['$(inherited)']
+        config.build_settings['OTHER_LDFLAGS'] << '-lNSKAlgoSDKECG'
+        config.build_settings['LIBRARY_SEARCH_PATHS'] ||= ['$(inherited)']
+        config.build_settings['LIBRARY_SEARCH_PATHS'] << '$(PROJECT_DIR)/App/Libraries/NeuroSky'
+        config.build_settings['SWIFT_OBJC_BRIDGING_HEADER'] = '$(PROJECT_DIR)/App/Plugins/HC03Bluetooth/HC03Bluetooth-Bridging-Header.h'
+      end
+    end
+  end
 end
