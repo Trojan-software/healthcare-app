@@ -18,8 +18,6 @@ export interface EcgDataEvent {
   isTouch?: boolean;
 }
 
-const HC03Bluetooth = registerPlugin<HC03BluetoothPlugin>('HC03Bluetooth', {
-  web: () => import('./hc03-bluetooth-web').then(m => new m.HC03BluetoothWeb()),
-});
+const HC03Bluetooth = registerPlugin<HC03BluetoothPlugin>('HC03Bluetooth');
 
 export default HC03Bluetooth;

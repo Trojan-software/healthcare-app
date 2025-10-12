@@ -436,6 +436,8 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       
       if (error.message?.includes('not supported')) {
         userMessage = 'Bluetooth is not supported in this browser. Please use Chrome, Edge, or another compatible browser on desktop or Android.';
+      } else if (error.message?.includes('cancelled') || error.message?.includes('canceled')) {
+        userMessage = 'Device selection was cancelled. Please try again and select your HC03 device from the list.';
       } else if (error.name === 'NotFoundError' || error.message?.includes('No device found')) {
         userMessage = 'No HC03 device found. Make sure your device is turned on, in pairing mode, and nearby.';
       } else if (error.name === 'NotAllowedError' || error.message?.includes('denied')) {
