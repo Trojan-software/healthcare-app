@@ -372,6 +372,11 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
     setError('');
     
     try {
+      // Check if Web Bluetooth is supported
+      if (!navigator.bluetooth) {
+        throw new Error('Bluetooth is not supported in this browser. Please use Chrome, Edge, or another compatible browser on desktop or Android.');
+      }
+      
       // Check if device is available first
       const isAvailable = await hc03Sdk.isDeviceAvailable();
       if (!isAvailable) {
@@ -423,13 +428,31 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error scanning for devices:', error);
-      setError(error instanceof Error ? error.message : 'Failed to scan for devices');
+      
+      // Provide user-friendly error messages
+      let userMessage = 'Failed to scan for devices';
+      
+      if (error.message?.includes('not supported')) {
+        userMessage = 'Bluetooth is not supported in this browser. Please use Chrome, Edge, or another compatible browser on desktop or Android.';
+      } else if (error.name === 'NotFoundError' || error.message?.includes('No device found')) {
+        userMessage = 'No HC03 device found. Make sure your device is turned on, in pairing mode, and nearby.';
+      } else if (error.name === 'NotAllowedError' || error.message?.includes('denied')) {
+        userMessage = 'Bluetooth access was denied. Please allow Bluetooth permissions in your browser settings.';
+      } else if (error.name === 'SecurityError') {
+        userMessage = 'Bluetooth access requires a secure connection (HTTPS). Please ensure you\'re using a secure connection.';
+      } else if (error.message?.includes('already connected')) {
+        userMessage = error.message;
+      } else if (error.message) {
+        userMessage = error.message;
+      }
+      
+      setError(userMessage);
       setConnectionStatus('error');
       toast({
         title: "Connection Failed",
-        description: error instanceof Error ? error.message : 'Failed to connect to HC03 device',
+        description: userMessage,
         variant: "destructive"
       });
     } finally {
