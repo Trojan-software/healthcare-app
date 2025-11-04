@@ -24,7 +24,7 @@ export default function FAQSection({ onClose }: FAQSectionProps) {
       id: 'setup-1',
       category: 'setup',
       question: 'How do I set up my HC03 device for the first time?',
-      answer: 'To set up your HC03 device: 1) Charge the device completely, 2) Download the 24/7 Tele H app, 3) Turn on Bluetooth on your phone, 4) Press and hold the power button on HC03 for 3 seconds, 5) Follow the pairing instructions in the app.',
+      answer: 'To set up your HC03 device: 1) Charge the device completely, 2) Download the 24/7 Health Monitor app, 3) Turn on Bluetooth on your phone, 4) Press and hold the power button on HC03 for 3 seconds, 5) Follow the pairing instructions in the app.',
       videoUrl: 'https://example.com/setup-video'
     },
     {
