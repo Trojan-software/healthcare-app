@@ -60,7 +60,7 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg bg-white" data-testid="img-app-logo">
                 <img 
-                  src="/attached_assets/logo2_1749727548844.JPG" 
+                  src="/attached_assets/logo 3_1762286183978.png" 
                   alt="24/7 Health Monitor"
                   className="w-full h-full object-contain"
                 />
