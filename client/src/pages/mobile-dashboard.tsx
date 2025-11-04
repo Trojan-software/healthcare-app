@@ -53,12 +53,12 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Mobile App Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50">
-        <div className="px-4 py-3">
+      {/* Mobile App Header - Optimized with safe areas */}
+      <header className="mobile-header bg-white dark:bg-gray-800 shadow-lg" data-testid="header-mobile-app">
+        <div className="px-4 py-3 safe-left safe-right">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg bg-white">
+              <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg bg-white" data-testid="img-app-logo">
                 <img 
                   src="/attached_assets/logo2_1749727548844.JPG" 
                   alt="24/7 Health Monitor"
@@ -66,8 +66,8 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
                 />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">24/7 Health Monitor</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Healthcare Platform</p>
+                <h1 className="mobile-title text-gray-900 dark:text-white" data-testid="text-app-title">24/7 Health Monitor</h1>
+                <p className="mobile-subtitle" data-testid="text-app-subtitle">Healthcare Platform</p>
               </div>
             </div>
             
@@ -76,17 +76,18 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
                 onClick={() => setShowProfile(true)}
                 variant="outline" 
                 size="sm" 
-                className="px-3 py-1 text-xs"
+                className="mobile-btn px-3 text-xs"
+                data-testid="button-profile"
               >
                 <User className="h-4 w-4 mr-1" />
                 Profile
               </Button>
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="p-2">
+                <Button variant="ghost" size="sm" className="mobile-btn p-2" data-testid="button-back-dashboard">
                   <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                 </Button>
               </Link>
-              <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center" data-testid="indicator-online-status">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
               </div>
             </div>
@@ -94,45 +95,45 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
         </div>
       </header>
 
-      {/* Mobile App Content */}
-      <div className="px-4 pb-20">
-        {/* Quick Stats */}
-        <div className="mb-4">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+      {/* Mobile App Content with proper spacing */}
+      <div className="mobile-content px-4">
+        {/* Quick Stats - Mobile Optimized */}
+        <div className="mb-4 pt-4">
+          <div className="mobile-grid-3">
+            <div className="mobile-card" data-testid="card-stats-checkups">
               <div className="flex flex-col items-center">
                 <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-2">
                   <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{dashboardStats.checkupsToday}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white" data-testid="text-checkups-count">{dashboardStats.checkupsToday}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Today</p>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+            <div className="mobile-card" data-testid="card-stats-alerts">
               <div className="flex flex-col items-center">
                 <div className="w-10 h-10 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-2">
                   <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                 </div>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{dashboardStats.criticalAlerts}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white" data-testid="text-alerts-count">{dashboardStats.criticalAlerts}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Alerts</p>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
+            <div className="mobile-card" data-testid="card-stats-rate">
               <div className="flex flex-col items-center">
                 <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-2">
                   <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{dashboardStats.completionRate}%</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white" data-testid="text-completion-rate">{dashboardStats.completionRate}%</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Rate</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Mobile Tab Navigation */}
-        <div className="mb-6">
+        {/* Desktop/Tablet Tab Navigation - Hidden on mobile, shown on larger screens */}
+        <div className="mb-6 hidden sm:block">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-2 shadow-sm">
             <div className="grid grid-cols-5 gap-1">
               {tabs.map((tab) => {
@@ -141,13 +142,14 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+                    className={`tap-target flex flex-col items-center justify-center p-3 rounded-xl transition-all ${
                       activeTab === tab.id
                         ? 'bg-blue-500 text-white shadow-lg'
                         : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
+                    data-testid={`button-tab-${tab.id}`}
                   >
-                    <IconComponent className="h-4 w-4 mb-1" />
+                    <IconComponent className="h-5 w-5 mb-1" />
                     <span className="text-xs font-medium">{tab.label}</span>
                   </button>
                 );
@@ -307,6 +309,35 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
       
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+      
+      {/* Mobile Bottom Navigation - Fixed at bottom on mobile devices */}
+      <nav className="mobile-bottom-nav sm:hidden safe-bottom" data-testid="nav-mobile-bottom">
+        <div className="px-2 py-2">
+          <div className="grid grid-cols-5 gap-1">
+            {tabs.map((tab) => {
+              const IconComponent = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`tap-target flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+                    isActive
+                      ? 'bg-blue-500 text-white'
+                      : 'text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-700'
+                  }`}
+                  data-testid={`button-nav-${tab.id}`}
+                >
+                  <IconComponent className={`h-5 w-5 mb-1 ${isActive ? 'scale-110' : ''}`} />
+                  <span className={`text-xs font-medium ${isActive ? 'font-bold' : ''}`}>
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

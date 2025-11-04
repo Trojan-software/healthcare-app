@@ -396,9 +396,9 @@ For questions, contact: support@24x7teleh.com
 
   if (state.view === 'login') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 safe-top safe-bottom">
         <div className="flex min-h-screen">
-          {/* Branding Section */}
+          {/* Branding Section - Hidden on mobile, shown on desktop */}
           <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/20"></div>
             <div className="relative z-10 flex flex-col justify-center px-12 text-white">
@@ -436,21 +436,33 @@ For questions, contact: support@24x7teleh.com
             </div>
           </div>
 
-          {/* Login Form */}
-          <div className={`w-full lg:w-1/2 flex items-center justify-center px-6 py-12 ${isRTL ? 'rtl' : 'ltr'}`}>
-            <div className="w-full max-w-md space-y-8">
-              <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          {/* Login Form - Mobile Optimized */}
+          <div className={`w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 safe-left safe-right ${isRTL ? 'rtl' : 'ltr'}`}>
+            <div className="w-full max-w-md space-y-6 sm:space-y-8">
+              <div className={`flex items-center justify-between mb-4 sm:mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <div className={isRTL ? 'text-right' : 'text-left'}>
+                  {/* Mobile header with logo */}
                   <div className="lg:hidden mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">24/7 Health Monitor</h1>
-                    <p className="text-gray-600">
-                      {t('technologyServices')}
-                    </p>
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg bg-white">
+                        <img 
+                          src="/attached_assets/logo2_1749727548844.JPG" 
+                          alt="24/7 Health Monitor"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div>
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">24/7 Health Monitor</h1>
+                        <p className="text-xs sm:text-sm text-gray-600">
+                          {t('technologyServices')}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <h2 className="text-3xl font-bold text-gray-900">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
                     {t('welcomeBack')}
                   </h2>
-                  <p className="mt-2 text-gray-600">
+                  <p className="mt-2 text-sm sm:text-base text-gray-600">
                     {t('signInToHealthcareDashboard')}
                   </p>
                 </div>
@@ -464,7 +476,7 @@ For questions, contact: support@24x7teleh.com
                   formData.get('email') as string,
                   formData.get('password') as string
                 );
-              }} className="space-y-6">
+              }} className="space-y-4 sm:space-y-6">
                 <div>
                   <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>
                     {t('emailOrPatientId')}
@@ -473,9 +485,10 @@ For questions, contact: support@24x7teleh.com
                     type="text"
                     name="email"
                     required
-                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
+                    className={`mobile-input w-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
                     placeholder={t('enterEmailOrPatientId')}
                     dir={isRTL ? 'rtl' : 'ltr'}
+                    data-testid="input-email"
                   />
                 </div>
 
@@ -487,8 +500,9 @@ For questions, contact: support@24x7teleh.com
                     type="password"
                     name="password"
                     required
-                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
+                    className={`mobile-input w-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isRTL ? 'text-right' : 'text-left'}`}
                     placeholder={t('enterPassword')}
+                    data-testid="input-password"
                   />
                 </div>
 
@@ -501,7 +515,7 @@ For questions, contact: support@24x7teleh.com
                 <button
                   type="submit"
                   disabled={state.loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-teal-700 disabled:opacity-50 transition-all transform hover:scale-[1.02]"
+                  className="mobile-btn w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-teal-700 disabled:opacity-50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                   data-testid="button-login-submit"
                 >
                   {state.loading ? t('signingIn') : t('signIn')}
