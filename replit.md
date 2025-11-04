@@ -1,7 +1,7 @@
-# 24/7 Tele H - Health Monitoring System
+# 24/7 Health Monitor - Health Monitoring System
 
 ## Overview
-The 24/7 Tele H platform is a comprehensive telemedicine and health monitoring system designed for healthcare professionals and patients. Its core purpose is to provide real-time vital signs monitoring, integrate with HC03 medical devices, and offer a mobile-first Progressive Web App (PWA) experience. The system aims to enhance patient care through continuous monitoring, early alert systems, and robust data analytics, ultimately improving health outcomes and operational efficiency for healthcare providers.
+The 24/7 Health Monitor platform is a comprehensive telemedicine and health monitoring system designed for healthcare professionals and patients. Its core purpose is to provide real-time vital signs monitoring, integrate with HC03 medical devices, and offer a mobile-first Progressive Web App (PWA) experience. The system aims to enhance patient care through continuous monitoring, early alert systems, and robust data analytics, ultimately improving health outcomes and operational efficiency for healthcare providers.
 
 ## User Preferences
 ```

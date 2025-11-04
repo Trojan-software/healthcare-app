@@ -1,5 +1,5 @@
 # ADHCC Security Audit Validation Report
-## 24/7 Tele H Healthcare Application
+## 24/7 Health Monitor Healthcare Application
 
 **Document Date:** November 4, 2025  
 **Audit Report Date:** October 9, 2025  

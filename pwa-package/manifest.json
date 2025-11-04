@@ -1,6 +1,6 @@
 {
-  "name": "24/7 Tele H - Health Monitor",
-  "short_name": "24/7 Tele H",
+  "name": "24/7 Health Monitor - Healthcare Platform",
+  "short_name": "Health Monitor",
   "description": "Professional healthcare monitoring platform with HC03 device integration",
   "start_url": "/mobile-dashboard",
   "display": "standalone",

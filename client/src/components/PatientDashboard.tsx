@@ -253,7 +253,7 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
-              🏥 24/7 Tele H - Health Monitoring Dashboard
+              🏥 24/7 Health Monitor - Health Dashboard
             </h1>
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
               Welcome back, {user.firstName} {user.lastName} - Real-time health monitoring is active

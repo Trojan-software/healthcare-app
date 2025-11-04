@@ -166,7 +166,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage patient dashboard access for 24/7 Tele H</p>
+            <p className="text-gray-600 dark:text-gray-400">Manage patient dashboard access for 24/7 Health Monitor</p>
           </div>
           <div className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-blue-600" />
