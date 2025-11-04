@@ -439,20 +439,21 @@ For questions, contact: support@24x7teleh.com
           {/* Login Form - Mobile Optimized */}
           <div className={`w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 safe-left safe-right ${isRTL ? 'rtl' : 'ltr'}`}>
             <div className="w-full max-w-md space-y-6 sm:space-y-8">
-              <div className={`flex items-center justify-between mb-4 sm:mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              {/* Mobile: Stack vertically to prevent text squeeze */}
+              <div className="flex flex-col gap-4 mb-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className={isRTL ? 'text-right' : 'text-left'}>
                   {/* Mobile header with logo */}
                   <div className="lg:hidden mb-6">
-                    <div className="flex items-start gap-2 mb-4">
-                      <div className="w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden shadow bg-white">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden shadow bg-white">
                         <img 
                           src="/attached_assets/logo2_1749727548844.JPG" 
                           alt="24/7 Health Monitor"
                           className="w-full h-full object-contain"
                         />
                       </div>
-                      <div className="flex-1 overflow-hidden">
-                        <h1 className="text-base font-bold text-gray-900 leading-snug whitespace-nowrap overflow-hidden text-ellipsis">
+                      <div className="flex-1 min-w-0">
+                        <h1 className="text-lg font-bold text-gray-900 leading-tight">
                           24/7 Health Monitor
                         </h1>
                         <p className="text-xs text-gray-600 leading-tight mt-0.5">
