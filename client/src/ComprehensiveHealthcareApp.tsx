@@ -443,17 +443,17 @@ For questions, contact: support@24x7teleh.com
                 <div className={isRTL ? 'text-right' : 'text-left'}>
                   {/* Mobile header with logo */}
                   <div className="lg:hidden mb-6">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg bg-white">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-14 h-14 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg bg-white">
                         <img 
                           src="/attached_assets/logo2_1749727548844.JPG" 
                           alt="24/7 Health Monitor"
                           className="w-full h-full object-contain"
                         />
                       </div>
-                      <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">24/7 Health Monitor</h1>
-                        <p className="text-xs sm:text-sm text-gray-600">
+                      <div className="flex-1 min-w-0">
+                        <h1 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">24/7 Health Monitor</h1>
+                        <p className="text-xs sm:text-sm text-gray-600 leading-tight mt-0.5">
                           {t('technologyServices')}
                         </p>
                       </div>
