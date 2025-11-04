@@ -61,13 +61,13 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
               <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg bg-white">
                 <img 
                   src="/attached_assets/logo2_1749727548844.JPG" 
-                  alt="24/7 Tele H Technology Services"
+                  alt="24/7 Health Monitor"
                   className="w-full h-full object-contain"
                 />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">24/7 Tele H</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Technology Services</p>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">24/7 Health Monitor</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Healthcare Platform</p>
               </div>
             </div>
             

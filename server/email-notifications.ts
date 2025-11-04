@@ -86,7 +86,7 @@ Patient Dashboard Link: https://24x7teleh.replit.app/patient/${notification.pati
     <div class="container">
         <div class="header">
             <h1>🚨 Critical Health Alert</h1>
-            <p>24/7 Tele H Technology Services</p>
+            <p>24/7 Health Monitor</p>
         </div>
         
         <div class="content">
@@ -119,7 +119,7 @@ Patient Dashboard Link: https://24x7teleh.replit.app/patient/${notification.pati
         </div>
         
         <div class="footer">
-            <p>This is an automated alert from 24/7 Tele H Healthcare Monitoring System</p>
+            <p>This is an automated alert from 24/7 Health Monitor Healthcare Monitoring System</p>
             <p>For technical support: support@24x7teleh.com | +971-2-123-4567</p>
         </div>
     </div>

@@ -102,6 +102,6 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
   }, () => {
     log(`Healthcare system serving on port ${port}`);
-    console.log(`24/7 Tele H System ready at http://localhost:${port}`);
+    console.log(`24/7 Health Monitor System ready at http://localhost:${port}`);
   });
 })();
