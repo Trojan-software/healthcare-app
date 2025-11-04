@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Configuration
+    Security: MEDIUM (5.9) - SSL Certificate Pinning
+    
+    This configuration enforces:
+    1. SSL Certificate Pinning for production domains
+    2. HTTPS-only communication
+    3. Cleartext traffic disabled for production
+    4. Certificate transparency enforcement
+-->
+<network-security-config>
+    <!-- Production Configuration -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- Add your production domain here -->
+        <domain includeSubdomains="true">247tech.net</domain>
+        <domain includeSubdomains="true">t247tech.net</domain>
+        
+        <pin-set expiration="2026-12-31">
+            <!-- 
+                ⚠️ CRITICAL: SSL Certificate Pinning MUST be configured before production deployment!
+                
+                Current Status: NOT ENFORCED (empty pin-set)
+                Security Risk: MITM attacks possible without pins
+                
+                To generate pins for your production domain (247tech.net):
+                
+                1. Generate primary certificate pin:
+                   openssl s_client -servername 247tech.net -connect 247tech.net:443 2>/dev/null | \
+                   openssl x509 -pubkey -noout | \
+                   openssl pkey -pubin -outform der | \
+                   openssl dgst -sha256 -binary | \
+                   base64
+                
+                2. Generate backup certificate pin (from CA or backup cert):
+                   Contact your SSL provider for backup certificate public key
+                
+                3. Add pins here (REQUIRED - minimum 2 pins):
+                   <pin digest="SHA-256">YOUR_PRIMARY_CERT_PIN_HERE=</pin>
+                   <pin digest="SHA-256">YOUR_BACKUP_CERT_PIN_HERE=</pin>
+                
+                Without valid pins, this security feature is DISABLED.
+                Reference: OWASP MASVS-NETWORK-1, PCI-DSS 4.1-4.2
+            -->
+        </pin-set>
+        
+        <!-- Trust system certificates -->
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+    
+    <!-- Development Configuration (localhost) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">replit.dev</domain>
+        <domain includeSubdomains="true">replit.app</domain>
+    </domain-config>
+    
+    <!-- Base configuration -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

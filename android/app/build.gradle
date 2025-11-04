@@ -27,9 +27,15 @@ android {
     
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Enable ProGuard/R8 obfuscation for security (Bytecode Obfuscation - Score: 2.3)
+            minifyEnabled true
+            // Enable resource shrinking to reduce APK size
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+        }
+        debug {
+            minifyEnabled false
         }
     }
     compileOptions {

@@ -9,6 +9,7 @@ import { bloodGlucoseManager } from "./hc03-blood-glucose";
 import { batteryManager } from "./hc03-battery";
 import { ecgDataManager } from "./hc03-ecg";
 import { HC03WebSocketService } from "./websocket";
+import { generateSecurePassword, generateSecureOTP } from "./utils/secure-random";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
@@ -458,17 +459,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
-      // Generate a secure temporary password
-      const generateTempPassword = () => {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-        let password = '';
-        for (let i = 0; i < 12; i++) {
-          password += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return password;
-      };
-      
-      const temporaryPassword = generateTempPassword();
+      // Generate a cryptographically secure temporary password
+      // Security: MEDIUM (6.1) - Fixed Weak PRNG vulnerability
+      const temporaryPassword = generateSecurePassword(12);
       const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
       
       const updatedPatient = await storage.updateUser(parseInt(id), {
@@ -556,8 +549,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate a 6-digit reset code
-      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+      // Generate a cryptographically secure 6-digit reset code
+      // Security: MEDIUM (6.1) - Fixed Weak PRNG vulnerability
+      const resetCode = generateSecureOTP();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
       // Store reset code (in production, this would be in a separate table)

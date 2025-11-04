@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import { z } from "zod";
+import { generateSecurePassword } from "./utils/secure-random";
 
 // Patient Management API Schema Validation
 
@@ -317,8 +318,9 @@ export function registerPatientManagementRoutes(app: Express) {
         });
       }
 
-      // Generate new temporary password
-      const newPassword = Math.random().toString(36).slice(-8).toUpperCase();
+      // Generate new cryptographically secure temporary password
+      // Security: MEDIUM (6.1) - Fixed Weak PRNG vulnerability
+      const newPassword = generateSecurePassword(8);
       const passwordHash = await bcrypt.hash(newPassword, 10);
 
       await storage.updateUser(patient.id, { password: passwordHash });
