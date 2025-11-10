@@ -447,7 +447,7 @@ For questions, contact: support@24x7teleh.com
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden shadow bg-white">
                         <img 
-                          src="/attached_assets/logo 3_1762286183978.png" 
+                          src="/attached_assets/logo2_1749727548844.JPG" 
                           alt="24/7 Health Monitor"
                           className="w-full h-full object-contain"
                         />
