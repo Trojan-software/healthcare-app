@@ -782,7 +782,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold">24/7 Health Monitor - {t('dashboard')}</h1>
+                <h1 className="text-2xl font-bold">24/7 Tele H - {t('dashboard')}</h1>
                 <p className="text-blue-100">{t('welcomeBack')}, {dashboardData.user.firstName} {dashboardData.user.lastName}</p>
               </div>
             </div>

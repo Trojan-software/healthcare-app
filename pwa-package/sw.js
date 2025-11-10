@@ -1,4 +1,4 @@
-const CACHE_NAME = 'health-monitor-v1';
+const CACHE_NAME = 'teleh-health-monitor-v1';
 const urlsToCache = [
   '/',
   '/mobile-dashboard',
@@ -184,7 +184,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('24/7 Health Monitor', options)
+    self.registration.showNotification('24/7 Tele H Health Monitor', options)
   );
 });
 
@@ -202,7 +202,7 @@ self.addEventListener('notificationclick', (event) => {
 // Helper functions for IndexedDB storage
 async function getStoredData(key) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('HealthMonitorDB', 1);
+    const request = indexedDB.open('TeleHHealthDB', 1);
     
     request.onsuccess = (event) => {
       const db = event.target.result;
@@ -227,7 +227,7 @@ async function getStoredData(key) {
 
 async function clearStoredData(key) {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('HealthMonitorDB', 1);
+    const request = indexedDB.open('TeleHHealthDB', 1);
     
     request.onsuccess = (event) => {
       const db = event.target.result;

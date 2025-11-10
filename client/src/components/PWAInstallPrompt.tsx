@@ -78,7 +78,7 @@ export default function PWAInstallPrompt() {
           
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Install 24/7 Health Monitor App
+              Install 24/7 Tele H App
             </h3>
             <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
               {isIOS 

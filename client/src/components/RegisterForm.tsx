@@ -82,7 +82,7 @@ export default function RegisterForm({ onRegister, onSwitchToLogin }: RegisterFo
           Create Account
         </CardTitle>
         <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-          Join 24/7 Health Monitor platform
+          Join 24/7 Tele H health monitoring platform
         </p>
       </CardHeader>
       

@@ -626,7 +626,7 @@ export default function EnhancedPatientSignup() {
                           <a href="#" className="text-blue-600 hover:underline">
                             Privacy Policy
                           </a>{' '}
-                          of 24/7 Health Monitor.
+                          of 24/7 Tele H Technology Services.
                         </p>
                       </div>
                     </div>
@@ -820,7 +820,7 @@ export default function EnhancedPatientSignup() {
                     Registration Successful!
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    Your account has been created successfully. You can now log in to access the 24/7 Health Monitor healthcare monitoring system.
+                    Your account has been created successfully. You can now log in to access the 24/7 Tele H healthcare monitoring system.
                   </p>
                   
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">

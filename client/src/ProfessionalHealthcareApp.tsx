@@ -210,8 +210,8 @@ export default function ProfessionalHealthcareApp() {
                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4H9l3-4 3 4h-1v4z"/>
                   </svg>
                 </div>
-                <h1 className="text-4xl font-bold mb-4">24/7 Health Monitor</h1>
-                <p className="text-xl text-blue-100 mb-8">Healthcare Platform</p>
+                <h1 className="text-4xl font-bold mb-4">24/7 Tele H</h1>
+                <p className="text-xl text-blue-100 mb-8">Technology Services</p>
                 <p className="text-lg text-blue-100/90 leading-relaxed">
                   Advanced Healthcare Management System providing comprehensive patient monitoring, 
                   real-time analytics, and seamless integration with medical devices.
@@ -248,8 +248,8 @@ export default function ProfessionalHealthcareApp() {
             <div className="w-full max-w-md space-y-8">
               <div className="text-center">
                 <div className="lg:hidden mb-6">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">24/7 Health Monitor</h1>
-                  <p className="text-gray-600">Healthcare Platform</p>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">24/7 Tele H</h1>
+                  <p className="text-gray-600">Technology Services</p>
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
                 <p className="mt-2 text-gray-600">Sign in to your healthcare dashboard</p>
@@ -516,7 +516,7 @@ export default function ProfessionalHealthcareApp() {
                 />
                 <label htmlFor="terms" className="text-sm text-gray-700">
                   I agree to the <span className="text-blue-600 hover:underline cursor-pointer">Terms and Conditions</span> and 
-                  <span className="text-blue-600 hover:underline cursor-pointer"> Privacy Policy</span> of 24/7 Health Monitor.
+                  <span className="text-blue-600 hover:underline cursor-pointer"> Privacy Policy</span> of 24/7 Tele H Technology Services.
                 </label>
               </div>
 

@@ -60,7 +60,7 @@ export default function BasicLogin() {
             color: '#1e293b',
             margin: '0 0 8px 0'
           }}>
-            24/7 Health Monitor
+            24/7 Tele H Technology Services
           </h1>
           <p style={{
             color: '#64748b',

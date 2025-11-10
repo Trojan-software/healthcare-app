@@ -1,9 +1,7 @@
-# 24/7 Health Monitor - Health Monitoring System
+# 24/7 Tele H - Health Monitoring System
 
 ## Overview
-The 24/7 Health Monitor platform is a comprehensive telemedicine and health monitoring system designed for healthcare professionals and patients. Its core purpose is to provide real-time vital signs monitoring, integrate with HC03 medical devices, and offer a mobile-first Progressive Web App (PWA) experience. The system aims to enhance patient care through continuous monitoring, early alert systems, and robust data analytics, ultimately improving health outcomes and operational efficiency for healthcare providers.
-
-**Latest Update (November 4, 2025)**: Comprehensive mobile CSS alignment implemented with iOS safe area support, fixed bottom navigation, touch-optimized UI components, and responsive breakpoints for consistent rendering across all devices.
+The 24/7 Tele H platform is a comprehensive telemedicine and health monitoring system designed for healthcare professionals and patients. Its core purpose is to provide real-time vital signs monitoring, integrate with HC03 medical devices, and offer a mobile-first Progressive Web App (PWA) experience. The system aims to enhance patient care through continuous monitoring, early alert systems, and robust data analytics, ultimately improving health outcomes and operational efficiency for healthcare providers.
 
 ## User Preferences
 ```
@@ -21,7 +19,7 @@ The backend uses **Node.js** with **TypeScript** and **Express.js** for its REST
 - **Enhanced Patient Registration**: Comprehensive signup, UAE mobile validation, patient ID generation, Abu Dhabi hospital selection, OTP email verification, secure passwords, and role-based access.
 - **Health Monitoring**: Tracks heart rate, blood pressure, temperature, oxygen, blood glucose, and integrates with HC03 devices via Bluetooth for real-time ECG and blood oxygen monitoring. Includes health analytics and a critical event alert system.
 - **Native Android Bluetooth Integration**: Capacitor plugin with HC03 native SDK (NskAlgoSdk) for reliable Bluetooth connectivity on Android devices. Includes ECG signal processing, heart rate variability analysis, mood index calculation, and respiratory rate detection. Falls back to Web Bluetooth API for web browsers.
-- **Mobile-First Design**: PWA with offline support, mobile-optimized dashboards with fixed bottom navigation, iOS safe area support, touch-friendly 44px minimum tap targets, device installation without app store, push notifications, and cross-platform compatibility. Comprehensive responsive CSS framework with mobile/tablet/desktop breakpoints.
+- **Mobile-First Design**: PWA with offline support, mobile-optimized dashboards, device installation without app store, push notifications, and cross-platform compatibility.
 - **Data Flow**: Secure JWT authentication, real-time data capture from HC03 devices via native Android plugin or Web Bluetooth API, data validation and storage, immediate alert generation for critical readings, and an analytics pipeline for insights.
 - **Bilingual Support**: Comprehensive Arabic/English internationalization with RTL/LTR layouts across all interfaces, including forms, dashboards, and reports.
 - **Advanced Monitoring**: ECG monitoring with interval analysis, arrhythmia detection, and clinical interpretation using NeuroSky ECG algorithms. Comprehensive battery and blood glucose monitoring systems with real-time data and alerts.

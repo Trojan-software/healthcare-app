@@ -115,7 +115,7 @@ export default function StandaloneApp() {
               color: '#1f2937',
               marginBottom: '8px'
             }}>
-              24/7 Health Monitor
+              24/7 Tele H Technology Services
             </h1>
             <p style={{
               color: '#6b7280',

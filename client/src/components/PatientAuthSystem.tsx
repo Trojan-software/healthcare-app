@@ -53,7 +53,7 @@ export default function PatientAuthSystem({ onAuthSuccess }: PatientAuthSystemPr
             <div className="flex justify-between items-center py-4">
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">
-                  24/7 Health Monitor
+                  24/7 Tele H Technology Services
                 </h1>
                 <p className="text-sm text-gray-600">
                   Welcome, {currentUser.firstName} {currentUser.lastName} | ID: {currentUser.patientId}

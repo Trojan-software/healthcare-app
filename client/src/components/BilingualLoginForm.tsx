@@ -64,7 +64,7 @@ export default function BilingualLoginForm({ onLoginSuccess }: LoginFormProps) {
                 <User className="w-5 h-5 text-white" />
               </div>
               <CardTitle className="text-2xl font-bold text-gray-900">
-                24/7 Health Monitor
+                24/7 Tele H
               </CardTitle>
             </div>
             <LanguageSwitcher />

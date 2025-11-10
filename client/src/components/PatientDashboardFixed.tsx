@@ -400,7 +400,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1e293b', margin: 0 }}>
-              24/7 Health Monitor - {t('dashboard')}
+              24/7 Tele H - {t('dashboard')}
             </h1>
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
               {t('welcomeBack')}, {user?.firstName} {user?.lastName}
