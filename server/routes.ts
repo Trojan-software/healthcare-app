@@ -431,6 +431,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Multi-Device Data Persistence Routes (UNKTOP SDK Integration)
+  
+  // Save ECG data from UNKTOP devices
+  app.post("/api/ecg/data", async (req, res) => {
+    try {
+      const { patientId, deviceId, heartRate, moodIndex, rrInterval, hrv, respiratoryRate, fingerDetected, recordingDuration } = req.body;
+      
+      if (!patientId || !deviceId) {
+        return res.status(400).json({ message: "Patient ID and Device ID are required" });
+      }
+
+      const ecgData = await storage.saveEcgData({
+        patientId,
+        deviceId,
+        heartRate,
+        moodIndex,
+        rrInterval,
+        hrv,
+        respiratoryRate,
+        fingerDetected,
+        recordingDuration,
+      });
+
+      res.status(201).json(ecgData);
+    } catch (error) {
+      console.error("Error saving ECG data:", error);
+      res.status(500).json({ message: "Failed to save ECG data" });
+    }
+  });
+
+  // Save blood oxygen data from UNKTOP devices
+  app.post("/api/blood-oxygen/data", async (req, res) => {
+    try {
+      const { patientId, deviceId, bloodOxygen, heartRate, fingerDetected } = req.body;
+      
+      if (!patientId || !deviceId || bloodOxygen === undefined) {
+        return res.status(400).json({ message: "Patient ID, Device ID, and Blood Oxygen level are required" });
+      }
+
+      const oxData = await storage.saveBloodOxygenData({
+        patientId,
+        deviceId,
+        bloodOxygen,
+        heartRate,
+        fingerDetected,
+      });
+
+      res.status(201).json(oxData);
+    } catch (error) {
+      console.error("Error saving blood oxygen data:", error);
+      res.status(500).json({ message: "Failed to save blood oxygen data" });
+    }
+  });
+
+  // Save blood pressure data from UNKTOP devices
+  app.post("/api/blood-pressure/data", async (req, res) => {
+    try {
+      const { patientId, deviceId, systolic, diastolic, heartRate, cuffPressure, measurementProgress } = req.body;
+      
+      if (!patientId || !deviceId || systolic === undefined || diastolic === undefined) {
+        return res.status(400).json({ message: "Patient ID, Device ID, Systolic, and Diastolic are required" });
+      }
+
+      const bpData = await storage.saveBloodPressureData({
+        patientId,
+        deviceId,
+        systolic,
+        diastolic,
+        heartRate,
+        cuffPressure,
+        measurementProgress,
+      });
+
+      // Check for critical blood pressure
+      if (systolic > 180 || diastolic > 120) {
+        await storage.createAlert({
+          patientId,
+          type: "critical",
+          title: "Critical Blood Pressure Alert",
+          description: `Blood pressure dangerously high: ${systolic}/${diastolic} mmHg`,
+        });
+      }
+
+      res.status(201).json(bpData);
+    } catch (error) {
+      console.error("Error saving blood pressure data:", error);
+      res.status(500).json({ message: "Failed to save blood pressure data" });
+    }
+  });
+
+  // Save blood glucose data from UNKTOP devices
+  app.post("/api/blood-glucose/data", async (req, res) => {
+    try {
+      const { patientId, deviceId, glucoseLevel, testStripStatus, measurementType } = req.body;
+      
+      if (!patientId || !deviceId || glucoseLevel === undefined) {
+        return res.status(400).json({ message: "Patient ID, Device ID, and Glucose Level are required" });
+      }
+
+      const glucoseData = await storage.saveBloodGlucoseData({
+        patientId,
+        deviceId,
+        glucoseLevel,
+        testStripStatus,
+        measurementType,
+      });
+
+      // Check for critical glucose levels
+      if (glucoseLevel > 300 || glucoseLevel < 50) {
+        await storage.createAlert({
+          patientId,
+          type: "critical",
+          title: "Critical Blood Glucose Alert",
+          description: `Blood glucose ${glucoseLevel > 300 ? 'dangerously high' : 'dangerously low'}: ${glucoseLevel} mg/dL`,
+        });
+      }
+
+      res.status(201).json(glucoseData);
+    } catch (error) {
+      console.error("Error saving blood glucose data:", error);
+      res.status(500).json({ message: "Failed to save blood glucose data" });
+    }
+  });
+
+  // Save temperature data from UNKTOP devices
+  app.post("/api/temperature/data", async (req, res) => {
+    try {
+      const { patientId, deviceId, temperature, measurementSite } = req.body;
+      
+      if (!patientId || !deviceId || temperature === undefined) {
+        return res.status(400).json({ message: "Patient ID, Device ID, and Temperature are required" });
+      }
+
+      const tempData = await storage.saveTemperatureData({
+        patientId,
+        deviceId,
+        temperature: temperature.toString(),
+        measurementSite,
+      });
+
+      // Check for fever
+      if (temperature > 38.5) {
+        await storage.createAlert({
+          patientId,
+          type: "warning",
+          title: "High Temperature Alert",
+          description: `Fever detected: ${temperature}°C`,
+        });
+      }
+
+      res.status(201).json(tempData);
+    } catch (error) {
+      console.error("Error saving temperature data:", error);
+      res.status(500).json({ message: "Failed to save temperature data" });
+    }
+  });
+
   // Patient update endpoint for edit functionality
   app.put("/api/patients/:id", async (req, res) => {
     try {

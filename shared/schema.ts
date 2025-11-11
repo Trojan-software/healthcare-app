@@ -49,6 +49,8 @@ export const hc03Devices = pgTable("hc03_devices", {
   id: serial("id").primaryKey(),
   deviceId: text("device_id").notNull().unique(),
   deviceName: text("device_name"),
+  deviceType: text("device_type").default("ecg").notNull(), // 'ecg', 'glucose', 'temperature', 'blood_pressure', 'multi_function'
+  supportedMeasurements: text("supported_measurements").array(), // ['ecg', 'blood_oxygen', 'temperature', 'blood_pressure', 'glucose', 'battery']
   macAddress: text("mac_address"),
   firmwareVersion: text("firmware_version"),
   batteryLevel: integer("battery_level"),
