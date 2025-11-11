@@ -245,9 +245,24 @@ export class Hc03Sdk {
       
       console.log('HC03 device connected successfully');
       return this.device;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to connect to HC03 device:', error);
-      throw new Error(`Failed to connect to HC03 device: ${error}`);
+      
+      // Provide user-friendly error messages for common Web Bluetooth issues
+      if (error.name === 'NotFoundError') {
+        throw new Error('No HC03 device found. Make sure:\n• Your HC03 device is turned on and in pairing mode (LED should be blinking)\n• The device is within 10 meters\n• The device is not already connected to another phone');
+      } else if (error.name === 'NotAllowedError') {
+        throw new Error('Bluetooth permission denied. Please:\n• Enable Bluetooth in your browser settings\n• Grant Bluetooth permission when prompted\n• On Android: Enable Location/GPS (required for Bluetooth scanning)');
+      } else if (error.name === 'SecurityError') {
+        throw new Error('Bluetooth access blocked. Please:\n• Use HTTPS (required for Web Bluetooth)\n• Check browser permissions\n• Try using Chrome, Edge, or another compatible browser');
+      } else if (error.name === 'NetworkError') {
+        throw new Error('Failed to connect to device. Please:\n• Move closer to the HC03 device\n• Restart your HC03 device\n• Forget the device in phone Bluetooth settings and try again');
+      } else if (error.message && error.message.includes('User cancelled')) {
+        throw new Error('Device selection cancelled. Please select your HC03 device from the list.');
+      }
+      
+      // Generic error for unknown issues
+      throw new Error(`Failed to connect: ${error.message || 'Unknown error'}. Please restart your HC03 device and try again.`);
     }
   }
 
@@ -443,6 +458,11 @@ export class Hc03Sdk {
     }
     
     return isActuallyConnected && isMarkedConnected;
+  }
+
+  // Check if device is connected (alias for getConnectionStatus for API consistency)
+  public isDeviceConnected(): boolean {
+    return this.getConnectionStatus();
   }
 
   // Get active detections
