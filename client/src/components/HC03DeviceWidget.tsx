@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
 import { 
@@ -21,9 +22,14 @@ import {
   AlertTriangle,
   Loader2,
   Settings,
-  RefreshCw
+  RefreshCw,
+  X,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw
 } from 'lucide-react';
 import { hc03Sdk, Detection, type ECGData, type BloodOxygenData, type BloodPressureData, type TemperatureData, type BatteryData } from '@/lib/hc03-sdk';
+import BluetoothTroubleshootingGuide from '@/components/BluetoothTroubleshootingGuide';
 
 interface HC03DeviceData {
   deviceId: string;
@@ -56,6 +62,8 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
   const [error, setError] = useState<string>('');
   const [showDeviceDetails, setShowDeviceDetails] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
+  const [showTroubleshooting, setShowTroubleshooting] = useState(false);
+  const [isTroubleshootingOpen, setIsTroubleshootingOpen] = useState(true);
   
   const wsConnection = useRef<WebSocket | null>(null);
   const { toast } = useToast();
@@ -417,6 +425,10 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
           setConnectionStatus('connected');
           setDeviceInfo(hc03Sdk.getDeviceInfo());
           
+          // Clear any previous connection errors
+          setError('');
+          setShowTroubleshooting(false);
+          
           // Query battery level
           setTimeout(() => {
             queryBattery();
@@ -452,6 +464,9 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       
       setError(userMessage);
       setConnectionStatus('error');
+      setShowTroubleshooting(true);
+      setIsTroubleshootingOpen(true);
+      
       toast({
         title: "Connection Failed",
         description: userMessage,
@@ -641,28 +656,81 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
 
         {/* Connection Section */}
         {!selectedDevice ? (
-          <div className="text-center space-y-4">
-            <p className="text-sm text-muted-foreground">
-              No HC03 device connected. Scan for available devices.
-            </p>
-            <Button 
-              onClick={scanForDevices}
-              disabled={isConnecting}
-              className="w-full"
-              data-testid="button-scan-devices"
-            >
-              {isConnecting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Scanning...
-                </>
-              ) : (
-                <>
-                  <Bluetooth className="h-4 w-4 mr-2" />
-                  Scan for Devices
-                </>
-              )}
-            </Button>
+          <div className="space-y-4">
+            <div className="text-center space-y-4">
+              <p className="text-sm text-muted-foreground">
+                No HC03 device connected. Scan for available devices.
+              </p>
+              <Button 
+                onClick={scanForDevices}
+                disabled={isConnecting}
+                className="w-full"
+                data-testid="button-scan-devices"
+              >
+                {isConnecting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Scanning...
+                  </>
+                ) : (
+                  <>
+                    <Bluetooth className="h-4 w-4 mr-2" />
+                    Scan for Devices
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Bluetooth Troubleshooting Guide - Shows when connection fails */}
+            {showTroubleshooting && error && (
+              <Card className="border-red-200 dark:border-red-800 mt-4">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <Alert variant="destructive" className="mb-4" data-testid="alert-connection-error">
+                        <AlertDescription className="flex items-center justify-between flex-wrap gap-2">
+                          <div>
+                            <strong>Connection Error:</strong>
+                            <p className="mt-1 text-sm">{error}</p>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={scanForDevices} 
+                            disabled={isConnecting}
+                            className="ml-4"
+                            data-testid="button-retry-connection"
+                          >
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Retry
+                          </Button>
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowTroubleshooting(false)}
+                      className="ml-2"
+                      data-testid="button-dismiss-troubleshooting"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Collapsible open={isTroubleshootingOpen} onOpenChange={setIsTroubleshootingOpen}>
+                    <CollapsibleTrigger className="flex items-center gap-2 text-lg font-semibold mb-4 w-full hover:underline" data-testid="button-toggle-troubleshooting">
+                      {isTroubleshootingOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      Need help connecting?
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <BluetoothTroubleshootingGuide />
+                    </CollapsibleContent>
+                  </Collapsible>
+                </CardContent>
+              </Card>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
