@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import ComprehensiveHealthcareApp from './ComprehensiveHealthcareApp';
 import EnhancedAdminDashboard from './components/EnhancedAdminDashboard';
+import { DeviceDataProvider } from './contexts/DeviceDataContext';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -17,11 +18,17 @@ export default function App() {
   // Simple path-based routing without external router
   if (currentPath.startsWith('/admin')) {
     return (
-      <div data-testid="text-admin-wired">
-        <EnhancedAdminDashboard />
-      </div>
+      <DeviceDataProvider>
+        <div data-testid="text-admin-wired">
+          <EnhancedAdminDashboard />
+        </div>
+      </DeviceDataProvider>
     );
   }
 
-  return <ComprehensiveHealthcareApp />;
+  return (
+    <DeviceDataProvider>
+      <ComprehensiveHealthcareApp />
+    </DeviceDataProvider>
+  );
 }

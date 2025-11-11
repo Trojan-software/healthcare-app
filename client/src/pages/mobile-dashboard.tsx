@@ -11,6 +11,7 @@ import AlertsPanel from "@/components/AlertsPanel";
 import ReminderSettings from "@/components/ReminderSettings";
 import AuthWrapper from "@/components/AuthWrapper";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import DeviceWidgetsPanel from "@/components/DeviceWidgetsPanel";
 import { useQuery } from "@tanstack/react-query";
 
 interface DashboardStats {
@@ -161,6 +162,11 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
           {activeTab === 'monitor' && (
             <div className="space-y-4">
               <MobileVitalSignsInput />
+              <DeviceWidgetsPanel 
+                patientId={user?.id?.toString()} 
+                layout="vertical"
+                onConnectDevice={() => setActiveTab('bluetooth')}
+              />
               <div className="grid grid-cols-1 gap-4">
                 <AlertsPanel />
                 <ReminderSettings />

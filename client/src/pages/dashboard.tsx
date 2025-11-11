@@ -9,6 +9,7 @@ import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import AlertsPanel from "@/components/AlertsPanel";
 import ReminderSettings from "@/components/ReminderSettings";
 import RecentActivity from "@/components/RecentActivity";
+import DeviceWidgetsPanel from "@/components/DeviceWidgetsPanel";
 import { useQuery } from "@tanstack/react-query";
 
 interface DashboardStats {
@@ -174,6 +175,12 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Device Widgets Panel */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-foreground mb-4">Medical Device Monitoring</h2>
+          <DeviceWidgetsPanel layout="grid" />
         </div>
 
         {/* Main Content Grid */}

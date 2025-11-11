@@ -33,6 +33,7 @@ import {
 } from '@/lib/unktop-sdk';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useDeviceData } from '@/contexts/DeviceDataContext';
 
 interface MeasurementDisplay {
   type: DetectionType;
@@ -112,6 +113,7 @@ export default function MedicalDeviceManager({
   const [error, setError] = useState<string>('');
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const { toast } = useToast();
+  const { updateConnection, updateReading, clearReading } = useDeviceData();
 
   // Cleanup on unmount
   useEffect(() => {
@@ -126,6 +128,18 @@ export default function MedicalDeviceManager({
       setIsConnected(false);
       setDeviceInfo(null);
       setActiveMeasurements(new Set());
+      
+      // Clear connection state in context
+      allowedDevices.forEach(type => {
+        updateConnection(type, {
+          deviceId: null,
+          deviceName: null,
+          connected: false,
+          detectionType: null,
+        });
+        clearReading(type);
+      });
+      
       toast({
         title: "Device Disconnected",
         description: "The medical device has been disconnected.",
@@ -138,7 +152,7 @@ export default function MedicalDeviceManager({
     return () => {
       sdk.off('disconnected', handleDisconnect);
     };
-  }, [sdk, toast]);
+  }, [sdk, toast, allowedDevices, updateConnection, clearReading]);
 
   // Connect to device
   const connectDevice = async () => {
@@ -163,6 +177,14 @@ export default function MedicalDeviceManager({
       const info = sdk.getDeviceInfo();
       setDeviceInfo(info);
       setIsConnected(true);
+
+      // Update context with connection state
+      updateConnection(selectedDeviceType, {
+        deviceId: info?.deviceId || null,
+        deviceName: info?.deviceName || null,
+        connected: true,
+        detectionType: selectedDeviceType,
+      });
 
       // Register device with backend
       if (info) {
@@ -340,6 +362,17 @@ export default function MedicalDeviceManager({
           respiratoryRate: data.respiratoryRate,
           fingerDetected: data.fingerDetected,
         });
+        
+        // Update context with live reading
+        updateReading(DetectionType.ECG, {
+          heartRate: data.heartRate,
+          moodIndex: data.moodIndex,
+          rrInterval: data.rrInterval,
+          hrv: data.hrv,
+          respiratoryRate: data.respiratoryRate,
+          fingerDetected: data.fingerDetected,
+          wave: data.wave,
+        });
       } catch (err) {
         console.error('Failed to save ECG data:', err);
       }
@@ -365,6 +398,14 @@ export default function MedicalDeviceManager({
         heartRate: data.heartRate,
         fingerDetected: data.fingerDetection,
       });
+      
+      // Update context with live reading
+      updateReading(DetectionType.OX, {
+        bloodOxygen: data.bloodOxygen,
+        heartRate: data.heartRate,
+        fingerDetected: data.fingerDetection,
+        wave: data.wave,
+      });
     } catch (err) {
       console.error('Failed to save blood oxygen data:', err);
     }
@@ -386,6 +427,13 @@ export default function MedicalDeviceManager({
         await apiRequest('/api/blood-pressure/data', 'POST', {
           patientId,
           deviceId: deviceInfo?.deviceId || 'unknown',
+          systolic: data.systolic,
+          diastolic: data.diastolic,
+          heartRate: data.heartRate,
+        });
+        
+        // Update context with live reading
+        updateReading(DetectionType.BP, {
           systolic: data.systolic,
           diastolic: data.diastolic,
           heartRate: data.heartRate,
@@ -415,6 +463,12 @@ export default function MedicalDeviceManager({
           glucoseLevel: data.data,
           measurementType: 'capillary',
         });
+        
+        // Update context with live reading
+        updateReading(DetectionType.BG, {
+          glucoseLevel: data.data,
+          measurementType: 'capillary',
+        });
       } catch (err) {
         console.error('Failed to save glucose data:', err);
       }
@@ -438,6 +492,13 @@ export default function MedicalDeviceManager({
         deviceId: deviceInfo?.deviceId || 'unknown',
         temperature: data.temperature,
         measurementSite: data.measurementSite || 'oral',
+      });
+      
+      // Update context with live reading
+      updateReading(DetectionType.BT, {
+        temperature: data.temperature,
+        measurementSite: data.measurementSite || 'oral',
+        unit: data.unit === 'celsius' ? 'C' : 'F',
       });
     } catch (err) {
       console.error('Failed to save temperature data:', err);
