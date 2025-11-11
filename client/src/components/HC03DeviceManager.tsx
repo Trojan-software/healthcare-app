@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Heart, 
   Activity, 
@@ -15,11 +16,16 @@ import {
   BluetoothOff,
   Battery,
   BatteryLow,
-  Gauge
+  Gauge,
+  X,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw
 } from 'lucide-react';
 import { hc03Sdk, Detection, type ECGData, type BloodOxygenData, type BloodPressureData, type TemperatureData, type BatteryData } from '@/lib/hc03-sdk';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import BluetoothTroubleshootingGuide from '@/components/BluetoothTroubleshootingGuide';
 
 interface HC03Device {
   id: string;
@@ -47,6 +53,9 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
   const [vitalReadings, setVitalReadings] = useState<VitalReading[]>([]);
   const [latestReadings, setLatestReadings] = useState<Record<Detection, VitalReading>>({} as Record<Detection, VitalReading>);
   const [devices, setDevices] = useState<HC03Device[]>([]);
+  const [showTroubleshooting, setShowTroubleshooting] = useState(false);
+  const [lastConnectionError, setLastConnectionError] = useState<string>('');
+  const [isTroubleshootingOpen, setIsTroubleshootingOpen] = useState(true);
   const { toast } = useToast();
 
   // Load patient's HC03 devices
@@ -83,6 +92,10 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
 
       setConnectedDevice(registeredDevice);
       
+      // Clear any previous connection errors
+      setShowTroubleshooting(false);
+      setLastConnectionError('');
+      
       // Set up data callbacks
       setupDataCallbacks();
       
@@ -93,10 +106,18 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       
       await loadPatientDevices();
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to connect to HC03 device. Please try again.';
+      
       handleDeviceError('HC03DeviceManager', 'connectDevice', error as Error, { patientId });
+      
+      // Show troubleshooting guide
+      setShowTroubleshooting(true);
+      setLastConnectionError(errorMessage);
+      setIsTroubleshootingOpen(true);
+      
       toast({
         title: "Connection Failed",
-        description: "Failed to connect to HC03 device. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -395,13 +416,64 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
             <div className="text-center py-6">
               <BluetoothOff className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-4">No HC03 device connected</p>
-              <Button onClick={connectToDevice} disabled={isConnecting}>
+              <Button onClick={connectToDevice} disabled={isConnecting} data-testid="button-connect-device">
                 {isConnecting ? 'Connecting...' : 'Connect Device'}
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Bluetooth Troubleshooting Guide - Shows when connection fails */}
+      {showTroubleshooting && !connectedDevice && (
+        <Card className="border-red-200 dark:border-red-800">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <Alert variant="destructive" className="mb-4" data-testid="alert-connection-error">
+                  <AlertDescription className="flex items-center justify-between">
+                    <div>
+                      <strong>Connection Error:</strong>
+                      <p className="mt-1 text-sm">{lastConnectionError}</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={connectToDevice} 
+                      disabled={isConnecting}
+                      className="ml-4"
+                      data-testid="button-retry-connection"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Retry
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowTroubleshooting(false)}
+                className="ml-2"
+                data-testid="button-dismiss-troubleshooting"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Collapsible open={isTroubleshootingOpen} onOpenChange={setIsTroubleshootingOpen}>
+              <CollapsibleTrigger className="flex items-center gap-2 text-lg font-semibold mb-4 w-full hover:underline" data-testid="button-toggle-troubleshooting">
+                {isTroubleshootingOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                Need help connecting?
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <BluetoothTroubleshootingGuide />
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Detection Controls */}
       {connectedDevice && (
