@@ -34,7 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import BatteryWidget from './BatteryWidget';
 import BloodGlucoseWidget from './BloodGlucoseWidget';
 import EcgWidget from './EcgWidget';
-import BluetoothConnectionManager from './BluetoothConnectionManager';
+import BluetoothConnectionManager from './BluetoothConnectionManagerFixed';
 
 interface VitalSigns {
   id: number;

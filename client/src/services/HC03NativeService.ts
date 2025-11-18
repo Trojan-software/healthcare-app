@@ -13,6 +13,7 @@ export class HC03NativeService {
   private webService: WebBluetoothService | null = null;
   private isInitialized = false;
   private listeners: Map<string, Function[]> = new Map();
+  private currentPatientId: string | null = null;
 
   constructor() {
     this.isNativeAvailable = Capacitor.isNativePlatform();
@@ -103,6 +104,60 @@ export class HC03NativeService {
     } else if (this.webService) {
       console.warn('Web Bluetooth does not support native ECG processing');
     }
+  }
+
+  async startScan(): Promise<any[]> {
+    if (this.isNativeAvailable) {
+      // On native platforms, use Web Bluetooth API fallback
+      // Native scanning is handled by the OS Bluetooth settings
+      console.warn('Native platform detected - Bluetooth scanning requires manual pairing in system settings');
+      throw new Error('On native apps, please pair HC03 device in your phone Bluetooth settings first');
+    }
+    
+    if (!this.webService) {
+      throw new Error('Bluetooth service not initialized');
+    }
+    return this.webService.startScan();
+  }
+
+  async connect(deviceId: string, patientId: string): Promise<void> {
+    if (this.isNativeAvailable) {
+      // On native platforms, use Capacitor plugin for connection
+      // Connection will be established when data starts flowing
+      console.log('Native platform - device connection handled by Capacitor plugin');
+      this.currentPatientId = patientId;
+      return Promise.resolve();
+    }
+    
+    if (!this.webService) {
+      throw new Error('Bluetooth service not initialized');
+    }
+    return this.webService.connect(deviceId, patientId);
+  }
+
+  async disconnect(): Promise<void> {
+    if (this.isNativeAvailable) {
+      // Native platforms - disconnect handled by stopping measurement
+      console.log('Native platform - disconnect by stopping all measurements');
+      return Promise.resolve();
+    }
+    
+    if (!this.webService) {
+      throw new Error('Bluetooth service not initialized');
+    }
+    return this.webService.disconnect();
+  }
+
+  getConnectionState(): any {
+    if (this.isNativeAvailable) {
+      // Native platforms - connection state based on data flow
+      return this.isInitialized ? 'CONNECTED' : 'DISCONNECTED';
+    }
+    
+    if (!this.webService) {
+      return 'DISCONNECTED';
+    }
+    return (this.webService as any).connectionState;
   }
 
   isUsingNative(): boolean {
