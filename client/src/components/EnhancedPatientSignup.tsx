@@ -31,7 +31,7 @@ const signupSchema = z.object({
   dateOfBirth: z.string().min(1, 'Date of birth is required'),
   email: z.string().email('Please enter a valid email address'),
   mobileNumber: z.string().regex(/^(\+971|971|0)?[0-9]{9}$/, 'Please enter a valid UAE mobile number'),
-  patientId: z.string().min(6, 'Patient ID must be at least 6 characters'),
+  // patientId removed - now generated server-side using cryptographically secure random (CVSS 3.5 fix)
   hospitalId: z.string().min(1, 'Please select a hospital'),
   customHospitalName: z.string().optional(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
@@ -56,6 +56,7 @@ const otpSchema = z.object({
 
 type SignupForm = z.infer<typeof signupSchema>;
 type OtpForm = z.infer<typeof otpSchema>;
+type RegistrationData = SignupForm & { patientId?: string }; // Includes server-generated patient ID
 
 interface Hospital {
   id: string;
@@ -71,7 +72,7 @@ export default function EnhancedPatientSignup() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [registrationData, setRegistrationData] = useState<SignupForm | null>(null);
+  const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [otpSent, setOtpSent] = useState(false);
   const [showCustomHospital, setShowCustomHospital] = useState(false);
   const [otpMethod, setOtpMethod] = useState<'email' | 'sms'>('email');
@@ -90,7 +91,6 @@ export default function EnhancedPatientSignup() {
       dateOfBirth: '',
       email: '',
       mobileNumber: '',
-      patientId: '',
       hospitalId: '',
       customHospitalName: '',
       password: '',
@@ -111,14 +111,18 @@ export default function EnhancedPatientSignup() {
     mutationFn: async (data: SignupForm) => {
       return await apiRequest('/api/auth/register', 'POST', { ...data, otpMethod });
     },
-    onSuccess: (data) => {
-      setRegistrationData(signupForm.getValues());
+    onSuccess: (response: any) => {
+      // Store registration data including server-generated patient ID
+      setRegistrationData({
+        ...signupForm.getValues(),
+        patientId: response.user?.patientId || 'N/A'
+      });
       setOtpSent(true);
       setCurrentStep(2);
     },
     onError: (error) => {
       const currentFormData = signupForm.getValues();
-      handleApiError('EnhancedPatientSignup', 'register', error as Error, { email: currentFormData.email, patientId: currentFormData.patientId });
+      handleApiError('EnhancedPatientSignup', 'register', error as Error, { email: currentFormData.email });
     }
   });
 
@@ -252,13 +256,6 @@ export default function EnhancedPatientSignup() {
 
   const onOtpSubmit = (data: OtpForm) => {
     verifyOtpMutation.mutate(data);
-  };
-
-  const generatePatientId = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const patientId = `PAT${timestamp}${random}`;
-    signupForm.setValue('patientId', patientId);
   };
 
   if (hospitalsLoading) {
@@ -442,31 +439,10 @@ export default function EnhancedPatientSignup() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">Medical Information</h3>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Patient ID *
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          {...signupForm.register('patientId')}
-                          type="text"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Enter patient ID or generate one"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={generatePatientId}
-                          data-testid="button-generate-patient-id"
-                        >
-                          Generate
-                        </Button>
-                      </div>
-                      {signupForm.formState.errors.patientId && (
-                        <p className="text-red-600 text-sm mt-1">
-                          {signupForm.formState.errors.patientId.message}
-                        </p>
-                      )}
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                      <p className="text-sm text-blue-800">
+                        <strong>Patient ID:</strong> Will be automatically generated upon registration using cryptographically secure methods.
+                      </p>
                     </div>
 
                     <div>

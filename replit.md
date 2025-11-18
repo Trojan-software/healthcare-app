@@ -149,11 +149,13 @@ Following ADHCC Mobile Application Security Assessments (Oct 9, 2025 and Nov 12,
 
 7. **Hooking Detection** (CVSS 5.7) - Detects Frida, Xposed, Substrate frameworks
 
-8. **Weak PRNG Fixed** (CVSS 6.1) - Cryptographically secure random generation
+8. **Weak PRNG Fixed** (CVSS 3.5) - Cryptographically secure random generation
    - Implementation: `server/utils/secure-random.ts`
-   - Replaces Math.random() with crypto.randomBytes()
-   - Used for passwords, OTPs, tokens
-   - Compliance: OWASP MASVS-CRYPTO-1, HIPAA 164.312(c)(1)
+   - Fixed critical patient ID generation using Math.random() on client-side
+   - Server-side generation using `crypto.randomBytes()` for patient IDs, passwords, OTPs, tokens
+   - Patient ID format: P-YYYYMM-XXXXXX (e.g., P-202511-847362)
+   - Uniqueness validation with retry logic
+   - Compliance: OWASP MASVS-CRYPTO-1, MSTG-CRYPTO-6, HIPAA 164.312(c)(1), PCI-DSS 6.1, CWE-338
 
 9. **StrandHogg Prevention** (CVSS 6.5) - Task hijacking protection
    - launchMode: singleInstance, taskAffinity: ""

@@ -339,14 +339,61 @@ private void enableTapjackingProtection() {
 #### 18. Weak PRNG (CVSS 3.5)
 **Status:** ✅ **FULLY FIXED**
 
-**Implementation:**
+**ADHCC Finding:**
+> Activities found using insecure randomization via `java.util.Random` or `Math.random()` classes. Generated random data will be predictable and attackers can guess sensitive information.
+
+**Vulnerabilities Found:**
+- **CRITICAL:** Patient ID generation using `Math.random()` on client-side (3 locations)
+- **Bytecode Activities:** `LX1/g;->doFrame(J)V`, `LC0/f0;->initialValue()Ljava/lang/Object;` (UI animations - acceptable, not security-sensitive)
+
+**Remediation - Server-Side Secure Random Utilities:**
 - **File:** `server/utils/secure-random.ts`
-- **Solution:** `crypto.randomBytes()` instead of `Math.random()`
-- **Usage:** Passwords, OTPs, session tokens
+- **Functions Created:**
+  - `generateSecurePatientId()` - Cryptographically secure patient IDs (format: P-YYYYMM-XXXXXX)
+  - `generateSecurePassword()` - Secure password generation
+  - `generateSecureOTP()` - Secure 6-digit OTP codes
+  - `generateSecureToken()` - Secure session tokens
+  - `secureRandomInt()` - Secure random integers using `crypto.randomBytes()`
+
+**Patient ID Generation Fix:**
+```typescript
+// ❌ BEFORE (Client-side - Insecure):
+const timestamp = Date.now().toString().slice(-6);
+const random = Math.floor(Math.random() * 1000); // Weak PRNG!
+const patientId = `PAT${timestamp}${random}`;
+
+// ✅ AFTER (Server-side - Secure):
+import crypto from 'crypto';
+export function generateSecurePatientId(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const secureRandom = secureRandomInt(100000, 999999); // crypto.randomBytes()
+  return `P-${year}${month}-${secureRandom}`;
+}
+```
+
+**Implementation Changes:**
+- ✅ **Removed** client-side patient ID generation (`EnhancedPatientSignup.tsx`)
+- ✅ **Server-side generation** in `/api/register` endpoint with uniqueness validation
+- ✅ **Secure random** used for passwords (`generateSecurePassword()`)
+- ✅ **Secure random** used for OTPs (`generateSecureOTP()`)
+- ✅ **Secure random** used for reset tokens (`generateSecureToken()`)
+- ✅ **UI animations** using `Math.random()` documented as acceptable (not security-sensitive)
+
+**Files Modified:**
+1. `server/utils/secure-random.ts` - Cryptographic random utilities
+2. `server/routes.ts` - Server-side patient ID generation with retry logic
+3. `client/src/components/EnhancedPatientSignup.tsx` - Removed client-side generation
 
 **Compliance Mapping:**
 - ✅ OWASP MASVS-CRYPTO-1 (Cryptography)
-- ✅ HIPAA 164.312(c)(1) (Integrity Controls)
+- ✅ OWASP M10 (Insufficient Cryptography)
+- ✅ MSTG-CRYPTO-6 (Secure random number generator)
+- ✅ HIPAA 164.312(c)(1) (Integrity Controls - Electronic authentication)
+- ✅ PCI-DSS 6.1, 6.3 (Secure systems and software development)
+- ✅ GDPR Art-25, Art-32 (Data protection by design, Security of processing)
+- ✅ CWE-338 (Use of Cryptographically Weak Pseudo-Random Number Generator)
 
 ---
 

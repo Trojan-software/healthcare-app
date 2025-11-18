@@ -9,7 +9,7 @@ import { bloodGlucoseManager } from "./hc03-blood-glucose";
 import { batteryManager } from "./hc03-battery";
 import { ecgDataManager } from "./hc03-ecg";
 import { HC03WebSocketService } from "./websocket";
-import { generateSecurePassword, generateSecureOTP } from "./utils/secure-random";
+import { generateSecurePassword, generateSecureOTP, generateSecurePatientId } from "./utils/secure-random";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
@@ -75,7 +75,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email, 
         password, 
         mobile, 
-        patientId,
         hospitalId,
         dateOfBirth
       } = req.body;
@@ -89,11 +88,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "User already exists" });
       }
 
-      if (patientId) {
+      // Generate a cryptographically secure patient ID server-side
+      // Security: MEDIUM (3.5) - Fixes Weak PRNG vulnerability
+      // Uses crypto.randomBytes instead of Math.random()
+      let patientId: string;
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      // Ensure patient ID uniqueness with retry logic
+      do {
+        patientId = generateSecurePatientId();
         const existingPatient = await storage.getUserByPatientId(patientId);
-        if (existingPatient) {
-          return res.status(409).json({ message: "Patient ID already exists" });
-        }
+        if (!existingPatient) break;
+        attempts++;
+      } while (attempts < maxAttempts);
+      
+      if (attempts >= maxAttempts) {
+        return res.status(500).json({ message: "Failed to generate unique patient ID" });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -105,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email,
         password: hashedPassword,
         mobileNumber: mobile,
-        patientId,
+        patientId, // Server-generated secure patient ID
         hospitalId,
         dateOfBirth,
         role: "patient",
@@ -117,7 +128,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role
+        role: user.role,
+        patientId: user.patientId // Server-generated secure patient ID
       };
 
       res.status(201).json({ user: userResponse });

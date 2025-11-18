@@ -1,0 +1,351 @@
+ 
+
+
+Android provides capabilities for an app to output logging information and obtain log output. Applications can send information to log output using the android.util.Log class. To obtain log output, applications can execute the logcat command.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+6.2	Attack vector: LOCAL	Attack complexity: LOW
+	Privileges required: NONE	User Interaction: NONE
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: NONE	Availability Impact: NONE
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M6	Inadequate Privacy Controls
+M9	Insecure Data Storage
+ 
+CWE	CWE-779	https://cwe.mitre.org/data/definitions/779.html MSTG	MSTG-STORAGE-3	No sensitive data is written to application logs. OWASP MASVS (v2) MASVS-STORAGE-2	The app prevents leakage of sensitive data.
+
+
+PCI-DSS (v4.0)	3.2	Protect Account Data
+Storage of account data is kept to a minimum
+3.3	Protect Account Data
+Sensitive authentication data (SAD) is not stored after authorization
+3.4	Protect Account Data
+Access to displays of full PAN and ability to copy cardholder data are restricted
+3.5	Protect Account Data
+Primary account number (PAN) is secured wherever it is stored
+ 
+HIPAA	164.312(a)(1)	Technical Safeguards: Access Control
+
+▪	Unique User Identification (Required)
+Assign a unique name and/or number for identifying and tracking user identity
+▪	Emergency Access Procedure (Required)
+Establish (and implement as needed) procedures for obtaining necessary electronic protected health information during an emergency.
+▪	Automatic Logoff (Addressable)
+Implement electronic procedures that terminate an electronic session after a predetermined time of inactivity.
+▪	Encryption and Decryption (Addressable) Implement a method to encrypt and decrypt electronic protected health information.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+Application was found to be writing logs to the system logs
+
+Reference: android.util.Log.d Tag: AppCompatDelegate
+Message: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+
+Reference: android.util.Log.i Tag: cr_WVCFactoryProvider
+Message: version=141.0.7390.122 (739012233) minSdkVersion=29 multiprocess=true packageId=127 splits=<none>
+Reference: android.util.Log.i Tag: cr_LibraryLoader
+Message: Successfully loaded native library
+
+Reference: android.util.Log.i Tag: cr_CachingUmaRecorder
+Message: Flushed 14 samples from 14 histograms, 0 samples were dropped.
+
+Reference: android.util.Log.i Tag: cr_CombinedPProvider
+Message: #registerProvider() provider:WV.ak@69b537 isPolicyCacheEnabled:false policyProvidersSize:0
+Reference: android.util.Log.i Tag: cr_PolicyProvider
+Message: #setManagerAndSource() 0
+
+Reference: android.util.Log.i Tag: cr_CombinedPProvider Message: #linkNativeInternal() 1
+ 
+Reference: android.util.Log.i Tag: cr_AppResProvider
+Message: #getApplicationRestrictionsFromUserManager() Bundle[EMPTY_PARCEL]
+
+Reference: android.util.Log.i Tag: cr_PolicyProvider
+Message: #notifySettingsAvailable() 0
+
+Reference: android.util.Log.i Tag: cr_CombinedPProvider Message: #onSettingsAvailable() 0
+Reference: android.util.Log.i Tag: cr_CombinedPProvider Message: #flushPolicies()
+Reference: android.util.Log.w Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+
+Reference: android.util.Log.w Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: VideoCapabilities
+Message: Unrecognized profile/level 0/3 for video/mpeg2
+
+Reference: android.util.Log.i Tag: VideoCapabilities
+Message: Unsupported profile 4 for video/mp4v-es
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+
+Reference: android.util.Log.d Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+
+Reference: android.util.Log.w Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+
+Reference: android.util.Log.w Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+ 
+Reference: android.util.Log.w Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.d Tag: InsetsController Message: hide(ime())
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:3de49346: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+
+Reference: android.util.Log.d Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+
+Reference: android.util.Log.e Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.w Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+
+Reference: android.util.Log.w Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.d Tag: InsetsController Message: hide(ime())
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:3de49346: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+ 
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+
+Reference: android.util.Log.d Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+
+Reference: android.util.Log.e Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.w Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+
+Reference: android.util.Log.w Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+
+Reference: android.util.Log.d Tag: InsetsController Message: hide(ime())
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:7484880a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+
+Reference: android.util.Log.d Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:ec35a796: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+
+Reference: android.util.Log.e Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+ 
+Reference: android.util.Log.i Tag: cr_A11yState
+Message: Enabled accessibility services: [com.appknox.vnc/.InputService, null]
+
+Reference: android.util.Log.i Tag: cr_A11yState
+Message: Running accessibility services: [com.appknox.vnc/.InputService]
+
+Reference: android.util.Log.i Tag: cr_A11yState
+Message: Will check again after 250 milliseconds.
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:207af8ed: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+
+Reference: android.util.Log.w Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+
+Reference: android.util.Log.w Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.d Tag: InsetsController Message: hide(ime())
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:5760fbd8: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+
+Reference: android.util.Log.d Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+
+Reference: android.util.Log.e Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:9aefa0b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+ 
+Reference: android.util.Log.w Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+
+Reference: android.util.Log.w Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.d Tag: InsetsController Message: hide(ime())
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:5760fbd8: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+
+Reference: android.util.Log.d Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+
+Reference: android.util.Log.e Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:9aefa0b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+
+Reference: android.util.Log.w Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+
+Reference: android.util.Log.w Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+
+Reference: android.util.Log.w Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+
+Reference: android.util.Log.d Tag: InsetsController Message: hide(ime())
+ 
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:64ea4368: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.w Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+
+Reference: android.util.Log.d Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+
+Reference: android.util.Log.i Tag: AutofillManager
+Message: showAutofillDialog() return false due to improve fill dialog
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:c7329ad4: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.d Tag: InsetsController Message: show(ime())
+Reference: android.util.Log.d Tag: ImeBackDispatcher
+Message: Undo preliminary clear (mImeCallbacks.size=0)
+
+Reference: android.util.Log.d Tag: Autofill Status
+Message: Autofill popup isn't shown because autofill is not available.
+
+Did you set up autofill?
+1.	Go to Settings > System > Languages&input > Advanced > Autofill Service
+2.	Pick a service
+
+Did you add an account?
+1.	Go to Settings > System > Languages&input > Advanced
+2.	Click on the settings icon next to the Autofill Service
+3.	Add your account
+
+Reference: android.util.Log.d Tag: ImeBackDispatcher
+Message: Register received callback id=131256152 priority=0
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:c7329ad4: onShown
+
+Reference: android.util.Log.i Tag: ImeTracker
+ 
+Message: com.wnapp.id1762275362043:7d443f53: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:7d443f53: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: system_server:17487909: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+
+Reference: android.util.Log.e Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot use FILE backing without declarative registration. See go/phenotype-android-integration#phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:2e2e98f0: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:2e2e98f0: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: system_server:9ebf77f0: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:62f1232d: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:62f1232d: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:80695789: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:80695789: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: system_server:f7e6fe44: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: com.wnapp.id1762275362043:ebf85b7f: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false
+ 
+Reference: android.util.Log.d Tag: ImeBackDispatcher
+Message: Preliminary clear (mImeCallbacks.size=1)
+
+Reference: android.util.Log.i Tag: ImeTracker
+Message: system_server:66fbcb59: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+
+
+
+Facebook SDK for Android contained the following code which sends Facebook access tokens to log output in plain text format.
+Log.d("Facebook-authorize", "Login Success! access_token=" + getAccessToken() + " expires=" + getAccessExpires());
+Here is another example. A weather report for Android sent a user's location data to the log output as follows:
+
+I/MyWeatherReport( 6483): Re-use MyWeatherReport data I/ ( 6483): GET JSON:
+http://example.com/smart/repo_piece.cgi? arc=0&lat=26.209026&lon=127.650803&rad=50&dir=-999&lim=52&category=1000
+If a user is using Android OS 4.0 or before, other applications with READ_LOGS permission can obtain the user's location information without declaring ACCESS_FINE_LOCATION permission in the manifest file.
+
+
+Never use logs in production. Find all Log.d() and remove them.
+
+Use exception parsers and crash-based-analytics tool capture crashes in production so that it can be debugged
+
+
+Sensitive data can inadvertently leak into the logs and may aid in further attacks
+
+
+▪	Facebook SDK for Android
+▪	JVN#23328321 Puella Magi Madoka Magica iP for Android vulnerable to information disclosure
+▪	JVN#86040029 Weathernews Touch for Android stores location information in the system log file
+▪	JVN#33159152 Loctouch for Android information management vulnerability
+▪	JVN#56923652 Monaca Debugger for Android information management vulnerability

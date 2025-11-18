@@ -1,0 +1,49 @@
+ 
+
+
+A BroadcastReceiver represents one main component of an essential publish/subscribe messaging platform in Android. It, known as a subscriber, can be used to receive and respond to specific messages (or broadcasts) from the system or other components in the same application or different applications, such as notifying Android users when cellphone power is low as a system event-driven. This is generally achieved through the utilization of intent filters defined in the app manifest file.
+The dynamically Broadcastreceiver is in the java source code to realize the broadcast mechanism using onReceive(). This mechanism is managed by the Activity Manager Service (AMS) on the second framework layer in the Android architecture.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+6.1	Attack vector: LOCAL	Attack complexity: LOW
+	Privileges required: NONE	User Interaction: REQUIRED
+	Scope: UNCHANGED	Confidentiality Impact: NONE
+	Integrity Impact: HIGH	Availability Impact: LOW
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M8	Security Misconfiguration
+ 
+CWE	CWE-925	https://cwe.mitre.org/data/definitions/925.html
+
+
+MSTG	MSTG-PLATFORM-2	All inputs from external sources and the user are validated and if
+necessary sanitized. This includes data received via the UI, IPC mechanisms such as intents, custom URLs, and network sources.
+
+OWASP MASVS (v2)	MASVS-CODE-4	The app validates and sanitizes all untrusted inputs.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+ 
+Broadcast Receivers which are set Dynamically and are not protected
+
+An unprotected receiver was dynamically registered at Lcom/web2native/MainActivity;->onCreate
+
+
+
+If the broadcast filter is listening for an intent that isn't a restricted broadcast then the malicious app can start sending them without needing any permissions.
+Secondly if the receiver goes on to use the extras sent with the broadcast, or to start running other functions, then the malware has a whole new entry point to yTheour application.
+
+
+To protect broadcast, it needs to be registered with permissions when it is declare.
+
+Secondly never trust the data that is being sent with it. It's passing through a trust zone to arrive in the app, so it needs to be validated

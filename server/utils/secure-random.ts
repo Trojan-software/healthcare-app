@@ -48,7 +48,8 @@ export function secureRandomInt(min: number, max: number): number {
 export function secureRandom(): number {
   const randomBytes = crypto.randomBytes(8);
   const randomValue = randomBytes.readBigUInt64BE();
-  return Number(randomValue) / Number(0xFFFFFFFFFFFFFFFFn);
+  const maxValue = BigInt("18446744073709551615"); // 0xFFFFFFFFFFFFFFFF
+  return Number(randomValue) / Number(maxValue);
 }
 
 /**
@@ -91,4 +92,23 @@ export function generateSecureToken(length: number = 32): string {
  */
 export function generateSecureUUID(): string {
   return crypto.randomUUID();
+}
+
+/**
+ * Generate a secure patient ID in format: P-YYYYMM-XXXXXX
+ * where YYYYMM is current year/month and XXXXXX is a secure random 6-digit number
+ * Example: P-202511-847362
+ * 
+ * Security: MEDIUM (3.5) - Fixes Weak PRNG vulnerability for patient IDs
+ * Uses cryptographically secure random instead of Math.random()
+ * 
+ * @returns Secure patient ID string
+ */
+export function generateSecurePatientId(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const secureRandom = secureRandomInt(100000, 999999); // 6-digit secure random
+  
+  return `P-${year}${month}-${secureRandom}`;
 }

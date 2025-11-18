@@ -1,0 +1,63 @@
+
+ 
+
+
+Starting with Android 5.0, Google introduced the android.media.projection API which allows any third-party App to perform screen capture and screen sharing (fixed in Android 8).
+Such an App can capture everything on the device’s screen, including sensitive activity from all other Apps such as password keystrokes, credit card data, etc. The capturing ability remains on even if the user terminates/closes the App, but not after a reboot.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+6.8	Attack vector: LOCAL	Attack complexity: LOW
+	Privileges required: NONE	User Interaction: NONE
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: LOW	Availability Impact: NONE
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M8	Security Misconfiguration
+ 
+CWE	CWE-200	https://cwe.mitre.org/data/definitions/200.html
+
+
+MSTG	MSTG-STORAGE-9	The app removes sensitive data from views when moved to the
+background.
+
+
+OWASP MASVS (v2)	MASVS-PLATFORM-3	The app uses the user interface securely.
+
+
+PCI-DSS (v4.0)	3.1	Protect Account Data
+Processes and mechanisms for protecting stored account data are defined and understood
+3.2	Protect Account Data
+Storage of account data is kept to a minimum
+3.3	Protect Account Data
+Sensitive authentication data (SAD) is not stored after authorization
+ 
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+Protect all sensitive windows within the App by enabling the FLAG_SECURE flag. This flag will prevent Apps from being able to record the protected windows. Also, the flag will prevent users from taking screenshots of these windows (by pressing the VOLUME_DOWN and POWER buttons). As such screenshots are stored on the SDCard by default, they are accessible to all Apps and sensitive data may be exposed.
+
+The App does not protect sensitive screens from being displayed in screencasts initiated by third-party Apps
+
+
+
+Below is an example of how to use FLAG_SECURE inside your activity
+
+public class SecureActivity extends Activity { @Override
+protected void onCreate(Bundle savedInstanceState) { super.onCreate(savedInstanceState);
+
+// Set the Secure flag for this Window getWindow().setFlags(LayoutParams.FLAG_SECURE, LayoutParams.FLAG_SECURE);
+}
+}
+
+
+
+▪	Android 5.0 Docs
+▪	FLAG_SECURE docs
