@@ -1,0 +1,2804 @@
+App Security Report
+For Internal Purpose
+24/7 Health Monitor
+While precautions have been taken in the preparation of this document, the publisher and the author(s) assume no
+responsibility for errors, omissions, or for damages resulting from the use of the information contained herein. Use of
+services does not guarantee the security of a system, or that intrusions will not occur.
+com.wnapp.id1762275362043
+1.0
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 1 of 80
+Application Details
+Application Name 24/7 Health Monitor
+Platform Android
+Application Namespace com.wnapp.id1762275362043
+Version 1.0
+Version Code 1
+Application SHA1 Hash 320c2fb309693c10afb705c1fa9f68899234a641
+Application MD5 Hash fd02f23f216c88b7dd8bad57a5e03d45
+Audit Details
+File ID 215
+Audit Date Nov. 12, 2025, 4:24 a.m.
+Scan Status Static Dynamic API
+Scans included in the Report Static, Dynamic, API
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 2 of 80
+Table of Contents
+Report Summary
+- Audit Summary
+- Security Rating
+Network Security Misconfiguration
+- Noncompliant Code Example
+- Compliant Solution
+- Business Implication
+- Related Vulnerabilities
+Hardcoded Secrets
+- Business Implication
+- Related Vulnerabilities
+Hooking Detection
+- Compliant Solution
+- Business Implication
+Root Detection
+- Compliant Solution
+- Business Implication
+- Related Vulnerabilities
+WebView Exploits
+- Compliant Solution
+- Business Implication
+Application Logs
+- Noncompliant Code Example
+- Compliant Solution
+- Business Implication
+- Related Vulnerabilities
+Android Tapjacking
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 3 of 80
+- Noncompliant Code Example
+- Compliant Solution
+- Business Implication
+StrandHogg Vulnerability
+- Noncompliant Code Example
+- Compliant Solution
+- Business Implication
+- Related Vulnerabilities
+MediaProjection: Android Service Allows Recording of Audio, Screen Activity
+- Compliant Solution
+- Related Vulnerabilities
+Insecure Broadcast Receivers registered dynamically
+- Noncompliant Code Example
+- Compliant Solution
+Disabled SSL CA Validation and Certificate Pinning
+- Compliant Solution
+- Business Implication
+- Related Vulnerabilities
+Storing Information in Shared Preferences
+- Noncompliant Code Example
+- Compliant Solution
+- Business Implication
+Android Developer options status detection
+- Compliant Solution
+- Business Implication
+Android Developer Bridge(ADB) status detection
+- Compliant Solution
+- Business Implication
+Bytecode Obfuscation
+- Noncompliant Code Example
+- Compliant Solution
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 4 of 80
+- Related Vulnerabilities
+Enabled Android Application Backup
+- Noncompliant Code Example
+- Compliant Solution
+- Related Vulnerabilities
+Keylogger Protection
+- Compliant Solution
+- Business Implication
+Weak PRNG (Pseudorandom number generator)
+- Noncompliant Code Example
+- Compliant Solution
+- Business Implication
+Deprecated setPluginState in WebView
+- Noncompliant Code Example
+- Compliant Solution
+- Related Vulnerabilities
+Unused Permissions
+- Compliant Solution
+- Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 5 of 80
+Report Summary
+This report is generated based on the findings during the automated auditing process. It also contains the process of
+discovering those vulnerabilities in the first place, and ways to remediate those issues.
+Audit Summary
+Network Security Misconfiguration Static
+This technique allows the user to secure the communication in the application by specifying
+proper values to the flags which are present in the network security configuration file. If
+implemented correctly it can help in securing the application by communicating only on
+secure protocols like HTTPS. It can also be used to implement certificate pinning by using
+the SHA-256 hashes of the public certificate.
+9.1
+Critical
+Hardcoded Secrets Static
+Malicious actors could take advantage of the hardcoded secrets to access private
+databases, leading to data breaches and the exposure of users' personal data.
+7.5
+High
+Hooking Detection Dynamic
+Hooking is a technique where an external piece of code intercepts or manipulates the
+normal execution flow of an application or the operating system. While legitimate uses of
+hooking exist, such as for debugging and development purposes, malicious applications
+may use hooking to compromise the security and integrity of the system. Hooking detection
+is a technique to detect whether an application is being hooked at run time.
+5.7
+Medium
+Root Detection Dynamic
+Since a rooted device is much more at risk of being compromised, it is important to know
+about it. Detecting whether the device is rooted or not is essential for further security
+measures.
+6.8
+Medium
+WebView Exploits Dynamic
+WebView can be susceptible to various exploits including client side Javascript injection and
+network sniffing if improperly implemented.
+5.4
+Medium
+Application Logs Static Dynamic
+Application was found to be writing logs to the system logs
+6.2
+Medium
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 6 of 80
+Android Tapjacking Static
+Android tapjacking is a type of attack where an attacker tricks or deceives a user into
+tapping on a seemingly harmless element on their Android device's screen, while secretly
+performing malicious actions in the background. Cybercriminals deploy overlay attacks to
+steal victims’ login credentials, bank card details, and other confidential information.
+4.8
+Medium
+StrandHogg Vulnerability Static
+One or more than one public facing activities of the application is vulnerable to StandHogg
+vulnerability.
+In StrandHogg and regular task hijacking, malicious applications typically deploy one of the
+following techniques or a selection in tandem:
+Task Affinity Manipulation: The malicious application leverages two activities, M1
+and M2, wherein M2.taskAffinity = com.victim.app and M2.allowTaskReparenting =
+true. In the eventuality that the malicious app is opened on M2, M2 would be
+relocated to the front and the user will interact with the malicious application once
+the victim application has initiated.
+Single Task Mode: In the eventuality that the victim application sets launchMode to
+singleTask, malicious applications can leverage M2.taskAffinity = com.victim.app to
+hijack the victim's application task stack.
+Task Reparenting: In the eventuality that the victim application sets
+taskReparenting to true, malicious applications can move the victim's application
+task to the malicious application's stack.
+However, in the case of StrandHogg 2.0, all exported activities without a launchMode of
+singleTask or singleInstance are affected on vulnerable Android versions.
+6.5
+Medium
+MediaProjection: Android Service Allows Recording of Audio, Screen Activity
+Static
+Protect all sensitive windows within the App by enabling the FLAG_SECURE flag. This flag will
+prevent Apps from being able to record the protected windows. Also, the flag will prevent
+users from taking screenshots of these windows (by pressing the VOLUME_DOWN and
+POWER buttons). As such screenshots are stored on the SDCard by default, they are
+accessible to all Apps and sensitive data may be exposed.
+6.8
+Medium
+Insecure Broadcast Receivers registered dynamically Static
+Broadcast Receivers which are set Dynamically and are not protected
+6.1
+Medium
+Disabled SSL CA Validation and Certificate Pinning Static
+A host or service's certificate or public key can be added to an application at development
+time, or it can be added upon first encountering the certificate or public key. The former -
+adding at development time - is preferred since preloading the certificate or public key out
+of band usually means the attacker cannot taint the pin.
+5.9
+Medium
+▪
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 7 of 80
+Storing Information in Shared Preferences Dynamic
+Insecured information was found in shared preference. One shouldn't use un-encrypted
+information in SharedPreference.
+6.1
+Medium
+Android Developer options status detection Dynamic
+Implementing Developer options protection in Android applications is crucial to ensure
+security and prevent unauthorized access to sensitive features and data. Implementing
+Developer option protection in your Android application enhances its security and integrity.
+By detecting and responding to the enabling of developer options, you can prevent
+unauthorized access and protect sensitive data.
+3.4
+Low
+Android Developer Bridge(ADB) status detection Dynamic
+Implementing ADB detection in Android applications is crucial to ensure security and
+prevent unauthorized access to sensitive features and data. ADB detection enhances app
+security by guarding against unintended exposure, unauthorized access, and tampering. By
+detecting and responding to the enabling of ADB on the device, you can prevent
+unauthorized access and protect sensitive data.
+3.4
+Low
+Bytecode Obfuscation Static
+Java source code is typically compiled into Java bytecode – the instruction set of the Java
+virtual machine. The compiled Java bytecode can be easily reversed engineered back into
+source code by freely available decompilers. Bytecode Obfuscation is the process of
+modifying Java bytecode (executable or library) so that it is much harder to read and
+understand for a hacker but remains fully functional.
+2.3
+Low
+Enabled Android Application Backup Static
+Application backup might contain sensitive information private data of the app into their PC
+3.3
+Low
+Keylogger Protection Static
+Keyloggers are malicious software designed to capture and record keystrokes or input data
+from users, posing a significant threat to personal and sensitive information. They operate
+by monitoring keyboard activity, potentially stealing passwords, credit card details, and
+other confidential data. Keylogger protection involves implementing secure input methods,
+such as custom keyboards and virtual keyboards, to prevent unauthorized access to typed
+information. Effective protection ensures that even if a keylogger is present, it cannot
+intercept or compromise the data being entered.
+3.9
+Low
+Weak PRNG (Pseudorandom number generator) Static
+Weak PRNG vulnerabilities stem from insufficiently random initializations, improper
+algorithms, or inadequate entropy sources. Such vulnerabilities can result in unauthorized
+access, data breaches, and compromised cryptographic operations.
+3.5
+Low
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 8 of 80
+Deprecated setPluginState in WebView Static
+setPluginState has security implication and deprecated by Android. It is unsafe to use in
+production.
+3.7
+Low
+Unused Permissions Static
+Application seems to be using extra permissions which are not really needed
+2.3
+Low
+Sensitive information in Sqlite database Dynamic
+Application is not vulnerable to SQLITE db
+Passed
+Android Component Hijacking via Intent Static
+Application has no vulnerable components for Intent hijacking
+Passed
+Do not allow WebView to access sensitive local resource through file scheme
+Static
+Webview file-scheme is not being used or vulnerable
+Passed
+Android Fragment Injection Static
+Application is not vulnerable to Fragment Injection
+Passed
+Insecure Hashing Algorithms Dynamic
+No insecure hash functions are used.
+Passed
+Non-signature Protected Exported Services Static
+The application does not export any service without a ProtectionLevel.
+Passed
+Unprotected Exported Receivers Static
+The application does not export Broadcast Receivers.
+Passed
+PhoneGap Debug Logging Static
+PhoneGap debug logs are not enabled, or PhoneGap is not being used.
+Passed
+PhoneGap Error URL Redirection Vulnerability Static
+The application is not vulnerable to error URL redirection vulnerability, or is not using
+PhoneGap.
+Passed
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 9 of 80
+PhoneGap JavaScript Injection Static
+The application does not seem to be affected by PhoneGap javascript injection.
+Passed
+Insufficient Transport Layer Protection Static Dynamic
+Application seems to have SSL enabled and sufficient protection is being used to prevent
+Information leakage.
+Passed
+App Extending WebViewClient Static
+Application seems to be handling WebViewClient correctly, or has no implementation of
+WebViewClient.
+Passed
+Broken SSL Trust Manager Static
+Trust Managers for SSL, if any, seem to be properly implemented.
+Passed
+Unprotected Services Static
+Exported services in the app are sufficiently protected.
+Passed
+Intent Redirection Vulnerability Static
+Application is not vulnerable to intent redirection vulnerability.
+Passed
+Keyboard Cache Exposure Static
+The application takes proper security measure to disable caching for sensitive input fields
+and hence is not vulnerable to keyboard cache exposure.
+Passed
+Janus Vulnerability (CVE-2017-13156) Static
+Application is signed using v2 signature scheme or above, and is not vulnerable to Janus.
+Passed
+Java Object Deserialization Vulnerability Static
+The application is not vulnerable to object deserialization.
+Passed
+Javascript CORS enabled in Webview Static
+The application is not vulnerable to Javascript CORS.
+Passed
+External data in raw SQL queries Static
+The application does not seem to use raw SQL query.
+Passed
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 10 of 80
+Surreptitious Sharing on Android Static
+Surreptitious Sharing might not be in use in this application
+Passed
+Sending Address Book Data over Unencrypted Insecure Transport Layer Static
+The Application doesn't sends Address Book over Insecured Network
+Passed
+Content Provider File Traversal Vulnerability Static
+Application does not seem to be vulnerable to content provider directory traversal attacks.
+Passed
+Non-signature Protected Exported Providers Static
+The application does not export any provider without a ProtectionLevel.
+Passed
+Non-signature Protected Exported Receivers Static
+The application does not export any Broadcast Receivers without a ProtectionLevel.
+Passed
+Non-signature Protected Exported Activities Static
+The application does not export any activity without a ProtectionLevel.
+Passed
+Unprotected Exported Provider Static
+The application does not export any providers insecurely.
+Passed
+Unprotected Exported Service Static
+The application does not export any services insecurely.
+Passed
+Unprotected Exported Activities Static
+The application does not insecurely export any activities.
+Passed
+PhoneGap Whitelisted URLs Static
+Application has proper whitelisted URLs, or does not use PhoneGap.
+Passed
+Cordova Remote Start Page Manipulation Vulnerability Static
+The application is not affected by CVE-3500, or Apache Cordova is not being used.
+Passed
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 11 of 80
+PhoneGap HTTPS Whitelist Bypass Static
+The PhoneGap application seems to be using proper regex check, or is not using PhoneGap.
+Passed
+Connection to External Redis Server Static
+The application does not communicate with an external Redis server.
+Passed
+PhoneGap HTTPS Bypass Vulnerability Static
+The application does not use a vulnerable version of PhoneGap, or is not using PhoneGap.
+Passed
+Remote URL Redirection Vulnerability Static
+The application is not vulnerable to URL redirection vulnerability, or is not using PhoneGap.
+Passed
+Derived Crypto Keys Static Dynamic
+Application seems to be using the correct cryptographic encryption method, if any.
+Passed
+JavascriptInterface Remote Code Execution Static
+Application is safe from remote code execution through JavascriptInterface.
+Passed
+HostnameVerifier Allowing All Hostnames Static
+AllowAllHostname is properly configured, or is disabled.
+Passed
+Insecure SSLSocketFactories Static
+No implementation errors were found.
+Passed
+Broken HostnameVerifier for SSL Static
+HostnameVerifiers for SSL, if any, seem to be verifying hostnames properly.
+Passed
+Improper Custom Permissions Static
+Custom permissions in the app have sufficient protection levels, or custom permissions are
+absent.
+Passed
+Application Debugging Static
+Debug was found to be disabled.
+Passed
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 12 of 80
+Improper Content Provider Permissions Static
+Application seems to properly implement SSL, or HTTPS is not implemented.
+Passed
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 13 of 80
+Priority Level Number of failed test cases
+Critical Risk 1
+High Risk 1
+Medium Risk 10
+Low Risk 8
+Security Rating
+Security Rating - 20.00 Unsecured
+Critical 1.59%
+High 1.59%
+Medium 15.87%
+Low 12.7%
+Passed 68.25%
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 14 of 80
+Scan Type
+Static
+Network Security Misconfiguration
+The Network Security Configuration feature lets apps customize their network security settings in a safe, declarative
+configuration file without modifying app code. These settings can be configured for specific domains and for a specific
+app. The key capabilities of this feature are as follows:
+Custom trust anchors: Customize which Certificate Authorities (CA) are trusted for an app's secure
+connections. For example, trusting particular self-signed certificates or restricting the set of public CAs that the
+app trusts.
+Debug-only overrides: Safely debug secure connections in an app without added risk to the installed base.
+Cleartext traffic opt-out: Protect apps from accidental usage of cleartext traffic.
+Certificate pinning: Restrict an app's secure connection to particular certificates.
+Risk Rating
+Critical
+Version 3.0
+Base Score
+9.1
+Attack vector: NETWORK Attack complexity: LOW
+Privileges required: NONE User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: HIGH
+Integrity Impact: HIGH Availability Impact: NONE
+▪
+▪
+▪
+▪
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M5 Insecure Communication
+M8 Security Misconfiguration
+CWE CWE-16 https://cwe.mitre.org/data/definitions/16.html
+MSTG MSTG-NETWORK-1 Data is encrypted on the network using TLS. The secure channel
+is used consistently throughout the app.
+OWASP MASVS (v2) MASVS-NETWORK-1 The app secures all network traffic according to the current best
+practices.
+PCI-DSS (v4.0) 4.1 Protect cardholder data with strong cryptography during
+transmission over open, public networks
+Processes and mechanisms for protecting cardholder data with
+strong cryptography during transmission over open, public
+networks are defined and documented.
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 15 of 80
+This technique allows the user to secure the communication in the application by specifying proper values to the flags
+which are present in the network security configuration file. If implemented correctly it can help in securing the
+application by communicating only on secure protocols like HTTPS. It can also be used to implement certificate pinning
+by using the SHA-256 hashes of the public certificate.
+Android manifest's application tag has `cleartextTrafficPermitted` attribute set to `true`.This
+is a vulnerability since it allows HTTP traffic.
+If you have set the base configuration or domain configuration with cleartextTrafficPermitted to True then it is a
+problem. If the src is set to "user" then, a user can install his own certificate in the device and the app will use that
+instead of the pinned certificate.
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+<base-config cleartextTrafficPermitted="true">
+<trust-anchors>
+<certificates src="system" />
+<certificates src="user" />
+</trust-anchors>
+</base-config>
+</network-security-config>
+Adding a debug-overrides can expose your debug certificate which can be used to perform MITM attack on your
+application.
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+<debug-overrides>
+<trust-anchors>
+<certificates src="@raw/debug_cas"/>
+</trust-anchors>
+</debug-overrides>
+</network-security-config>
+The following is a good network security configuration:
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+<base-config cleartextTrafficPermitted="false">
+4.2 Protect cardholder data with strong cryptography during
+transmission over open, public networks
+PAN is protected with strong cryptography during transmission
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Noncompliant Code Example
+Compliant Solution
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 16 of 80
+<trust-anchors>
+<certificates src="..."/>
+...
+</trust-anchors>
+</base-config>
+<domain-config cleartextTrafficPermitted="false">
+<domain>android.com</domain>
+...
+<trust-anchors>
+<certificates src="..."/>
+...
+</trust-anchors>
+<pin-set>
+<pin digest="...">...</pin>
+...
+</pin-set>
+</domain-config>
+...
+</network-security-config>
+An attacker can gain sensitive information which can result in loss of confidential data.
+Android Documentation: https://developer.android.com/training/articles/security-config
+Android Codelab for Network Security Configuration: https://developer.android.com/codelabs/android-networksecurity-
+config#3
+Business Implication
+Related Vulnerabilities
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 17 of 80
+Scan Type
+Static
+Hardcoded Secrets
+This vulnerability arises because of the insecure practice to hardcode secrets in the application package, that includes
+API keys, server authentication credentials, etc.
+Risk Rating
+High
+Version 3.0
+Base Score
+7.5
+Attack vector: NETWORK Attack complexity: LOW
+Privileges required: NONE User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: HIGH
+Integrity Impact: NONE Availability Impact: NONE
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M1 Improper Credential Usage
+M6 Inadequate Privacy Controls
+CWE CWE-259 https://cwe.mitre.org/data/definitions/259.html
+CWE-321 https://cwe.mitre.org/data/definitions/321.html
+CWE-798 https://cwe.mitre.org/data/definitions/798.html
+MSTG MSTG-ARCH-4 Data considered sensitive in the context of the mobile app is
+clearly identified.
+OWASP MASVS (v2) MASVS-STORAGE-2 The app prevents leakage of sensitive data.
+PCI-DSS (v4.0) 6.1 Develop and maintain secure systems and applications
+Processes and mechanisms for developing and maintaining
+secure systems and software are defined and understood
+6.3 Develop and maintain secure systems and applications
+Security vulnerabilities are identified and addressed
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 18 of 80
+Malicious actors could take advantage of the hardcoded secrets to access private databases, leading to data breaches
+and the exposure of users' personal data.
+Source: String resource
+google_api_key: AIzaSyBqQYtN5NJDttym4Gho7PAu0xvF5YvCToA
+Source: String resource
+google_crash_reporting_api_key: AIzaSyBqQYtN5NJDttym4Gho7PAu0xvF5YvCToA
+Source: String resource
+orufy_connect_client_id: jVY6FSPTypeVnrDKkcGU4R1bBGsg5SXR
+Hardcoded secrets can allow a malicious actor to access private resources that may contain sensitive information
+leading to data breaches and the exposure of users' personal data which may lead to loss in business.
+CWE-259
+CWE-321
+CWE-798
+HIPAA 164.312(c)(1) Technical Safeguards: Integrity
+Mechanism to Authenticate Electronic Protected
+(Addressable)
+Implement electronic mechanisms to corroborate that
+electronic protected health information has not been altered or
+destroyed in an unauthorized manner.
+▪
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Business Implication
+Related Vulnerabilities
+▪
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 19 of 80
+Scan Type
+Dynamic
+Hooking Detection
+Hooking detection test case checks whether an application can detect if it's being hooked or not. If an application is
+being hooked, the application behaviour can be modified at run time.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+5.7
+Attack vector: PHYSICAL Attack complexity: LOW
+Privileges required: LOW User Interaction: REQUIRED
+Scope: UNCHANGED Confidentiality Impact: HIGH
+Integrity Impact: HIGH Availability Impact: NONE
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M7 Insufficient Binary Protections
+CWE CWE-693 https://cwe.mitre.org/data/definitions/693.html
+MSTG MSTG-RESILIENCE-1 The app detects, and responds to, the presence of a rooted or
+jailbroken device either by alerting the user or terminating the
+app.
+OWASP MASVS (v2) MASVS-RESILIANCE-1 The app validates the integrity of the platform.
+PCI-DSS (v4.0) 7.1 Restrict access to cardholder data by business need to
+know
+Processes and mechanisms for restricting access to system
+components and cardholder data by business need to know are
+defined and understood
+7.2 Restrict access to cardholder data by business need to
+know
+Access to system components and data is appropriately defined
+and assigned
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 20 of 80
+Hooking is a technique where an external piece of code intercepts or manipulates the normal execution flow of an
+application or the operating system. While legitimate uses of hooking exist, such as for debugging and development
+purposes, malicious applications may use hooking to compromise the security and integrity of the system. Hooking
+detection is a technique to detect whether an application is being hooked at run time.
+The application has not implemented hooking detection or any kind of runtime protection system.
+To implement a hooking detection solution, the following code (in Java or Kotlin) can be used to enumerate packages
+and figure out malicious tools. This should be used in conjunction with the native (C/C++) code to make detection
+more stronger and efficient.
+Java:
+function checkSuspiciousMethodsinStackTrace() {
+try {
+Set libraries = new HashSet();
+String mapsFilename = "/proc/" + android.os.Process.myPid() + "/maps";
+BufferedReader reader = new BufferedReader(new FileReader(mapsFilename));
+String line;
+while((line = reader.readLine()) != null) {
+if (line.endsWith(".so") || line.endsWith(".jar")) {
+int n = line.lastIndexOf(" ");
+libraries.add(line.substring(n + 1));
+}
+HIPAA 164.308(a)(4) Administrative Safeguards: Information Access
+Management
+Isolating Health Care Clearinghouse Functions
+(Required)
+If a health care clearinghouse is part of a larger organization,
+the clearinghouse must implement policies and procedures
+that protect the electronic protected health information of the
+clearinghouse from unauthorized access by the larger
+organization.
+Access Authorization (Addressable)
+Implement policies and procedures for granting access to
+electronic protected health information, for example, through
+access to a workstation, transaction, program, process, or
+other mechanism.
+Access Establishment and Modification (Addressable)
+Implement policies and procedures that, based upon the
+entity's access authorization policies, establish, document,
+review, and modify a user's right of access to a workstation,
+transaction, program, or process.
+▪
+▪
+▪
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Compliant Solution
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 21 of 80
+}
+for (String library : libraries) {
+if(library.contains("com.saurik.substrate")) {
+Log.wtf("HookDetection", "Substrate shared object found: " + library);
+}
+if(library.contains("XposedBridge.jar")) {
+Log.wtf("HookDetection", "Xposed JAR found: " + library);
+}
+}
+reader.close();
+}
+catch (Exception e) {
+Log.wtf("HookDetection", e.toString());
+}
+}
+function checkSuspiciousPackagesInstalled() {
+PackageManager packageManager = context.getPackageManager();
+List applicationInfoList =
+packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
+for(ApplicationInfo applicationInfo : applicationInfoList) {
+if(applicationInfo.packageName.equals("de.robv.android.xposed.installer")) {
+Log.wtf("HookDetection", "Xposed found on the system.");
+}
+if(applicationInfo.packageName.equals("com.saurik.substrate")) {
+Log.wtf("HookDetection", "Substrate found on the system.");
+}
+}
+}
+Kotlin:
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.util.Log
+import java.io.BufferedReader
+import java.io.FileReader
+import java.util.HashSet
+fun checkSuspiciousMethodsInStackTrace() {
+try {
+val libraries = mutableSetOf<String>()
+val mapsFilename = "/proc/${android.os.Process.myPid()}/maps"
+val reader = BufferedReader(FileReader(mapsFilename))
+var line: String?
+while (reader.readLine().also { line = it } != null) {
+if (line!!.endsWith(".so") || line.endsWith(".jar")) {
+val n = line!!.lastIndexOf(" ")
+libraries.add(line!!.substring(n + 1))
+}
+}
+for (library in libraries) {
+if (library.contains("com.saurik.substrate")) {
+Log.wtf("HookDetection", "Substrate shared object found: $library")
+}
+if (library.contains("XposedBridge.jar")) {
+Log.wtf("HookDetection", "Xposed JAR found: $library")
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 22 of 80
+}
+}
+reader.close()
+} catch (e: Exception) {
+Log.wtf("HookDetection", e.toString())
+}
+}
+fun checkSuspiciousPackagesInstalled(context: Context) {
+val packageManager: PackageManager = context.packageManager
+val applicationInfoList: List<ApplicationInfo> =
+packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+for (applicationInfo in applicationInfoList) {
+if (applicationInfo.packageName == "de.robv.android.xposed.installer") {
+Log.wtf("HookDetection", "Xposed found on the system.")
+}
+if (applicationInfo.packageName == "com.saurik.substrate") {
+Log.wtf("HookDetection", "Substrate found on the system.")
+}
+}
+}
+Native (via Java Native Interface) in C/C++:
+static char keyword[] = "LIBFRIDA";
+num_found = 0;
+int scan_executable_segments(char * map) {
+char buf[512];
+unsigned long start, end;
+sscanf(map, "%lx-%lx %s", &start, &end, buf);
+if (buf[2] == 'x') {
+return (find_mem_string(start, end, (char*)keyword, 8) == 1);
+} else {
+return 0;
+}
+}
+void scan() {
+if ((fd = my_openat(AT_FDCWD, "/proc/self/maps", O_RDONLY, 0)) >= 0) {
+while ((read_one_line(fd, map, MAX_LINE)) > 0) {
+if (scan_executable_segments(map) == 1) {
+num_found++;
+}
+}
+if (num_found > 1) {
+/* Frida Detected */
+}
+}
+boolean is_frida_server_listening() {
+struct sockaddr_in sa;
+memset(&sa, 0, sizeof(sa));
+sa.sin_family = AF_INET;
+sa.sin_port = htons(27042);
+inet_aton("127.0.0.1", &(sa.sin_addr));
+int sock = socket(AF_INET , SOCK_STREAM , 0);
+if (connect(sock , (struct sockaddr*)&sa , sizeof sa) != -1) {
+/* Frida server detected. Do something… */
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 23 of 80
+}
+}
+public boolean checkRunningProcesses() {
+boolean returnValue = false;
+// Get currently running application processes
+List<RunningServiceInfo> list = manager.getRunningServices(300);
+if(list != null){
+String tempName;
+for(int i=0;i<list.size();++i){
+tempName = list.get(i).process;
+if(tempName.contains("fridaserver")) {
+returnValue = true;
+}
+}
+}
+return returnValue;
+}
+Malicious applications may use hooking to compromise the security and integrity and bypass buiness logic checks
+performed by the application.
+Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 24 of 80
+Scan Type
+Dynamic
+Root Detection
+Root detection test case detects whether the application is running on a rooted device or not. If it can then a malicious
+application can access or modify the data of any application.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+6.8
+Attack vector: PHYSICAL Attack complexity: HIGH
+Privileges required: HIGH User Interaction: NONE
+Scope: CHANGED Confidentiality Impact: HIGH
+Integrity Impact: HIGH Availability Impact: LOW
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M7 Insufficient Binary Protections
+CWE CWE-693 https://cwe.mitre.org/data/definitions/693.html
+MSTG MSTG-RESILIENCE-1 The app detects, and responds to, the presence of a rooted or
+jailbroken device either by alerting the user or terminating the
+app.
+OWASP MASVS (v2) MASVS-RESILIANCE-1 The app validates the integrity of the platform.
+PCI-DSS (v4.0) 7.1 Restrict access to cardholder data by business need to
+know
+Processes and mechanisms for restricting access to system
+components and cardholder data by business need to know are
+defined and understood
+7.2 Restrict access to cardholder data by business need to
+know
+Access to system components and data is appropriately defined
+and assigned
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 25 of 80
+Since a rooted device is much more at risk of being compromised, it is important to know about it. Detecting whether
+the device is rooted or not is essential for further security measures.
+The application has not properly implemented root detection.
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.util.Log;
+import android.content.pm.PackageManager;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.util.List;
+public class RootCheck {
+private static Context mContext;
+private static final String TAG = "RootCheck";
+private String[] binaryPaths= {
+"/data/local/",
+"/data/local/bin/",
+"/data/local/xbin/",
+HIPAA 164.308(a)(4) Administrative Safeguards: Information Access
+Management
+Isolating Health Care Clearinghouse Functions
+(Required)
+If a health care clearinghouse is part of a larger organization,
+the clearinghouse must implement policies and procedures
+that protect the electronic protected health information of the
+clearinghouse from unauthorized access by the larger
+organization.
+Access Authorization (Addressable)
+Implement policies and procedures for granting access to
+electronic protected health information, for example, through
+access to a workstation, transaction, program, process, or
+other mechanism.
+Access Establishment and Modification (Addressable)
+Implement policies and procedures that, based upon the
+entity's access authorization policies, establish, document,
+review, and modify a user's right of access to a workstation,
+transaction, program, or process.
+▪
+▪
+▪
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Compliant Solution
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 26 of 80
+"/sbin/",
+"/su/bin/",
+"/system/bin/",
+"/system/bin/.ext/",
+"/system/bin/failsafe/",
+"/system/sd/xbin/",
+"/system/usr/we-need-root/",
+"/system/xbin/",
+"/system/app/Superuser.apk",
+"/cache",
+"/data",
+"/dev"
+};
+private String[] dangerousPackages = {
+"com.devadvance.rootcloak",
+"com.devadvance.rootcloakplus",
+"com.koushikdutta.superuser",
+"com.thirdparty.superuser",
+"com.topjohnwu.magisk",
+"org.lsposed.manager",
+"com.devadvance.rootcloak2"
+};
+RootCheck(Context ct) {
+mContext = ct;
+}
+public String rootBeerCheck() {
+if(DetectTestKeys() || checkSuExists() || checkForBusyBoxBinary() || checkForSuBinary()
+|| checkPackages(mContext))
+return "DEVICE IS ROOTED!";
+else
+return "DEVICE IS NOT ROOTED";
+}
+private boolean DetectTestKeys() {
+String buildTags = android.os.Build.TAGS;
+return buildTags != null && buildTags.contains("test-keys");
+}
+private boolean checkForBinary(String filename) {
+for (String path : binaryPaths) {
+File f = new File(path, filename);
+boolean fileExists = f.exists();
+if (fileExists) {
+return true;
+}
+}
+return false;
+}
+private boolean checkForSuBinary() {
+return checkForBinary("su"); //checking for su binary
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 27 of 80
+}
+private boolean checkForBusyBoxBinary() {
+return checkForBinary("busybox"); //checking for busybox
+}
+private boolean checkSuExists() {
+Process process = null;
+try {
+process = Runtime.getRuntime().exec(new String[]
+{"/system /xbin/which", "su"}); //Checking if su binary exists
+BufferedReader in = new BufferedReader(
+new InputStreamReader(process.getInputStream()));
+String line = in.readLine();
+process.destroy();
+return line != null;
+} catch (Exception e) {
+if (process != null) {
+process.destroy();
+}
+return false;
+}
+}
+private boolean checkPackages(Context ctx) {
+PackageManager pm = ctx.getPackageManager();
+for(String name:dangerousPackages){
+if(isPackageInstalled(name,pm)){ //Checking if dangerous applications are
+installed
+return true;
+}
+}
+return false;
+}
+private boolean isPackageInstalled(String packageName, PackageManager packageManager) {
+try {
+return packageManager.getApplicationInfo(packageName, 0).enabled;
+} catch (PackageManager.NameNotFoundException e) {
+return false;
+}
+}
+}
+In the event, if an attacker can install a malicious application on the device then an attacker can perform malicious
+activities which can result in compromising the victim's data.
+Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 28 of 80
+RootBear Library - Simple to use root checking Android library and sample app (https://github.com/scottyab/
+rootbeer)
+Related Vulnerabilities
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 29 of 80
+Scan Type
+Dynamic
+WebView Exploits
+Android API offers WebView to deliver a web application (or just a web page) as a part of a client app. A common
+scenario in which using WebView is helpful is when you want to provide information in your application that you might
+need to update, such as an end-user agreement or a user guide. Another scenario is if your application provides data
+to the user that always requires an Internet connection to retrieve data, such as email. In this case, you might find that
+it's easier to build a WebView in your Android application that shows a web page with all the user data, rather than
+performing a network request, then parsing the data and rendering it in an Android layout.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+5.4
+Attack vector: NETWORK Attack complexity: HIGH
+Privileges required: LOW User Interaction: REQUIRED
+Scope: UNCHANGED Confidentiality Impact: HIGH
+Integrity Impact: LOW Availability Impact: NONE
+WebView can be susceptible to various exploits including client side Javascript injection and network sniffing if
+improperly implemented.
+Reference: android.webkit.WebView.loadUrl
+Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl
+Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl
+Javascript enabled within WebView
+CVSS
+Regulatory
+CWE CWE-749 https://cwe.mitre.org/data/definitions/749.html
+MSTG MSTG-PLATFORM-5 JavaScript is disabled in WebViews unless explicitly required.
+OWASP MASVS (v2) MASVS-PLATFORM-2 The app uses WebViews securely.
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 30 of 80
+Reference: android.webkit.WebView.loadUrl
+Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl
+Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl
+Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl
+Javascript enabled within WebView
+When using WebView, ensure the following:
+Use WebView to load only trusted content
+Always load resources over HTTPS
+Avoid using Javascript within WebView. If Javascript is absolutely required, be sure that each context is escaped
+properly by using an XSS filter component such as the OWASP Java Encoder Project
+Accept only plain-text user input and sanitize it before displaying in WebView
+An improperly implemented WebView instance may be vulnerable to XSS can be used to gain access to shared
+preference files using file:///. When Javascript is enabled, it may allow adversaries to perform XSS attacks.
+Furthermore, not loading WebView over HTTPS may allow attackers to sniff data from network transmissions and
+perform Man-in-the-Middle attack by injecting arbitrary JavaScript into the WebView.
+Compliant Solution
+▪
+▪
+▪
+▪
+Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 31 of 80
+Scan Type
+Static Dynamic
+Application Logs
+Android provides capabilities for an app to output logging information and obtain log output. Applications can send
+information to log output using the android.util.Log class. To obtain log output, applications can execute the logcat
+command.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+6.2
+Attack vector: LOCAL Attack complexity: LOW
+Privileges required: NONE User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: HIGH
+Integrity Impact: NONE Availability Impact: NONE
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M6 Inadequate Privacy Controls
+M9 Insecure Data Storage
+CWE CWE-779 https://cwe.mitre.org/data/definitions/779.html
+MSTG MSTG-STORAGE-3 No sensitive data is written to application logs.
+OWASP MASVS (v2) MASVS-STORAGE-2 The app prevents leakage of sensitive data.
+PCI-DSS (v4.0) 3.2 Protect Account Data
+Storage of account data is kept to a minimum
+3.3 Protect Account Data
+Sensitive authentication data (SAD) is not stored after
+authorization
+3.4 Protect Account Data
+Access to displays of full PAN and ability to copy cardholder data
+are restricted
+3.5 Protect Account Data
+Primary account number (PAN) is secured wherever it is stored
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 32 of 80
+Application was found to be writing logs to the system logs
+Reference: android.util.Log.d
+Tag: AppCompatDelegate
+Message: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+Reference: android.util.Log.i
+Tag: cr_WVCFactoryProvider
+Message: version=141.0.7390.122 (739012233) minSdkVersion=29 multiprocess=true packageId=127
+splits=<none>
+Reference: android.util.Log.i
+Tag: cr_LibraryLoader
+Message: Successfully loaded native library
+Reference: android.util.Log.i
+Tag: cr_CachingUmaRecorder
+Message: Flushed 14 samples from 14 histograms, 0 samples were dropped.
+Reference: android.util.Log.i
+Tag: cr_CombinedPProvider
+Message: #registerProvider() provider:WV.ak@69b537 isPolicyCacheEnabled:false
+policyProvidersSize:0
+Reference: android.util.Log.i
+Tag: cr_PolicyProvider
+Message: #setManagerAndSource() 0
+Reference: android.util.Log.i
+Tag: cr_CombinedPProvider
+Message: #linkNativeInternal() 1
+HIPAA 164.312(a)(1) Technical Safeguards: Access Control
+Unique User Identification (Required)
+Assign a unique name and/or number for identifying and
+tracking user identity
+Emergency Access Procedure (Required)
+Establish (and implement as needed) procedures for obtaining
+necessary electronic protected health information during an
+emergency.
+Automatic Logoff (Addressable)
+Implement electronic procedures that terminate an electronic
+session after a predetermined time of inactivity.
+Encryption and Decryption (Addressable)
+Implement a method to encrypt and decrypt electronic
+protected health information.
+▪
+▪
+▪
+▪
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 33 of 80
+Reference: android.util.Log.i
+Tag: cr_AppResProvider
+Message: #getApplicationRestrictionsFromUserManager() Bundle[EMPTY_PARCEL]
+Reference: android.util.Log.i
+Tag: cr_PolicyProvider
+Message: #notifySettingsAvailable() 0
+Reference: android.util.Log.i
+Tag: cr_CombinedPProvider
+Message: #onSettingsAvailable() 0
+Reference: android.util.Log.i
+Tag: cr_CombinedPProvider
+Message: #flushPolicies()
+Reference: android.util.Log.w
+Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+Reference: android.util.Log.w
+Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: VideoCapabilities
+Message: Unrecognized profile/level 0/3 for video/mpeg2
+Reference: android.util.Log.i
+Tag: VideoCapabilities
+Message: Unsupported profile 4 for video/mp4v-es
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be
+manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+Reference: android.util.Log.d
+Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+Reference: android.util.Log.w
+Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+Reference: android.util.Log.w
+Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 34 of 80
+Reference: android.util.Log.w
+Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be
+manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.d
+Tag: InsetsController
+Message: hide(ime())
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:3de49346: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+Reference: android.util.Log.d
+Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+Reference: android.util.Log.e
+Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot
+use FILE backing without declarative registration. See go/phenotype-androidintegration#
+phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.w
+Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+Reference: android.util.Log.w
+Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be
+manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.d
+Tag: InsetsController
+Message: hide(ime())
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:3de49346: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 35 of 80
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+Reference: android.util.Log.d
+Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+Reference: android.util.Log.e
+Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot
+use FILE backing without declarative registration. See go/phenotype-androidintegration#
+phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be
+manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.w
+Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+Reference: android.util.Log.w
+Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+Reference: android.util.Log.d
+Tag: InsetsController
+Message: hide(ime())
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:7484880a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Reference: android.util.Log.d
+Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:ec35a796: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Reference: android.util.Log.e
+Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot
+use FILE backing without declarative registration. See go/phenotype-androidintegration#
+phenotype for more information. This will lead to stale flags.
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 36 of 80
+Reference: android.util.Log.i
+Tag: cr_A11yState
+Message: Enabled accessibility services: [com.appknox.vnc/.InputService, null]
+Reference: android.util.Log.i
+Tag: cr_A11yState
+Message: Running accessibility services: [com.appknox.vnc/.InputService]
+Reference: android.util.Log.i
+Tag: cr_A11yState
+Message: Will check again after 250 milliseconds.
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:207af8ed: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Reference: android.util.Log.w
+Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+Reference: android.util.Log.w
+Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be
+manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.d
+Tag: InsetsController
+Message: hide(ime())
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:5760fbd8: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+Reference: android.util.Log.d
+Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+Reference: android.util.Log.e
+Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot
+use FILE backing without declarative registration. See go/phenotype-androidintegration#
+phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:9aefa0b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 37 of 80
+Reference: android.util.Log.w
+Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+Reference: android.util.Log.w
+Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be
+manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.d
+Tag: InsetsController
+Message: hide(ime())
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:5760fbd8: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+Reference: android.util.Log.d
+Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+Reference: android.util.Log.e
+Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot
+use FILE backing without declarative registration. See go/phenotype-androidintegration#
+phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:9aefa0b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Reference: android.util.Log.w
+Tag: cr_media
+Message: BLUETOOTH_CONNECT permission is missing.
+Reference: android.util.Log.w
+Tag: cr_media
+Message: getBluetoothAdapter() requires BLUETOOTH permission
+Reference: android.util.Log.w
+Tag: cr_media
+Message: registerBluetoothIntentsIfNeeded: Requires BLUETOOTH permission
+Reference: android.util.Log.d
+Tag: InsetsController
+Message: hide(ime())
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 38 of 80
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:64ea4368: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths. Merge paths are only supported on KitKat+ and must be
+manually enabled by calling enableMergePathsForKitKatAndAbove().
+Reference: android.util.Log.w
+Tag: LOTTIE
+Message: Animation contains merge paths but they are disabled.
+Reference: android.util.Log.d
+Tag: ProfileInstaller
+Message: Installing profile for com.wnapp.id1762275362043
+Reference: android.util.Log.i
+Tag: AutofillManager
+Message: showAutofillDialog() return false due to improve fill dialog
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:c7329ad4: onRequestShow at ORIGIN_CLIENT reason
+SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.d
+Tag: InsetsController
+Message: show(ime())
+Reference: android.util.Log.d
+Tag: ImeBackDispatcher
+Message: Undo preliminary clear (mImeCallbacks.size=0)
+Reference: android.util.Log.d
+Tag: Autofill Status
+Message: Autofill popup isn't shown because autofill is not available.
+Did you set up autofill?
+1. Go to Settings > System > Languages&input > Advanced > Autofill Service
+2. Pick a service
+Did you add an account?
+1. Go to Settings > System > Languages&input > Advanced
+2. Click on the settings icon next to the Autofill Service
+3. Add your account
+Reference: android.util.Log.d
+Tag: ImeBackDispatcher
+Message: Register received callback id=131256152 priority=0
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:c7329ad4: onShown
+Reference: android.util.Log.i
+Tag: ImeTracker
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 39 of 80
+Message: com.wnapp.id1762275362043:7d443f53: onRequestShow at ORIGIN_CLIENT reason
+SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:7d443f53: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: system_server:17487909: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+Reference: android.util.Log.e
+Tag: FilePhenotypeFlags
+Message: Config package com.google.android.gms.clearcut_client#com.wnapp.id1762275362043 cannot
+use FILE backing without declarative registration. See go/phenotype-androidintegration#
+phenotype for more information. This will lead to stale flags.
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:2e2e98f0: onRequestShow at ORIGIN_CLIENT reason
+SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:2e2e98f0: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: system_server:9ebf77f0: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:62f1232d: onRequestShow at ORIGIN_CLIENT reason
+SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:62f1232d: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:80695789: onRequestShow at ORIGIN_CLIENT reason
+SHOW_SOFT_INPUT fromUser false
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:80695789: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: system_server:f7e6fe44: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: com.wnapp.id1762275362043:ebf85b7f: onRequestHide at ORIGIN_CLIENT reason
+HIDE_SOFT_INPUT fromUser false
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 40 of 80
+Reference: android.util.Log.d
+Tag: ImeBackDispatcher
+Message: Preliminary clear (mImeCallbacks.size=1)
+Reference: android.util.Log.i
+Tag: ImeTracker
+Message: system_server:66fbcb59: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+Facebook SDK for Android contained the following code which sends Facebook access tokens to log output in plain text
+format.
+Log.d("Facebook-authorize", "Login Success! access_token=" + getAccessToken() + " expires=" +
+getAccessExpires());
+Here is another example. A weather report for Android sent a user's location data to the log output as follows:
+I/MyWeatherReport( 6483): Re-use MyWeatherReport data
+I/ ( 6483): GET JSON:
+http://example.com/smart/repo_piece.cgi?
+arc=0&lat=26.209026&lon=127.650803&rad=50&dir=-999&lim=52&category=1000
+If a user is using Android OS 4.0 or before, other applications with READ_LOGS permission can obtain the user's
+location information without declaring ACCESS_FINE_LOCATION permission in the manifest file.
+Never use logs in production. Find all Log.d() and remove them.
+Use exception parsers and crash-based-analytics tool capture crashes in production so that it can be debugged
+Sensitive data can inadvertently leak into the logs and may aid in further attacks
+Facebook SDK for Android
+JVN#23328321 Puella Magi Madoka Magica iP for Android vulnerable to information disclosure
+JVN#86040029 Weathernews Touch for Android stores location information in the system log file
+JVN#33159152 Loctouch for Android information management vulnerability
+JVN#56923652 Monaca Debugger for Android information management vulnerability
+Noncompliant Code Example
+Compliant Solution
+Business Implication
+Related Vulnerabilities
+▪
+▪
+▪
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 41 of 80
+Scan Type
+Static
+Android Tapjacking
+Android tapjacking is a type of attack where an attacker tricks or deceives a user into tapping on a seemingly harmless
+element on their Android device's screen, while secretly performing malicious actions in the background without the
+user's knowledge or consent.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+4.8
+Attack vector: LOCAL Attack complexity: LOW
+Privileges required: LOW User Interaction: REQUIRED
+Scope: UNCHANGED Confidentiality Impact: LOW
+Integrity Impact: LOW Availability Impact: LOW
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M4 Insufficient Input/Output Validation
+M8 Security Misconfiguration
+CWE CWE-1021 https://cwe.mitre.org/data/definitions/1021.html
+MSTG MSTG-PLATFORM-9 The app protects itself against screen overlay attacks. (Android
+only)
+OWASP MASVS (v2) MASVS-PLATFORM-3 The app uses the user interface securely.
+PCI-DSS (v4.0) 6.1 Develop and maintain secure systems and applications
+Processes and mechanisms for developing and maintaining
+secure systems and software are defined and understood
+6.3 Develop and maintain secure systems and applications
+Security vulnerabilities are identified and addressed
+HIPAA 164.310(c) Physical Safeguards: Workstation Security
+Workstation Use (Required)
+Implement physical safeguards for all workstations that access
+ePHI, to restrict access to authorized users.
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 42 of 80
+Android tapjacking is a type of attack where an attacker tricks or deceives a user into tapping on a seemingly harmless
+element on their Android device's screen, while secretly performing malicious actions in the background.
+Cybercriminals deploy overlay attacks to steal victims’ login credentials, bank card details, and other confidential
+information.
+Vulnerable Layout - custom_dialog.xml
+- The root element of the custom_dialog.xml does not have filterTouchesWhenObscured set to true
+- Element: <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="-1" android:layout_height="-1">
+Vulnerable Layout - externalurls_webview.xml
+- The root element of the externalurls_webview.xml does not have filterTouchesWhenObscured set
+to true
+- Element: <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="1" android:layout_width="-1" android:layout_height="-1"
+android:weightSum="1.000000">
+Vulnerable Layout - ime_secondary_split_test_activity.xml
+- The root element of the ime_secondary_split_test_activity.xml does not have
+filterTouchesWhenObscured set to true
+- Element: <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="1" android:layout_width="-1" android:layout_height="-1">
+Vulnerable Layout - mtrl_picker_actions.xml
+- The root element of the mtrl_picker_actions.xml does not have filterTouchesWhenObscured set to
+true
+- Element: <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:gravity="0x00800005" android:orientation="0" android:id="@7F09009A"
+android:paddingRight="@7F060275" android:layout_width="-1" android:layout_height="@7F060274"
+android:paddingEnd="@7F060275">
+Vulnerable Layout - web_view.xml
+- The root element of the web_view.xml does not have filterTouchesWhenObscured set to true
+- Element: <androidx.constraintlayout.widget.ConstraintLayout xmlns:app="http://
+schemas.android.com/apk/res-auto" xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="-1" android:layout_height="-1">
+Vulnerable Layout - material_clock_period_toggle_land.xml
+- The root element of the material_clock_period_toggle_land.xml does not have
+filterTouchesWhenObscured set to true
+- Element: <com.google.android.material.button.MaterialButtonToggleGroup xmlns:android="http://
+schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+android:orientation="0" android:id="@7F09011C" android:visibility="2" android:layout_width="-2"
+GDPR Art-32-GDPR Security of processing
+Art-25-GDPR Data protection by design and by default
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 43 of 80
+android:layout_height="-2" app:checkedButton="@7F09011A" app:selectionRequired="true"
+app:singleSelection="true">
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://
+schemas.android.com/apk/res-auto">
+<Button android:id="@id/button_calculate_checksum" android:layout_width="fill_parent"
+android:layout_height="wrap_content" android:text="@string/button_calculate_checksum"
+android:filterTouchesWhenObscured="true"/>
+<Button android:id="@id/button_encrypt" android:layout_width="fill_parent"
+android:layout_height="wrap_content" android:text="@string/button_encrypt"
+android:filterTouchesWhenObscured="true"/>
+</LinearLayout>
+OR
+View rootView = getWindow().getDecorView().getRootView();
+rootView.setFilterTouchesWhenObscured(false);
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://
+schemas.android.com/apk/res-auto" android:filterTouchesWhenObscured="true">
+<Button android:id="@id/button_calculate_checksum" android:layout_width="fill_parent"
+android:layout_height="wrap_content" android:text="@string/button_calculate_checksum" />
+<Button android:id="@id/button_encrypt" android:layout_width="fill_parent"
+android:layout_height="wrap_content" android:text="@string/button_encrypt" />
+</LinearLayout>
+OR
+View rootView = getWindow().getDecorView().getRootView();
+rootView.setFilterTouchesWhenObscured(true);
+Tapjacking attacks are used to trick users into performing certain actions. A properly executed attack can lead to loss
+of confidential information
+Noncompliant Code Example
+Compliant Solution
+Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 44 of 80
+Scan Type
+Static
+StrandHogg Vulnerability
+StrandHogg is a vulnerability in the task management system on Android that allows an attacker to hijack tasks. This
+can be exploited such that when the end user starts a legitimate app, instead of actually getting that app, the user is
+presented with a malicious look-a-like instead.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+6.5
+Attack vector: LOCAL Attack complexity: HIGH
+Privileges required: NONE User Interaction: REQUIRED
+Scope: UNCHANGED Confidentiality Impact: HIGH
+Integrity Impact: LOW Availability Impact: HIGH
+One or more than one public facing activities of the application is vulnerable to StandHogg vulnerability.
+CVSS
+Regulatory
+CWE CWE-200 https://cwe.mitre.org/data/definitions/200.html
+MSTG MSTG-PLATFORM-9 The app protects itself against screen overlay attacks. (Android
+only)
+OWASP MASVS (v2) MASVS-PLATFORM-3 The app uses the user interface securely.
+PCI-DSS (v4.0) 6.1 Develop and maintain secure systems and applications
+Processes and mechanisms for developing and maintaining
+secure systems and software are defined and understood
+6.3 Develop and maintain secure systems and applications
+Security vulnerabilities are identified and addressed
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 45 of 80
+In StrandHogg and regular task hijacking, malicious applications typically deploy one of the following techniques or a
+selection in tandem:
+Task Affinity Manipulation: The malicious application leverages two activities, M1 and M2, wherein
+M2.taskAffinity = com.victim.app and M2.allowTaskReparenting = true. In the eventuality that the malicious app
+is opened on M2, M2 would be relocated to the front and the user will interact with the malicious application
+once the victim application has initiated.
+Single Task Mode: In the eventuality that the victim application sets launchMode to singleTask, malicious
+applications can leverage M2.taskAffinity = com.victim.app to hijack the victim's application task stack.
+Task Reparenting: In the eventuality that the victim application sets taskReparenting to true, malicious
+applications can move the victim's application task to the malicious application's stack.
+However, in the case of StrandHogg 2.0, all exported activities without a launchMode of singleTask or singleInstance
+are affected on vulnerable Android versions.
+The launchMode for public activity com.web2native.MainActivity is set as singleTask. As a
+result, a malicious applications can leverage taskAffinity='com.victim.app' to hijack the
+victim's application task stack.
+A new activity is launched with flag FLAG_ACTIVITY_NEW_TASK set in LA4/m;->invoke(Ljava/lang/
+Object;)Ljava/lang/Object; [access_flags=public final] @ 0xdd8f0. As a result, a malicious
+applications can leverage taskAffinity='com.victim.app' to hijack the victim's application task
+stack.
+A new activity is launched with flag FLAG_ACTIVITY_NEW_TASK set in LG2/a;->d(Landroid/webkit/
+WebView; Ljava/lang/String;)Z [access_flags=public] @ 0x15d3f4. As a result, a malicious
+applications can leverage taskAffinity='com.victim.app' to hijack the victim's application task
+stack.
+A new activity is launched with flag FLAG_ACTIVITY_NEW_TASK set in Lx4/q2;->invokeSuspend(Ljava/
+lang/Object;)Ljava/lang/Object; [access_flags=public final] @ 0x3d066c. As a result, a malicious
+applications can leverage taskAffinity='com.victim.app' to hijack the victim's application task
+stack.
+A new activity is launched with flag FLAG_ACTIVITY_NEW_TASK set in Lx4/g0;->run()V
+[access_flags=public final] @ 0x3c73f8. As a result, a malicious applications can leverage
+taskAffinity='com.victim.app' to hijack the victim's application task stack.
+A new activity is launched with flag FLAG_ACTIVITY_NEW_TASK set in Lx4/Y2;-
+>getBase64FromBlobData(Ljava/lang/String;)V [access_flags=public final] @ 0x3d4208. As a result,
+a malicious applications can leverage taskAffinity='com.victim.app' to hijack the victim's
+application task stack.
+<activity android:theme="@style/AppTheme.NoActionBar"
+android:name="com.demo.MainActivity" android:exported="true"
+android:screenOrientation="portrait"
+android:windowSoftInputMode="adjustNothing">
+▪
+▪
+▪
+Noncompliant Code Example
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 46 of 80
+<activity android:theme="@style/AppTheme.NoActionBar"
+android:name="com.demo.MainActivity" android:exported="true"
+android:screenOrientation="portrait" android:windowSoftInputMode="adjustNothing"
+android:launchMode="singleInstance" android:taskAffinity="">
+A malicious app could leverage this weakness to manipulate the way in which users interact with the app. Specifically,
+this could be instigated by relocating a malicious attacker-controlled activity in the screen flow of the user, which may
+prove useful towards performing phishing, DoS or user-credential capture. This issue has been verified as a known
+exploit leveraged by banking malware Trojans in the past.
+Towards Discovering and Understanding Task Hijacking in Android
+Compliant Solution
+Business Implication
+Related Vulnerabilities
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 47 of 80
+Scan Type
+Static
+MediaProjection: Android Service Allows Recording
+of Audio, Screen Activity
+Starting with Android 5.0, Google introduced the android.media.projection API which allows any third-party App to
+perform screen capture and screen sharing (fixed in Android 8).
+Such an App can capture everything on the device’s screen, including sensitive activity from all other Apps such as
+password keystrokes, credit card data, etc. The capturing ability remains on even if the user terminates/closes the App,
+but not after a reboot.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+6.8
+Attack vector: LOCAL Attack complexity: LOW
+Privileges required: NONE User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: HIGH
+Integrity Impact: LOW Availability Impact: NONE
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M8 Security Misconfiguration
+CWE CWE-200 https://cwe.mitre.org/data/definitions/200.html
+MSTG MSTG-STORAGE-9 The app removes sensitive data from views when moved to the
+background.
+OWASP MASVS (v2) MASVS-PLATFORM-3 The app uses the user interface securely.
+PCI-DSS (v4.0) 3.1 Protect Account Data
+Processes and mechanisms for protecting stored account data
+are defined and understood
+3.2 Protect Account Data
+Storage of account data is kept to a minimum
+3.3 Protect Account Data
+Sensitive authentication data (SAD) is not stored after
+authorization
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 48 of 80
+Protect all sensitive windows within the App by enabling the FLAG_SECURE flag. This flag will prevent Apps from being
+able to record the protected windows. Also, the flag will prevent users from taking screenshots of these windows (by
+pressing the VOLUME_DOWN and POWER buttons). As such screenshots are stored on the SDCard by default, they are
+accessible to all Apps and sensitive data may be exposed.
+The App does not protect sensitive screens from being displayed in screencasts initiated by
+third-party Apps
+Below is an example of how to use FLAG_SECURE inside your activity
+public class SecureActivity extends Activity {
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+// Set the Secure flag for this Window
+getWindow().setFlags(LayoutParams.FLAG_SECURE, LayoutParams.FLAG_SECURE);
+}
+}
+Android 5.0 Docs
+FLAG_SECURE docs
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Compliant Solution
+Related Vulnerabilities
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 49 of 80
+Scan Type
+Static
+Insecure Broadcast Receivers registered
+dynamically
+A BroadcastReceiver represents one main component of an essential publish/subscribe messaging platform in Android.
+It, known as a subscriber, can be used to receive and respond to specific messages (or broadcasts) from the system or
+other components in the same application or different applications, such as notifying Android users when cellphone
+power is low as a system event-driven. This is generally achieved through the utilization of intent filters defined in the
+app manifest file.
+The dynamically Broadcastreceiver is in the java source code to realize the broadcast mechanism using onReceive().
+This mechanism is managed by the Activity Manager Service (AMS) on the second framework layer in the Android
+architecture.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+6.1
+Attack vector: LOCAL Attack complexity: LOW
+Privileges required: NONE User Interaction: REQUIRED
+Scope: UNCHANGED Confidentiality Impact: NONE
+Integrity Impact: HIGH Availability Impact: LOW
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M8 Security Misconfiguration
+CWE CWE-925 https://cwe.mitre.org/data/definitions/925.html
+MSTG MSTG-PLATFORM-2 All inputs from external sources and the user are validated and if
+necessary sanitized. This includes data received via the UI, IPC
+mechanisms such as intents, custom URLs, and network sources.
+OWASP MASVS (v2) MASVS-CODE-4 The app validates and sanitizes all untrusted inputs.
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 50 of 80
+Broadcast Receivers which are set Dynamically and are not protected
+An unprotected receiver was dynamically registered at Lcom/web2native/MainActivity;->onCreate
+If the broadcast filter is listening for an intent that isn't a restricted broadcast then the malicious app can start sending
+them without needing any permissions.
+Secondly if the receiver goes on to use the extras sent with the broadcast, or to start running other functions, then the
+malware has a whole new entry point to yTheour application.
+To protect broadcast, it needs to be registered with permissions when it is declare.
+Secondly never trust the data that is being sent with it. It's passing through a trust zone to arrive in the app, so it
+needs to be validated
+Noncompliant Code Example
+Compliant Solution
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 51 of 80
+Scan Type
+Static
+Disabled SSL CA Validation and Certificate Pinning
+Certificate Pinning is the process of associating a host with their expected X509 certificate or public key. Once a
+certificate or public key is known or seen for a host, the certificate or public key is associated or 'pinned' to the host. If
+more than one certificate or public key is acceptable. In this case, the advertised identity must match one of the
+elements in the pinset.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+5.9
+Attack vector: NETWORK Attack complexity: HIGH
+Privileges required: NONE User Interaction: REQUIRED
+Scope: UNCHANGED Confidentiality Impact: HIGH
+Integrity Impact: LOW Availability Impact: NONE
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M5 Insecure Communication
+CWE CWE-295 https://cwe.mitre.org/data/definitions/295.html
+MSTG MSTG-NETWORK-3 The app verifies the X.509 certificate of the remote endpoint
+when the secure channel is established. Only certificates signed
+by a trusted CA are accepted.
+OWASP MASVS (v2) MASVS-NETWORK-2 The app performs identity pinning for all remote endpoints under
+the developer's control.
+PCI-DSS (v4.0) 4.1 Protect cardholder data with strong cryptography during
+transmission over open, public networks
+Processes and mechanisms for protecting cardholder data with
+strong cryptography during transmission over open, public
+networks are defined and documented.
+4.2 Protect cardholder data with strong cryptography during
+transmission over open, public networks
+PAN is protected with strong cryptography during transmission
+GDPR Art-25-GDPR Data protection by design and by default
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 52 of 80
+A host or service's certificate or public key can be added to an application at development time, or it can be added
+upon first encountering the certificate or public key. The former - adding at development time - is preferred since
+preloading the certificate or public key out of band usually means the attacker cannot taint the pin.
+SSL Pinning is not implemented in the Application.
+Certificate Pinning can be done with these two options:
+You can 1. pin the certificate or 2. pin the public key
+If you choose public keys, you have two additional choices: - pin the subjectPublicKeyInfo or - pin one of the
+concrete types such as RSAPublicKey or DSAPublicKey.
+The three choices are explained below in more detail. I would encourage you to pin the subjectPublicKeyInfo because it
+has the public parameters (such as {e,n} for an RSA public key) and contextual information such as an algorithm and
+OID. The context will help you keep your bearings at times, and the figure to the right shows the additional information
+available.
+Certificate
+The certificate is easiest to pin. You can fetch the certificate out of band for the website, have the IT folks email your
+company certificate to you, use openssl s_client to retrieve the certificate etc. At runtime, you retrieve the website or
+server's certificate in the callback. Within the callback, you compare the retrieved certificate with the certificate
+embedded within the program. If the comparison fails, then fail the method or function. There is a downside to pinning
+a certificate. If the site rotates its certificate on a regular basis, then your application would need to be updated
+regularly. For example, Google rotates its certificates, so you will need to update your application about once a month
+(if it depended on Google services). Even though Google rotates its certificates, the underlying public keys (within the
+certificate) remain static.
+Public Key
+Public key pinning is more flexible but a little trickier due to the extra steps necessary to extract the public key from a
+certificate. As with a certificate, the program checks the extracted public key with its embedded copy of the public key.
+There are two downsides to public key pinning. First, it's harder to work with keys (versus certificates) since you must
+extract the key from the certificate. Extraction is a minor inconvenience in Java and .Net, buts it's uncomfortable in
+Cocoa/CocoaTouch and OpenSSL. Second, the key is static and may violate key rotation policies.
+Hashing
+While the three choices above used DER encoding, its also acceptable to use a hash of the information. In fact, the
+original sample programs were written using digested certificates and public keys. The samples were changed to allow
+a programmer to inspect the objects with tools like dumpasn1 and other ASN.1 decoders.
+Hashing also provides three additional benefits. First, hashing allows you to anonymize a certificate or public key. This
+might be important if you application is concerned about leaking information during decompilation and re-engineering.
+Second, a digested certificate fingerprint is often available as a native API for many libraries, so its convenient to use.
+Finally, an organization might want to supply a reserve (or back-up) identity in case the primary identity is
+compromised. Hashing ensures your adversaries do not see the reserved certificate or public key in advance of its use.
+In fact, Google's IETF draft websec-key-pinning uses the technique.
+Art-32-GDPR Security of processing
+Risk Assessment
+Compliant Solution
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 53 of 80
+In the event that a user (anonymous or verified) is able to execute over-privileged functionality, the business may
+experience:
+Reputational Damage
+Fraud
+Information Theft
+OWASP Transport Layer Protection Cheat Sheet
+IETF RFC 1421 (PEM Encoding)
+IETF RFC 4648 (Base16, Base32, and Base64 Encodings)
+IETF RFC 5280 (Internet X.509, PKIX)
+IETF RFC 3279 (PKI, X509 Algorithms and CRL Profiles)
+IETF RFC 4055 (PKI, X509 Additional Algorithms and CRL Profiles)
+IETF RFC 2246 (TLS 1.0)
+IETF RFC 4346 (TLS 1.1)
+IETF RFC 5246 (TLS 1.2)
+RSA Laboratories PKCS#1, RSA Encryption Standard
+RSA Laboratories PKCS#6, Extended-Certificate Syntax Standard
+Business Implication
+▪
+▪
+▪
+Related Vulnerabilities
+▪
+▪
+▪
+▪
+▪
+▪
+▪
+▪
+▪
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 54 of 80
+Scan Type
+Dynamic
+Storing Information in Shared Preferences
+In Android apps, data can be communicated via intents, or data can be written to files, distributed using shared
+references, or stored in databases. In all these cases, if the data is sensitive, it is important to keep the data secure.
+That is, it should not be possible for other apps (or, more strictly, apps with different userids) to be able to access this
+data, or for the data to be accessible to other programs or people, if the data owner does not intend that.
+Data security (for non-intent communication channels) can be supported by creating the file, shared preference or
+database with MODE_PRIVATE on internal storage or with MODE_PRIVATE and encrypted (using secure encryption
+techniques, and using an encryption key only secure parties/apps have) on external storage. MODE_PRIVATE is a
+constant defined by the class android.content.Context. It may be used as the mode parameter in the methods
+openFileOutput(), getSharedPreferences(), andopenOrCreateDatabase() (which are all also defined in the class
+android.content.Context).
+Static taint flow analysis can be done for a set of apps, to trace data from each source (an input of data which cannot
+be fully predicted by static analysis, e.g., text input by a user) to reachable sinks (data output to a location that other
+applications or methods can access, e.g., sending the data over a Bluetooth connection). Taint flow analysis helps
+users understand many possible source to sink flows, including flows that include intents and/or static fields.
+Risk Rating
+Medium
+Version 3.0
+Base Score
+6.1
+Attack vector: LOCAL Attack complexity: LOW
+Privileges required: LOW User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: HIGH
+Integrity Impact: LOW Availability Impact: NONE
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M6 Inadequate Privacy Controls
+M9 Insecure Data Storage
+CWE CWE-922 https://cwe.mitre.org/data/definitions/922.html
+MSTG MSTG-STORAGE-1 System credential storage facilities need to be used to store
+sensitive data, such as PII, user credentials or cryptographic
+keys.
+OWASP MASVS (v2) MASVS-STORAGE-1 The app securely stores sensitive data.
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 55 of 80
+Insecured information was found in shared preference. One shouldn't use un-encrypted information in
+SharedPreference.
+Reference: android.content.SharedPreferences.Editor.putString
+Key: origins_visited_date
+Value: 11/12/25
+Reference: android.content.SharedPreferences.Editor.putString
+Key: origins_visited_date
+Value: 11/12/25
+This non-compliant code example shows an application that creates a file that is world readable, and hence not secure.
+openFileOutput("someFile", MODE_WORLD_READABLE);
+Any application could read the file and access any data stored in it.
+PCI-DSS (v4.0) 3.2 Protect Account Data
+Storage of account data is kept to a minimum
+3.3 Protect Account Data
+Sensitive authentication data (SAD) is not stored after
+authorization
+3.4 Protect Account Data
+Access to displays of full PAN and ability to copy cardholder data
+are restricted
+3.5 Protect Account Data
+Primary account number (PAN) is secured wherever it is stored
+HIPAA 164.312(a)(1) Technical Safeguards: Access Control
+Unique User Identification (Required)
+Assign a unique name and/or number for identifying and
+tracking user identity
+Emergency Access Procedure (Required)
+Establish (and implement as needed) procedures for obtaining
+necessary electronic protected health information during an
+emergency.
+Automatic Logoff (Addressable)
+Implement electronic procedures that terminate an electronic
+session after a predetermined time of inactivity.
+Encryption and Decryption (Addressable)
+Implement a method to encrypt and decrypt electronic
+protected health information.
+▪
+▪
+▪
+▪
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Noncompliant Code Example
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 56 of 80
+In this compliant solution the file is created using MODE_PRIVATE, so it can be accessed only by the app that created
+the file.
+openFileOutput("someFile", MODE_PRIVATE);
+Typically, malicious code steals sensitive information (passwords, session cookies, personally identifiable information,
+etc). Hence, the associated business impacts include:
+Fraud
+Privacy Violations
+Compliant Solution
+Business Implication
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 57 of 80
+Scan Type
+Dynamic
+Android Developer options status detection
+Developer Options in Android are a set of advanced settings intended primarily for app developers. These settings
+provide tools and functionalities that help developers test, debug, and optimize their applications. Common features
+include enabling USB debugging, showing CPU usage, capturing bug reports, and more.
+Security Implications: - USB Debugging: Exposes device data to connected computers. - OEM Unlocking: Can lead to
+rooting, bypassing security controls. - Mock Locations: Can be used to spoof location data. - General System Exposure:
+Enabling Developer Options increases the attack surface.
+Risk Rating
+Low
+Version 3.0
+Base Score
+3.4
+Attack vector: PHYSICAL Attack complexity: LOW
+Privileges required: HIGH User Interaction: REQUIRED
+Scope: CHANGED Confidentiality Impact: NONE
+Integrity Impact: LOW Availability Impact: LOW
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M6 Inadequate Privacy Controls
+CWE CWE-284 https://cwe.mitre.org/data/definitions/284.html
+CWE-541 https://cwe.mitre.org/data/definitions/541.html
+CWE-532 https://cwe.mitre.org/data/definitions/532.html
+MSTG MSTG-RESILIENCE-2 The app prevents debugging and/or detects, and responds to, a
+debugger being attached. All available debugging protocols must
+be covered.
+OWASP MASVS (v2) MASVS-RESILIANCE-1 The app validates the integrity of the platform.
+ASVS V1.4.4 Verify the application uses a single and well-vetted access
+control mechanism for accessing protected data and resources.
+All requests must pass through this single mechanism to avoid
+copy and paste or insecure alternative paths.
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 58 of 80
+Implementing Developer options protection in Android applications is crucial to ensure security and prevent
+unauthorized access to sensitive features and data. Implementing Developer option protection in your Android
+application enhances its security and integrity. By detecting and responding to the enabling of developer options, you
+can prevent unauthorized access and protect sensitive data.
+The application does not protect itself from launching if developer option is turned on.
+V1.8.2 Verify that all protection levels have an associated set of
+protection requirements, such as encryption requirements,
+integrity requirements, retention, privacy and other
+confidentiality requirements, and that these are applied in the
+architecture.
+PCI-DSS (v4.0) 7.1 Restrict access to cardholder data by business need to
+know
+Processes and mechanisms for restricting access to system
+components and cardholder data by business need to know are
+defined and understood
+7.2 Restrict access to cardholder data by business need to
+know
+Access to system components and data is appropriately defined
+and assigned
+HIPAA 164.308(a)(4) Administrative Safeguards: Information Access
+Management
+Isolating Health Care Clearinghouse Functions
+(Required)
+If a health care clearinghouse is part of a larger organization,
+the clearinghouse must implement policies and procedures
+that protect the electronic protected health information of the
+clearinghouse from unauthorized access by the larger
+organization.
+Access Authorization (Addressable)
+Implement policies and procedures for granting access to
+electronic protected health information, for example, through
+access to a workstation, transaction, program, process, or
+other mechanism.
+Access Establishment and Modification (Addressable)
+Implement policies and procedures that, based upon the
+entity's access authorization policies, establish, document,
+review, and modify a user's right of access to a workstation,
+transaction, program, or process.
+▪
+▪
+▪
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 59 of 80
+To detect whether Developer Options are enabled on an Android device, you can use the Settings.Global API in Android.
+Here’s how you can do it in Java or Kotlin.
+Java:
+public class MainActivity extends AppCompatActivity { @Override protected void onCreate(Bundle savedInstanceState)
+{ super.onCreate(savedInstanceState); setContentView(R.layout.activity_main);
+if (isDeveloperOptionsEnabled(this)) {
+// show a warning and exit the app
+} else {
+// continue the app...
+}
+}
+public static boolean isDeveloperOptionsEnabled(Context context) {
+int devOptions = Settings.Global.getInt(context.getContentResolver(),
+Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0);
+return devOptions == 1;
+}
+}
+Kotlin:
+class MainActivity : AppCompatActivity() { override fun onCreate(savedInstanceState: Bundle?) {
+super.onCreate(savedInstanceState) setContentView(R.layout.activity_main)
+if (isDeveloperOptionsEnabled(this)) {
+// show a warning and exit the app
+} else {
+// continue the app...
+}
+}
+private fun isDeveloperOptionsEnabled(context: Context): Boolean {
+val devOptions = Settings.Global.getInt(context.contentResolver,
+Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0)
+return devOptions == 1
+}
+}
+Running an application in Developer options enabled environment can expose security risks, impact performance, and
+affect user experience.
+Compliant Solution
+Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 60 of 80
+Scan Type
+Dynamic
+Android Developer Bridge(ADB) status detection
+ADB (Android Debug Bridge) is a versatile command-line tool that provides a bridge between your computer and an
+Android device. It's essential for developers to test, debug, and optimize their apps. However, while ADB offers
+numerous functionalities, it also introduces potential security risks if not used carefully.
+Security Implications: - Data exposure: Unauthorized access can lead to data theft. - Malware installation: Malicious
+actors can install malware. - Device compromise: Misuse can grant root access, compromising the device. - USB
+debugging vulnerabilities: Connected to an untrusted computer can expose the device. - Shell command risks:
+Incorrect or malicious use can lead to security vulnerabilities.
+Risk Rating
+Low
+Version 3.0
+Base Score
+3.4
+Attack vector: PHYSICAL Attack complexity: LOW
+Privileges required: HIGH User Interaction: REQUIRED
+Scope: CHANGED Confidentiality Impact: NONE
+Integrity Impact: LOW Availability Impact: LOW
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M6 Inadequate Privacy Controls
+CWE CWE-284 https://cwe.mitre.org/data/definitions/284.html
+CWE-541 https://cwe.mitre.org/data/definitions/541.html
+CWE-532 https://cwe.mitre.org/data/definitions/532.html
+MSTG MSTG-RESILIENCE-2 The app prevents debugging and/or detects, and responds to, a
+debugger being attached. All available debugging protocols must
+be covered.
+OWASP MASVS (v2) MASVS-RESILIANCE-1 The app validates the integrity of the platform.
+ASVS V1.4.4 Verify the application uses a single and well-vetted access
+control mechanism for accessing protected data and resources.
+All requests must pass through this single mechanism to avoid
+copy and paste or insecure alternative paths.
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 61 of 80
+Implementing ADB detection in Android applications is crucial to ensure security and prevent unauthorized access to
+sensitive features and data. ADB detection enhances app security by guarding against unintended exposure,
+unauthorized access, and tampering. By detecting and responding to the enabling of ADB on the device, you can
+prevent unauthorized access and protect sensitive data.
+The application does not protect itself from launching if ADB is turned on.
+V1.8.2 Verify that all protection levels have an associated set of
+protection requirements, such as encryption requirements,
+integrity requirements, retention, privacy and other
+confidentiality requirements, and that these are applied in the
+architecture.
+PCI-DSS (v4.0) 7.1 Restrict access to cardholder data by business need to
+know
+Processes and mechanisms for restricting access to system
+components and cardholder data by business need to know are
+defined and understood
+7.2 Restrict access to cardholder data by business need to
+know
+Access to system components and data is appropriately defined
+and assigned
+HIPAA 164.308(a)(4) Administrative Safeguards: Information Access
+Management
+Isolating Health Care Clearinghouse Functions
+(Required)
+If a health care clearinghouse is part of a larger organization,
+the clearinghouse must implement policies and procedures
+that protect the electronic protected health information of the
+clearinghouse from unauthorized access by the larger
+organization.
+Access Authorization (Addressable)
+Implement policies and procedures for granting access to
+electronic protected health information, for example, through
+access to a workstation, transaction, program, process, or
+other mechanism.
+Access Establishment and Modification (Addressable)
+Implement policies and procedures that, based upon the
+entity's access authorization policies, establish, document,
+review, and modify a user's right of access to a workstation,
+transaction, program, or process.
+▪
+▪
+▪
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 62 of 80
+To detect whether ADB (Android Debug Bridge) debugging is enabled on an Android device, you can use the
+Settings.Global API in Android. Here’s how you can do it in Java or Kotlin.
+Java:
+public class MainActivity extends AppCompatActivity { @Override protected void onCreate(Bundle savedInstanceState)
+{ super.onCreate(savedInstanceState); setContentView(R.layout.activity_main);
+if (isAdbEnabled(this)) {
+// show a warning and exit the app
+} else {
+// continue the app...
+}
+}
+public static boolean isAdbEnabled(Context context) {
+int adb = Settings.Global.getInt(context.getContentResolver(), Settings.Global.ADB_ENABLED,
+0);
+return adb == 1;
+}
+}
+Kotlin:
+class MainActivity : AppCompatActivity() { override fun onCreate(savedInstanceState: Bundle?) {
+super.onCreate(savedInstanceState) setContentView(R.layout.activity_main)
+if (isAdbEnabled(this)) {
+// show a warning and exit the app
+} else {
+// continue the app...
+}
+}
+private fun isAdbEnabled(context: Context): Boolean {
+val adb = Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0)
+return adb == 1
+}
+}
+Running an application in ADB enabled environment can expose security risks, impact performance, and affect user
+experience.
+Compliant Solution
+Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 63 of 80
+Scan Type
+Static
+Bytecode Obfuscation
+Generally, all mobile code is susceptible to reverse engineering. Some apps are more susceptible than others. Code
+written in languages / frameworks that allow for dynamic introspection at runtime (Java, .NET, Objective C, Swift) are
+particularly at risk for reverse engineering. Detecting susceptibility to reverse engineering is fairly straight forward.
+First, decrypt the app store version of the app (if binary encryption is applied). Code will be susceptible if it is fairly
+easy to understand the app’s controlflow path, string table, and any pseudocode/source-code generated by these
+tools.
+Bytecode obfuscation consists of multiple complementary techniques that can help create a layered defense against
+reverse engineering and tampering. Some typical examples of obfuscation techniques include:
+Renaming to alter the name of methods and variables to make the decompiled source much harder for a
+human to understand.
+Control Flow Obfuscationcreates conditional, branching, and iterative constructs that produce valid
+executable logic, but yield non-deterministic semantic results when decompiled.
+String Encryption hides strings in the executable and only restores their original value when needed
+Instruction Pattern Transformation converts common instructions to other, less obvious constructs potential
+confusing decompliers.
+Dummy Code Insertion inserts code that does not affect the program’s logic, but breaks decompilers or
+makes reverse-engineered code harder to analyze.
+Unused Code and Metadata Removal prunes out debug, non-essential metadata and used code from
+applications to reduce the information available to an attacker.
+Risk Rating
+Low
+Version 3.0
+Base Score
+2.3
+Attack vector: LOCAL Attack complexity: LOW
+Privileges required: HIGH User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: LOW
+Integrity Impact: NONE Availability Impact: NONE
+▪
+▪
+▪
+▪
+▪
+▪
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M7 Insufficient Binary Protections
+CWE CWE-693 https://cwe.mitre.org/data/definitions/693.html
+MSTG MSTG-RESILIENCE-9 Obfuscation is applied to programmatic defenses, which in turn
+impede de-obfuscation via dynamic analysis.
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 64 of 80
+Java source code is typically compiled into Java bytecode – the instruction set of the Java virtual machine. The
+compiled Java bytecode can be easily reversed engineered back into source code by freely available decompilers.
+Bytecode Obfuscation is the process of modifying Java bytecode (executable or library) so that it is much harder to
+read and understand for a hacker but remains fully functional.
+Application is vulnerable to reverse engineering without any obfuscation
+Sample proguard-rules.pro lines which fails obfuscation when used:
+-dontobfuscate
+Or if no proguard or obfuscation is used then you can use number of freely available Java decompilers that can
+recreate source code from Java bytecode (executables or libraries).
+Popular decompilers include:
+Bytecode Viewer - A Java 8 Jar & Android APK Reverse Engineering Suite (Decompiler, Editor, Debugger & More)
+CFR - Another Java decompiler
+JDGui - Yet another fast Java decompiler
+Fernflower - An analytical decompiler for Java
+JadX - tool to decompile APK and DEX files
+To enable shrinking, obfuscation, and optimization, using proguard include the following in your project-level
+build.gradle file.
+android {
+buildTypes {
+release {
+OWASP MASVS (v2) MASVS-RESILIANCE-3 The app implements anti-static analysis mechanisms.
+PCI-DSS (v4.0) 3.2 Protect Account Data
+Storage of account data is kept to a minimum
+3.3 Protect Account Data
+Sensitive authentication data (SAD) is not stored after
+authorization
+3.4 Protect Account Data
+Access to displays of full PAN and ability to copy cardholder data
+are restricted
+3.5 Protect Account Data
+Primary account number (PAN) is secured wherever it is stored
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Noncompliant Code Example
+▪
+▪
+▪
+▪
+▪
+Compliant Solution
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 65 of 80
+// Enables code shrinking, obfuscation, and optimization for only
+// your project's release build type.
+minifyEnabled true
+// Enables resource shrinking, which is performed by the
+// Android Gradle plugin.
+shrinkResources true
+// Includes the default ProGuard rules files that are packaged with
+// the Android Gradle plugin. To learn more, go to the section about
+// R8 configuration files.
+proguardFiles getDefaultProguardFile(
+'proguard-android-optimize.txt'),
+'proguard-rules.pro'
+}
+}
+...
+}
+Sample proguard-rules.pro which you can use to obfuscate code:
+// Basic proguard rules
+-optimizations !code/simplification/arithmetic
+-keepattributes <em>Annotation</em>
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
+-keep class *<em>.R$</em>
+-dontskipnonpubliclibraryclasses
+-forceprocessing
+-optimizationpasses 5
+-overloadaggressively
+// Removing logging code
+-assumenosideeffects class android.util.Log {
+public static *** d();
+public static *** v();
+public static *** i();
+public static *** w();
+public static *** e();
+}
+// Crashlytics code as given below which one can exclude
+-keep class com.crashlytics.** { *; }
+-keep class com.crashlytics.android.**
+-keepattributes SourceFile,LineNumberTable
+M9: Reverse Engineering
+Bytecode Obfuscation
+Android Developer Resource to shrink and obfuscate your code in proguard
+Related Vulnerabilities
+▪
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 66 of 80
+Scan Type
+Static
+Enabled Android Application Backup
+The mobile application uses external backup functionality (default Android backup mechanism) that may store inside
+sensitive data from the application.
+In certain conditions, this may lead to information disclosure (e.g. when a backup server or the Gmail account is
+compromised).
+Risk Rating
+Low
+Version 3.0
+Base Score
+3.3
+Attack vector: LOCAL Attack complexity: LOW
+Privileges required: LOW User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: LOW
+Integrity Impact: NONE Availability Impact: NONE
+Application backup might contain sensitive information private data of the app into their PC
+`android:allowBackup=true` is found in AndroidManifest.xml
+Example of an insecure code in AndroidManifest file:
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M8 Security Misconfiguration
+CWE CWE-16 https://cwe.mitre.org/data/definitions/16.html
+MSTG MSTG-STORAGE-8 No sensitive data is included in backups generated by the mobile
+operating system.
+OWASP MASVS (v2) MASVS-STORAGE-2 The app prevents leakage of sensitive data.
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Noncompliant Code Example
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 67 of 80
+android:allowBackup="true"
+Below is an example of how to prevent the application from getting backed-up via adb in your AndroidManifest file:
+android:allowBackup="false"
+Android Manifest Docs
+Hacking Android Apps using Backup
+Compliant Solution
+Related Vulnerabilities
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 68 of 80
+Scan Type
+Static
+Keylogger Protection
+Keylogger protection is crucial for safeguarding sensitive information from malicious applications that may be installed
+on a device. A keylogger is a type of malware designed to capture and record keystrokes or other input data from the
+user. If such an application is present on the device, it can potentially intercept and steal personal or confidential
+information by tracking what you type.
+Risk Rating
+Low
+Version 3.0
+Base Score
+3.9
+Attack vector: LOCAL Attack complexity: HIGH
+Privileges required: HIGH User Interaction: NONE
+Scope: CHANGED Confidentiality Impact: LOW
+Integrity Impact: LOW Availability Impact: NONE
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M6 Inadequate Privacy Controls
+CWE CWE-693 https://cwe.mitre.org/data/definitions/693.html
+OWASP MASVS (v2) MASVS-RESILIANCE-2 The app implements anti-tampering mechanisms.
+ASVS V1.8.1 Verify that all sensitive data is identified and classified into
+protection levels.
+V1.8.2 Verify that all protection levels have an associated set of
+protection requirements, such as encryption requirements,
+integrity requirements, retention, privacy and other
+confidentiality requirements, and that these are applied in the
+architecture.
+PCI-DSS (v4.0) 7.1 Restrict access to cardholder data by business need to
+know
+Processes and mechanisms for restricting access to system
+components and cardholder data by business need to know are
+defined and understood
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 69 of 80
+Keyloggers are malicious software designed to capture and record keystrokes or input data from users, posing a
+significant threat to personal and sensitive information. They operate by monitoring keyboard activity, potentially
+stealing passwords, credit card details, and other confidential data. Keylogger protection involves implementing secure
+input methods, such as custom keyboards and virtual keyboards, to prevent unauthorized access to typed information.
+Effective protection ensures that even if a keylogger is present, it cannot intercept or compromise the data being
+entered.
+7.2 Restrict access to cardholder data by business need to
+know
+Access to system components and data is appropriately defined
+and assigned
+6.2 Develop and maintain secure systems and applications
+Bespoke and custom software are developed securely
+6.3 Develop and maintain secure systems and applications
+Security vulnerabilities are identified and addressed
+HIPAA 164.308(a)(4) Administrative Safeguards: Information Access
+Management
+Isolating Health Care Clearinghouse Functions
+(Required)
+If a health care clearinghouse is part of a larger organization,
+the clearinghouse must implement policies and procedures
+that protect the electronic protected health information of the
+clearinghouse from unauthorized access by the larger
+organization.
+Access Authorization (Addressable)
+Implement policies and procedures for granting access to
+electronic protected health information, for example, through
+access to a workstation, transaction, program, process, or
+other mechanism.
+Access Establishment and Modification (Addressable)
+Implement policies and procedures that, based upon the
+entity's access authorization policies, establish, document,
+review, and modify a user's right of access to a workstation,
+transaction, program, or process.
+164.312(c)(1) Technical Safeguards: Integrity
+Mechanism to Authenticate Electronic Protected
+(Addressable)
+Implement electronic mechanisms to corroborate that
+electronic protected health information has not been altered or
+destroyed in an unauthorized manner.
+▪
+▪
+▪
+▪
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 70 of 80
+No Keylogger Protection Found
+The application does not implement a virtual keyboard service
+and thus is vulnerable to keylogger attacks
+Application should utilize a virtual or custom keyboard. By doing so, the app can prevent keyloggers from capturing
+sensitive input. Below is an example of how to implement a virtual keyboard.
+Create a new service
+class MyInputMethodService : InputMethodService() {
+override fun onCreateInputView(): View {
+val keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardView
+return keyboardView
+}
+}
+Create an Input Method XML Configuration
+<?xml version="1.0" encoding="utf-8"?>
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+android:settingsActivity=".SettingsActivity"
+android:service="com.example.MyInputMethodService">
+<subtype
+android:label="@string/subtype_label"
+android:locale="en_US"
+android:mode="keyboard"
+android:imeSubtypeLocale="en_US"/>
+</input-method>
+Create the keyboard layout XML
+<?xml version="1.0" encoding="utf-8"?>
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android">
+<Row>
+<Key android:codes="113" android:keyLabel="Q" />
+<Key android:codes="119" android:keyLabel="W" />
+<!-- Add more keys as needed -->
+</Row>
+<!-- Add more rows as needed -->
+</Keyboard>
+Create the keyboard view layout
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:orientation="vertical"
+android:layout_width="match_parent"
+android:layout_height="wrap_content">
+<com.example.KeyboardView
+android:id="@+id/keyboard_view"
+android:layout_width="match_parent"
+android:layout_height="wrap_content"/>
+</LinearLayout>
+Compliant Solution
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 71 of 80
+Implement the keyboard logic and events
+class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardActionListener {
+private lateinit var keyboardView: KeyboardView
+private lateinit var keyboard: Keyboard
+override fun onCreateInputView(): View {
+keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardView
+keyboard = Keyboard(this, R.xml.keyboard_layout)
+keyboardView.keyboard = keyboard
+keyboardView.setOnKeyboardActionListener(this)
+return keyboardView
+}
+override fun onKey(primaryCode: Int, keyCodes: IntArray) {
+val inputConnection = currentInputConnection
+inputConnection?.commitText(primaryCode.toChar().toString(), 1)
+}
+}
+Add the service declaration in the manifest with correct permissions
+<service
+android:name=".MyInputMethodService"
+android:permission="android.permission.BIND_INPUT_METHOD">
+<intent-filter>
+<action android:name="android.service.inputmethod.InputMethodService" />
+</intent-filter>
+<meta-data
+android:name="android.view.im"
+android:resource="@xml/input_method_config"/>
+</service>
+Without keylogger protection, there is a significant risk of sensitive information being stolen, which could lead to
+serious consequences such as identity theft and financial loss. This vulnerability exposes both the application and its
+users to potential security breaches.
+Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 72 of 80
+Scan Type
+Static
+Weak PRNG (Pseudorandom number generator)
+Weak PRNG (Pseudorandom Number Generator) vulnerability in Android refers to a security weakness where the
+algorithms responsible for generating random numbers within an application lack the required level of unpredictability
+and randomness.
+Risk Rating
+Low
+Version 3.0
+Base Score
+3.5
+Attack vector: PHYSICAL Attack complexity: LOW
+Privileges required: NONE User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: LOW
+Integrity Impact: LOW Availability Impact: NONE
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M10 Insufficient Cryptography
+CWE CWE-338 https://cwe.mitre.org/data/definitions/338.html
+MSTG MSTG-CRYPTO-6 All random values are generated using a sufficiently secure
+random number generator.
+OWASP MASVS (v2) MASVS-CRYPTO-1 The app employs current strong cryptography and uses it
+according to industry best practices.
+PCI-DSS (v4.0) 6.1 Develop and maintain secure systems and applications
+Processes and mechanisms for developing and maintaining
+secure systems and software are defined and understood
+6.3 Develop and maintain secure systems and applications
+Security vulnerabilities are identified and addressed
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 73 of 80
+Weak PRNG vulnerabilities stem from insufficiently random initializations, improper algorithms, or inadequate entropy
+sources. Such vulnerabilities can result in unauthorized access, data breaches, and compromised cryptographic
+operations.
+Activity := LX1/g;
+An activity was found using an insecure randomization function via the Random class in LX1/g;-
+>doFrame(J)V. As a result, the generated random data will be predictable and an attacker can
+guess or infer sensitive information
+Activity := LC0/f0;
+An activity was found using an insecure randomization function via the Random class in LC0/f0;-
+>initialValue()Ljava/lang/Object;. As a result, the generated random data will be predictable
+and an attacker can guess or infer sensitive information
+import java.util.Random;
+public class generateRandom {
+public static void main(String args[]) {
+Random rand = new Random();
+int rand_int = rand.nextInt(1000);
+}
+}
+OR
+import java.lang.Math;
+public class generateRandom {
+public static void main(String[] args) {
+double randomValue = Math.random();
+}
+}
+HIPAA 164.312(c)(1) Technical Safeguards: Integrity
+Mechanism to Authenticate Electronic Protected
+(Addressable)
+Implement electronic mechanisms to corroborate that
+electronic protected health information has not been altered or
+destroyed in an unauthorized manner.
+▪
+GDPR Art-32-GDPR Security of processing
+Art-25-GDPR Data protection by design and by default
+Risk Assessment
+Noncompliant Code Example
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 74 of 80
+import java.security.SecureRandom;
+public class generateRandom {
+public static void main(String args[]) {
+SecureRandom rand = new SecureRandom();
+int rand_int = rand.nextInt(1000);
+}
+}
+Weak PRNG (Pseudorandom Number Generator) vulnerabilities within Android applications can have far-reaching
+business consequences. Such vulnerabilities can lead to data breaches and unauthorized access, undermining user
+trust and potentially violating regulatory requirements. Financial losses may result from legal actions, compensations,
+and operational disruptions caused by security incidents. Moreover, a compromised reputation can lead to decreased
+user adoption, loss of competitive advantage, and even app removal from stores
+Compliant Solution
+Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 75 of 80
+Scan Type
+Static
+Deprecated setPluginState in WebView
+The mobile application uses a deprecated setPluginState method in WebView. The "setPluginState" method was
+deprecated in Android’s API level 18 because plugins will not be supported anymore in the future and should not be
+used. Example of plugins are embedded PDF reader, Flash plugin, etc.
+Risk Rating
+Low
+Version 3.0
+Base Score
+3.7
+Attack vector: NETWORK Attack complexity: HIGH
+Privileges required: NONE User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: LOW
+Integrity Impact: NONE Availability Impact: NONE
+setPluginState has security implication and deprecated by Android. It is unsafe to use in production.
+setPluginState used in LE4/c;->invokeSuspend is depricated
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M8 Security Misconfiguration
+CWE CWE-477 https://cwe.mitre.org/data/definitions/477.html
+MSTG MSTG-CODE-5 All third party components used by the mobile app, such as
+libraries and frameworks, are identified, and checked for known
+vulnerabilities.
+OWASP MASVS (v2) MASVS-CODE-3 The app only uses software components without known
+vulnerabilities.
+PCI-DSS (v4.0) 6.3 Develop and maintain secure systems and applications
+Security vulnerabilities are identified and addressed
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 76 of 80
+setPluginState used in Lx4/b1;-><init> is depricated
+setPluginState used in LA4/v;->onCreateWindow is depricated
+Following is an example of insecure implementation
+WebSettings settings = webView.getSettings();
+settings.setPluginsEnabled(true);
+settings.setPluginState(WebSettings.PluginState.ON);
+setPluginState feature is deprecated, don't enable it.
+Webview docs
+WebSettings docs
+Noncompliant Code Example
+Compliant Solution
+Related Vulnerabilities
+▪
+▪
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 77 of 80
+Scan Type
+Static
+Unused Permissions
+An app might request a user for certain permissions, like access to SD card, contacts, social profiles, etc. which has not
+actually been invoked while the scan was running. We list out all these permissions so that you can optimize your app
+and follow proper compliance checks.
+Risk Rating
+Low
+Version 3.0
+Base Score
+2.3
+Attack vector: LOCAL Attack complexity: LOW
+Privileges required: HIGH User Interaction: NONE
+Scope: UNCHANGED Confidentiality Impact: LOW
+Integrity Impact: NONE Availability Impact: NONE
+Application seems to be using extra permissions which are not really needed
+android.permission.RECEIVE_BOOT_COMPLETED
+android.permission.WAKE_LOCK
+android.permission.READ_EXTERNAL_STORAGE
+android.permission.MODIFY_AUDIO_SETTINGS
+CVSS
+Regulatory
+OWASP Mobile Top
+10 (2024)
+M8 Security Misconfiguration
+CWE CWE-250 https://cwe.mitre.org/data/definitions/250.html
+MSTG MSTG-PLATFORM-1 The app only requests the minimum set of permissions
+necessary.
+OWASP MASVS (v2) MASVS-PLATFORM-1 The app uses IPC mechanisms securely.
+GDPR Art-25-GDPR Data protection by design and by default
+Art-32-GDPR Security of processing
+Risk Assessment
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 78 of 80
+Do not request for permissions beyond what your app actually needs
+Users may not download your app when presented with a long list of permissions. Imagine a flashlight app requesting
+access to SD card, camera, contacts, SMS and more. This is an invitation to poor ratings and reviews on App Stores.
+This also breaks compliance standards.
+Compliant Solution
+Business Implication
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 79 of 80
+References
+Mobile Top 10 OWASP Categories | 2016
+Web Top 10 OWASP Categories | 2013
+1.
+2.
+Confidential Nov. 12, 2025, 4:24 a.m. UTC
+Page 80 of 80
