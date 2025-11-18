@@ -814,5 +814,47 @@ export class Hc03Sdk {
   }
 }
 
+// ============================================================================
+// EVENT NAMES FOR CAPACITOR PLUGIN COMMUNICATION
+// ============================================================================
+
+/**
+ * Event constants for native Capacitor plugin communication
+ * These match the event names emitted by HC03BluetoothPlugin (Android/iOS)
+ */
+export const HC03_EVENTS = {
+  // ECG Events
+  ECG_WAVE: 'hc03:ecg:wave',
+  ECG_METRICS: 'hc03:ecg:metrics',
+  
+  // Blood Oxygen Events
+  BLOOD_OXYGEN_DATA: 'hc03:bloodoxygen:data',
+  BLOOD_OXYGEN_WAVE: 'hc03:bloodoxygen:wave',
+  
+  // Blood Glucose Events
+  BLOOD_GLUCOSE_SEND: 'hc03:bloodglucose:send',
+  BLOOD_GLUCOSE_PAPER_STATE: 'hc03:bloodglucose:paperstate',
+  BLOOD_GLUCOSE_RESULT: 'hc03:bloodglucose:result',
+  
+  // Blood Pressure Events
+  BLOOD_PRESSURE_SEND: 'hc03:bloodpressure:send',
+  BLOOD_PRESSURE_PROCESS: 'hc03:bloodpressure:process',
+  BLOOD_PRESSURE_RESULT: 'hc03:bloodpressure:result',
+  
+  // Battery Events
+  BATTERY_LEVEL: 'hc03:battery:level',
+  BATTERY_CHARGING: 'hc03:battery:charging',
+  
+  // Body Temperature Events
+  BODY_TEMPERATURE_DATA: 'hc03:temperature:data',
+  
+  // Connection Events
+  DEVICE_CONNECTED: 'hc03:device:connected',
+  DEVICE_DISCONNECTED: 'hc03:device:disconnected',
+  
+  // Error Events
+  ERROR: 'hc03:error'
+} as const;
+
 // Export singleton instance
 export const hc03Sdk = Hc03Sdk.getInstance();
