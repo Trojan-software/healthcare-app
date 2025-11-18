@@ -361,7 +361,7 @@ private void enableTapjackingProtection() {
 ---
 
 #### 20. Unused Permissions (CVSS 2.3)
-**Status:** ✅ **OPTIMIZED**
+**Status:** ✅ **FULLY OPTIMIZED**
 
 **Remediation:**
 - **File:** `AndroidManifest.xml`
@@ -371,21 +371,34 @@ private void enableTapjackingProtection() {
   - ✅ Removed `ACCESS_COARSE_LOCATION` (not needed)
   - ✅ Added `neverForLocation` flag to BLUETOOTH_SCAN
   - ✅ Limited ACCESS_FINE_LOCATION to Android 11 and below only
+  - ✅ Explicitly removed `RECEIVE_BOOT_COMPLETED` (auto-added by Capacitor)
+  - ✅ Explicitly removed `WAKE_LOCK` (auto-added by dependencies)
+  - ✅ Explicitly removed `READ_EXTERNAL_STORAGE` (not needed)
+  - ✅ Explicitly removed `MODIFY_AUDIO_SETTINGS` (not needed)
 
-**Optimized Permissions:**
+**Optimized Permissions (Final):**
 ```xml
+<!-- Essential Permissions Only -->
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.BLUETOOTH_SCAN" 
                  android:usesPermissionFlags="neverForLocation" />
-<uses-permission android:name="android:permission.BLUETOOTH_CONNECT" />
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" 
                  android:maxSdkVersion="30" />
+
+<!-- Explicitly Remove Unused Permissions -->
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove" />
+<uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove" />
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" tools:node="remove" />
 ```
 
 **Benefit:**
-- Minimal permission footprint
+- **Minimal permission footprint** - Only 4 essential permissions
 - Android 12+ doesn't require location for Bluetooth
-- Improved privacy compliance
+- Explicitly blocks auto-added permissions from dependencies
+- Improved privacy compliance and user trust
+- Follows MSTG-PLATFORM-1: "App requests minimum set of permissions necessary"
 
 ---
 

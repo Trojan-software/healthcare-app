@@ -171,7 +171,9 @@ Following ADHCC Mobile Application Security Assessments (Oct 9, 2025 and Nov 12,
 15. **Unused Permissions Removed** (CVSS 2.3) - ADHCC Nov 12, 2025
     - Removed deprecated BLUETOOTH, BLUETOOTH_ADMIN
     - Added neverForLocation flag for Android 12+
-    - Minimal permission footprint
+    - Explicitly removed RECEIVE_BOOT_COMPLETED, WAKE_LOCK, READ_EXTERNAL_STORAGE, MODIFY_AUDIO_SETTINGS
+    - Minimal permission footprint (only 4 essential permissions)
+    - Compliance: MSTG-PLATFORM-1, OWASP M8, GDPR Art-25
 
 **VERIFIED NOT APPLICABLE:**
 - Insecure Broadcast Receivers - No dynamic receivers in code
