@@ -1,0 +1,148 @@
+ 
+
+
+Root detection test case detects whether the application is running on a rooted device or not. If it can then a malicious application can access or modify the data of any application.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+6.8	Attack vector: PHYSICAL	Attack complexity: HIGH
+	Privileges required: HIGH	User Interaction: NONE
+	Scope: CHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: HIGH	Availability Impact: LOW
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M7	Insufficient Binary Protections
+ 
+CWE	CWE-693	https://cwe.mitre.org/data/definitions/693.html
+
+
+MSTG	MSTG-RESILIENCE-1	The app detects, and responds to, the presence of a rooted or
+jailbroken device either by alerting the user or terminating the app.
+
+OWASP MASVS (v2)	MASVS-RESILIANCE-1	The app validates the integrity of the platform.
+
+
+PCI-DSS (v4.0)	7.1	Restrict access to cardholder data by business need to know
+Processes and mechanisms for restricting access to system components and cardholder data by business need to know are defined and understood
+7.2	Restrict access to cardholder data by business need to know
+Access to system components and data is appropriately defined and assigned
+ 
+HIPAA	164.308(a)(4)	Administrative Safeguards: Information Access
+Management
+
+▪	Isolating Health Care Clearinghouse Functions (Required)
+If a health care clearinghouse is part of a larger organization, the clearinghouse must implement policies and procedures that protect the electronic protected health information of the clearinghouse from unauthorized access by the larger organization.
+▪	Access Authorization (Addressable)
+Implement policies and procedures for granting access to electronic protected health information, for example, through access to a workstation, transaction, program, process, or other mechanism.
+▪	Access Establishment and Modification (Addressable) Implement policies and procedures that, based upon the entity's access authorization policies, establish, document, review, and modify a user's right of access to a workstation, transaction, program, or process.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+Since a rooted device is much more at risk of being compromised, it is important to know about it. Detecting whether the device is rooted or not is essential for further security measures.
+The application has not properly implemented root detection.
+
+
+
+import android.content.Context;
+import android.content.pm.ApplicationInfo; import android.content.pm.PackageInfo; import android.content.pm.PackageManager; import android.util.Log;
+import android.content.pm.PackageManager; import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader; import java.util.List;
+
+public class RootCheck {
+private static Context mContext;
+private static final String TAG = "RootCheck"; private String[] binaryPaths= {
+"/data/local/", "/data/local/bin/", "/data/local/xbin/",
+ 
+"/sbin/", "/su/bin/", "/system/bin/", "/system/bin/.ext/",
+"/system/bin/failsafe/", "/system/sd/xbin/", "/system/usr/we-need-root/", "/system/xbin/", "/system/app/Superuser.apk", "/cache",
+"/data", "/dev"
+};
+
+private String[] dangerousPackages = { "com.devadvance.rootcloak", "com.devadvance.rootcloakplus", "com.koushikdutta.superuser", "com.thirdparty.superuser", "com.topjohnwu.magisk", "org.lsposed.manager", "com.devadvance.rootcloak2"
+};
+
+RootCheck(Context ct) { mContext = ct;
+}
+
+public String rootBeerCheck() {
+if(DetectTestKeys() || checkSuExists() || checkForBusyBoxBinary() || checkForSuBinary()
+|| checkPackages(mContext))
+return "DEVICE IS ROOTED!";
+else
+return "DEVICE IS NOT ROOTED";
+}
+
+private boolean DetectTestKeys() {
+String buildTags = android.os.Build.TAGS;
+return buildTags != null && buildTags.contains("test-keys");
+}
+
+private boolean checkForBinary(String filename) { for (String path : binaryPaths) {
+File f = new File(path, filename); boolean fileExists = f.exists(); if (fileExists) {
+return true;
+}
+}
+return false;
+}
+
+private boolean checkForSuBinary() {
+return checkForBinary("su");	//checking for su binary
+ 
+}
+
+private boolean checkForBusyBoxBinary() {
+return checkForBinary("busybox"); //checking for busybox
+}
+
+private boolean checkSuExists() { Process process = null;
+try {
+process = Runtime.getRuntime().exec(new String[]
+{"/system /xbin/which", "su"}); //Checking if su binary exists BufferedReader in = new BufferedReader(
+new InputStreamReader(process.getInputStream())); String line = in.readLine();
+process.destroy(); return line != null;
+} catch (Exception e) {
+if (process != null) { process.destroy();
+}
+return false;
+}
+}
+
+private boolean checkPackages(Context ctx) { PackageManager pm = ctx.getPackageManager(); for(String name:dangerousPackages){
+if(isPackageInstalled(name,pm)){	//Checking if dangerous applications are
+ 
+installed
+
+}
+}
+ 
+
+return true;
+ 
+return false;
+}
+
+private boolean isPackageInstalled(String packageName, PackageManager packageManager) { try {
+return packageManager.getApplicationInfo(packageName, 0).enabled;
+} catch (PackageManager.NameNotFoundException e) { return false;
+}
+}
+
+}
+
+
+
+In the event, if an attacker can install a malicious application on the device then an attacker can perform malicious activities which can result in compromising the victim's data.
+ 
+
+ 
+▪	RootBear Library - Simple to use root checking Android library and sample app (https://github.com/scottyab/ rootbeer)

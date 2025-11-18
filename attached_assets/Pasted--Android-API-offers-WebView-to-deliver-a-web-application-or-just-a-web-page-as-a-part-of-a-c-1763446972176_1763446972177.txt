@@ -1,0 +1,54 @@
+ 
+
+
+Android API offers WebView to deliver a web application (or just a web page) as a part of a client app. A common scenario in which using WebView is helpful is when you want to provide information in your application that you might need to update, such as an end-user agreement or a user guide. Another scenario is if your application provides data to the user that always requires an Internet connection to retrieve data, such as email. In this case, you might find that it's easier to build a WebView in your Android application that shows a web page with all the user data, rather than performing a network request, then parsing the data and rendering it in an Android layout.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+5.4	Attack vector: NETWORK	Attack complexity: HIGH
+	Privileges required: LOW	User Interaction: REQUIRED
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: LOW	Availability Impact: NONE
+
+
+
+CWE	CWE-749	https://cwe.mitre.org/data/definitions/749.html
+
+MSTG	
+MSTG-PLATFORM-5	
+JavaScript is disabled in WebViews unless explicitly required.
+
+OWASP MASVS (v2)	
+MASVS-PLATFORM-2	
+The app uses WebViews securely.
+
+GDPR	
+Art-25-GDPR Art-32-GDPR	
+Data protection by design and by default Security of processing
+Risk Assessment		
+
+WebView can be susceptible to various exploits including client side Javascript injection and network sniffing if improperly implemented.
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+ 
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+
+
+
+When using WebView, ensure the following:
+
+▪	Use WebView to load only trusted content
+▪	Always load resources over HTTPS
+▪	Avoid using Javascript within WebView. If Javascript is absolutely required, be sure that each context is escaped properly by using an XSS filter component such as the OWASP Java Encoder Project
+▪	Accept only plain-text user input and sanitize it before displaying in WebView
+
+
+An improperly implemented WebView instance may be vulnerable to XSS can be used to gain access to shared preference files using file:///. When Javascript is enabled, it may allow adversaries to perform XSS attacks. Furthermore, not loading WebView over HTTPS may allow attackers to sniff data from network transmissions and perform Man-in-the-Middle attack by injecting arbitrary JavaScript into the WebView.
