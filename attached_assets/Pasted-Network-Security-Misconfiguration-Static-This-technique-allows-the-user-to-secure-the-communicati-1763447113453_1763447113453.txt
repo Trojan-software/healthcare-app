@@ -1,0 +1,110 @@
+Network Security Misconfiguration	Static
+
+This technique allows the user to secure the communication in the application by specifying proper values to the flags which are present in the network security configuration file. If implemented correctly it can help in securing the application by communicating only on secure protocols like HTTPS. It can also be used to implement certificate pinning by using the SHA-256 hashes of the public certificate.	
+9.1
+Critical
+Hardcoded Secrets	Static
+
+Malicious actors could take advantage of the hardcoded secrets to access private databases, leading to data breaches and the exposure of users' personal data.	7.5
+High
+Hooking Detection	Dynamic
+
+Hooking is a technique where an external piece of code intercepts or manipulates the normal execution flow of an application or the operating system. While legitimate uses of hooking exist, such as for debugging and development purposes, malicious applications may use hooking to compromise the security and integrity of the system. Hooking detection is a technique to detect whether an application is being hooked at run time.	
+5.7
+Medium
+Root Detection	Dynamic
+
+Since a rooted device is much more at risk of being compromised, it is important to know about it. Detecting whether the device is rooted or not is essential for further security measures.	6.8
+Medium
+WebView Exploits	Dynamic
+
+WebView can be susceptible to various exploits including client side Javascript injection and network sniffing if improperly implemented.	5.4
+Medium
+
+Application Logs	Static	Dynamic
+
+Application was found to be writing logs to the system logs	6.2
+Medium
+ 
+
+Android Tapjacking	Static
+
+Android tapjacking is a type of attack where an attacker tricks or deceives a user into tapping on a seemingly harmless element on their Android device's screen, while secretly performing malicious actions in the background. Cybercriminals deploy overlay attacks to steal victims’ login credentials, bank card details, and other confidential information.	
+4.8
+Medium
+StrandHogg Vulnerability	Static
+
+One or more than one public facing activities of the application is vulnerable to StandHogg vulnerability.
+In StrandHogg and regular task hijacking, malicious applications typically deploy one of the following techniques or a selection in tandem:
+▪	Task Affinity Manipulation: The malicious application leverages two activities, M1 and M2, wherein M2.taskAffinity = com.victim.app and M2.allowTaskReparenting = true. In the eventuality that the malicious app is opened on M2, M2 would be relocated to the front and the user will interact with the malicious application once the victim application has initiated.
+▪	Single Task Mode: In the eventuality that the victim application sets launchMode to singleTask, malicious applications can leverage M2.taskAffinity = com.victim.app to hijack the victim's application task stack.
+▪	Task Reparenting: In the eventuality that the victim application sets taskReparenting to true, malicious applications can move the victim's application task to the malicious application's stack.
+However, in the case of StrandHogg 2.0, all exported activities without a launchMode of singleTask or singleInstance are affected on vulnerable Android versions.	
+
+
+
+
+
+6.5
+Medium
+MediaProjection: Android Service Allows Recording of Audio, Screen Activity
+Static
+
+Protect all sensitive windows within the App by enabling the FLAG_SECURE flag. This flag will prevent Apps from being able to record the protected windows. Also, the flag will prevent users from taking screenshots of these windows (by pressing the VOLUME_DOWN and POWER buttons). As such screenshots are stored on the SDCard by default, they are accessible to all Apps and sensitive data may be exposed.	
+6.8
+Medium
+
+Insecure Broadcast Receivers registered dynamically	Static Broadcast Receivers which are set Dynamically and are not protected	6.1
+Medium
+Disabled SSL CA Validation and Certificate Pinning	Static
+
+A host or service's certificate or public key can be added to an application at development time, or it can be added upon first encountering the certificate or public key. The former - adding at development time - is preferred since preloading the certificate or public key out of band usually means the attacker cannot taint the pin.	
+5.9
+Medium
+ 
+
+Storing Information in Shared Preferences	Dynamic
+
+Insecured information was found in shared preference. One shouldn't use un-encrypted information in SharedPreference.	6.1
+Medium
+Android Developer options status detection	Dynamic
+
+Implementing Developer options protection in Android applications is crucial to ensure security and prevent unauthorized access to sensitive features and data. Implementing Developer option protection in your Android application enhances its security and integrity. By detecting and responding to the enabling of developer options, you can prevent unauthorized access and protect sensitive data.	
+3.4
+Low
+Android Developer Bridge(ADB) status detection	Dynamic
+
+Implementing ADB detection in Android applications is crucial to ensure security and prevent unauthorized access to sensitive features and data. ADB detection enhances app security by guarding against unintended exposure, unauthorized access, and tampering. By detecting and responding to the enabling of ADB on the device, you can prevent unauthorized access and protect sensitive data.	
+3.4
+Low
+Bytecode Obfuscation	Static
+
+Java source code is typically compiled into Java bytecode – the instruction set of the Java virtual machine. The compiled Java bytecode can be easily reversed engineered back into source code by freely available decompilers. Bytecode Obfuscation is the process of modifying Java bytecode (executable or library) so that it is much harder to read and understand for a hacker but remains fully functional.	
+2.3
+Low
+
+Enabled Android Application Backup	Static
+
+Application backup might contain sensitive information private data of the app into their PC	3.3
+Low
+Keylogger Protection	Static
+
+Keyloggers are malicious software designed to capture and record keystrokes or input data from users, posing a significant threat to personal and sensitive information. They operate by monitoring keyboard activity, potentially stealing passwords, credit card details, and other confidential data. Keylogger protection involves implementing secure input methods, such as custom keyboards and virtual keyboards, to prevent unauthorized access to typed information. Effective protection ensures that even if a keylogger is present, it cannot intercept or compromise the data being entered.	
+
+3.9
+Low
+Weak PRNG (Pseudorandom number generator)	Static
+
+Weak PRNG vulnerabilities stem from insufficiently random initializations, improper algorithms, or inadequate entropy sources. Such vulnerabilities can result in unauthorized access, data breaches, and compromised cryptographic operations.	3.5
+Low
+ 
+
+Deprecated setPluginState in WebView	Static
+
+setPluginState has security implication and deprecated by Android. It is unsafe to use in production.	3.7
+Low
+
+Unused Permissions	Static
+
+Application seems to be using extra permissions which are not really needed	2.3
+Low

@@ -1,0 +1,164 @@
+ 
+
+
+ 
+
+
+Hooking detection test case checks whether an application can detect if it's being hooked or not. If an application is being hooked, the application behaviour can be modified at run time.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+5.7	Attack vector: PHYSICAL	Attack complexity: LOW
+	Privileges required: LOW	User Interaction: REQUIRED
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: HIGH	Availability Impact: NONE
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M7	Insufficient Binary Protections
+ 
+CWE	CWE-693	https://cwe.mitre.org/data/definitions/693.html
+
+
+MSTG	MSTG-RESILIENCE-1	The app detects, and responds to, the presence of a rooted or
+jailbroken device either by alerting the user or terminating the app.
+
+OWASP MASVS (v2)	MASVS-RESILIANCE-1	The app validates the integrity of the platform.
+
+
+PCI-DSS (v4.0)	7.1	Restrict access to cardholder data by business need to know
+Processes and mechanisms for restricting access to system components and cardholder data by business need to know are defined and understood
+7.2	Restrict access to cardholder data by business need to know
+Access to system components and data is appropriately defined and assigned
+ 
+HIPAA	164.308(a)(4)	Administrative Safeguards: Information Access
+Management
+
+▪	Isolating Health Care Clearinghouse Functions (Required)
+If a health care clearinghouse is part of a larger organization, the clearinghouse must implement policies and procedures that protect the electronic protected health information of the clearinghouse from unauthorized access by the larger organization.
+▪	Access Authorization (Addressable)
+Implement policies and procedures for granting access to electronic protected health information, for example, through access to a workstation, transaction, program, process, or other mechanism.
+▪	Access Establishment and Modification (Addressable) Implement policies and procedures that, based upon the entity's access authorization policies, establish, document, review, and modify a user's right of access to a workstation, transaction, program, or process.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+Hooking is a technique where an external piece of code intercepts or manipulates the normal execution flow of an application or the operating system. While legitimate uses of hooking exist, such as for debugging and development purposes, malicious applications may use hooking to compromise the security and integrity of the system. Hooking detection is a technique to detect whether an application is being hooked at run time.
+The application has not implemented hooking detection or any kind of runtime protection system.
+
+
+
+To implement a hooking detection solution, the following code (in Java or Kotlin) can be used to enumerate packages and figure out malicious tools. This should be used in conjunction with the native (C/C++) code to make detection more stronger and efficient.
+Java:
+
+function checkSuspiciousMethodsinStackTrace() { try {
+Set libraries = new HashSet();
+String mapsFilename = "/proc/" + android.os.Process.myPid() + "/maps"; BufferedReader reader = new BufferedReader(new FileReader(mapsFilename)); String line;
+while((line = reader.readLine()) != null) {
+if (line.endsWith(".so") || line.endsWith(".jar")) { int n = line.lastIndexOf(" "); libraries.add(line.substring(n + 1));
+}
+ 
+}
+for (String library : libraries) { if(library.contains("com.saurik.substrate")) {
+Log.wtf("HookDetection", "Substrate shared object found: " + library);
+}
+if(library.contains("XposedBridge.jar")) { Log.wtf("HookDetection", "Xposed JAR found: " + library);
+}
+}
+reader.close();
+}
+catch (Exception e) { Log.wtf("HookDetection", e.toString());
+}
+}
+function checkSuspiciousPackagesInstalled() {
+PackageManager packageManager = context.getPackageManager(); List applicationInfoList =
+packageManager.getInstalledApplications(PackageManager.GET_META_DATA); for(ApplicationInfo applicationInfo : applicationInfoList) {
+if(applicationInfo.packageName.equals("de.robv.android.xposed.installer")) { Log.wtf("HookDetection", "Xposed found on the system.");
+}
+if(applicationInfo.packageName.equals("com.saurik.substrate")) { Log.wtf("HookDetection", "Substrate found on the system.");
+}
+}
+}
+
+Kotlin:
+
+import android.content.pm.ApplicationInfo import android.content.pm.PackageManager import android.util.Log
+import java.io.BufferedReader import java.io.FileReader import java.util.HashSet
+fun checkSuspiciousMethodsInStackTrace() { try {
+val libraries = mutableSetOf<String>()
+val mapsFilename = "/proc/${android.os.Process.myPid()}/maps" val reader = BufferedReader(FileReader(mapsFilename))
+var line: String?
+while (reader.readLine().also { line = it } != null) {
+if (line!!.endsWith(".so") || line.endsWith(".jar")) { val n = line!!.lastIndexOf(" ") libraries.add(line!!.substring(n + 1))
+}
+}
+for (library in libraries) {
+if (library.contains("com.saurik.substrate")) { Log.wtf("HookDetection", "Substrate shared object found: $library")
+}
+if (library.contains("XposedBridge.jar")) { Log.wtf("HookDetection", "Xposed JAR found: $library")
+ 
+}
+}
+reader.close()
+} catch (e: Exception) { Log.wtf("HookDetection", e.toString())
+}
+}
+fun checkSuspiciousPackagesInstalled(context: Context) {
+val packageManager: PackageManager = context.packageManager val applicationInfoList: List<ApplicationInfo> =
+packageManager.getInstalledApplications(PackageManager.GET_META_DATA) for (applicationInfo in applicationInfoList) {
+if (applicationInfo.packageName == "de.robv.android.xposed.installer") { Log.wtf("HookDetection", "Xposed found on the system.")
+}
+if (applicationInfo.packageName == "com.saurik.substrate") { Log.wtf("HookDetection", "Substrate found on the system.")
+}
+}
+}
+
+Native (via Java Native Interface) in C/C++:
+
+static char keyword[] = "LIBFRIDA"; num_found = 0;
+int scan_executable_segments(char * map) { char buf[512];
+unsigned long start, end;
+sscanf(map, "%lx-%lx %s", &start, &end, buf); if (buf[2] == 'x') {
+return (find_mem_string(start, end, (char*)keyword, 8) == 1);
+} else {
+return 0;
+}
+}
+void scan() {
+if ((fd = my_openat(AT_FDCWD, "/proc/self/maps", O_RDONLY, 0)) >= 0) { while ((read_one_line(fd, map, MAX_LINE)) > 0) {
+if (scan_executable_segments(map) == 1) { num_found++;
+}
+}
+if (num_found > 1) {
+/* Frida Detected */
+}
+}
+boolean is_frida_server_listening() { struct sockaddr_in sa; memset(&sa, 0, sizeof(sa)); sa.sin_family = AF_INET; sa.sin_port = htons(27042);
+inet_aton("127.0.0.1", &(sa.sin_addr));
+int sock = socket(AF_INET , SOCK_STREAM , 0);
+if (connect(sock , (struct sockaddr*)&sa , sizeof sa) != -1) {
+/* Frida server detected. Do something… */
+ 
+}
+}
+public boolean checkRunningProcesses() { boolean returnValue = false;
+// Get currently running application processes List<RunningServiceInfo> list = manager.getRunningServices(300); if(list != null){
+String tempName;
+for(int i=0;i<list.size();++i){ tempName = list.get(i).process; if(tempName.contains("fridaserver")) {
+returnValue = true;
+}
+}
+}
+return returnValue;
+}
+
+
+
+Malicious applications may use hooking to compromise the security and integrity and bypass buiness logic checks performed by the application.

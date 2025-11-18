@@ -1,0 +1,113 @@
+
+
+ 
+
+
+The Network Security Configuration feature lets apps customize their network security settings in a safe, declarative configuration file without modifying app code. These settings can be configured for specific domains and for a specific app. The key capabilities of this feature are as follows:
+▪	Custom trust anchors: Customize which Certificate Authorities (CA) are trusted for an app's secure connections. For example, trusting particular self-signed certificates or restricting the set of public CAs that the app trusts.
+▪	Debug-only overrides: Safely debug secure connections in an app without added risk to the installed base.
+▪	Cleartext traffic opt-out: Protect apps from accidental usage of cleartext traffic.
+▪	Certificate pinning: Restrict an app's secure connection to particular certificates.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+9.1	Attack vector: NETWORK	Attack complexity: LOW
+	Privileges required: NONE	User Interaction: NONE
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: HIGH	Availability Impact: NONE
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M5	Insecure Communication
+M8	Security Misconfiguration
+ 
+
+
+CWE	CWE-16	https://cwe.mitre.org/data/definitions/16.html
+
+
+MSTG	MSTG-NETWORK-1	Data is encrypted on the network using TLS. The secure channel
+is used consistently throughout the app.
+
+
+OWASP MASVS (v2)	MASVS-NETWORK-1	The app secures all network traffic according to the current best practices.
+
+PCI-DSS (v4.0)	4.1	Protect cardholder data with strong cryptography during transmission over open, public networks
+Processes and mechanisms for protecting cardholder data with strong cryptography during transmission over open, public networks are defined and documented.
+ 
+4.2	Protect cardholder data with strong cryptography during transmission over open, public networks
+PAN is protected with strong cryptography during transmission
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+This technique allows the user to secure the communication in the application by specifying proper values to the flags which are present in the network security configuration file. If implemented correctly it can help in securing the application by communicating only on secure protocols like HTTPS. It can also be used to implement certificate pinning by using the SHA-256 hashes of the public certificate.
+Android manifest's application tag has `cleartextTrafficPermitted` attribute set to `true`.This is a vulnerability since it allows HTTP traffic.
+
+
+
+If you have set the base configuration or domain configuration with cleartextTrafficPermitted to True then it is a problem. If the src is set to "user" then, a user can install his own certificate in the device and the app will use that instead of the pinned certificate.
+
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+<base-config cleartextTrafficPermitted="true">
+<trust-anchors>
+<certificates src="system" />
+<certificates src="user" />
+</trust-anchors>
+</base-config>
+</network-security-config>
+
+Adding a debug-overrides can expose your debug certificate which can be used to perform MITM attack on your application.
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+<debug-overrides>
+<trust-anchors>
+<certificates src="@raw/debug_cas"/>
+</trust-anchors>
+</debug-overrides>
+</network-security-config>
+
+
+
+The following is a good network security configuration:
+
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+<base-config cleartextTrafficPermitted="false">
+ 
+<trust-anchors>
+<certificates src="..."/>
+...
+</trust-anchors>
+</base-config>
+
+<domain-config cleartextTrafficPermitted="false">
+<domain>android.com</domain>
+...
+<trust-anchors>
+<certificates src="..."/>
+...
+</trust-anchors>
+<pin-set>
+<pin digest="...">...</pin>
+...
+</pin-set>
+</domain-config>
+...
+</network-security-config>
+
+
+
+An attacker can gain sensitive information which can result in loss of confidential data.
+
+
+▪	Android  Documentation:  https://developer.android.com/training/articles/security-config
+▪	Android Codelab for Network Security Configuration: https://developer.android.com/codelabs/android-network-security-config#3

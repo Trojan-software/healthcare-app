@@ -176,6 +176,12 @@ Following ADHCC Mobile Application Security Assessments (Oct 9, 2025 and Nov 12,
     - Explicitly removed RECEIVE_BOOT_COMPLETED, WAKE_LOCK, READ_EXTERNAL_STORAGE, MODIFY_AUDIO_SETTINGS
     - Minimal permission footprint (only 4 essential permissions)
     - Compliance: MSTG-PLATFORM-1, OWASP M8, GDPR Art-25
+16. **Keylogger Protection** (CVSS 3.9) - MITIGATED (not fully implemented - intentional UX preservation)
+    - FLAG_SECURE prevents screen recording/screenshots
+    - Secure input types for password fields
+    - Root/hooking detection alerts before keyloggers operate
+    - Custom keyboard NOT implemented (severe UX degradation for marginal security gain)
+    - Residual risk: VERY LOW (attack requires HIGH privileges + device compromise)
 
 **VERIFIED NOT APPLICABLE:**
 - Insecure Broadcast Receivers - No dynamic receivers in code
