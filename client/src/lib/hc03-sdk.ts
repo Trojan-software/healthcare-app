@@ -25,22 +25,133 @@ const HC03_NOTIFY_CHARACTERISTIC = '0000fff4-0000-1000-8000-00805f9b34fb'; // Of
 const BATTERY_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb';
 const BATTERY_LEVEL_CHARACTERISTIC = '00002a19-0000-1000-8000-00805f9b34fb';
 
-// Detection Commands as per HC03 protocol
+// HC03 Protocol Constants (from baseCommon.dart)
+const PROTOCOL = {
+  PACKAGE_TOTAL_LENGTH: 10,
+  PACKAGE_INDEX_START: 0,
+  PACKAGE_INDEX_LENGTH: 1,
+  PACKAGE_INDEX_BT_EDITION: 3,
+  PACKAGE_INDEX_TYPE: 4,
+  PACKAGE_INDEX_HEADER_CRC: 5,
+  PACKAGE_INDEX_CONTENT: 6,
+  ATTR_START_REQ: 0x01,
+  ATTR_START_RES: 0x02,
+  ATTR_END_REQ: 0xff,
+  BT_EDITION: 0x04,
+  
+  // Command types (from baseCommon.dart)
+  ELECTROCARDIOGRAM: 0x05,
+  TEMPERATURE: 0x02,
+  OX_REQ_TYPE_NORMAL: 0x04,
+  BP_REQ_TYPE: 0x01,
+  BLOOD_GLUCOSE: 0x03,
+  CHECK_BATTARY: 0x0f,
+  
+  // Command contents (from baseCommon.dart)
+  ECG_START: 0x01,
+  ECG_STOP: 0x02,
+  TEP_START_NORMAL: 0x00,
+  TEP_STOP_NORMAL: 0x01,
+  OX_REQ_CONTENT_START_NORMAL: 0x00,
+  OX_REQ_CONTENT_STOP_NORMAL: 0x01,
+  BP_REQ_CONTENT_CALIBRATE_PARAMETER: 0x01,
+  BP_REQ_CONTENT_STOP_CHARGING_GAS: 0x07,
+  TEST_PAPER_GET_VER: 0x01,
+  TEST_PAPER_ADC_STOP: 0x04,
+  BATTERY_QUERY: 0x00,
+  
+  // Response types
+  BT_RES_TYPE: 0x82,
+  OX_RES_TYPE_NORMAL: 0x84,
+  BP_RES_TYPE: 0x81,
+  BG_RES_TYPE: 0x83,
+  RESPONSE_CHECK_BATTERY: 0x8f,
+};
+
+// CRC calculation functions (from baseCommon.dart)
+function encryHead(data: number[]): number {
+  let result = 0;
+  for (let i = 0; i < data.length; i++) {
+    result ^= (data[i] & 0xff);
+    result &= 0xffff;
+  }
+  return result;
+}
+
+function encryTail(data: number[]): number {
+  let result = 0xffff;
+  for (const byte of data) {
+    const transe = byte & 0xff;
+    result = ((result >> 8) & 0xff) | (result << 8);
+    result &= 0xffff;
+    result ^= transe;
+    result &= 0xffff;
+    result ^= (result & 0xff) >> 4;
+    result &= 0xffff;
+    result ^= (result << 8) << 4;
+    result &= 0xffff;
+    result ^= ((result & 0xff) << 4) << 1;
+    result &= 0xffff;
+  }
+  return result;
+}
+
+// Package command data (from baseCommon.dart obtainCommandData)
+function obtainCommandData(type: number, cmd: number[]): Uint8Array {
+  const totalLen = PROTOCOL.PACKAGE_TOTAL_LENGTH + cmd.length - 1;
+  const buffer = new Uint8Array(totalLen);
+  const view = new DataView(buffer.buffer);
+  
+  // Fill start
+  view.setUint8(PROTOCOL.PACKAGE_INDEX_START, PROTOCOL.ATTR_START_REQ);
+  
+  // Fill length (little-endian)
+  view.setUint16(PROTOCOL.PACKAGE_INDEX_LENGTH, cmd.length, true);
+  
+  // Fill bluetooth edition
+  view.setUint8(PROTOCOL.PACKAGE_INDEX_BT_EDITION, PROTOCOL.BT_EDITION);
+  
+  // Fill type
+  view.setUint8(PROTOCOL.PACKAGE_INDEX_TYPE, type);
+  
+  // Calculate and fill header CRC
+  const headerData = Array.from(buffer.slice(0, PROTOCOL.PACKAGE_INDEX_HEADER_CRC));
+  const entryHead = encryHead(headerData);
+  view.setUint8(PROTOCOL.PACKAGE_INDEX_HEADER_CRC, entryHead);
+  
+  // Fill content
+  for (let i = 0; i < cmd.length; i++) {
+    view.setUint8(PROTOCOL.PACKAGE_INDEX_CONTENT + i, cmd[i]);
+  }
+  
+  // Calculate and fill tail CRC
+  const tailIndex = totalLen - 3;
+  const tailData = Array.from(buffer.slice(0, tailIndex));
+  const tail = encryTail(tailData);
+  view.setUint16(tailIndex, tail, true);
+  
+  // Fill end
+  view.setUint8(totalLen - 1, PROTOCOL.ATTR_END_REQ);
+  
+  return buffer;
+}
+
+// Detection Commands using proper HC03 protocol packaging
 const DETECTION_COMMANDS: Record<Detection, Uint8Array> = {
-  [Detection.ECG]: new Uint8Array([0x01, 0x01]), // Start ECG
-  [Detection.OX]: new Uint8Array([0x02, 0x01]),  // Start Blood Oxygen
-  [Detection.BP]: new Uint8Array([0x03, 0x01]),  // Start Blood Pressure
-  [Detection.BT]: new Uint8Array([0x04, 0x01]),  // Start Temperature
-  [Detection.BG]: new Uint8Array([0x05, 0x01]),  // Start Blood Glucose
-  [Detection.BATTERY]: new Uint8Array([0x06, 0x01]), // Query Battery
+  [Detection.ECG]: obtainCommandData(PROTOCOL.ELECTROCARDIOGRAM, [PROTOCOL.ECG_START]),
+  [Detection.OX]: obtainCommandData(PROTOCOL.OX_REQ_TYPE_NORMAL, [PROTOCOL.OX_REQ_CONTENT_START_NORMAL]),
+  [Detection.BP]: obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_CALIBRATE_PARAMETER]),
+  [Detection.BT]: obtainCommandData(PROTOCOL.TEMPERATURE, [PROTOCOL.TEP_START_NORMAL]),
+  [Detection.BG]: obtainCommandData(PROTOCOL.BLOOD_GLUCOSE, [PROTOCOL.TEST_PAPER_GET_VER]),
+  [Detection.BATTERY]: obtainCommandData(PROTOCOL.CHECK_BATTARY, [PROTOCOL.BATTERY_QUERY]),
 };
 
 const STOP_COMMANDS: Partial<Record<Detection, Uint8Array>> = {
-  [Detection.ECG]: new Uint8Array([0x01, 0x00]), // Stop ECG
-  [Detection.OX]: new Uint8Array([0x02, 0x00]),  // Stop Blood Oxygen
-  [Detection.BP]: new Uint8Array([0x03, 0x00]),  // Stop Blood Pressure
-  [Detection.BT]: new Uint8Array([0x04, 0x00]),  // Stop Temperature
-  [Detection.BG]: new Uint8Array([0x05, 0x00]),  // Stop Blood Glucose
+  [Detection.ECG]: obtainCommandData(PROTOCOL.ELECTROCARDIOGRAM, [PROTOCOL.ECG_STOP]),
+  [Detection.OX]: obtainCommandData(PROTOCOL.OX_REQ_TYPE_NORMAL, [PROTOCOL.OX_REQ_CONTENT_STOP_NORMAL]),
+  [Detection.BP]: obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]),
+  [Detection.BT]: obtainCommandData(PROTOCOL.TEMPERATURE, [PROTOCOL.TEP_STOP_NORMAL]),
+  [Detection.BG]: obtainCommandData(PROTOCOL.BLOOD_GLUCOSE, [PROTOCOL.TEST_PAPER_ADC_STOP]),
 };
 
 // HC03 Data Structures as per API documentation
