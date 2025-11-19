@@ -204,19 +204,29 @@ export class Hc03Sdk {
         await this.disconnect();
       }
       
-      // Request HC03 device with very permissive filters to find all BLE devices
-      // This allows users to manually select their HC03 device even if it has unexpected name/UUID
-      console.log('🔍 [HC03] Requesting Bluetooth device with acceptAllDevices=true...');
-      console.log('🔍 [HC03] This will show ALL nearby Bluetooth devices in the Chrome picker');
-      console.log('🔍 [HC03] Look for device named: HC02-XXX or HC03-XXX or similar');
+      // Request HC03/HC02 device with filters that match both device types
+      // HC03 devices use naming pattern: HC03-XXXXXX
+      // HC02 devices use naming pattern: HC02-XXXXXX (e.g., HC02-F1B51D)
+      console.log('🔍 [HC03] Requesting Bluetooth device...');
+      console.log('🔍 [HC03] Will search for HC03-XXX and HC02-XXX devices');
       
       try {
-        // Use acceptAllDevices to show ALL nearby Bluetooth devices
-        // This helps when HC03 device advertises with unexpected name or UUID
         console.log('🔍 [HC03] Calling navigator.bluetooth.requestDevice()...');
         
+        // Use filters with namePrefix to match HC03 AND HC02 devices
+        // This is more reliable than acceptAllDevices on Android
         this.device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
+          filters: [
+            { namePrefix: 'HC03' },
+            { namePrefix: 'HC02' },
+            { namePrefix: 'HC-03' },
+            { namePrefix: 'HC-02' },
+            { namePrefix: 'UNKTOP' },
+            { namePrefix: 'Health' },
+            { services: [HC03_SERVICE_UUID] },
+            { services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] },
+            { services: ['0000ffe5-0000-1000-8000-00805f9b34fb'] }
+          ],
           optionalServices: [
             HC03_SERVICE_UUID,
             BATTERY_SERVICE_UUID,
@@ -230,7 +240,7 @@ export class Hc03Sdk {
             'heart_rate',
             'health_thermometer'
           ]
-        } as any); // Type assertion for acceptAllDevices (valid Web Bluetooth API but not in TypeScript types yet)
+        });
 
         console.log('✅ [HC03] Device selected successfully!');
         console.log('✅ [HC03] Device name:', this.device.name);

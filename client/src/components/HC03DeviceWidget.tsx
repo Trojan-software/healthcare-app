@@ -389,13 +389,31 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
         throw new Error(errorMessage);
       }
       
+      // Check for Location permission on Android (required for Bluetooth scanning)
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      if (isAndroid && 'permissions' in navigator) {
+        try {
+          console.log('🔍 [HC03] Checking location permission (required on Android)...');
+          // @ts-ignore - geolocation permission API
+          const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+          console.log('🔍 [HC03] Location permission status:', permissionStatus.state);
+          
+          if (permissionStatus.state === 'denied') {
+            throw new Error('Location permission is required for Bluetooth scanning on Android. Please enable Location in your phone settings, then grant location permission to Chrome when prompted.');
+          }
+        } catch (permError) {
+          console.warn('⚠️ [HC03] Could not check location permission:', permError);
+        }
+      }
+      
       // Check if device is available first
       const isAvailable = await hc03Sdk.isDeviceAvailable();
       if (!isAvailable) {
-        throw new Error('HC03 device is already connected to another application. Please disconnect it from other apps and try again.');
+        throw new Error('HC02/HC03 device is already connected to another application. Please disconnect it from other apps and try again.');
       }
       
       // Use HC03 SDK to connect to device
+      console.log('🔍 [HC03] Starting device scan...');
       const device = await hc03Sdk.connectDevice();
       
       if (device) {
