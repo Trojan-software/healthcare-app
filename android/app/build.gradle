@@ -19,9 +19,53 @@ android {
     signingConfigs {
         release {
             storeFile file('../app-release.keystore')
-            storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD') ?: 'healthcare123'
-            keyAlias System.getenv('ANDROID_KEY_ALIAS') ?: 'healthcare-app'
-            keyPassword System.getenv('ANDROID_KEY_PASSWORD') ?: 'healthcare123'
+            
+            // SECURITY: Require environment variables in production (ADHCC - High 7.5)
+            // No fallback passwords to prevent accidental use of weak credentials
+            def keystorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            def keyAlias = System.getenv('ANDROID_KEY_ALIAS')
+            def keyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+            
+            if (!keystorePassword || !keyAlias || !keyPassword) {
+                throw new GradleException(
+                    """
+                    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    ❌ KEYSTORE CREDENTIALS MISSING
+                    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    
+                    Required environment variables are not set:
+                    ${!keystorePassword ? '  ❌ ANDROID_KEYSTORE_PASSWORD' : '  ✅ ANDROID_KEYSTORE_PASSWORD'}
+                    ${!keyAlias ? '  ❌ ANDROID_KEY_ALIAS' : '  ✅ ANDROID_KEY_ALIAS'}
+                    ${!keyPassword ? '  ❌ ANDROID_KEY_PASSWORD' : '  ✅ ANDROID_KEY_PASSWORD'}
+                    
+                    SOLUTIONS:
+                    
+                    1. Local Development:
+                       Create a .env file and set:
+                       export ANDROID_KEYSTORE_PASSWORD=your_password
+                       export ANDROID_KEY_ALIAS=healthcare-app
+                       export ANDROID_KEY_PASSWORD=your_password
+                    
+                    2. CI/CD (GitHub Actions):
+                       Repository Settings → Secrets → Add:
+                       - ANDROID_KEYSTORE_PASSWORD
+                       - ANDROID_KEY_ALIAS
+                       - ANDROID_KEY_PASSWORD
+                    
+                    3. CI/CD (GitLab):
+                       Settings → CI/CD → Variables → Add each variable
+                    
+                    See .env.example for reference.
+                    
+                    ADHCC Compliance: Hardcoded Secrets Prevention (High - 7.5)
+                    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    """.stripIndent()
+                )
+            }
+            
+            storePassword keystorePassword
+            keyAlias keyAlias
+            keyPassword keyPassword
         }
     }
     
