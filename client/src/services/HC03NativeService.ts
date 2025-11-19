@@ -49,12 +49,107 @@ export class HC03NativeService {
     this.isNativeAvailable = false;
     try {
       this.webService = new WebBluetoothService();
+      this.setupWebBluetoothListeners();
       this.isInitialized = true;
       console.log('Using Web Bluetooth API');
     } catch (error) {
       console.error('Web Bluetooth not available:', error);
       throw error;
     }
+  }
+  
+  private setupWebBluetoothListeners(): void {
+    if (!this.webService) return;
+    
+    // Map Web Bluetooth events to normalized HC03NativeService events
+    this.webService.on('batteryData', (data: any) => {
+      this.emit('batteryLevel', {
+        level: data.level,
+        voltage: data.voltage,
+        charging: data.charging || false
+      });
+    });
+    
+    this.webService.on('temperatureData', (data: any) => {
+      this.emit('temperature', {
+        body: data.bodyTemp,
+        environment: data.envTemp
+      });
+    });
+    
+    this.webService.on('bloodGlucoseData', (data: any) => {
+      this.emit('bloodGlucose', { value: data.value });
+    });
+    
+    this.webService.on('bloodOxygenData', (data: any) => {
+      this.emit('bloodOxygen', {
+        spo2: data.spo2,
+        heartRate: data.heartRate,
+        waveData: data.waveData
+      });
+    });
+    
+    this.webService.on('bloodOxygenWave', (data: any) => {
+      this.emit('bloodOxygen', {
+        spo2: data.spo2 || 0,
+        heartRate: data.heartRate || 0,
+        waveData: data.waveData
+      });
+    });
+    
+    this.webService.on('bloodPressureData', (data: any) => {
+      this.emit('bloodPressure', {
+        systolic: data.systolic,
+        diastolic: data.diastolic,
+        heartRate: data.heartRate
+      });
+    });
+    
+    // ECG events
+    this.webService.on('ecgWave', (data: any) => {
+      this.emit('ecgWave', data);
+    });
+    
+    this.webService.on('ecgHeartRate', (data: any) => {
+      this.emit('heartRate', { value: data.value });
+    });
+    
+    this.webService.on('ecgHRV', (data: any) => {
+      this.emit('hrv', { value: data.value });
+    });
+    
+    this.webService.on('ecgMood', (data: any) => {
+      this.emit('moodIndex', { value: data.value });
+    });
+    
+    this.webService.on('ecgRR', (data: any) => {
+      this.emit('rrInterval', { value: data.value });
+    });
+    
+    this.webService.on('ecgRespiratory', (data: any) => {
+      this.emit('respiratoryRate', { value: data.value });
+    });
+    
+    this.webService.on('ecgTouch', (data: any) => {
+      this.emit('fingerDetection', { detected: data.detected });
+    });
+    
+    // Connection lifecycle events (pass through)
+    this.webService.on('connectionStateChanged', (data: any) => {
+      this.emit('connectionStateChanged', data);
+    });
+    
+    this.webService.on('connected', (data: any) => {
+      this.emit('connected', data);
+    });
+    
+    this.webService.on('disconnected', (data: any) => {
+      this.emit('disconnected', data);
+    });
+    
+    this.webService.on('bluetoothError', (data: any) => {
+      this.emit('bluetoothError', data);
+    });
   }
 
   private setupNativeListeners(): void {
@@ -262,10 +357,9 @@ export class HC03NativeService {
       this.listeners.set(event, []);
     }
     this.listeners.get(event)!.push(callback);
-
-    if (this.webService) {
-      this.webService.on(event, callback);
-    }
+    
+    // Note: webService listeners are set up via setupWebBluetoothListeners()
+    // which translates webService events to normalized event names
   }
 
   off(event: string, callback: Function): void {
@@ -276,10 +370,9 @@ export class HC03NativeService {
         eventListeners.splice(index, 1);
       }
     }
-
-    if (this.webService) {
-      this.webService.off(event, callback);
-    }
+    
+    // Note: webService event removal is managed internally
+    // Normalized events are emitted through HC03NativeService.emit()
   }
 
   private emit(event: string, data: any): void {
