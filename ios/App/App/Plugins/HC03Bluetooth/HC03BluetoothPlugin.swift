@@ -170,9 +170,9 @@ public class HC03BluetoothPlugin: CAPPlugin {
         }
         
         let start = rawData[PACKAGE_INDEX_START]
-        let length = Int(rawData[PACKAGE_INDEX_LENGTH]) | (Int(rawData[PACKAGE_INDEX_LENGTH + 1]) << 8)
+        var length = Int(rawData[PACKAGE_INDEX_LENGTH]) | (Int(rawData[PACKAGE_INDEX_LENGTH + 1]) << 8)
         let btEdition = rawData[PACKAGE_INDEX_BT_EDITION]
-        let type = rawData[PACKAGE_INDEX_TYPE]
+        var type = rawData[PACKAGE_INDEX_TYPE]
         let headerCrc = rawData[PACKAGE_INDEX_HEADER_CRC]
         
         // Validate header CRC
@@ -214,37 +214,65 @@ public class HC03BluetoothPlugin: CAPPlugin {
             data = Array(rawData[PACKAGE_INDEX_CONTENT..<PACKAGE_INDEX_CONTENT + length])
             
         } else if isHead {
-            // Head packet - cache it
+            // Head packet - cache for multi-packet reconstruction
+            // Head structure: [START, LEN(2), VER, TYPE, HDR_CRC, CONTENT...] (no tail CRC/END)
             cacheMap.removeAll()
             cacheType = type
             cacheMap[type] = rawData
             return nil
             
         } else if isTail {
-            // Tail packet - combine with cached head (Flutter SDK approach)
+            // Tail packet - combine with cached head and validate CRC
+            // Tail structure: [CONTENT..., TAIL_CRC(2), END(1)]
             guard cacheType != 0, let headData = cacheMap[cacheType] else {
                 cacheType = 0
                 cacheMap.removeAll()
-                print("Missing head data")
+                print("Missing head data for tail packet")
                 return nil
             }
             
-            // Concatenate head + tail (Flutter SDK: List<int> allData = [...cacheMap[cacheType]!, ...rawData];)
-            let allData = headData + rawData
+            // Extract header info from head packet (overwrite garbage values from tail)
+            length = Int(headData[PACKAGE_INDEX_LENGTH]) | (Int(headData[PACKAGE_INDEX_LENGTH + 1]) << 8)
+            type = headData[PACKAGE_INDEX_TYPE]
             
-            // Extract header info from combined buffer
-            let length = Int(allData[PACKAGE_INDEX_LENGTH]) | (Int(allData[PACKAGE_INDEX_LENGTH + 1]) << 8)
-            let type = allData[PACKAGE_INDEX_TYPE]
+            // Extract payload from head (skip header bytes)
+            let headContentLength = headData.count - PACKAGE_INDEX_CONTENT
+            let headContent = Array(headData[PACKAGE_INDEX_CONTENT..<headData.count])
             
-            // Extract data (Flutter SDK: Uint8List.view(buffer, PACKAGE_INDEX_CONTENT, length).toList())
-            guard allData.count >= PACKAGE_INDEX_CONTENT + length else {
-                print("Insufficient data in combined packet")
+            // Extract payload from tail (strip last 3 bytes: TAIL_CRC(2) + END(1))
+            guard rawData.count >= 3 else {
+                print("Tail packet too short")
                 cacheType = 0
                 cacheMap.removeAll()
                 return nil
             }
             
-            data = Array(allData[PACKAGE_INDEX_CONTENT..<PACKAGE_INDEX_CONTENT + length])
+            let tailContentLength = rawData.count - 3
+            let tailContent = Array(rawData[0..<tailContentLength])
+            
+            // Get tail CRC from tail frame (last 2 bytes before END marker)
+            let tailCrc = Int(rawData[tailContentLength]) | (Int(rawData[tailContentLength + 1]) << 8)
+            
+            // Combine payload bytes
+            data = headContent + tailContent
+            
+            // Validate combined payload length matches header
+            if data!.count != length {
+                print("Multi-packet length mismatch: expected \(length), got \(data!.count)")
+            }
+            
+            // Reconstruct full packet for CRC validation: [HDR + CONTENT]
+            var fullPacket = Array(headData[0..<PACKAGE_INDEX_CONTENT])
+            fullPacket.append(contentsOf: data!)
+            
+            // Validate tail CRC over reconstructed packet
+            let checkEncryTail = encryTail(fullPacket)
+            guard tailCrc == checkEncryTail else {
+                print("Multi-packet CRC validation failed: expected 0x\(String(checkEncryTail, radix: 16)), got 0x\(String(tailCrc, radix: 16))")
+                cacheType = 0
+                cacheMap.removeAll()
+                return nil
+            }
             
             cacheType = 0
             cacheMap.removeAll()

@@ -325,39 +325,71 @@ public class HC03BluetoothPlugin extends Plugin {
             System.arraycopy(rawData, PACKAGE_INDEX_CONTENT, data, 0, length);
             
         } else if (isHead) {
-            // Head packet - cache it
+            // Head packet - cache for multi-packet reconstruction
+            // Head structure: [START, LEN(2), VER, TYPE, HDR_CRC, CONTENT...] (no tail CRC/END)
             cacheMap.clear();
             cacheType = type;
             cacheMap.put(type, rawData);
             return null;
             
         } else if (isTail) {
-            // Tail packet - combine with cached head (Flutter SDK approach)
+            // Tail packet - combine with cached head and validate CRC
+            // Tail structure: [CONTENT..., TAIL_CRC(2), END(1)]
             if (cacheType == 0 || !cacheMap.containsKey(cacheType)) {
                 cacheType = 0;
                 cacheMap.clear();
-                Log.w(TAG, "Missing head data");
+                Log.w(TAG, "Missing head data for tail packet");
                 return null;
             }
             
             byte[] headData = cacheMap.get(cacheType);
             
-            // Concatenate head + tail (Flutter SDK: List<int> allData = [...cacheMap[cacheType]!, ...rawData];)
-            byte[] allData = new byte[headData.length + rawData.length];
-            System.arraycopy(headData, 0, allData, 0, headData.length);
-            System.arraycopy(rawData, 0, allData, headData.length, rawData.length);
+            // Extract header info from head packet
+            ByteBuffer headBuffer = ByteBuffer.wrap(headData).order(ByteOrder.LITTLE_ENDIAN);
+            length = headBuffer.getShort(PACKAGE_INDEX_LENGTH) & 0xFFFF;
+            type = headBuffer.get(PACKAGE_INDEX_TYPE) & 0xFF;
             
-            // Extract header info from combined buffer
-            ByteBuffer allBuffer = ByteBuffer.wrap(allData).order(ByteOrder.LITTLE_ENDIAN);
-            length = allBuffer.getShort(PACKAGE_INDEX_LENGTH) & 0xFFFF;
-            type = allBuffer.get(PACKAGE_INDEX_TYPE) & 0xFF;
+            // Extract payload from head (skip header bytes)
+            int headContentLength = headData.length - PACKAGE_INDEX_CONTENT;
+            byte[] headContent = new byte[headContentLength];
+            System.arraycopy(headData, PACKAGE_INDEX_CONTENT, headContent, 0, headContentLength);
             
-            // Extract data (Flutter SDK: Uint8List.view(buffer, PACKAGE_INDEX_CONTENT, length).toList())
-            if (allData.length >= PACKAGE_INDEX_CONTENT + length) {
-                data = new byte[length];
-                System.arraycopy(allData, PACKAGE_INDEX_CONTENT, data, 0, length);
-            } else {
-                Log.w(TAG, "Insufficient data in combined packet");
+            // Extract payload from tail (strip last 3 bytes: TAIL_CRC(2) + END(1))
+            if (rawData.length < 3) {
+                Log.w(TAG, "Tail packet too short");
+                cacheType = 0;
+                cacheMap.clear();
+                return null;
+            }
+            
+            int tailContentLength = rawData.length - 3;
+            byte[] tailContent = new byte[tailContentLength];
+            System.arraycopy(rawData, 0, tailContent, 0, tailContentLength);
+            
+            // Get tail CRC from tail frame (last 2 bytes before END marker)
+            ByteBuffer tailBuffer = ByteBuffer.wrap(rawData).order(ByteOrder.LITTLE_ENDIAN);
+            int tailCrc = tailBuffer.getShort(tailContentLength) & 0xFFFF;
+            
+            // Combine payload bytes
+            data = new byte[headContentLength + tailContentLength];
+            System.arraycopy(headContent, 0, data, 0, headContentLength);
+            System.arraycopy(tailContent, 0, data, headContentLength, tailContentLength);
+            
+            // Validate combined payload length matches header
+            if (data.length != length) {
+                Log.w(TAG, "Multi-packet length mismatch: expected " + length + ", got " + data.length);
+            }
+            
+            // Reconstruct full packet for CRC validation: [HDR + CONTENT]
+            byte[] fullPacket = new byte[PACKAGE_INDEX_CONTENT + data.length];
+            System.arraycopy(headData, 0, fullPacket, 0, PACKAGE_INDEX_CONTENT);
+            System.arraycopy(data, 0, fullPacket, PACKAGE_INDEX_CONTENT, data.length);
+            
+            // Validate tail CRC over reconstructed packet
+            int checkEncryTail = encryTail(fullPacket);
+            if (tailCrc != checkEncryTail) {
+                Log.w(TAG, "Multi-packet CRC validation failed: expected 0x" + 
+                      Integer.toHexString(checkEncryTail) + ", got 0x" + Integer.toHexString(tailCrc));
                 cacheType = 0;
                 cacheMap.clear();
                 return null;
