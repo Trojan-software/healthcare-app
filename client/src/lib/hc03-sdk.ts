@@ -16,14 +16,12 @@ export enum Detection {
   BG = 'BG'            // Blood glucose
 }
 
-// HC03 Device Service and Characteristic UUIDs (from Flutter SDK Guide)
-const HC03_SERVICE_UUID = '0000fff0-0000-1000-8000-00805f9b34fb';
-const HC03_WRITE_CHARACTERISTIC = '0000fff1-0000-1000-8000-00805f9b34fb';
-const HC03_NOTIFY_CHARACTERISTIC = '0000fff2-0000-1000-8000-00805f9b34fb';
-const HC03_ECG_CHARACTERISTIC = '0000fff3-0000-1000-8000-00805f9b34fb';
-const HC03_BLOOD_OXYGEN_CHARACTERISTIC = '0000fff4-0000-1000-8000-00805f9b34fb';
-const HC03_BLOOD_PRESSURE_CHARACTERISTIC = '0000fff5-0000-1000-8000-00805f9b34fb';
-const HC03_TEMPERATURE_CHARACTERISTIC = '0000fff6-0000-1000-8000-00805f9b34fb';
+// HC03/HC02 Device Service and Characteristic UUIDs (from Official HC03 Flutter SDK)
+// Source: HC03_Flutter_V1.0.1/lib/src/common/constant.dart
+const HC03_FILTER_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // Official SDK FILTER_UUID
+const HC03_SERVICE_UUID = '00001822-0000-1000-8000-00805f9b34fb'; // Official SDK UUID_SERVICE
+const HC03_WRITE_CHARACTERISTIC = '0000fff1-0000-1000-8000-00805f9b34fb'; // Official SDK WRITE_UUID
+const HC03_NOTIFY_CHARACTERISTIC = '0000fff4-0000-1000-8000-00805f9b34fb'; // Official SDK NOTIFY_UUID (was fff2, CORRECTED to fff4!)
 const BATTERY_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb';
 const BATTERY_LEVEL_CHARACTERISTIC = '00002a19-0000-1000-8000-00805f9b34fb';
 
@@ -214,7 +212,7 @@ export class Hc03Sdk {
         console.log('🔍 [HC03] Calling navigator.bluetooth.requestDevice()...');
         
         // Use filters with namePrefix to match HC03 AND HC02 devices
-        // This is more reliable than acceptAllDevices on Android
+        // HC02/HC03 devices advertise with name patterns like: HC02-F1B51D, HC03-XXXXXX
         this.device = await navigator.bluetooth.requestDevice({
           filters: [
             { namePrefix: 'HC03' },
@@ -224,11 +222,13 @@ export class Hc03Sdk {
             { namePrefix: 'UNKTOP' },
             { namePrefix: 'Health' },
             { services: [HC03_SERVICE_UUID] },
+            { services: [HC03_FILTER_UUID] },
             { services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] },
             { services: ['0000ffe5-0000-1000-8000-00805f9b34fb'] }
           ],
           optionalServices: [
             HC03_SERVICE_UUID,
+            HC03_FILTER_UUID,
             BATTERY_SERVICE_UUID,
             'device_information',
             'generic_access',
