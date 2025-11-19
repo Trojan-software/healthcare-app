@@ -74,7 +74,7 @@
 }
 
 # Optimization flags
--optimizationpasses 5
+-optimizationpasses 7
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
 -dontpreverify
@@ -85,14 +85,12 @@
 -allowaccessmodification
 -optimizations !code/simplification/arithmetic,!field/*,!class/merging/*
 
-# Keep annotation classes
+# Keep essential attributes for runtime and crash reporting
 -keepattributes *Annotation*
 -keepattributes Signature
 -keepattributes Exceptions
 -keepattributes InnerClasses
 -keepattributes EnclosingMethod
-
-# Keep source file names for crash reports
 -keepattributes SourceFile,LineNumberTable
 
 # Keep custom model classes
@@ -113,19 +111,8 @@
 -adaptresourcefilenames
 -adaptresourcefilecontents
 
-# Remove debugging information
--keepattributes !LocalVariableTable
--keepattributes !LocalVariableTypeTable
-
-# Advanced optimization passes for smaller, harder to reverse APK
--optimizationpasses 7
-
 # Flatten package hierarchy (makes reverse engineering harder)
 -flattenpackagehierarchy ''
-
-# Remove unused code
--dontwarn **
--ignorewarnings
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # SECURITY: Protect Security-Critical Classes
