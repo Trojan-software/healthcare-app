@@ -20,6 +20,25 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.UUID;
+
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
+import android.content.pm.PackageManager;
+import android.os.Handler;
+import android.os.Looper;
 
 /**
  * HC03 Bluetooth Plugin for Android
@@ -82,6 +101,23 @@ public class HC03BluetoothPlugin extends Plugin {
     
     // Active detection tracking
     private Set<String> activeDetections = new HashSet<>();
+    
+    // BLE Connection Manager (from Flutter SDK bluetooth_manager.dart)
+    private static final UUID SERVICE_UUID = UUID.fromString("0000fff0-0000-1000-8000-00805f9b34fb");
+    private static final UUID WRITE_CHARACTERISTIC_UUID = UUID.fromString("0000fff1-0000-1000-8000-00805f9b34fb");
+    private static final UUID NOTIFY_CHARACTERISTIC_UUID = UUID.fromString("0000fff2-0000-1000-8000-00805f9b34fb");
+    private static final UUID CLIENT_CHARACTERISTIC_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    private static final long SCAN_PERIOD = 10000; // 10 seconds
+    
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothLeScanner bleScanner;
+    private BluetoothGatt bluetoothGatt;
+    private BluetoothGattCharacteristic writeCharacteristic;
+    private BluetoothGattCharacteristic notifyCharacteristic;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private boolean isScanning = false;
+    private boolean isConnected = false;
+    private List<BluetoothDevice> discoveredDevices = new ArrayList<>();
     
     // ECG Manager (NeuroSky SDK)
     private EcgManager ecgManager;
@@ -736,6 +772,325 @@ public class HC03BluetoothPlugin extends Plugin {
             notifyListeners("hc03:ecg:metrics", data);
         }
     }
+    
+    /**
+     * Scan for HC03 Bluetooth devices
+     */
+    @PluginMethod
+    public void startScan(PluginCall call) {
+        try {
+            Context context = getContext();
+            
+            // Check Bluetooth feature support
+            if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                call.reject("BLE not supported on this device");
+                return;
+            }
+            
+            BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+            bluetoothAdapter = bluetoothManager.getAdapter();
+            
+            if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
+                call.reject("Bluetooth is not enabled");
+                return;
+            }
+            
+            bleScanner = bluetoothAdapter.getBluetoothLeScanner();
+            if (bleScanner == null) {
+                call.reject("BLE scanner not available");
+                return;
+            }
+            
+            discoveredDevices.clear();
+            isScanning = true;
+            bleScanner.startScan(scanCallback);
+            
+            // Stop scan after period
+            handler.postDelayed(() -> {
+                if (isScanning) {
+                    stopScanInternal();
+                }
+            }, SCAN_PERIOD);
+            
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            call.resolve(ret);
+            
+            Log.d(TAG, "BLE scan started");
+        } catch (SecurityException e) {
+            Log.e(TAG, "Missing Bluetooth permissions", e);
+            call.reject("Missing Bluetooth permissions. Please grant BLUETOOTH_SCAN and BLUETOOTH_CONNECT permissions.");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start scan", e);
+            call.reject("Scan failed: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Stop BLE scan
+     */
+    @PluginMethod
+    public void stopScan(PluginCall call) {
+        if (isScanning) {
+            stopScanInternal();
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            call.resolve(ret);
+        } else {
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            ret.put("message", "No scan in progress");
+            call.resolve(ret);
+        }
+    }
+    
+    private void stopScanInternal() {
+        if (isScanning && bleScanner != null) {
+            try {
+                bleScanner.stopScan(scanCallback);
+                isScanning = false;
+                Log.d(TAG, "BLE scan stopped");
+            } catch (SecurityException e) {
+                Log.e(TAG, "Permission denied while stopping scan", e);
+            }
+        }
+    }
+    
+    /**
+     * Connect to HC03 device
+     */
+    @PluginMethod
+    public void connect(PluginCall call) {
+        try {
+            String deviceAddress = call.getString("deviceAddress");
+            if (deviceAddress == null) {
+                call.reject("Device address is required");
+                return;
+            }
+            
+            // Clean up existing connection
+            if (bluetoothGatt != null) {
+                bluetoothGatt.close();
+                bluetoothGatt = null;
+            }
+            
+            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
+            if (device == null) {
+                call.reject("Device not found");
+                return;
+            }
+            
+            Context context = getContext();
+            // Use TRANSPORT_LE for proper BLE connection
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
+            } else {
+                bluetoothGatt = device.connectGatt(context, false, gattCallback);
+            }
+            
+            if (bluetoothGatt == null) {
+                call.reject("Failed to create GATT connection");
+                return;
+            }
+            
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            call.resolve(ret);
+            
+            Log.d(TAG, "Connecting to device: " + deviceAddress);
+        } catch (SecurityException e) {
+            Log.e(TAG, "Missing Bluetooth permissions", e);
+            call.reject("Missing Bluetooth permissions. Please grant BLUETOOTH_CONNECT permission.");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to connect", e);
+            call.reject("Connection failed: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Disconnect from HC03 device
+     */
+    @PluginMethod
+    public void disconnect(PluginCall call) {
+        disconnectInternal();
+        
+        JSObject ret = new JSObject();
+        ret.put("success", true);
+        call.resolve(ret);
+    }
+    
+    private void disconnectInternal() {
+        if (bluetoothGatt != null) {
+            bluetoothGatt.disconnect();
+            bluetoothGatt.close();
+            bluetoothGatt = null;
+        }
+        isConnected = false;
+        writeCharacteristic = null;
+        notifyCharacteristic = null;
+        Log.d(TAG, "Disconnected from device");
+    }
+    
+    /**
+     * BLE Scan Callback
+     */
+    private final ScanCallback scanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            BluetoothDevice device = result.getDevice();
+            String deviceName = device.getName();
+            
+            // Filter for HC03 devices
+            if (deviceName != null && (deviceName.startsWith("HC") || deviceName.contains("HC03"))) {
+                if (!discoveredDevices.contains(device)) {
+                    discoveredDevices.add(device);
+                    
+                    JSObject deviceInfo = new JSObject();
+                    deviceInfo.put("name", deviceName);
+                    deviceInfo.put("address", device.getAddress());
+                    deviceInfo.put("rssi", result.getRssi());
+                    
+                    notifyListeners("hc03:device:found", deviceInfo);
+                    Log.d(TAG, "Found HC03 device: " + deviceName + " (" + device.getAddress() + ")");
+                }
+            }
+        }
+        
+        @Override
+        public void onScanFailed(int errorCode) {
+            JSObject error = new JSObject();
+            error.put("errorCode", errorCode);
+            notifyListeners("hc03:scan:error", error);
+            Log.e(TAG, "BLE scan failed with error: " + errorCode);
+        }
+    };
+    
+    /**
+     * GATT Callback for connection and data
+     */
+    private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    isConnected = true;
+                    Log.d(TAG, "Connected to GATT server, status: " + status);
+                    
+                    // Discover services after successful connection
+                    try {
+                        boolean result = gatt.discoverServices();
+                        if (!result) {
+                            Log.e(TAG, "Failed to start service discovery");
+                        }
+                    } catch (SecurityException e) {
+                        Log.e(TAG, "Permission denied during service discovery", e);
+                    }
+                    
+                    JSObject event = new JSObject();
+                    event.put("connected", true);
+                    notifyListeners("hc03:connection:state", event);
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    isConnected = false;
+                    Log.d(TAG, "Disconnected from GATT server");
+                    
+                    JSObject event = new JSObject();
+                    event.put("connected", false);
+                    notifyListeners("hc03:connection:state", event);
+                    
+                    // Clean up on disconnect
+                    writeCharacteristic = null;
+                    notifyCharacteristic = null;
+                }
+            } else {
+                // Handle GATT errors (e.g., status 133)
+                Log.e(TAG, "GATT connection error: status=" + status + ", newState=" + newState);
+                isConnected = false;
+                
+                JSObject event = new JSObject();
+                event.put("connected", false);
+                event.put("error", "GATT error: " + status);
+                notifyListeners("hc03:connection:error", event);
+                
+                // Close and cleanup on error
+                if (gatt != null) {
+                    gatt.close();
+                    bluetoothGatt = null;
+                }
+            }
+        }
+        
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                BluetoothGattService service = gatt.getService(SERVICE_UUID);
+                if (service != null) {
+                    writeCharacteristic = service.getCharacteristic(WRITE_CHARACTERISTIC_UUID);
+                    notifyCharacteristic = service.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
+                    
+                    if (notifyCharacteristic != null) {
+                        // Enable notifications on the client side
+                        boolean notifyEnabled = gatt.setCharacteristicNotification(notifyCharacteristic, true);
+                        if (!notifyEnabled) {
+                            Log.e(TAG, "Failed to enable characteristic notification");
+                            return;
+                        }
+                        
+                        // Write descriptor to enable notifications on the device
+                        BluetoothGattDescriptor descriptor = notifyCharacteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG);
+                        if (descriptor != null) {
+                            try {
+                                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                                boolean writeResult = gatt.writeDescriptor(descriptor);
+                                if (!writeResult) {
+                                    Log.e(TAG, "Failed to write notification descriptor");
+                                }
+                                Log.d(TAG, "HC03 service found, notifications enabled: " + writeResult);
+                            } catch (SecurityException e) {
+                                Log.e(TAG, "Permission denied while enabling notifications", e);
+                            }
+                        } else {
+                            Log.e(TAG, "Client Characteristic Config descriptor not found");
+                        }
+                    } else {
+                        Log.e(TAG, "Notify characteristic not found");
+                    }
+                } else {
+                    Log.e(TAG, "HC03 service not found");
+                }
+            } else {
+                Log.e(TAG, "Service discovery failed with status: " + status);
+            }
+        }
+        
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (CLIENT_CHARACTERISTIC_CONFIG.equals(descriptor.getUuid())) {
+                    Log.d(TAG, "Notification descriptor written successfully");
+                    
+                    JSObject event = new JSObject();
+                    event.put("ready", true);
+                    notifyListeners("hc03:device:ready", event);
+                }
+            } else {
+                Log.e(TAG, "Descriptor write failed with status: " + status);
+            }
+        }
+        
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            if (NOTIFY_CHARACTERISTIC_UUID.equals(characteristic.getUuid())) {
+                byte[] data = characteristic.getValue();
+                if (data != null && data.length > 0) {
+                    // Feed raw data to parseData() for HC03 protocol processing
+                    OriginData originData = generalUnpackRawData(data);
+                    if (originData != null) {
+                        routeData(originData.type, originData.data);
+                    }
+                }
+            }
+        }
+    };
     
     /**
      * Internal data structure for unpacked frames

@@ -14,9 +14,10 @@
 
 import Foundation
 import Capacitor
+import CoreBluetooth
 
 @objc(HC03BluetoothPlugin)
-public class HC03BluetoothPlugin: CAPPlugin {
+public class HC03BluetoothPlugin: CAPPlugin, CBCentralManagerDelegate, CBPeripheralDelegate {
     
     // MARK: - Protocol Constants (from Flutter SDK)
     private let PACKAGE_TOTAL_LENGTH = 10
@@ -66,6 +67,19 @@ public class HC03BluetoothPlugin: CAPPlugin {
     private var cacheType: UInt8 = 0
     private var cacheMap = [UInt8: [UInt8]]()
     
+    // MARK: - BLE Connection Manager (from Flutter SDK bluetooth_manager.dart)
+    private let SERVICE_UUID = CBUUID(string: "0000FFF0-0000-1000-8000-00805F9B34FB")
+    private let WRITE_CHARACTERISTIC_UUID = CBUUID(string: "0000FFF1-0000-1000-8000-00805F9B34FB")
+    private let NOTIFY_CHARACTERISTIC_UUID = CBUUID(string: "0000FFF2-0000-1000-8000-00805F9B34FB")
+    
+    private var centralManager: CBCentralManager?
+    private var connectedPeripheral: CBPeripheral?
+    private var writeCharacteristic: CBCharacteristic?
+    private var notifyCharacteristic: CBCharacteristic?
+    private var discoveredDevices = [CBPeripheral]()
+    private var isScanning = false
+    private var scanTimer: Timer?
+    
     // MARK: - Lifecycle
     override public func load() {
         sdkHealthMonitor = SDKHealthMonitor()
@@ -74,6 +88,9 @@ public class HC03BluetoothPlugin: CAPPlugin {
         sdkHealthMonitor?.dataCallback = { [weak self] (type, value) in
             self?.sendECGData(type: type, value: value)
         }
+        
+        // Initialize CBCentralManager once
+        centralManager = CBCentralManager(delegate: self, queue: nil)
     }
     
     // MARK: - Plugin Methods
@@ -595,6 +612,221 @@ public class HC03BluetoothPlugin: CAPPlugin {
         } else {
             data["value"] = value
             notifyListeners("hc03:ecg:metrics", data: data)
+        }
+    }
+    
+    // MARK: - BLE Connection Methods
+    
+    @objc func startScan(_ call: CAPPluginCall) {
+        guard let central = centralManager else {
+            call.reject("Central Manager not available")
+            return
+        }
+        
+        if central.state == .poweredOn {
+            // Start scanning immediately if powered on
+            startScanningInternal()
+            call.resolve(["success": true])
+        } else if central.state == .poweredOff {
+            call.reject("Bluetooth is powered off")
+        } else if central.state == .unauthorized {
+            call.reject("Bluetooth permission not granted")
+        } else if central.state == .unsupported {
+            call.reject("Bluetooth not supported on this device")
+        } else {
+            // State is .unknown or .resetting - wait for power on
+            call.resolve([
+                "success": true,
+                "message": "Waiting for Bluetooth to power on"
+            ])
+        }
+    }
+    
+    private func startScanningInternal() {
+        guard let central = centralManager, central.state == .poweredOn else {
+            return
+        }
+        
+        if isScanning {
+            stopScanInternal()
+        }
+        
+        isScanning = true
+        // Scan without service filter to find all HC03 devices
+        central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
+        
+        // Stop scan after 10 seconds
+        scanTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { [weak self] _ in
+            self?.stopScanInternal()
+            
+            // Notify scan complete
+            self?.notifyListeners("hc03:scan:complete", data: [:])
+        }
+        
+        print("BLE scan started")
+    }
+    
+    @objc func stopScan(_ call: CAPPluginCall) {
+        stopScanInternal()
+        call.resolve(["success": true])
+    }
+    
+    private func stopScanInternal() {
+        if isScanning {
+            centralManager?.stopScan()
+            isScanning = false
+            scanTimer?.invalidate()
+            scanTimer = nil
+        }
+    }
+    
+    @objc func connect(_ call: CAPPluginCall) {
+        guard let deviceAddress = call.getString("deviceAddress") else {
+            call.reject("Device address is required")
+            return
+        }
+        
+        // Find peripheral by UUID
+        if let peripheral = discoveredDevices.first(where: { $0.identifier.uuidString == deviceAddress }) {
+            connectedPeripheral = peripheral
+            peripheral.delegate = self
+            centralManager?.connect(peripheral, options: nil)
+            call.resolve(["success": true])
+        } else {
+            call.reject("Device not found")
+        }
+    }
+    
+    @objc func disconnect(_ call: CAPPluginCall) {
+        if let peripheral = connectedPeripheral {
+            centralManager?.cancelPeripheralConnection(peripheral)
+        }
+        connectedPeripheral = nil
+        writeCharacteristic = nil
+        notifyCharacteristic = nil
+        call.resolve(["success": true])
+    }
+    
+    // MARK: - CBCentralManagerDelegate
+    
+    public func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        switch central.state {
+        case .poweredOn:
+            print("Bluetooth is powered on")
+            notifyListeners("hc03:bluetooth:state", data: ["powered": true])
+            
+            // Auto-start scanning if requested while BT was off
+            if isScanning {
+                startScanningInternal()
+            }
+        case .poweredOff:
+            print("Bluetooth is powered off")
+            notifyListeners("hc03:bluetooth:state", data: ["powered": false])
+            stopScanInternal()
+        case .unauthorized:
+            print("Bluetooth is unauthorized")
+            notifyListeners("hc03:bluetooth:state", data: ["powered": false, "unauthorized": true])
+        case .unsupported:
+            print("Bluetooth is unsupported")
+            notifyListeners("hc03:bluetooth:state", data: ["powered": false, "unsupported": true])
+        case .unknown:
+            print("Bluetooth state unknown")
+        case .resetting:
+            print("Bluetooth is resetting")
+        @unknown default:
+            print("Bluetooth state unknown")
+        }
+    }
+    
+    public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
+        let deviceName = peripheral.name ?? "Unknown"
+        
+        // Filter for HC03 devices
+        if deviceName.hasPrefix("HC") || deviceName.contains("HC03") {
+            if !discoveredDevices.contains(where: { $0.identifier == peripheral.identifier }) {
+                discoveredDevices.append(peripheral)
+                
+                let deviceInfo: [String: Any] = [
+                    "name": deviceName,
+                    "address": peripheral.identifier.uuidString,
+                    "rssi": RSSI.intValue
+                ]
+                
+                notifyListeners("hc03:device:found", data: deviceInfo)
+                print("Found HC03 device: \(deviceName) (\(peripheral.identifier.uuidString))")
+            }
+        }
+    }
+    
+    public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        print("Connected to peripheral: \(peripheral.name ?? "Unknown")")
+        peripheral.discoverServices([SERVICE_UUID])
+        
+        notifyListeners("hc03:connection:state", data: ["connected": true])
+    }
+    
+    public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+        print("Disconnected from peripheral: \(peripheral.name ?? "Unknown")")
+        
+        var eventData: [String: Any] = ["connected": false]
+        if let error = error {
+            print("Disconnect error: \(error.localizedDescription)")
+            eventData["error"] = error.localizedDescription
+        }
+        
+        connectedPeripheral = nil
+        writeCharacteristic = nil
+        notifyCharacteristic = nil
+        
+        notifyListeners("hc03:connection:state", data: eventData)
+    }
+    
+    // MARK: - CBPeripheralDelegate
+    
+    public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+        guard error == nil, let services = peripheral.services else {
+            print("Error discovering services: \(error?.localizedDescription ?? "unknown")")
+            return
+        }
+        
+        for service in services {
+            if service.uuid == SERVICE_UUID {
+                peripheral.discoverCharacteristics([WRITE_CHARACTERISTIC_UUID, NOTIFY_CHARACTERISTIC_UUID], for: service)
+            }
+        }
+    }
+    
+    public func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+        guard error == nil, let characteristics = service.characteristics else {
+            print("Error discovering characteristics: \(error?.localizedDescription ?? "unknown")")
+            return
+        }
+        
+        for characteristic in characteristics {
+            if characteristic.uuid == WRITE_CHARACTERISTIC_UUID {
+                writeCharacteristic = characteristic
+            } else if characteristic.uuid == NOTIFY_CHARACTERISTIC_UUID {
+                notifyCharacteristic = characteristic
+                peripheral.setNotifyValue(true, for: characteristic)
+                print("Enabled notifications for HC03 data")
+                
+                notifyListeners("hc03:device:ready", data: ["ready": true])
+            }
+        }
+    }
+    
+    public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        guard error == nil else {
+            print("Error updating value: \(error?.localizedDescription ?? "unknown")")
+            return
+        }
+        
+        if characteristic.uuid == NOTIFY_CHARACTERISTIC_UUID, let data = characteristic.value {
+            // Convert Data to [UInt8] and feed to HC03 protocol parser
+            let bytes = [UInt8](data)
+            if let originData = generalUnpackRawData(bytes) {
+                routeData(type: originData.type, data: originData.data)
+            }
         }
     }
     

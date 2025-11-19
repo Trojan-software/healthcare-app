@@ -16,7 +16,11 @@ The system employs a modern full-stack architecture. The frontend uses **React 1
 **Key Features and Design Decisions:**
 -   **Enhanced Patient Registration**: Comprehensive signup, UAE mobile validation, patient ID generation, Abu Dhabi hospital selection, OTP email verification, secure passwords, and role-based access.
 -   **Health Monitoring**: Tracks heart rate, blood pressure, temperature, oxygen, blood glucose, and integrates with HC03 devices via Bluetooth for real-time ECG and blood oxygen monitoring. Includes health analytics and a critical event alert system.
--   **Native Android Bluetooth Integration**: Capacitor plugin with HC03 native SDK (NskAlgoSdk) for reliable Bluetooth connectivity on Android devices, including ECG signal processing, HRV, mood index, and respiratory rate detection. Fallback to Web Bluetooth API for browsers.
+-   **Complete HC03 Bluetooth Architecture (Nov 2025)**: 
+    - **Web Bluetooth (PWA)**: Full HC03 protocol in `hc03-sdk.ts` with frame unpacking, multi-packet reconstruction, CRC validation (encryHead/encryTail), and all 6 sensor parsers (Battery, Temperature, Glucose, Oxygen, Pressure, ECG)
+    - **Android Native BLE**: BluetoothAdapter + GATT with TRANSPORT_LE flag, proper permission handling (BLUETOOTH_SCAN/CONNECT), GATT error handling (status 133), notification enable verification, onDescriptorWrite callback
+    - **iOS Native BLE**: Single CBCentralManager instance, service-agnostic scanning, auto-start on power-on, CoreBluetooth delegates for connection/data
+    - **Unified Data Flow**: All platforms feed raw notify bytes → `generalUnpackRawData()` → `routeData()` → sensor parsers → JavaScript events
 -   **Multi-Device Bluetooth Integration**: Supports all UNKTOP medical peripherals with a unified SDK wrapper, auto-pairing, and real-time data synchronization for various sensors (ECG, SpO2, BP, glucose, temperature). Features device-specific dashboard widgets with Chart.js.
 -   **Mobile-First Design**: PWA with offline support, mobile-optimized dashboards, direct device installation, push notifications, and cross-platform compatibility.
 -   **Data Flow**: Secure JWT authentication, real-time data capture from HC03 devices, data validation and storage, immediate alert generation, and an analytics pipeline.
