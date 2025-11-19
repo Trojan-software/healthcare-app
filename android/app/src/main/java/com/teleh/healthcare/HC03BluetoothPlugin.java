@@ -881,8 +881,8 @@ public class HC03BluetoothPlugin extends Plugin {
             }
             
             Context context = getContext();
-            // Use TRANSPORT_LE for proper BLE connection
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            // Use TRANSPORT_LE for proper BLE connection (API 23+)
+            if (android.os.Build.VERSION.SDK_INT >= 23) {
                 bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
             } else {
                 bluetoothGatt = device.connectGatt(context, false, gattCallback);
@@ -1006,14 +1006,29 @@ public class HC03BluetoothPlugin extends Plugin {
                 Log.e(TAG, "GATT connection error: status=" + status + ", newState=" + newState);
                 isConnected = false;
                 
-                JSObject event = new JSObject();
-                event.put("connected", false);
-                event.put("error", "GATT error: " + status);
-                notifyListeners("hc03:connection:error", event);
+                // Clean up characteristics
+                writeCharacteristic = null;
+                notifyCharacteristic = null;
                 
-                // Close and cleanup on error
+                // Emit error event to JavaScript layer
+                JSObject errorEvent = new JSObject();
+                errorEvent.put("connected", false);
+                errorEvent.put("error", "GATT error: " + status);
+                errorEvent.put("status", status);
+                notifyListeners("hc03:connection:error", errorEvent);
+                
+                // Emit disconnect event
+                JSObject disconnectEvent = new JSObject();
+                disconnectEvent.put("connected", false);
+                notifyListeners("hc03:connection:state", disconnectEvent);
+                
+                // Close and cleanup on error (no retry - let JS layer handle)
                 if (gatt != null) {
-                    gatt.close();
+                    try {
+                        gatt.close();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error closing GATT", e);
+                    }
                     bluetoothGatt = null;
                 }
             }
@@ -1074,6 +1089,32 @@ public class HC03BluetoothPlugin extends Plugin {
                 }
             } else {
                 Log.e(TAG, "Descriptor write failed with status: " + status);
+                
+                // Clear characteristics
+                writeCharacteristic = null;
+                notifyCharacteristic = null;
+                isConnected = false;
+                
+                // Emit error event
+                JSObject errorEvent = new JSObject();
+                errorEvent.put("error", "Failed to enable notifications: " + status);
+                notifyListeners("hc03:connection:error", errorEvent);
+                
+                // Emit disconnect state before cleanup
+                JSObject disconnectEvent = new JSObject();
+                disconnectEvent.put("connected", false);
+                notifyListeners("hc03:connection:state", disconnectEvent);
+                
+                // Clean up failed connection
+                if (bluetoothGatt != null) {
+                    try {
+                        bluetoothGatt.disconnect();
+                        bluetoothGatt.close();
+                    } catch (SecurityException e) {
+                        Log.e(TAG, "Permission denied during cleanup", e);
+                    }
+                    bluetoothGatt = null;
+                }
             }
         }
         

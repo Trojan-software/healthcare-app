@@ -723,6 +723,10 @@ public class HC03BluetoothPlugin: CAPPlugin, CBCentralManagerDelegate, CBPeriphe
             print("Bluetooth is powered off")
             notifyListeners("hc03:bluetooth:state", data: ["powered": false])
             stopScanInternal()
+            
+            // Cancel scan timer if Bluetooth powers off
+            scanTimer?.invalidate()
+            scanTimer = nil
         case .unauthorized:
             print("Bluetooth is unauthorized")
             notifyListeners("hc03:bluetooth:state", data: ["powered": false, "unauthorized": true])
@@ -779,6 +783,22 @@ public class HC03BluetoothPlugin: CAPPlugin, CBCentralManagerDelegate, CBPeriphe
         notifyCharacteristic = nil
         
         notifyListeners("hc03:connection:state", data: eventData)
+    }
+    
+    public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        print("Failed to connect to peripheral: \(peripheral.name ?? "Unknown")")
+        
+        var eventData: [String: Any] = ["connected": false]
+        if let error = error {
+            print("Connection error: \(error.localizedDescription)")
+            eventData["error"] = error.localizedDescription
+        }
+        
+        connectedPeripheral = nil
+        writeCharacteristic = nil
+        notifyCharacteristic = nil
+        
+        notifyListeners("hc03:connection:error", data: eventData)
     }
     
     // MARK: - CBPeripheralDelegate
