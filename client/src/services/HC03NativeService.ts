@@ -58,20 +58,68 @@ export class HC03NativeService {
   }
 
   private setupNativeListeners(): void {
-    HC03Bluetooth.addListener('ecgData', (event: EcgDataEvent) => {
-      this.handleNativeData(event);
+    // ECG data events (wave and metrics)
+    HC03Bluetooth.addListener('hc03:ecg:wave', (event: any) => {
+      this.handleECGWave(event);
+    });
+    
+    HC03Bluetooth.addListener('hc03:ecg:metrics', (event: any) => {
+      this.handleECGMetrics(event);
+    });
+    
+    // Battery data events
+    HC03Bluetooth.addListener('hc03:battery:level', (event: any) => {
+      this.handleBatteryData(event);
+    });
+    
+    // Temperature data events
+    HC03Bluetooth.addListener('hc03:temperature:data', (event: any) => {
+      this.handleTemperatureData(event);
+    });
+    
+    // Blood glucose data events
+    HC03Bluetooth.addListener('hc03:bloodglucose:result', (event: any) => {
+      this.handleGlucoseData(event);
+    });
+    
+    // Blood oxygen data events
+    HC03Bluetooth.addListener('hc03:bloodoxygen:data', (event: any) => {
+      this.handleOxygenData(event);
+    });
+    
+    // Blood pressure data events
+    HC03Bluetooth.addListener('hc03:bloodpressure:result', (event: any) => {
+      this.handlePressureData(event);
+    });
+    
+    // Detection lifecycle events
+    HC03Bluetooth.addListener('detectionStarted', (event: any) => {
+      console.log('Detection started:', event.detection);
+      this.emit('detectionStarted', event);
+    });
+    
+    HC03Bluetooth.addListener('detectionStopped', (event: any) => {
+      console.log('Detection stopped:', event.detection);
+      this.emit('detectionStopped', event);
     });
   }
 
-  private handleNativeData(event: EcgDataEvent): void {
-    console.log('Native ECG data received:', event);
+  private handleECGWave(event: any): void {
+    console.log('Native ECG wave received:', event);
+    this.emit('ecgWave', event);
+  }
+
+  private handleECGMetrics(event: any): void {
+    console.log('Native ECG metrics received:', event);
     
-    switch (event.type) {
-      case 'wave':
-        this.emit('ecgWave', { wave: event.data });
-        break;
+    // Route different metric types to appropriate events
+    const type = event.type;
+    switch (type) {
       case 'HR':
         this.emit('heartRate', { value: event.value });
+        break;
+      case 'HRV':
+        this.emit('hrv', { value: event.value });
         break;
       case 'Mood Index':
         this.emit('moodIndex', { value: event.value });
@@ -79,30 +127,75 @@ export class HC03NativeService {
       case 'RR':
         this.emit('rrInterval', { value: event.value });
         break;
-      case 'HRV':
-        this.emit('hrv', { value: event.value });
-        break;
       case 'RESPIRATORY RATE':
         this.emit('respiratoryRate', { value: event.value });
+        break;
+      case 'STRESS':
+        this.emit('stress', { value: event.value });
+        break;
+      case 'HEART AGE':
+        this.emit('heartAge', { value: event.value });
         break;
       case 'touch':
         this.emit('fingerDetection', { detected: event.isTouch });
         break;
-      case 'signalQuality':
-        this.emit('signalQuality', { level: event.level });
-        break;
+      default:
+        console.log('Unknown ECG metric type:', type);
     }
+  }
+
+  private handleBatteryData(event: any): void {
+    console.log('Native battery data received:', event);
+    this.emit('batteryLevel', { 
+      level: event.level, 
+      voltage: event.voltage,
+      charging: event.charging 
+    });
+  }
+
+  private handleTemperatureData(event: any): void {
+    console.log('Native temperature data received:', event);
+    this.emit('temperature', { 
+      body: event.bodyTemp,
+      environment: event.envTemp 
+    });
+  }
+
+  private handleGlucoseData(event: any): void {
+    console.log('Native glucose data received:', event);
+    this.emit('bloodGlucose', { value: event.value });
+  }
+
+  private handleOxygenData(event: any): void {
+    console.log('Native oxygen data received:', event);
+    this.emit('bloodOxygen', { 
+      spo2: event.spo2,
+      heartRate: event.heartRate,
+      waveData: event.waveData 
+    });
+  }
+
+  private handlePressureData(event: any): void {
+    console.log('Native pressure data received:', event);
+    this.emit('bloodPressure', { 
+      systolic: event.systolic,
+      diastolic: event.diastolic,
+      heartRate: event.heartRate 
+    });
   }
 
   async processBluetoothData(data: ArrayBuffer | number[]): Promise<void> {
     if (this.isNativeAvailable) {
-      const hexString = Array.from(new Uint8Array(data instanceof ArrayBuffer ? data : new Uint8Array(data).buffer))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join(',');
+      // Convert to number array for native plugin
+      const byteArray = Array.from(new Uint8Array(data instanceof ArrayBuffer ? data : new Uint8Array(data).buffer));
       
-      await HC03Bluetooth.processEcgData({ data: hexString });
+      try {
+        await HC03Bluetooth.parseData({ data: byteArray });
+      } catch (error) {
+        console.error('Failed to parse Bluetooth data:', error);
+      }
     } else if (this.webService) {
-      console.warn('Web Bluetooth does not support native ECG processing');
+      console.warn('Web Bluetooth does not support native data processing');
     }
   }
 
