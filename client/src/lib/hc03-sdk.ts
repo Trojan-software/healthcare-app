@@ -204,22 +204,28 @@ export class Hc03Sdk {
         await this.disconnect();
       }
       
-      // Request HC03 device with flexible filters
+      // Request HC03 device with very permissive filters to find all BLE devices
+      // This allows users to manually select their HC03 device even if it has unexpected name/UUID
+      console.log('Requesting Bluetooth device...');
+      
+      // Use acceptAllDevices to show ALL nearby Bluetooth devices
+      // This helps when HC03 device advertises with unexpected name or UUID
       this.device = await navigator.bluetooth.requestDevice({
-        filters: [
-          { namePrefix: 'HC03' },
-          { namePrefix: 'Health' },
-          { namePrefix: 'HC-03' },
-          { namePrefix: 'hc03' },
-          { name: 'HC03' },
-          { services: [HC03_SERVICE_UUID] }
-        ],
+        acceptAllDevices: true,
         optionalServices: [
           HC03_SERVICE_UUID,
           BATTERY_SERVICE_UUID,
-          'device_information'
+          'device_information',
+          'generic_access',
+          'battery_service',
+          '0000fff0-0000-1000-8000-00805f9b34fb',
+          '0000ffe0-0000-1000-8000-00805f9b34fb',
+          '0000ffe5-0000-1000-8000-00805f9b34fb',
+          '000018f0-0000-1000-8000-00805f9b34fb',
+          'heart_rate',
+          'health_thermometer'
         ]
-      });
+      } as any); // Type assertion for acceptAllDevices (valid Web Bluetooth API but not in TypeScript types yet)
 
       console.log('HC03 device selected:', this.device.name);
 
