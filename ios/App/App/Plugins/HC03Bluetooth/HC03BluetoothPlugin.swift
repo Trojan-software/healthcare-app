@@ -3,15 +3,13 @@
 //  24/7 Tele H
 //
 //  Capacitor plugin for HC03 Bluetooth device integration
-//  Based on HC03 Flutter SDK API Guide v1.0
+//  Based on HC03 Flutter SDK API Guide v1.0.1
 //
-//  Supports all 6 detection types:
-//  - ECG (Electrocardiogram)
-//  - OX (Blood Oxygen/SpO2)
-//  - BP (Blood Pressure)
-//  - BG (Blood Glucose)
-//  - BATTERY (Battery Level)
-//  - BT (Body Temperature)
+//  Implements complete HC03 protocol:
+//  - Frame structure: [START, LENGTH(2 LE), BT_EDITION, TYPE, HEADER_CRC, ...CONTENT..., TAIL_CRC(2 LE), END]
+//  - CRC validation (encryHead, encryTail)
+//  - Multi-packet handling (head/tail frame caching)
+//  - All 6 detection types: ECG, OX, BP, BG, BATTERY, BT
 //
 
 import Foundation
@@ -20,11 +18,38 @@ import Capacitor
 @objc(HC03BluetoothPlugin)
 public class HC03BluetoothPlugin: CAPPlugin {
     
-    private var sdkHealthMonitor: SDKHealthMonitor?
-    private var isInitialized = false
-    private var activeDetections = Set<String>()
+    // MARK: - Protocol Constants (from Flutter SDK)
+    private let PACKAGE_TOTAL_LENGTH = 10
+    private let PACKAGE_INDEX_START = 0
+    private let PACKAGE_INDEX_LENGTH = 1
+    private let PACKAGE_INDEX_BT_EDITION = 3
+    private let PACKAGE_INDEX_TYPE = 4
+    private let PACKAGE_INDEX_HEADER_CRC = 5
+    private let PACKAGE_INDEX_CONTENT = 6
+    private let ATTR_START_REQ: UInt8 = 0x01
+    private let ATTR_START_RES: UInt8 = 0x02
+    private let BT_EDITION: UInt8 = 0x04
+    private let ATTR_END_REQ: UInt8 = 0xff
+    private let FULL_PACKAGE_MAX_DATA_SIZE = 11
     
-    // Detection type constants matching HC03 Flutter SDK API
+    // Response Type Constants
+    private let RESPONSE_CHECK_BATTERY: UInt8 = 0x8F
+    private let BT_RES_TYPE: UInt8 = 0x82  // Temperature
+    private let BG_RES_TYPE: UInt8 = 0x83  // Blood Glucose
+    private let OX_RES_TYPE_NORMAL: UInt8 = 0x84  // Blood Oxygen
+    private let BP_RES_TYPE: UInt8 = 0x81  // Blood Pressure
+    
+    // Blood Pressure Content Types
+    private let BP_RES_CONTENT_CALIBRATE_PARAMETER: UInt8 = 0x01
+    private let BP_RES_CONTENT_CALIBRATE_TEMPERATURE: UInt8 = 0x02
+    private let BP_RES_CONTENT_PRESSURE_DATA: UInt8 = 0x03
+    
+    // Battery Status
+    private let BATTERY_QUERY: UInt8 = 0x00
+    private let BATTERY_CHARGING: UInt8 = 0x01
+    private let BATTERY_FULLY: UInt8 = 0x02
+    
+    // Detection Types
     private let DETECTION_ECG = "ECG"
     private let DETECTION_OX = "OX"
     private let DETECTION_BP = "BP"
@@ -32,6 +57,16 @@ public class HC03BluetoothPlugin: CAPPlugin {
     private let DETECTION_BATTERY = "BATTERY"
     private let DETECTION_BT = "BT"
     
+    // MARK: - Instance Variables
+    private var sdkHealthMonitor: SDKHealthMonitor?
+    private var isInitialized = false
+    private var activeDetections = Set<String>()
+    
+    // Multi-packet frame cache
+    private var cacheType: UInt8 = 0
+    private var cacheMap = [UInt8: [UInt8]]()
+    
+    // MARK: - Lifecycle
     override public func load() {
         sdkHealthMonitor = SDKHealthMonitor()
         
@@ -41,10 +76,8 @@ public class HC03BluetoothPlugin: CAPPlugin {
         }
     }
     
-    /**
-     * Initialize HC03 SDK
-     * As per Flutter SDK API: Hc03Sdk.getInstance()
-     */
+    // MARK: - Plugin Methods
+    
     @objc func initialize(_ call: CAPPluginCall) {
         guard let monitor = sdkHealthMonitor else {
             call.reject("SDK not available")
@@ -63,10 +96,6 @@ public class HC03BluetoothPlugin: CAPPlugin {
         ])
     }
     
-    /**
-     * Start detection for a specific measurement type
-     * As per Flutter SDK API: startDetect(Detection detection)
-     */
     @objc func startDetect(_ call: CAPPluginCall) {
         guard let detection = call.getString("detection") else {
             call.reject("Detection type is required")
@@ -78,15 +107,7 @@ public class HC03BluetoothPlugin: CAPPlugin {
             return
         }
         
-        // Add to active detections
         activeDetections.insert(detection)
-        
-        // For ECG, NeuroSky SDK is ready to process data
-        if detection == DETECTION_ECG {
-            // ECG processing handled by processEcgData() when Bluetooth data arrives
-        }
-        
-        // For other types, we'll process raw Bluetooth data in parseData()
         
         call.resolve([
             "success": true,
@@ -101,17 +122,12 @@ public class HC03BluetoothPlugin: CAPPlugin {
         ])
     }
     
-    /**
-     * Stop detection for a specific measurement type
-     * As per Flutter SDK API: stopDetect(Detection detection)
-     */
     @objc func stopDetect(_ call: CAPPluginCall) {
         guard let detection = call.getString("detection") else {
             call.reject("Detection type is required")
             return
         }
         
-        // Remove from active detections
         activeDetections.remove(detection)
         
         call.resolve([
@@ -127,12 +143,6 @@ public class HC03BluetoothPlugin: CAPPlugin {
         ])
     }
     
-    /**
-     * Parse raw Bluetooth data from HC03 device
-     * As per Flutter SDK API: parseData(data)
-     * 
-     * Routes data to appropriate parser based on command byte
-     */
     @objc func parseData(_ call: CAPPluginCall) {
         guard let dataArray = call.getArray("data", Int.self) else {
             call.reject("Data parameter is required")
@@ -140,53 +150,346 @@ public class HC03BluetoothPlugin: CAPPlugin {
         }
         
         // Convert to byte array
-        let bytes = dataArray.compactMap { UInt8($0 & 0xFF) }
+        let rawData = dataArray.compactMap { UInt8($0 & 0xFF) }
         
-        guard bytes.count >= 2 else {
-            call.reject("Invalid data: too short")
-            return
-        }
-        
-        // Get command byte to determine data type
-        let command = bytes[0]
-        
-        // Route to appropriate parser
-        switch command {
-        case 0x01: // ECG data
-            if activeDetections.contains(DETECTION_ECG) {
-                processEcgDataBytes(bytes)
-            }
-        case 0x02: // Blood oxygen data
-            if activeDetections.contains(DETECTION_OX) {
-                parseBloodOxygenData(bytes)
-            }
-        case 0x03: // Blood pressure data
-            if activeDetections.contains(DETECTION_BP) {
-                parseBloodPressureData(bytes)
-            }
-        case 0x04: // Temperature data
-            if activeDetections.contains(DETECTION_BT) {
-                parseTemperatureData(bytes)
-            }
-        case 0x05: // Blood glucose data
-            if activeDetections.contains(DETECTION_BG) {
-                parseBloodGlucoseData(bytes)
-            }
-        case 0x06: // Battery data
-            if activeDetections.contains(DETECTION_BATTERY) {
-                parseBatteryData(bytes)
-            }
-        default:
-            print("Unknown command: 0x\(String(format:"%02X", command))")
+        // Unpack frame
+        if let originData = generalUnpackRawData(rawData) {
+            // Route to appropriate parser
+            routeData(type: originData.type, data: originData.data)
         }
         
         call.resolve(["success": true])
     }
     
-    /**
-     * Process ECG data using NeuroSky SDK
-     * Legacy method for backward compatibility
-     */
+    // MARK: - Frame Unpacking (from Flutter SDK)
+    
+    private func generalUnpackRawData(_ rawData: [UInt8]) -> OriginData? {
+        guard rawData.count >= PACKAGE_TOTAL_LENGTH - 1 else {
+            print("Insufficient data length: \(rawData.count)")
+            return nil
+        }
+        
+        let start = rawData[PACKAGE_INDEX_START]
+        let length = Int(rawData[PACKAGE_INDEX_LENGTH]) | (Int(rawData[PACKAGE_INDEX_LENGTH + 1]) << 8)
+        let btEdition = rawData[PACKAGE_INDEX_BT_EDITION]
+        let type = rawData[PACKAGE_INDEX_TYPE]
+        let headerCrc = rawData[PACKAGE_INDEX_HEADER_CRC]
+        
+        // Validate header CRC
+        let headerBytes = Array(rawData[PACKAGE_INDEX_START..<PACKAGE_INDEX_HEADER_CRC])
+        let checkEncryHead = encryHead(headerBytes)
+        
+        let isFull = btEdition == BT_EDITION &&
+                     start == ATTR_START_RES &&
+                     headerCrc == checkEncryHead &&
+                     length <= FULL_PACKAGE_MAX_DATA_SIZE
+        
+        let isHead = isFull ||
+                     (!isFull &&
+                      btEdition == BT_EDITION &&
+                      start == ATTR_START_RES &&
+                      headerCrc == checkEncryHead)
+        
+        let isTail = isFull || (!isFull && !isHead)
+        
+        var data: [UInt8]? = nil
+        
+        if isFull {
+            // Full packet - validate tail CRC
+            let tailCrcIndex = PACKAGE_INDEX_CONTENT + length
+            guard rawData.count >= tailCrcIndex + 2 else {
+                print("Incomplete tail CRC")
+                return nil
+            }
+            
+            let tailCrc = Int(rawData[tailCrcIndex]) | (Int(rawData[tailCrcIndex + 1]) << 8)
+            let tailBytes = Array(rawData[PACKAGE_INDEX_START..<tailCrcIndex])
+            let checkEncryTail = encryTail(tailBytes)
+            
+            guard tailCrc == checkEncryTail else {
+                print("Invalid tail CRC")
+                return nil
+            }
+            
+            data = Array(rawData[PACKAGE_INDEX_CONTENT..<PACKAGE_INDEX_CONTENT + length])
+            
+        } else if isHead {
+            // Head packet - cache it
+            cacheMap.removeAll()
+            cacheType = type
+            cacheMap[type] = rawData
+            return nil
+            
+        } else if isTail {
+            // Tail packet - combine with cached head (Flutter SDK approach)
+            guard cacheType != 0, let headData = cacheMap[cacheType] else {
+                cacheType = 0
+                cacheMap.removeAll()
+                print("Missing head data")
+                return nil
+            }
+            
+            // Concatenate head + tail (Flutter SDK: List<int> allData = [...cacheMap[cacheType]!, ...rawData];)
+            let allData = headData + rawData
+            
+            // Extract header info from combined buffer
+            let length = Int(allData[PACKAGE_INDEX_LENGTH]) | (Int(allData[PACKAGE_INDEX_LENGTH + 1]) << 8)
+            let type = allData[PACKAGE_INDEX_TYPE]
+            
+            // Extract data (Flutter SDK: Uint8List.view(buffer, PACKAGE_INDEX_CONTENT, length).toList())
+            guard allData.count >= PACKAGE_INDEX_CONTENT + length else {
+                print("Insufficient data in combined packet")
+                cacheType = 0
+                cacheMap.removeAll()
+                return nil
+            }
+            
+            data = Array(allData[PACKAGE_INDEX_CONTENT..<PACKAGE_INDEX_CONTENT + length])
+            
+            cacheType = 0
+            cacheMap.removeAll()
+        }
+        
+        if let data = data {
+            return OriginData(type: type, data: data)
+        }
+        
+        return nil
+    }
+    
+    // MARK: - CRC Calculations (from Flutter SDK)
+    
+    private func encryHead(_ data: [UInt8]) -> UInt8 {
+        var result: UInt16 = 0
+        for byte in data {
+            let transe = UInt16(byte)
+            result ^= transe
+            result &= 0xFFFF
+        }
+        return UInt8(result & 0xFF)
+    }
+    
+    private func encryTail(_ data: [UInt8]) -> Int {
+        var result: UInt16 = 0xFFFF
+        for byte in data {
+            let transe = UInt16(byte)
+            result = ((result >> 8) & 0xFF) | (result << 8)
+            result &= 0xFFFF
+            result ^= transe
+            result &= 0xFFFF
+            result ^= (result & 0xFF) >> 4
+            result &= 0xFFFF
+            result ^= (result << 8) << 4
+            result &= 0xFFFF
+            result ^= ((result & 0xFF) << 4) << 1
+            result &= 0xFFFF
+        }
+        return Int(result & 0xFFFF)
+    }
+    
+    // MARK: - Data Routing
+    
+    private func routeData(type: UInt8, data: [UInt8]) {
+        switch type {
+        case RESPONSE_CHECK_BATTERY:
+            if activeDetections.contains(DETECTION_BATTERY) {
+                parseBatteryData(data)
+            }
+        case BT_RES_TYPE:
+            if activeDetections.contains(DETECTION_BT) {
+                parseTemperatureData(data)
+            }
+        case BG_RES_TYPE:
+            if activeDetections.contains(DETECTION_BG) {
+                parseBloodGlucoseData(data)
+            }
+        case OX_RES_TYPE_NORMAL:
+            if activeDetections.contains(DETECTION_OX) {
+                parseBloodOxygenData(data)
+            }
+        case BP_RES_TYPE:
+            if activeDetections.contains(DETECTION_BP) {
+                parseBloodPressureData(data)
+            }
+        default:
+            print("Unknown type: 0x\(String(format:"%02X", type))")
+        }
+    }
+    
+    // MARK: - Data Parsers (from Flutter SDK)
+    
+    private func parseBatteryData(_ bytes: [UInt8]) {
+        guard bytes.count >= 3 else {
+            print("Battery data too short")
+            return
+        }
+        
+        let status = bytes[0]
+        
+        switch status {
+        case BATTERY_QUERY:
+            let batteryValue = Int(bytes[1]) << 8 | Int(bytes[2])
+            let level = getBatteryLevel(batteryValue)
+            
+            notifyListeners("hc03:battery:level", data: [
+                "type": "battery",
+                "level": level,
+                "charging": false,
+                "timestamp": Int(Date().timeIntervalSince1970 * 1000)
+            ])
+            
+        case BATTERY_CHARGING:
+            notifyListeners("hc03:battery:level", data: [
+                "type": "battery",
+                "charging": true,
+                "timestamp": Int(Date().timeIntervalSince1970 * 1000)
+            ])
+            
+        case BATTERY_FULLY:
+            notifyListeners("hc03:battery:level", data: [
+                "type": "battery",
+                "level": 100,
+                "charging": false,
+                "timestamp": Int(Date().timeIntervalSince1970 * 1000)
+            ])
+            
+        default:
+            break
+        }
+    }
+    
+    private func getBatteryLevel(_ d: Int) -> Int {
+        let data = Int((Double(d) / 8191.0) * 3.3 * 3 * 1000)
+        
+        if data >= 4090 { return 100 }
+        else if data >= 4070 { return 99 }
+        else if data >= 4056 { return 97 }
+        else if data >= 4040 { return 95 }
+        else if data >= 4028 { return 93 }
+        else if data >= 4000 { return 91 }
+        else if data >= 3980 { return 86 }
+        else if data >= 3972 { return 83 }
+        else if data >= 3944 { return 78 }
+        else if data >= 3916 { return 73 }
+        else if data >= 3888 { return 69 }
+        else if data >= 3860 { return 65 }
+        else if data >= 3832 { return 61 }
+        else if data >= 3804 { return 56 }
+        else if data >= 3776 { return 50 }
+        else if data >= 3748 { return 42 }
+        else if data >= 3720 { return 30 }
+        else if data >= 3692 { return 19 }
+        else if data >= 3664 { return 15 }
+        else if data >= 3636 { return 11 }
+        else if data >= 3608 { return 8 }
+        else if data >= 3580 { return 7 }
+        else if data >= 3524 { return 6 }
+        else if data >= 3468 { return 5 }
+        else if data >= 3300 { return 4 }
+        return 0
+    }
+    
+    private func parseTemperatureData(_ bytes: [UInt8]) {
+        guard bytes.count >= 8 else {
+            print("Temperature data too short")
+            return
+        }
+        
+        // Parse temperature values (little-endian)
+        let temperatureBdF = Int(bytes[1]) << 8 | Int(bytes[0])
+        let temperatureEvF = Int(bytes[3]) << 8 | Int(bytes[2])
+        
+        // Convert to Celsius
+        let tempBT = Double(temperatureBdF) * 0.02 - 273.15
+        let tempET = Double(temperatureEvF) * 0.02 - 273.15
+        
+        // Apply body temperature calculation (simplified)
+        let bodyTemp = tempBT + (tempET / 100.0)
+        let rounded = round(bodyTemp * 10) / 10.0
+        
+        notifyListeners("hc03:temperature:data", data: [
+            "type": "temperature",
+            "temperature": rounded,
+            "unit": "C",
+            "timestamp": Int(Date().timeIntervalSince1970 * 1000)
+        ])
+    }
+    
+    private func parseBloodGlucoseData(_ data: [UInt8]) {
+        guard data.count >= 4 else {
+            print("Blood glucose data too short")
+            return
+        }
+        
+        // Parse glucose value
+        let glucoseRaw = Int(data[0]) << 8 | Int(data[1])
+        let glucose = Double(glucoseRaw) / 10.0
+        
+        notifyListeners("hc03:bloodglucose:result", data: [
+            "type": "bloodGlucose",
+            "glucose": glucose,
+            "timestamp": Int(Date().timeIntervalSince1970 * 1000)
+        ])
+    }
+    
+    private func parseBloodOxygenData(_ data: [UInt8]) {
+        guard data.count >= 30 else {
+            print("Blood oxygen data incomplete")
+            return
+        }
+        
+        // Resolve wave data (30 bytes -> 10 values)
+        var waveData = [Int]()
+        for i in stride(from: 0, to: 30, by: 3) {
+            let first = Int(data[i]) << 16
+            let second = Int(data[i + 1]) << 8
+            let third = Int(data[i + 2])
+            waveData.append(first + second + third)
+        }
+        
+        notifyListeners("hc03:bloodoxygen:data", data: [
+            "type": "bloodOxygen",
+            "waveData": waveData,
+            "timestamp": Int(Date().timeIntervalSince1970 * 1000)
+        ])
+    }
+    
+    private func parseBloodPressureData(_ data: [UInt8]) {
+        guard data.count >= 2 else {
+            print("Blood pressure data too short")
+            return
+        }
+        
+        let contentType = data[0]
+        
+        switch contentType {
+        case BP_RES_CONTENT_PRESSURE_DATA:
+            guard data.count >= 7 else { return }
+            
+            let systolic = Int(data[1]) | (Int(data[2]) << 8)
+            let diastolic = Int(data[3]) | (Int(data[4]) << 8)
+            let heartRate = Int(data[5]) | (Int(data[6]) << 8)
+            
+            notifyListeners("hc03:bloodpressure:result", data: [
+                "type": "bloodPressure",
+                "systolic": systolic,
+                "diastolic": diastolic,
+                "heartRate": heartRate,
+                "timestamp": Int(Date().timeIntervalSince1970 * 1000)
+            ])
+            
+        case BP_RES_CONTENT_CALIBRATE_PARAMETER,
+             BP_RES_CONTENT_CALIBRATE_TEMPERATURE:
+            // Calibration data - log but don't emit event
+            print("BP calibration data received")
+            
+        default:
+            break
+        }
+    }
+    
+    // MARK: - Legacy Methods (backward compatibility)
+    
     @objc func processEcgData(_ call: CAPPluginCall) {
         guard let monitor = sdkHealthMonitor else {
             call.reject("SDK not initialized")
@@ -208,145 +511,11 @@ public class HC03BluetoothPlugin: CAPPlugin {
             }
         }
         
-        processEcgDataBytes(bytes)
+        monitor.decodeECGData(bytes)
         
         call.resolve(["success": true])
     }
     
-    /**
-     * Process ECG data bytes using NeuroSky SDK
-     */
-    private func processEcgDataBytes(_ bytes: [UInt8]) {
-        sdkHealthMonitor?.decodeECGData(bytes)
-    }
-    
-    /**
-     * Parse blood oxygen data from HC03 device
-     * As per Flutter SDK API: getBloodOxygen
-     */
-    private func parseBloodOxygenData(_ data: [UInt8]) {
-        guard data.count >= 6 else {
-            print("Blood oxygen data too short")
-            return
-        }
-        
-        let bloodOxygen = Int(data[2])
-        let heartRate = Int(data[3]) | (Int(data[4]) << 8)
-        let fingerDetected = data[5] == 1
-        
-        let result: [String: Any] = [
-            "type": "bloodOxygen",
-            "bloodOxygen": bloodOxygen,
-            "heartRate": heartRate,
-            "fingerDetection": fingerDetected,
-            "timestamp": Int(Date().timeIntervalSince1970 * 1000)
-        ]
-        
-        notifyListeners("hc03:bloodoxygen:data", data: result)
-    }
-    
-    /**
-     * Parse blood pressure data from HC03 device
-     * As per Flutter SDK API: getBloodPressureData
-     */
-    private func parseBloodPressureData(_ data: [UInt8]) {
-        guard data.count >= 8 else {
-            print("Blood pressure data too short")
-            return
-        }
-        
-        let systolic = Int(data[2]) | (Int(data[3]) << 8)
-        let diastolic = Int(data[4]) | (Int(data[5]) << 8)
-        let heartRate = Int(data[6]) | (Int(data[7]) << 8)
-        let progress = data.count > 8 ? Int(data[8]) : 100
-        
-        let result: [String: Any] = [
-            "type": "bloodPressure",
-            "systolic": systolic,
-            "diastolic": diastolic,
-            "heartRate": heartRate,
-            "progress": progress,
-            "timestamp": Int(Date().timeIntervalSince1970 * 1000)
-        ]
-        
-        notifyListeners("hc03:bloodpressure:result", data: result)
-    }
-    
-    /**
-     * Parse blood glucose data from HC03 device
-     * As per Flutter SDK API: getBloodGlucoseData
-     */
-    private func parseBloodGlucoseData(_ data: [UInt8]) {
-        guard data.count >= 6 else {
-            print("Blood glucose data too short")
-            return
-        }
-        
-        let glucoseRaw = Int(data[2]) | (Int(data[3]) << 8)
-        let glucose = Double(glucoseRaw) / 10.0 // Convert to mg/dL
-        let testStripStatus = Int(data[4])
-        
-        let statusMap = ["ready", "insert_strip", "apply_sample", "measuring", "complete", "error"]
-        let status = testStripStatus < statusMap.count ? statusMap[testStripStatus] : "unknown"
-        
-        let result: [String: Any] = [
-            "type": "bloodGlucose",
-            "glucose": glucose,
-            "paperState": status,
-            "timestamp": Int(Date().timeIntervalSince1970 * 1000)
-        ]
-        
-        notifyListeners("hc03:bloodglucose:result", data: result)
-    }
-    
-    /**
-     * Parse battery data from HC03 device
-     * As per Flutter SDK API: getBattery
-     */
-    private func parseBatteryData(_ data: [UInt8]) {
-        guard data.count >= 4 else {
-            print("Battery data too short")
-            return
-        }
-        
-        let batteryLevel = Int(data[2])
-        let isCharging = data[3] == 1
-        
-        let result: [String: Any] = [
-            "type": "battery",
-            "level": batteryLevel,
-            "charging": isCharging,
-            "timestamp": Int(Date().timeIntervalSince1970 * 1000)
-        ]
-        
-        notifyListeners("hc03:battery:level", data: result)
-    }
-    
-    /**
-     * Parse temperature data from HC03 device
-     */
-    private func parseTemperatureData(_ data: [UInt8]) {
-        guard data.count >= 4 else {
-            print("Temperature data too short")
-            return
-        }
-        
-        let tempRaw = Int(data[2]) | (Int(data[3]) << 8)
-        let temperature = Double(tempRaw) / 100.0 // Convert to Celsius
-        
-        let result: [String: Any] = [
-            "type": "temperature",
-            "temperature": temperature,
-            "unit": "C",
-            "timestamp": Int(Date().timeIntervalSince1970 * 1000)
-        ]
-        
-        notifyListeners("hc03:temperature:data", data: result)
-    }
-    
-    /**
-     * Start measurement (legacy method for backward compatibility)
-     */
     @objc func startMeasurement(_ call: CAPPluginCall) {
         guard let monitor = sdkHealthMonitor else {
             call.reject("SDK not initialized")
@@ -367,9 +536,6 @@ public class HC03BluetoothPlugin: CAPPlugin {
         ])
     }
     
-    /**
-     * Stop measurement (legacy method for backward compatibility)
-     */
     @objc func stopMeasurement(_ call: CAPPluginCall) {
         guard let monitor = sdkHealthMonitor else {
             call.reject("SDK not initialized")
@@ -384,9 +550,8 @@ public class HC03BluetoothPlugin: CAPPlugin {
         ])
     }
     
-    /**
-     * Send ECG data to JavaScript
-     */
+    // MARK: - ECG Data Handling
+    
     private func sendECGData(type: String, value: Any) {
         var data: [String: Any] = [
             "type": type,
@@ -403,5 +568,12 @@ public class HC03BluetoothPlugin: CAPPlugin {
             data["value"] = value
             notifyListeners("hc03:ecg:metrics", data: data)
         }
+    }
+    
+    // MARK: - Data Structures
+    
+    private struct OriginData {
+        let type: UInt8
+        let data: [UInt8]
     }
 }
