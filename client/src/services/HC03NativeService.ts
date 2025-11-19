@@ -187,6 +187,37 @@ export class HC03NativeService {
       this.handlePressureData(event);
     });
     
+    // BLE Connection lifecycle events (Android/iOS)
+    HC03Bluetooth.addListener('hc03:device:found', (event: any) => {
+      console.log('Native device found:', event);
+      this.emit('deviceFound', event);
+    });
+    
+    HC03Bluetooth.addListener('hc03:connection:state', (event: any) => {
+      console.log('Native connection state:', event);
+      this.emit('connectionStateChanged', event);
+    });
+    
+    HC03Bluetooth.addListener('hc03:connection:error', (event: any) => {
+      console.log('Native connection error:', event);
+      this.emit('bluetoothError', event);
+    });
+    
+    HC03Bluetooth.addListener('hc03:device:ready', (event: any) => {
+      console.log('Native device ready:', event);
+      this.emit('connected', event);
+    });
+    
+    HC03Bluetooth.addListener('hc03:bluetooth:state', (event: any) => {
+      console.log('Native Bluetooth state:', event);
+      this.emit('bluetoothState', event);
+    });
+    
+    HC03Bluetooth.addListener('hc03:scan:complete', (event: any) => {
+      console.log('Native scan complete:', event);
+      this.emit('scanCompleted', event);
+    });
+    
     // Detection lifecycle events
     HC03Bluetooth.addListener('detectionStarted', (event: any) => {
       console.log('Detection started:', event.detection);
@@ -296,10 +327,33 @@ export class HC03NativeService {
 
   async startScan(): Promise<any[]> {
     if (this.isNativeAvailable) {
-      // On native platforms, use Web Bluetooth API fallback
-      // Native scanning is handled by the OS Bluetooth settings
-      console.warn('Native platform detected - Bluetooth scanning requires manual pairing in system settings');
-      throw new Error('On native apps, please pair HC03 device in your phone Bluetooth settings first');
+      try {
+        // Use native BLE scanning on Android/iOS
+        const result = await HC03Bluetooth.startScan();
+        console.log('Native BLE scan started:', result);
+        
+        // Collect discovered devices from events
+        return new Promise((resolve) => {
+          const devices: any[] = [];
+          const deviceListener = (event: any) => {
+            if (!devices.find(d => d.address === event.address)) {
+              devices.push(event);
+            }
+          };
+          
+          const completeListener = () => {
+            HC03Bluetooth.removeAllListeners();
+            this.setupNativeListeners(); // Re-setup listeners
+            resolve(devices);
+          };
+          
+          HC03Bluetooth.addListener('hc03:device:found', deviceListener);
+          HC03Bluetooth.addListener('hc03:scan:complete', completeListener);
+        });
+      } catch (error) {
+        console.error('Native scan failed:', error);
+        throw error;
+      }
     }
     
     if (!this.webService) {
@@ -310,11 +364,16 @@ export class HC03NativeService {
 
   async connect(deviceId: string, patientId: string): Promise<void> {
     if (this.isNativeAvailable) {
-      // On native platforms, use Capacitor plugin for connection
-      // Connection will be established when data starts flowing
-      console.log('Native platform - device connection handled by Capacitor plugin');
-      this.currentPatientId = patientId;
-      return Promise.resolve();
+      try {
+        // Use native BLE connection on Android/iOS
+        const result = await HC03Bluetooth.connect({ deviceAddress: deviceId });
+        console.log('Native BLE connection initiated:', result);
+        this.currentPatientId = patientId;
+        return Promise.resolve();
+      } catch (error) {
+        console.error('Native connection failed:', error);
+        throw error;
+      }
     }
     
     if (!this.webService) {
@@ -325,9 +384,16 @@ export class HC03NativeService {
 
   async disconnect(): Promise<void> {
     if (this.isNativeAvailable) {
-      // Native platforms - disconnect handled by stopping measurement
-      console.log('Native platform - disconnect by stopping all measurements');
-      return Promise.resolve();
+      try {
+        // Use native BLE disconnect on Android/iOS
+        const result = await HC03Bluetooth.disconnect();
+        console.log('Native BLE disconnected:', result);
+        this.currentPatientId = null;
+        return Promise.resolve();
+      } catch (error) {
+        console.error('Native disconnect failed:', error);
+        throw error;
+      }
     }
     
     if (!this.webService) {
