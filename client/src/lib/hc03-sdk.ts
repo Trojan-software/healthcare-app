@@ -394,45 +394,227 @@ export class Hc03Sdk {
     }
   }
 
-  // Parse incoming data as per HC03 API
+  // HC03 Protocol Constants (matching native plugin)
+  private static readonly PACKAGE_TOTAL_LENGTH = 10;
+  private static readonly PACKAGE_INDEX_START = 0;
+  private static readonly PACKAGE_INDEX_LENGTH = 1;
+  private static readonly PACKAGE_INDEX_BT_EDITION = 3;
+  private static readonly PACKAGE_INDEX_TYPE = 4;
+  private static readonly PACKAGE_INDEX_HEADER_CRC = 5;
+  private static readonly PACKAGE_INDEX_CONTENT = 6;
+  private static readonly ATTR_START_RES = 0x02;
+  private static readonly BT_EDITION = 0x04;
+  private static readonly ATTR_END = 0x03;
+  private static readonly FULL_PACKAGE_MAX_DATA_SIZE = 11;
+  
+  // Response Type Constants
+  private static readonly RESPONSE_CHECK_BATTERY = 0x8F;
+  private static readonly BT_RES_TYPE = 0x82;  // Temperature
+  private static readonly BG_RES_TYPE = 0x83;  // Blood Glucose
+  private static readonly OX_RES_TYPE_NORMAL = 0x84;  // Blood Oxygen
+  private static readonly BP_RES_TYPE = 0x81;  // Blood Pressure
+  
+  // Multi-packet frame cache
+  private cacheType: number = 0;
+  private cacheData: number[] = [];
+
+  // Parse incoming data using HC03 protocol with multi-packet reconstruction
   public parseData(data: ArrayBuffer): void {
     try {
-      const view = new DataView(data);
-      if (view.byteLength < 2) {
-        console.warn('Received incomplete data packet');
+      const rawData = new Uint8Array(data);
+      
+      if (rawData.length < Hc03Sdk.PACKAGE_TOTAL_LENGTH - 1) {
+        console.warn('Insufficient data length:', rawData.length);
         return;
       }
       
-      const command = view.getUint8(0);
-      const subCommand = view.getUint8(1);
+      // Unpack HC03 frame
+      const originData = this.generalUnpackRawData(rawData);
       
-      console.log(`Received data - Command: 0x${command.toString(16)}, SubCommand: 0x${subCommand.toString(16)}`);
-      
-      // Route data to appropriate parser based on command
-      switch (command) {
-        case 0x01: // ECG data
-          this.parseECGData(data);
-          break;
-        case 0x02: // Blood oxygen data
-          this.parseBloodOxygenData(data);
-          break;
-        case 0x03: // Blood pressure data
-          this.parseBloodPressureData(data);
-          break;
-        case 0x04: // Temperature data
-          this.parseTemperatureData(data);
-          break;
-        case 0x05: // Blood glucose data
-          this.parseBloodGlucoseData(data);
-          break;
-        case 0x06: // Battery data
-          this.parseBatteryData(data);
-          break;
-        default:
-          console.warn(`Unknown command received: 0x${command.toString(16)}`);
+      if (originData) {
+        // Route to appropriate parser based on type
+        this.routeData(originData.type, originData.data);
       }
     } catch (error) {
       console.error('Error parsing HC03 data:', error);
+    }
+  }
+
+  // Unpack HC03 frame with multi-packet reconstruction (matching native plugin)
+  private generalUnpackRawData(rawData: Uint8Array): { type: number; data: Uint8Array } | null {
+    const view = new DataView(rawData.buffer, rawData.byteOffset, rawData.byteLength);
+    
+    const start = view.getUint8(Hc03Sdk.PACKAGE_INDEX_START);
+    let length = view.getUint16(Hc03Sdk.PACKAGE_INDEX_LENGTH, true); // Little endian
+    const btEdition = view.getUint8(Hc03Sdk.PACKAGE_INDEX_BT_EDITION);
+    let type = view.getUint8(Hc03Sdk.PACKAGE_INDEX_TYPE);
+    const headerCrc = view.getUint8(Hc03Sdk.PACKAGE_INDEX_HEADER_CRC);
+    
+    // Validate header CRC
+    const headerBytes = rawData.slice(Hc03Sdk.PACKAGE_INDEX_START, Hc03Sdk.PACKAGE_INDEX_HEADER_CRC);
+    const checkEncryHead = this.encryHead(headerBytes);
+    
+    const isFull = btEdition === Hc03Sdk.BT_EDITION &&
+                   start === Hc03Sdk.ATTR_START_RES &&
+                   headerCrc === checkEncryHead &&
+                   length <= Hc03Sdk.FULL_PACKAGE_MAX_DATA_SIZE;
+    
+    const isHead = isFull ||
+                   (!isFull &&
+                    btEdition === Hc03Sdk.BT_EDITION &&
+                    start === Hc03Sdk.ATTR_START_RES &&
+                    headerCrc === checkEncryHead);
+    
+    const isTail = isFull || (!isFull && !isHead);
+    
+    let data: Uint8Array | null = null;
+    
+    if (isFull) {
+      // Full packet - validate tail CRC and END marker
+      const tailCrcIndex = Hc03Sdk.PACKAGE_INDEX_CONTENT + length;
+      if (rawData.length < tailCrcIndex + 3) {  // Need space for CRC(2) + END(1)
+        console.warn('[HC03] Incomplete tail CRC/END');
+        return null;
+      }
+      
+      const tailCrc = view.getUint16(tailCrcIndex, true);
+      const endMarker = rawData[tailCrcIndex + 2];
+      
+      // Validate END marker
+      if (endMarker !== Hc03Sdk.ATTR_END) {
+        console.warn(`[HC03] Invalid END marker: expected 0x03, got 0x${endMarker.toString(16)}`);
+        return null;
+      }
+      
+      // Compute CRC over [START ... CONTENT] (excluding CRC and END)
+      const tailBytes = rawData.slice(Hc03Sdk.PACKAGE_INDEX_START, tailCrcIndex);
+      const checkEncryTail = this.encryTail(tailBytes);
+      
+      if (tailCrc !== checkEncryTail) {
+        console.warn(`[HC03] Invalid tail CRC: expected 0x${checkEncryTail.toString(16)}, got 0x${tailCrc.toString(16)}`);
+        return null;
+      }
+      
+      data = rawData.slice(Hc03Sdk.PACKAGE_INDEX_CONTENT, Hc03Sdk.PACKAGE_INDEX_CONTENT + length);
+      
+    } else if (isHead) {
+      // Head packet - cache for multi-packet reconstruction
+      this.cacheData = [];
+      this.cacheType = type;
+      
+      const headContent = rawData.slice(Hc03Sdk.PACKAGE_INDEX_CONTENT);
+      for (let i = 0; i < headContent.length; i++) {
+        this.cacheData.push(headContent[i]);
+      }
+      
+      console.log(`[HC03] Head packet cached: type=0x${type.toString(16)}, length=${this.cacheData.length}`);
+      return null;
+      
+    } else if (isTail) {
+      // Tail packet - reconstruct from cache
+      if (this.cacheData.length === 0) {
+        console.warn('Tail packet received but no head cached');
+        return null;
+      }
+      
+      // Extract tail content (strip last 3 bytes: CRC(2) + END(1))
+      const tailContent = rawData.slice(0, rawData.length - 3);
+      for (let i = 0; i < tailContent.length; i++) {
+        this.cacheData.push(tailContent[i]);
+      }
+      
+      // Use type from cached head
+      type = this.cacheType;
+      length = this.cacheData.length;
+      
+      // Validate END marker
+      const endMarker = rawData[rawData.length - 1];
+      if (endMarker !== Hc03Sdk.ATTR_END) {
+        console.warn(`[HC03] Invalid END marker in tail: expected 0x03, got 0x${endMarker.toString(16)}`);
+        this.cacheData = [];
+        return null;
+      }
+      
+      // Get tail CRC (last 2 bytes before END marker)
+      const tailCrc = view.getUint16(rawData.length - 3, true);
+      
+      // Build complete frame for CRC validation: [HEAD(6 bytes) + CONTENT]
+      const completeFrame = new Uint8Array(6 + this.cacheData.length);
+      completeFrame[0] = Hc03Sdk.ATTR_START_RES;
+      completeFrame[1] = length & 0xFF;
+      completeFrame[2] = (length >> 8) & 0xFF;
+      completeFrame[3] = Hc03Sdk.BT_EDITION;
+      completeFrame[4] = type;
+      completeFrame[5] = this.encryHead(completeFrame.slice(0, 5));
+      completeFrame.set(this.cacheData, 6);
+      
+      // Compute CRC over reconstructed packet (excluding CRC and END)
+      const checkEncryTail = this.encryTail(completeFrame);
+      
+      if (tailCrc !== checkEncryTail) {
+        console.warn(`[HC03] Invalid tail CRC: expected=0x${checkEncryTail.toString(16)}, got=0x${tailCrc.toString(16)}`);
+        this.cacheData = [];
+        return null;
+      }
+      
+      data = new Uint8Array(this.cacheData);
+      this.cacheData = [];
+      
+      console.log(`[HC03] Multi-packet reconstructed: type=0x${type.toString(16)}, length=${data.length}`);
+    }
+    
+    if (data) {
+      return { type, data };
+    }
+    
+    return null;
+  }
+
+  // XOR checksum for header (matching native plugin)
+  private encryHead(data: Uint8Array): number {
+    let crc = 0;
+    for (let i = 0; i < data.length; i++) {
+      crc ^= data[i];
+    }
+    return crc & 0xFF;
+  }
+
+  // CRC16 variant for tail (matching native plugin)
+  private encryTail(data: Uint8Array): number {
+    let crc = 0xFFFF;
+    for (let i = 0; i < data.length; i++) {
+      crc ^= (data[i] & 0xFF);
+      for (let j = 0; j < 8; j++) {
+        if ((crc & 0x0001) !== 0) {
+          crc = (crc >> 1) ^ 0xA001;
+        } else {
+          crc = crc >> 1;
+        }
+      }
+    }
+    return crc & 0xFFFF;
+  }
+
+  // Route data to appropriate parser based on HC03 type
+  private routeData(type: number, data: Uint8Array): void {
+    switch (type) {
+      case Hc03Sdk.RESPONSE_CHECK_BATTERY:
+        this.parseBatteryData(data);
+        break;
+      case Hc03Sdk.BT_RES_TYPE:
+        this.parseTemperatureData(data);
+        break;
+      case Hc03Sdk.BG_RES_TYPE:
+        this.parseBloodGlucoseData(data);
+        break;
+      case Hc03Sdk.OX_RES_TYPE_NORMAL:
+        this.parseBloodOxygenData(data);
+        break;
+      case Hc03Sdk.BP_RES_TYPE:
+        this.parseBloodPressureData(data);
+        break;
+      default:
+        console.log(`[HC03] Unknown type: 0x${type.toString(16)}`);
     }
   }
 
@@ -470,85 +652,44 @@ export class Hc03Sdk {
     return Array.from(this.activeDetections);
   }
 
-  // ECG Data Parsing
-  private parseECGData(data: ArrayBuffer): void {
-    try {
-      const view = new DataView(data);
-      
-      if (view.byteLength < 20) {
-        console.warn('ECG data packet too short');
-        return;
-      }
-      
-      // Extract ECG data according to HC03 protocol
-      const heartRate = view.getUint16(2, true); // Little endian
-      const moodIndex = view.getUint8(4);
-      const rrInterval = view.getUint16(5, true);
-      const hrv = view.getUint16(7, true);
-      const respiratoryRate = view.getUint8(9);
-      const fingerDetected = view.getUint8(10) === 1;
-      
-      // Extract wave data (remaining bytes)
-      const waveData: number[] = [];
-      for (let i = 11; i < view.byteLength; i++) {
-        waveData.push(view.getUint8(i));
-      }
-      
-      const ecgData: ECGData = {
-        wave: waveData,
-        hr: heartRate,
-        moodIndex: moodIndex,
-        rr: rrInterval,
-        hrv: hrv,
-        respiratoryRate: respiratoryRate,
-        touch: fingerDetected
-      };
-      
-      // Store latest data for getter methods
-      this.latestEcgData = ecgData;
-      
-      console.log('ECG Data:', ecgData);
-      
-      const callback = this.callbacks.get(Detection.ECG);
-      if (callback) {
-        callback({ type: 'data', detection: Detection.ECG, data: ecgData });
-      }
-    } catch (error) {
-      console.error('Error parsing ECG data:', error);
-    }
+  // ECG Data Parsing (handled by NeuroSky native SDK, not via HC03 protocol)
+  private parseECGData(data: Uint8Array): void {
+    // Note: ECG is handled separately by NeuroSky SDK via native plugin
+    // This method is a placeholder for potential future direct HC03 ECG protocol
+    console.log('[HC03] ECG data received (processed by NeuroSky SDK)');
   }
 
-  // Blood Oxygen Data Parsing
-  private parseBloodOxygenData(data: ArrayBuffer): void {
+  // Blood Oxygen Data Parsing (from Flutter SDK oxEngine.dart)
+  private parseBloodOxygenData(data: Uint8Array): void {
     try {
-      const view = new DataView(data);
-      
-      if (view.byteLength < 10) {
-        console.warn('Blood oxygen data packet too short');
+      if (data.length < 30) {
+        console.warn('[HC03] Blood oxygen data incomplete:', data.length);
         return;
       }
       
-      const bloodOxygen = view.getUint8(2);
-      const heartRate = view.getUint16(3, true);
-      const fingerDetected = view.getUint8(5) === 1;
-      
-      // Extract wave data (remaining bytes)
+      // Resolve wave data (30 bytes -> 10 values, 3 bytes each as 24-bit)
+      // Note: Flutter SDK's Calculate class computes SpO2 and HR from these waveforms
       const waveData: number[] = [];
-      for (let i = 6; i < view.byteLength; i++) {
-        waveData.push(view.getUint8(i));
+      for (let i = 0; i < 30; i += 3) {
+        const first = (data[i] & 0xFF) << 16;
+        const second = (data[i + 1] & 0xFF) << 8;
+        const third = data[i + 2] & 0xFF;
+        waveData.push(first + second + third);
       }
       
+      // SpO2 and HR are calculated from wave data by signal processing algorithms
+      // For now, emit wave data and let UI/Calculate module process it
       const bloodOxygenData: BloodOxygenData = {
-        bloodOxygen: bloodOxygen,
-        heartRate: heartRate,
-        fingerDetection: fingerDetected,
+        bloodOxygen: 0, // Calculated from waveData by signal processing
+        heartRate: 0,   // Calculated from waveData by signal processing
+        fingerDetection: true,
         bloodOxygenWaveData: waveData
       };
       
       // Store latest data for getter methods
       this.latestBloodOxygenData = bloodOxygenData;
       
-      console.log('Blood Oxygen Data:', bloodOxygenData);
+      console.log('[HC03] Blood Oxygen wave data:', waveData.length, 'samples');
       
       const callback = this.callbacks.get(Detection.OX);
       if (callback) {
@@ -559,74 +700,70 @@ export class Hc03Sdk {
     }
   }
 
-  // Blood Pressure Data Parsing
-  private parseBloodPressureData(data: ArrayBuffer): void {
+  // Blood Pressure Data Parsing (from Flutter SDK bpEngine.dart)
+  private parseBloodPressureData(data: Uint8Array): void {
     try {
-      const view = new DataView(data);
-      
-      if (view.byteLength < 8) {
-        console.warn('Blood pressure data packet too short');
+      if (data.length < 2) {
+        console.warn('[HC03] Blood pressure data too short');
         return;
       }
       
-      const systolic = view.getUint16(2, true);
-      const diastolic = view.getUint16(4, true);
-      const heartRate = view.getUint16(6, true);
-      const progress = view.byteLength > 8 ? view.getUint8(8) : 100;
+      const contentType = data[0] & 0xFF;
+      const BP_RES_CONTENT_PRESSURE_DATA = 0x03;
       
-      const bloodPressureData: BloodPressureData = {
-        ps: systolic,
-        pd: diastolic,
-        hr: heartRate,
-        progress: progress
-      };
-      
-      // Store latest data for getter methods
-      this.latestBloodPressureData = bloodPressureData;
-      
-      console.log('Blood Pressure Data:', bloodPressureData);
-      
-      const callback = this.callbacks.get(Detection.BP);
-      if (callback) {
-        callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
+      if (contentType === BP_RES_CONTENT_PRESSURE_DATA) {
+        if (data.length >= 7) {
+          // Little-endian 16-bit values
+          const systolic = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
+          const diastolic = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
+          const heartRate = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
+          
+          const bloodPressureData: BloodPressureData = {
+            ps: systolic,
+            pd: diastolic,
+            hr: heartRate
+          };
+          
+          // Store latest data for getter methods
+          this.latestBloodPressureData = bloodPressureData;
+          
+          console.log('[HC03] Blood Pressure:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
+          
+          const callback = this.callbacks.get(Detection.BP);
+          if (callback) {
+            callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
+          }
+        }
+      } else {
+        console.log('[HC03] BP calibration/setup data received, type:', contentType);
       }
     } catch (error) {
       console.error('Error parsing blood pressure data:', error);
     }
   }
 
-  // Blood Glucose Data Parsing
-  private parseBloodGlucoseData(data: ArrayBuffer): void {
+  // Blood Glucose Data Parsing (from Flutter SDK bloodglucose.dart)
+  private parseBloodGlucoseData(data: Uint8Array): void {
     try {
-      const view = new DataView(data);
-      
-      if (view.byteLength < 6) {
-        console.warn('Blood glucose data packet too short');
+      if (data.length < 2) {
+        console.warn('[HC03] Blood glucose data too short');
         return;
       }
       
-      const glucoseLevel = view.getUint16(2, true) / 10; // Convert to mg/dL
-      const testStripStatus = view.getUint8(4);
-      
-      const statusMap: Record<number, string> = {
-        0: 'ready',
-        1: 'insert_strip',
-        2: 'apply_sample',
-        3: 'measuring',
-        4: 'complete',
-        5: 'error'
-      };
+      // Big-endian 16-bit value, divide by 10
+      const glucoseRaw = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+      const glucose = glucoseRaw / 10.0;
       
       const bloodGlucoseData: BloodGlucoseData = {
-        bloodGlucoseSendData: { rawValue: view.getUint16(2, true) },
-        bloodGlucosePaperState: statusMap[testStripStatus] || 'unknown',
-        bloodGlucosePaperData: glucoseLevel
+        bloodGlucoseSendData: { rawValue: glucoseRaw },
+        bloodGlucosePaperState: 'complete',
+        bloodGlucosePaperData: glucose
       };
       
       // Store latest data for getter methods
       this.latestBloodGlucoseData = bloodGlucoseData;
       
-      console.log('Blood Glucose Data:', bloodGlucoseData);
+      console.log('[HC03] Blood Glucose:', glucose, 'mmol/L');
       
       const callback = this.callbacks.get(Detection.BG);
       if (callback) {
@@ -637,26 +774,34 @@ export class Hc03Sdk {
     }
   }
 
-  // Temperature Data Parsing
-  private parseTemperatureData(data: ArrayBuffer): void {
+  // Temperature Data Parsing (from Flutter SDK Temperature.dart)
+  private parseTemperatureData(data: Uint8Array): void {
     try {
-      const view = new DataView(data);
-      
-      if (view.byteLength < 4) {
-        console.warn('Temperature data packet too short');
+      if (data.length < 4) {
+        console.warn('[HC03] Temperature data too short');
         return;
       }
       
-      const temperature = view.getUint16(2, true) / 100; // Convert to Celsius
+      // Little-endian 16-bit values
+      const temperatureBdF = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
+      const temperatureEvF = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
+      
+      // Convert to Celsius
+      const tempBT = temperatureBdF * 0.02 - 273.15;
+      const tempET = temperatureEvF * 0.02 - 273.15;
+      
+      // Apply body temperature calculation
+      const bodyTemp = tempBT + (tempET / 100.0);
+      const roundedTemp = Math.round(bodyTemp * 10) / 10.0;
       
       const temperatureData: TemperatureData = {
-        temperature: temperature
+        temperature: roundedTemp
       };
       
       // Store latest data for getter methods
       this.latestTemperatureData = temperatureData;
       
-      console.log('Temperature Data:', temperatureData);
+      console.log('[HC03] Temperature:', roundedTemp, '°C');
       
       const callback = this.callbacks.get(Detection.BT);
       if (callback) {
@@ -667,28 +812,56 @@ export class Hc03Sdk {
     }
   }
 
-  // Battery Data Parsing
-  private parseBatteryData(data: ArrayBuffer): void {
+  // Battery Data Parsing (from Flutter SDK battery.dart)
+  private parseBatteryData(data: Uint8Array): void {
     try {
-      const view = new DataView(data);
-      
-      if (view.byteLength < 4) {
-        console.warn('Battery data packet too short');
+      if (data.length < 3) {
+        console.warn('[HC03] Battery data too short');
         return;
       }
       
-      const batteryLevel = view.getUint8(2);
-      const chargingStatus = view.getUint8(3) === 1;
+      const status = data[0] & 0xFF;
+      const BATTERY_QUERY = 0x00;
+      const BATTERY_CHARGING = 0x01;
+      const BATTERY_FULLY = 0x02;
       
-      const batteryData: BatteryData = {
-        batteryLevel: batteryLevel,
-        chargingStatus: chargingStatus
-      };
+      let batteryData: BatteryData;
+      
+      switch (status) {
+        case BATTERY_QUERY:
+          // Calculate battery level from voltage
+          const batteryValue = ((data[1] & 0xFF) << 8) | (data[2] & 0xFF);
+          const level = this.getBatteryLevel(batteryValue);
+          
+          batteryData = {
+            batteryLevel: level,
+            chargingStatus: false
+          };
+          break;
+          
+        case BATTERY_CHARGING:
+          batteryData = {
+            batteryLevel: this.latestBatteryData?.batteryLevel || 50,
+            chargingStatus: true
+          };
+          break;
+          
+        case BATTERY_FULLY:
+          batteryData = {
+            batteryLevel: 100,
+            chargingStatus: false
+          };
+          break;
+          
+        default:
+          console.warn('[HC03] Unknown battery status:', status);
+          return;
+      }
       
       // Store latest data for getter methods
       this.latestBatteryData = batteryData;
       
-      console.log('Battery Data:', batteryData);
+      console.log('[HC03] Battery:', batteryData.batteryLevel + '%', batteryData.chargingStatus ? '(charging)' : '');
       
       const callback = this.callbacks.get(Detection.BATTERY);
       if (callback) {
@@ -697,6 +870,38 @@ export class Hc03Sdk {
     } catch (error) {
       console.error('Error parsing battery data:', error);
     }
+  }
+
+  // Calculate battery level from voltage (from Flutter SDK)
+  private getBatteryLevel(d: number): number {
+    const data = Math.floor((d / 8191.0) * 3.3 * 3 * 1000);
+    
+    if (data >= 4090) return 100;
+    else if (data >= 4070) return 99;
+    else if (data >= 4056) return 97;
+    else if (data >= 4040) return 95;
+    else if (data >= 4028) return 93;
+    else if (data >= 4000) return 91;
+    else if (data >= 3980) return 86;
+    else if (data >= 3972) return 83;
+    else if (data >= 3944) return 78;
+    else if (data >= 3916) return 73;
+    else if (data >= 3888) return 69;
+    else if (data >= 3860) return 65;
+    else if (data >= 3832) return 61;
+    else if (data >= 3804) return 56;
+    else if (data >= 3776) return 50;
+    else if (data >= 3748) return 42;
+    else if (data >= 3720) return 30;
+    else if (data >= 3692) return 19;
+    else if (data >= 3664) return 15;
+    else if (data >= 3636) return 11;
+    else if (data >= 3608) return 8;
+    else if (data >= 3580) return 7;
+    else if (data >= 3524) return 6;
+    else if (data >= 3468) return 5;
+    else if (data >= 3300) return 4;
+    return 0;
   }
 
   // Query battery level directly from battery service
