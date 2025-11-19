@@ -279,17 +279,46 @@ public class HC03BluetoothPlugin extends Plugin implements EcgListener {
     /**
      * Parse blood oxygen data from HC03 device
      * As per Flutter SDK API: getBloodOxygen
+     * Frame structure: [0xAA, 0x55, cmd, len, ...data..., checksum]
      */
     private void parseBloodOxygenData(byte[] data) {
         try {
-            if (data.length < 6) {
-                Log.w(TAG, "Blood oxygen data too short");
+            // Validate frame structure: [0xAA, 0x55, 0x02, len, bloodOxygen, heartRate_L, heartRate_H, fingerDetected, checksum]
+            if (data.length < 9) {
+                Log.w(TAG, "Blood oxygen data too short: " + data.length);
                 return;
             }
             
-            int bloodOxygen = data[2] & 0xFF;
-            int heartRate = ((data[4] & 0xFF) << 8) | (data[3] & 0xFF);
-            boolean fingerDetected = (data[5] & 0xFF) == 1;
+            // Validate header
+            if ((data[0] & 0xFF) != 0xAA || (data[1] & 0xFF) != 0x55) {
+                Log.w(TAG, "Invalid blood oxygen frame header");
+                return;
+            }
+            
+            // Validate command
+            if ((data[2] & 0xFF) != 0x02) {
+                Log.w(TAG, "Invalid blood oxygen command: 0x" + Integer.toHexString(data[2] & 0xFF));
+                return;
+            }
+            
+            int length = data[3] & 0xFF;
+            if (data.length < 4 + length + 1) {
+                Log.w(TAG, "Blood oxygen data length mismatch");
+                return;
+            }
+            
+            // Verify checksum
+            int calculatedChecksum = calculateChecksum(data, 2, 4 + length - 1);
+            int receivedChecksum = data[4 + length] & 0xFF;
+            if (calculatedChecksum != receivedChecksum) {
+                Log.w(TAG, "Blood oxygen checksum mismatch");
+                return;
+            }
+            
+            // Parse data fields (little-endian for heart rate)
+            int bloodOxygen = data[4] & 0xFF;
+            int heartRate = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
+            boolean fingerDetected = (data[7] & 0xFF) == 1;
             
             JSObject result = new JSObject();
             result.put("type", "bloodOxygen");
@@ -309,18 +338,47 @@ public class HC03BluetoothPlugin extends Plugin implements EcgListener {
     /**
      * Parse blood pressure data from HC03 device
      * As per Flutter SDK API: getBloodPressureData
+     * Frame structure: [0xAA, 0x55, cmd, len, ...data..., checksum]
      */
     private void parseBloodPressureData(byte[] data) {
         try {
-            if (data.length < 8) {
-                Log.w(TAG, "Blood pressure data too short");
+            // Validate frame structure: [0xAA, 0x55, 0x03, len, systolic_L, systolic_H, diastolic_L, diastolic_H, heartRate_L, heartRate_H, progress, checksum]
+            if (data.length < 11) {
+                Log.w(TAG, "Blood pressure data too short: " + data.length);
                 return;
             }
             
-            int systolic = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
-            int diastolic = ((data[5] & 0xFF) << 8) | (data[4] & 0xFF);
-            int heartRate = ((data[7] & 0xFF) << 8) | (data[6] & 0xFF);
-            int progress = data.length > 8 ? (data[8] & 0xFF) : 100;
+            // Validate header
+            if ((data[0] & 0xFF) != 0xAA || (data[1] & 0xFF) != 0x55) {
+                Log.w(TAG, "Invalid blood pressure frame header");
+                return;
+            }
+            
+            // Validate command
+            if ((data[2] & 0xFF) != 0x03) {
+                Log.w(TAG, "Invalid blood pressure command: 0x" + Integer.toHexString(data[2] & 0xFF));
+                return;
+            }
+            
+            int length = data[3] & 0xFF;
+            if (data.length < 4 + length + 1) {
+                Log.w(TAG, "Blood pressure data length mismatch");
+                return;
+            }
+            
+            // Verify checksum
+            int calculatedChecksum = calculateChecksum(data, 2, 4 + length - 1);
+            int receivedChecksum = data[4 + length] & 0xFF;
+            if (calculatedChecksum != receivedChecksum) {
+                Log.w(TAG, "Blood pressure checksum mismatch");
+                return;
+            }
+            
+            // Parse data fields (little-endian)
+            int systolic = (data[4] & 0xFF) | ((data[5] & 0xFF) << 8);
+            int diastolic = (data[6] & 0xFF) | ((data[7] & 0xFF) << 8);
+            int heartRate = (data[8] & 0xFF) | ((data[9] & 0xFF) << 8);
+            int progress = data.length > 10 ? (data[10] & 0xFF) : 100;
             
             JSObject result = new JSObject();
             result.put("type", "bloodPressure");
