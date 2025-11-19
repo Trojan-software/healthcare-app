@@ -206,28 +206,42 @@ export class Hc03Sdk {
       
       // Request HC03 device with very permissive filters to find all BLE devices
       // This allows users to manually select their HC03 device even if it has unexpected name/UUID
-      console.log('Requesting Bluetooth device...');
+      console.log('🔍 [HC03] Requesting Bluetooth device with acceptAllDevices=true...');
+      console.log('🔍 [HC03] This will show ALL nearby Bluetooth devices in the Chrome picker');
+      console.log('🔍 [HC03] Look for device named: HC02-XXX or HC03-XXX or similar');
       
-      // Use acceptAllDevices to show ALL nearby Bluetooth devices
-      // This helps when HC03 device advertises with unexpected name or UUID
-      this.device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [
-          HC03_SERVICE_UUID,
-          BATTERY_SERVICE_UUID,
-          'device_information',
-          'generic_access',
-          'battery_service',
-          '0000fff0-0000-1000-8000-00805f9b34fb',
-          '0000ffe0-0000-1000-8000-00805f9b34fb',
-          '0000ffe5-0000-1000-8000-00805f9b34fb',
-          '000018f0-0000-1000-8000-00805f9b34fb',
-          'heart_rate',
-          'health_thermometer'
-        ]
-      } as any); // Type assertion for acceptAllDevices (valid Web Bluetooth API but not in TypeScript types yet)
+      try {
+        // Use acceptAllDevices to show ALL nearby Bluetooth devices
+        // This helps when HC03 device advertises with unexpected name or UUID
+        console.log('🔍 [HC03] Calling navigator.bluetooth.requestDevice()...');
+        
+        this.device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [
+            HC03_SERVICE_UUID,
+            BATTERY_SERVICE_UUID,
+            'device_information',
+            'generic_access',
+            'battery_service',
+            '0000fff0-0000-1000-8000-00805f9b34fb',
+            '0000ffe0-0000-1000-8000-00805f9b34fb',
+            '0000ffe5-0000-1000-8000-00805f9b34fb',
+            '000018f0-0000-1000-8000-00805f9b34fb',
+            'heart_rate',
+            'health_thermometer'
+          ]
+        } as any); // Type assertion for acceptAllDevices (valid Web Bluetooth API but not in TypeScript types yet)
 
-      console.log('HC03 device selected:', this.device.name);
+        console.log('✅ [HC03] Device selected successfully!');
+        console.log('✅ [HC03] Device name:', this.device.name);
+        console.log('✅ [HC03] Device ID:', this.device.id);
+      } catch (requestError: any) {
+        console.error('❌ [HC03] navigator.bluetooth.requestDevice() failed');
+        console.error('❌ [HC03] Error name:', requestError.name);
+        console.error('❌ [HC03] Error message:', requestError.message);
+        console.error('❌ [HC03] Full error:', requestError);
+        throw requestError;
+      }
 
       // Connect to GATT server
       this.server = await this.device.gatt!.connect();
