@@ -382,7 +382,11 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
     try {
       // Check if Web Bluetooth is supported
       if (!navigator.bluetooth) {
-        throw new Error('Bluetooth is not supported in this browser. Please use Chrome, Edge, or another compatible browser on desktop or Android.');
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const errorMessage = isIOS 
+          ? 'Web Bluetooth is not supported on iOS Safari. Please install the native iOS app from the App Store to use Bluetooth features.'
+          : 'Web Bluetooth is not supported in this browser. Please use Chrome or Edge browser on Android/Desktop, or install the native mobile app.';
+        throw new Error(errorMessage);
       }
       
       // Check if device is available first
@@ -447,7 +451,10 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       let userMessage = 'Failed to scan for devices';
       
       if (error.message?.includes('not supported')) {
-        userMessage = 'Bluetooth is not supported in this browser. Please use Chrome, Edge, or another compatible browser on desktop or Android.';
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        userMessage = isIOS
+          ? 'Web Bluetooth is not supported on iOS. Please install the native iOS app to use Bluetooth features, or access this page from an Android device using Chrome browser.'
+          : 'Web Bluetooth is not supported in this browser. Please use Chrome or Edge browser, or install the native mobile app for full Bluetooth support.';
       } else if (error.message?.includes('cancelled') || error.message?.includes('canceled')) {
         userMessage = 'Device selection was cancelled. Please try again and select your HC03 device from the list.';
       } else if (error.name === 'NotFoundError' || error.message?.includes('No device found')) {
@@ -651,6 +658,34 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Browser Compatibility Warning */}
+        {!navigator.bluetooth && (
+          <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+              {/iPad|iPhone|iPod/.test(navigator.userAgent) ? (
+                <div className="space-y-2">
+                  <p className="font-semibold">iOS Detected: Web Bluetooth Not Supported</p>
+                  <p className="text-sm">iOS Safari doesn't support Web Bluetooth. To use HC03 devices:</p>
+                  <ul className="text-sm list-disc ml-5 space-y-1">
+                    <li>Install the native iOS app from the App Store</li>
+                    <li>Or use an Android device with Chrome browser</li>
+                  </ul>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="font-semibold">Bluetooth Not Available</p>
+                  <p className="text-sm">This browser doesn't support Web Bluetooth. For HC03 connectivity:</p>
+                  <ul className="text-sm list-disc ml-5 space-y-1">
+                    <li>Use Chrome or Edge browser (Android/Desktop)</li>
+                    <li>Or install the native mobile app for your device</li>
+                  </ul>
+                </div>
+              )}
+            </AlertDescription>
           </Alert>
         )}
 
