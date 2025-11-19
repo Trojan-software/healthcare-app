@@ -322,28 +322,35 @@ export class Hc03Sdk {
       try {
         console.log('🔍 [HC03] Calling navigator.bluetooth.requestDevice()...');
         
-        // Use filters with namePrefix to match HC03 AND HC02 devices
-        // HC02/HC03 devices advertise with name patterns like: HC02-F1B51D, HC03-XXXXXX
+        // Match official HC03 Flutter SDK scanning approach:
+        // Official SDK scans for FILTER_UUID (0000ff27) which devices advertise
+        // Web Bluetooth: Use service-based filter with FILTER_UUID as primary
+        // Fallback to name-based filters only if service filter doesn't work
         this.device = await navigator.bluetooth.requestDevice({
           filters: [
+            // PRIMARY: Service-based filter (matches official SDK)
+            { services: [HC03_FILTER_UUID] },  // 0000ff27 - advertised service
+            
+            // FALLBACK: Name-based filters for broader compatibility
             { namePrefix: 'HC03' },
             { namePrefix: 'HC02' },
             { namePrefix: 'HC-03' },
             { namePrefix: 'HC-02' },
             { namePrefix: 'UNKTOP' },
-            { namePrefix: 'Health' },
-            { services: [HC03_SERVICE_UUID] },
-            { services: [HC03_FILTER_UUID] },
-            { services: ['0000ffe0-0000-1000-8000-00805f9b34fb'] },
-            { services: ['0000ffe5-0000-1000-8000-00805f9b34fb'] }
+            { namePrefix: 'Health' }
           ],
           optionalServices: [
-            HC03_SERVICE_UUID,
-            HC03_FILTER_UUID,
-            BATTERY_SERVICE_UUID,
+            // Actual services accessed after connection (from official SDK)
+            HC03_SERVICE_UUID,      // 00001822 - actual data service
+            HC03_FILTER_UUID,       // 0000ff27 - discovery service
+            BATTERY_SERVICE_UUID,   // 0000180f - battery service
+            
+            // Additional standard services for compatibility
             'device_information',
             'generic_access',
             'battery_service',
+            
+            // Legacy/alternative UUIDs for older devices
             '0000fff0-0000-1000-8000-00805f9b34fb',
             '0000ffe0-0000-1000-8000-00805f9b34fb',
             '0000ffe5-0000-1000-8000-00805f9b34fb',
