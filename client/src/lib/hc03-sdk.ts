@@ -323,21 +323,20 @@ export class Hc03Sdk {
         console.log('🔍 [HC03] Calling navigator.bluetooth.requestDevice()...');
         
         // Match official HC03 Flutter SDK scanning approach:
-        // Official SDK scans for FILTER_UUID (0000ff27) which devices advertise
-        // Web Bluetooth: Use service-based filter with FILTER_UUID as primary
-        // Fallback to name-based filters only if service filter doesn't work
+        // Web Bluetooth API: Use name-based filters for maximum compatibility
+        // This allows HC02-F1B5D and HC03-XXXXXX devices to appear in picker
+        // Service UUID filtering happens AFTER device selection during connection
         this.device = await navigator.bluetooth.requestDevice({
           filters: [
-            // PRIMARY: Service-based filter (matches official SDK)
-            { services: [HC03_FILTER_UUID] },  // 0000ff27 - advertised service
-            
-            // FALLBACK: Name-based filters for broader compatibility
-            { namePrefix: 'HC03' },
-            { namePrefix: 'HC02' },
-            { namePrefix: 'HC-03' },
-            { namePrefix: 'HC-02' },
-            { namePrefix: 'UNKTOP' },
-            { namePrefix: 'Health' }
+            // Name-based filters for all HC03/HC02 device variants
+            { namePrefix: 'HC03' },       // HC03-XXXXXX devices
+            { namePrefix: 'HC02' },       // HC02-F1B5D and similar
+            { namePrefix: 'HC-03' },      // Alternative naming
+            { namePrefix: 'HC-02' },      // Alternative naming
+            { namePrefix: 'UNKTOP' },     // Brand name
+            { namePrefix: 'Health' },     // Generic health devices
+            { namePrefix: 'ECG' },        // ECG-specific devices
+            { namePrefix: 'BLE-' },       // BLE prefix devices
           ],
           optionalServices: [
             // Actual services accessed after connection (from official SDK)
