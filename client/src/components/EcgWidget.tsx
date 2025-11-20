@@ -48,9 +48,10 @@ interface EcgWidgetProps {
   patientId: string;
   compact?: boolean;
   showControls?: boolean;
+  isEcgMeasurementInProgress?: boolean;
 }
 
-export default function EcgWidget({ deviceId, patientId, compact = false, showControls = false }: EcgWidgetProps) {
+export default function EcgWidget({ deviceId, patientId, compact = false, showControls = false, isEcgMeasurementInProgress = false }: EcgWidgetProps) {
   const { t, isRTL } = useLanguage();
   const [ecgData, setEcgData] = useState<EcgData | null>(null);
   const [stats, setStats] = useState<EcgStats>({
@@ -80,6 +81,11 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Sync recording state with ECG measurement from HC03DeviceWidget
+  useEffect(() => {
+    setIsRecording(isEcgMeasurementInProgress);
+  }, [isEcgMeasurementInProgress]);
 
   useEffect(() => {
     loadEcgData();

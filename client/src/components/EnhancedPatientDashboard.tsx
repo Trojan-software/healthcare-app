@@ -77,6 +77,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const [vitalsHistory, setVitalsHistory] = useState<VitalSigns[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectedDeviceId, setConnectedDeviceId] = useState<string>('');
+  const [isEcgInProgress, setIsEcgInProgress] = useState(false);
   const [selectedVitalType, setSelectedVitalType] = useState('all');
   const [fromDate, setFromDate] = useState(() => {
     const date = new Date();
@@ -963,6 +964,11 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           {/* HC03 Device Control - Full Width */}
           <HC03DeviceWidget 
             patientId={dashboardData?.user?.patientId || ''}
+            onMeasurementStateChange={(type, isInProgress) => {
+              if (type === 'ecg') {
+                setIsEcgInProgress(isInProgress);
+              }
+            }}
             onDataUpdate={(data) => {
               // Handle real-time data updates from HC03 device
               console.log('HC03 data received:', data);
@@ -1014,6 +1020,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             patientId={dashboardData?.user?.patientId || ''} 
             showControls={true}
             compact={false}
+            isEcgMeasurementInProgress={isEcgInProgress}
           />
           
           {/* Blood Glucose and Battery - Side by Side */}

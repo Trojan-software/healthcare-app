@@ -50,9 +50,10 @@ interface MeasurementData {
 interface HC03DeviceWidgetProps {
   patientId: string;
   onDataUpdate?: (data: MeasurementData) => void;
+  onMeasurementStateChange?: (type: string, isInProgress: boolean) => void;
 }
 
-export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03DeviceWidgetProps) {
+export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasurementStateChange }: HC03DeviceWidgetProps) {
   const [devices, setDevices] = useState<HC03DeviceData[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<HC03DeviceData | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'scanning' | 'connecting' | 'connected' | 'error'>('idle');
@@ -120,17 +121,40 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       };
       
       addMeasurementData(measurementData);
+      
+      // Auto-stop after receiving valid ECG data with heart rate
+      if (ecgData.hr > 0 && measurementInProgress === Detection.ECG) {
+        if (!validDataReceived.current) {
+          validDataReceived.current = true;
+          
+          // Stop measurement after 30 seconds to ensure sufficient data is collected
+          setTimeout(async () => {
+            await stopMeasurement(Detection.ECG);
+            toast({
+              title: "ECG Measurement Complete",
+              description: `Heart Rate: ${ecgData.hr} bpm | Mood: ${hc03Sdk.getMoodText(ecgData.moodIndex)}`,
+            });
+          }, 30000);
+        }
+      }
     } else if (event.type === 'measurementStarted') {
+      validDataReceived.current = false;
       setMeasurementInProgress(Detection.ECG);
+      if (onMeasurementStateChange) {
+        onMeasurementStateChange('ecg', true);
+      }
       toast({
-        title: t('measurementStarted'),
-        description: t('placeFinger'),
+        title: "ECG Measurement Started",
+        description: "Please place your finger on the sensor and remain still",
       });
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
+      if (onMeasurementStateChange) {
+        onMeasurementStateChange('ecg', false);
+      }
       toast({
-        title: t('measurementCompleted'),
-        description: t('measurementCompleted'),
+        title: "ECG Measurement Complete",
+        description: "ECG measurement completed successfully",
       });
     }
   };
