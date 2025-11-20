@@ -292,11 +292,57 @@ export class Hc03Sdk {
 
   // Initialize HC03 SDK
   public async initialize(): Promise<void> {
+    console.log('🔍 [HC03] Checking Web Bluetooth API availability...');
+    console.log('🔍 [HC03] User agent:', navigator.userAgent);
+    console.log('🔍 [HC03] navigator.bluetooth exists?', !!navigator.bluetooth);
+    
     if (!navigator.bluetooth) {
-      throw new Error('Web Bluetooth API not supported in this browser. Please use Chrome, Edge, or another compatible browser.');
+      const browserName = this.detectBrowser();
+      throw new Error(
+        `Web Bluetooth API not supported in ${browserName}.\n\n` +
+        `✅ Supported browsers:\n` +
+        `  • Google Chrome (recommended)\n` +
+        `  • Microsoft Edge\n` +
+        `  • Opera Browser\n\n` +
+        `❌ Not supported:\n` +
+        `  • Safari (iOS/macOS)\n` +
+        `  • Firefox\n` +
+        `  • Most in-app browsers`
+      );
     }
     
-    console.log('HC03 SDK initialized successfully');
+    // Check if the API is available (not all features are available in all contexts)
+    try {
+      // @ts-ignore - getAvailability is not in all TypeScript definitions yet
+      const available = await navigator.bluetooth.getAvailability();
+      console.log('🔍 [HC03] Bluetooth available?', available);
+      
+      if (!available) {
+        throw new Error(
+          'Bluetooth is not available on this device.\n\n' +
+          'Please check:\n' +
+          '  • Bluetooth is enabled in system settings\n' +
+          '  • You are using HTTPS (required for Web Bluetooth)\n' +
+          '  • Your device has Bluetooth hardware'
+        );
+      }
+    } catch (e) {
+      console.warn('⚠️ [HC03] Could not check Bluetooth availability:', e);
+      // Continue anyway - some browsers don't support getAvailability()
+    }
+    
+    console.log('✅ [HC03] SDK initialized successfully');
+  }
+  
+  // Detect browser for better error messages
+  private detectBrowser(): string {
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes('chrome') && !ua.includes('edge')) return 'Chrome';
+    if (ua.includes('edg/')) return 'Edge';
+    if (ua.includes('safari') && !ua.includes('chrome')) return 'Safari';
+    if (ua.includes('firefox')) return 'Firefox';
+    if (ua.includes('opera') || ua.includes('opr/')) return 'Opera';
+    return 'your current browser';
   }
 
   // Connect to HC03 device via BLE

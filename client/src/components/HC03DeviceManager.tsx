@@ -26,6 +26,7 @@ import { hc03Sdk, Detection, type ECGData, type BloodOxygenData, type BloodPress
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import BluetoothTroubleshootingGuide from '@/components/BluetoothTroubleshootingGuide';
+import BluetoothDiagnostics from '@/components/BluetoothDiagnostics';
 
 interface HC03Device {
   id: string;
@@ -467,7 +468,8 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
                 {isTroubleshootingOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 Need help connecting?
               </CollapsibleTrigger>
-              <CollapsibleContent>
+              <CollapsibleContent className="space-y-6">
+                <BluetoothDiagnostics />
                 <BluetoothTroubleshootingGuide />
               </CollapsibleContent>
             </Collapsible>
