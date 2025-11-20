@@ -226,31 +226,18 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
   };
 
   const handleTemperatureData = (event: any) => {
-    if (event.type === 'data') {
-      const tempData = event.data as TemperatureData;
-      const measurementData: MeasurementData = {
-        type: 'temperature',
-        value: {
-          temperature: tempData.temperature
-        },
-        timestamp: new Date().toISOString(),
-        deviceId: selectedDevice?.deviceId || ''
-      };
-      
-      addMeasurementData(measurementData);
-    } else if (event.type === 'measurementStarted') {
-      setMeasurementInProgress(Detection.BT);
-      toast({
-        title: "Temperature Measurement Started",
-        description: "Measuring body temperature...",
-      });
-    } else if (event.type === 'measurementCompleted') {
-      setMeasurementInProgress(null);
-      toast({
-        title: "Temperature Measurement Complete",
-        description: "Temperature measurement completed successfully",
-      });
-    }
+    // TEMPERATURE MEASUREMENT DISABLED
+    // Missing ~800 lines of calibration logic from Flutter SDK
+    // Risk: Could display incorrect values (e.g., 19°C instead of 37°C)
+    console.warn('[HC03] Temperature measurement is disabled - missing calibration logic');
+    
+    toast({
+      title: "Temperature Measurement Unavailable",
+      description: "Temperature sensing requires additional calibration. Please use other vital sign measurements.",
+      variant: "destructive"
+    });
+    
+    return;
   };
 
   const handleBloodGlucoseData = (event: any) => {

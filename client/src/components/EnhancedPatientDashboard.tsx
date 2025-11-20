@@ -101,6 +101,64 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     }
   }, [dashboardData]);
 
+  // Save vital signs to backend after measurement
+  const saveVitalSignsToBackend = async (measurementData: any, patientId: string) => {
+    if (!patientId) return;
+    
+    try {
+      const vitalSignData: any = {
+        patientId,
+        timestamp: measurementData.timestamp || new Date().toISOString()
+      };
+      
+      // Map measurement data to vital signs API format
+      if (measurementData.type === 'ecg' && measurementData.value?.hr) {
+        vitalSignData.heartRate = measurementData.value.hr;
+      } else if (measurementData.type === 'bloodOxygen') {
+        if (measurementData.value?.heartRate) {
+          vitalSignData.heartRate = measurementData.value.heartRate;
+        }
+        if (measurementData.value?.bloodOxygen) {
+          vitalSignData.oxygenLevel = measurementData.value.bloodOxygen;
+        }
+      } else if (measurementData.type === 'bloodPressure' && measurementData.value) {
+        vitalSignData.bloodPressureSystolic = measurementData.value.systolic || measurementData.value.ps;
+        vitalSignData.bloodPressureDiastolic = measurementData.value.diastolic || measurementData.value.pd;
+        if (measurementData.value.heartRate || measurementData.value.hr) {
+          vitalSignData.heartRate = measurementData.value.heartRate || measurementData.value.hr;
+        }
+      } else if (measurementData.type === 'bloodGlucose' && measurementData.value) {
+        vitalSignData.bloodGlucose = measurementData.value.bloodGlucosePaperData || measurementData.value;
+      }
+      
+      // Only save if we have at least one valid vital sign
+      const hasValidData = vitalSignData.heartRate || 
+                           vitalSignData.bloodPressureSystolic || 
+                           vitalSignData.oxygenLevel || 
+                           vitalSignData.bloodGlucose;
+      
+      if (hasValidData) {
+        console.log('Saving vital signs to backend:', vitalSignData);
+        
+        const response = await fetch('/api/vital-signs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(vitalSignData)
+        });
+        
+        if (response.ok) {
+          console.log('Vital signs saved successfully');
+          // Reload vitals history to show new measurement
+          await loadVitalsHistory();
+        } else {
+          console.error('Failed to save vital signs:', await response.text());
+        }
+      }
+    } catch (error) {
+      console.error('Error saving vital signs:', error);
+    }
+  };
+
   const loadDashboardData = async () => {
     try {
       const response = await fetch(`/api/dashboard/patient/${userId}`);
@@ -928,9 +986,11 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                     updatedVitals.heartRate = data.value.heartRate;
                     updatedVitals.oxygenLevel = data.value.bloodOxygen || updatedVitals.oxygenLevel;
                   } else if (data.type === 'bloodPressure' && data.value) {
-                    updatedVitals.bloodPressure = `${data.value.ps}/${data.value.pd}`;
+                    updatedVitals.bloodPressure = `${data.value.systolic}/${data.value.diastolic}`;
                   } else if (data.type === 'temperature' && data.value?.temperature) {
-                    updatedVitals.temperature = data.value.temperature.toFixed(1);
+                    // Temperature measurement disabled - skip update
+                    console.warn('[Dashboard] Temperature measurement disabled');
+                    return prev;
                   }
                   
                   // Update timestamp
@@ -941,6 +1001,11 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                     vitals: updatedVitals
                   };
                 });
+                
+                // Persist vital signs to backend after measurement
+                if (data.type !== 'temperature') {
+                  saveVitalSignsToBackend(data, dashboardData.user?.patientId);
+                }
               }
             }}
           />
