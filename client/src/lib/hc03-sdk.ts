@@ -1010,14 +1010,14 @@ export class Hc03Sdk {
     }
     this.waveformBuffer.push(...waveData);
     
-    // Need at least 50 samples for reliable calculation (5 seconds at 10Hz)
-    if (this.waveformBuffer.length < 50) {
-      console.log(`[HC03] Collecting waveform data: ${this.waveformBuffer.length}/50 samples`);
+    // Need at least 100 samples for reliable calculation (10 seconds at 10Hz)
+    if (this.waveformBuffer.length < 100) {
+      console.log(`[HC03] Collecting waveform data: ${this.waveformBuffer.length}/100 samples`);
       return { spo2: 0, heartRate: 0 };
     }
     
-    // Use the last 50 samples for calculation
-    const samples = this.waveformBuffer.slice(-50);
+    // Use the last 100 samples for calculation
+    const samples = this.waveformBuffer.slice(-100);
     
     // Calculate AC and DC components from PPG signal
     const mean = samples.reduce((sum, val) => sum + val, 0) / samples.length;

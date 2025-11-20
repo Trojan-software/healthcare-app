@@ -159,7 +159,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
         description: "Please keep your finger steady on the sensor",
       });
       
-      // Auto-stop after 5 seconds of data collection
+      // Auto-stop after 10 seconds of data collection
       setTimeout(() => {
         stopMeasurement(Detection.OX).then(() => {
           toast({
@@ -167,7 +167,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
             description: "Measurement completed successfully",
           });
         });
-      }, 5000);
+      }, 10000);
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
       toast({
