@@ -417,9 +417,34 @@ export class Hc03Sdk {
       }
 
       // Connect to GATT server
+      console.log('🔗 [HC03] Connecting to GATT server...');
       this.server = await this.device.gatt!.connect();
+      console.log('✅ [HC03] GATT server connected!');
       
-      // Get main HC03 service
+      // DISCOVERY MODE: Scan all services to find what this device actually has
+      console.log('🔍 [HC03] Discovering all available services...');
+      try {
+        const services = await this.server.getPrimaryServices();
+        console.log(`📡 [HC03] Found ${services.length} services:`);
+        for (const service of services) {
+          console.log(`  📍 Service UUID: ${service.uuid}`);
+          try {
+            const characteristics = await service.getCharacteristics();
+            console.log(`     ↳ ${characteristics.length} characteristics:`);
+            for (const char of characteristics) {
+              console.log(`       - Characteristic UUID: ${char.uuid}`);
+              console.log(`         Properties: ${JSON.stringify(char.properties)}`);
+            }
+          } catch (e) {
+            console.log(`     ↳ Could not read characteristics: ${e}`);
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ [HC03] Could not discover all services:', e);
+      }
+      
+      // Try to get main HC03 service
+      console.log(`🔍 [HC03] Looking for HC03 service UUID: ${HC03_SERVICE_UUID}...`);
       this.service = await this.server.getPrimaryService(HC03_SERVICE_UUID);
       
       // Get write and notify characteristics
