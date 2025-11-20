@@ -79,6 +79,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const [connectedDeviceId, setConnectedDeviceId] = useState<string>('');
   const [isEcgInProgress, setIsEcgInProgress] = useState(false);
   const [isBpInProgress, setIsBpInProgress] = useState(false);
+  const [isGlucoseInProgress, setIsGlucoseInProgress] = useState(false);
   const [selectedVitalType, setSelectedVitalType] = useState('all');
   const [fromDate, setFromDate] = useState(() => {
     const date = new Date();
@@ -979,6 +980,8 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                 setIsEcgInProgress(isInProgress);
               } else if (type === 'bloodPressure') {
                 setIsBpInProgress(isInProgress);
+              } else if (type === 'bloodGlucose') {
+                setIsGlucoseInProgress(isInProgress);
               }
             }}
             onDataUpdate={(data) => {
@@ -1042,6 +1045,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               deviceId={connectedDeviceId || undefined}
               showControls={true}
               compact={false}
+              isGlucoseMeasurementInProgress={isGlucoseInProgress}
             />
             <BatteryWidget 
               patientId={dashboardData?.user?.patientId || ''} 

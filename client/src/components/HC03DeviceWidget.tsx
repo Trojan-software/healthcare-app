@@ -316,25 +316,31 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
         if (!validDataReceived.current) {
           validDataReceived.current = true;
           
-          // Stop measurement after 2 seconds to ensure data is saved
+          // Stop measurement immediately after valid reading
           setTimeout(async () => {
             await stopMeasurement(Detection.BG);
             toast({
               title: "Blood Glucose Measurement Complete",
-              description: `Glucose: ${event.data.bloodGlucosePaperData} mmol/L`,
+              description: `Glucose: ${event.data.bloodGlucosePaperData.toFixed(1)} mmol/L`,
             });
-          }, 2000);
+          }, 1000);
         }
       }
     } else if (event.type === 'measurementStarted') {
       validDataReceived.current = false;
       setMeasurementInProgress(Detection.BG);
+      if (onMeasurementStateChange) {
+        onMeasurementStateChange('bloodGlucose', true);
+      }
       toast({
         title: "Blood Glucose Measurement Started",
         description: "Please insert test strip and apply blood sample",
       });
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
+      if (onMeasurementStateChange) {
+        onMeasurementStateChange('bloodGlucose', false);
+      }
       toast({
         title: "Blood Glucose Measurement Complete",
         description: "Blood glucose measurement completed successfully",

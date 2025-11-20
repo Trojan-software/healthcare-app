@@ -21,13 +21,19 @@ interface BloodGlucoseWidgetProps {
   deviceId?: string;
   showControls?: boolean;
   compact?: boolean;
+  isGlucoseMeasurementInProgress?: boolean;
 }
 
-export default function BloodGlucoseWidget({ patientId, deviceId, showControls = false, compact = false }: BloodGlucoseWidgetProps) {
+export default function BloodGlucoseWidget({ patientId, deviceId, showControls = false, compact = false, isGlucoseMeasurementInProgress = false }: BloodGlucoseWidgetProps) {
   const [glucoseData, setGlucoseData] = useState<BloodGlucoseReading[]>([]);
   const [loading, setLoading] = useState(true);
   const [measuring, setMeasuring] = useState(false);
   const { t } = useLanguage();
+  
+  // Sync measuring state with HC03 measurement
+  useEffect(() => {
+    setMeasuring(isGlucoseMeasurementInProgress);
+  }, [isGlucoseMeasurementInProgress]);
 
   useEffect(() => {
     loadGlucoseData();
@@ -194,29 +200,39 @@ export default function BloodGlucoseWidget({ patientId, deviceId, showControls =
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {latestReading && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-3xl font-bold text-blue-600">
-                {latestReading.glucoseLevel} mg/dL
-              </span>
-              <div className="text-right">
-                <Badge variant="secondary" className={getGlucoseStatus(latestReading.glucoseLevel, latestReading.measurementType).color}>
-                  {getGlucoseStatus(latestReading.glucoseLevel, latestReading.measurementType).status}
-                </Badge>
-                <p className="text-sm text-gray-600 mt-1">
-                  {formatMeasurementType(latestReading.measurementType)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>{t('latestReading')}</span>
-              <span>{formatTimestamp(latestReading.timestamp)}</span>
+        {measuring ? (
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-gray-700">Measuring Blood Glucose...</p>
+              <p className="text-sm text-gray-500 mt-1">Insert test strip and apply blood sample</p>
             </div>
           </div>
-        )}
+        ) : (
+          <>
+            {latestReading && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-3xl font-bold text-blue-600">
+                    {latestReading.glucoseLevel} mg/dL
+                  </span>
+                  <div className="text-right">
+                    <Badge variant="secondary" className={getGlucoseStatus(latestReading.glucoseLevel, latestReading.measurementType).color}>
+                      {getGlucoseStatus(latestReading.glucoseLevel, latestReading.measurementType).status}
+                    </Badge>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {formatMeasurementType(latestReading.measurementType)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>{t('latestReading')}</span>
+                  <span>{formatTimestamp(latestReading.timestamp)}</span>
+                </div>
+              </div>
+            )}
 
-        <div className="space-y-3">
+            <div className="space-y-3">
           <h4 className="font-medium text-gray-800">{t('recentReadings')}</h4>
           {glucoseData.slice(0, 5).map((reading) => {
             const status = getGlucoseStatus(reading.glucoseLevel, reading.measurementType);
@@ -256,7 +272,9 @@ export default function BloodGlucoseWidget({ patientId, deviceId, showControls =
               )}
             </div>
           )}
-        </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
