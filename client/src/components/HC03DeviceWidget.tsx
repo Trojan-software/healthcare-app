@@ -66,6 +66,8 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
   const [isTroubleshootingOpen, setIsTroubleshootingOpen] = useState(true);
   
   const wsConnection = useRef<WebSocket | null>(null);
+  const measurementTimeout = useRef<NodeJS.Timeout | null>(null);
+  const validDataReceived = useRef<boolean>(false);
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
 
@@ -149,7 +151,24 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       };
       
       addMeasurementData(measurementData);
+      
+      // Auto-stop after receiving valid blood oxygen data (SpO2 > 0 and HR > 0)
+      if (oxData.bloodOxygen > 0 && oxData.heartRate > 0 && measurementInProgress === Detection.OX) {
+        if (!validDataReceived.current) {
+          validDataReceived.current = true;
+          
+          // Stop measurement after 2 seconds to ensure data is saved
+          setTimeout(async () => {
+            await stopMeasurement(Detection.OX);
+            toast({
+              title: "Blood Oxygen Measurement Complete",
+              description: `SpO2: ${oxData.bloodOxygen}% | HR: ${oxData.heartRate} bpm`,
+            });
+          }, 2000);
+        }
+      }
     } else if (event.type === 'measurementStarted') {
+      validDataReceived.current = false;
       setMeasurementInProgress(Detection.OX);
       toast({
         title: "Blood Oxygen Measurement Started",
@@ -180,7 +199,24 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       };
       
       addMeasurementData(measurementData);
+      
+      // Auto-stop after receiving valid blood pressure data (systolic > 0 and diastolic > 0)
+      if (bpData.ps > 0 && bpData.pd > 0 && measurementInProgress === Detection.BP) {
+        if (!validDataReceived.current) {
+          validDataReceived.current = true;
+          
+          // Stop measurement after 2 seconds to ensure data is saved
+          setTimeout(async () => {
+            await stopMeasurement(Detection.BP);
+            toast({
+              title: "Blood Pressure Measurement Complete",
+              description: `BP: ${bpData.ps}/${bpData.pd} mmHg | HR: ${bpData.hr} bpm`,
+            });
+          }, 2000);
+        }
+      }
     } else if (event.type === 'measurementStarted') {
+      validDataReceived.current = false;
       setMeasurementInProgress(Detection.BP);
       toast({
         title: "Blood Pressure Measurement Started",
@@ -233,7 +269,24 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       };
       
       addMeasurementData(measurementData);
+      
+      // Auto-stop after receiving valid blood glucose data
+      if (event.data?.bloodGlucosePaperData && measurementInProgress === Detection.BG) {
+        if (!validDataReceived.current) {
+          validDataReceived.current = true;
+          
+          // Stop measurement after 2 seconds to ensure data is saved
+          setTimeout(async () => {
+            await stopMeasurement(Detection.BG);
+            toast({
+              title: "Blood Glucose Measurement Complete",
+              description: `Glucose: ${event.data.bloodGlucosePaperData} mmol/L`,
+            });
+          }, 2000);
+        }
+      }
     } else if (event.type === 'measurementStarted') {
+      validDataReceived.current = false;
       setMeasurementInProgress(Detection.BG);
       toast({
         title: "Blood Glucose Measurement Started",
@@ -542,7 +595,27 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
     }
     
     try {
+      // Clear any existing timeout
+      if (measurementTimeout.current) {
+        clearTimeout(measurementTimeout.current);
+      }
+      
+      // Reset valid data flag
+      validDataReceived.current = false;
+      
       await hc03Sdk.startDetect(type);
+      
+      // Set timeout to auto-stop measurement after 30 seconds
+      measurementTimeout.current = setTimeout(async () => {
+        if (measurementInProgress === type) {
+          await stopMeasurement(type);
+          toast({
+            title: "Measurement Timeout",
+            description: "Measurement stopped after 30 seconds. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }, 30000);
     } catch (error) {
       console.error(`Error starting ${type} measurement:`, error);
       toast({
@@ -557,8 +630,15 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
     if (!hc03Sdk.getConnectionStatus()) return;
     
     try {
+      // Clear timeout
+      if (measurementTimeout.current) {
+        clearTimeout(measurementTimeout.current);
+        measurementTimeout.current = null;
+      }
+      
       await hc03Sdk.stopDetect(type);
       setMeasurementInProgress(null);
+      validDataReceived.current = false;
     } catch (error) {
       console.error(`Error stopping ${type} measurement:`, error);
     }
