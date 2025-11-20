@@ -1093,7 +1093,11 @@ export class Hc03Sdk {
         case BATTERY_QUERY:
           // Calculate battery level from voltage
           const batteryValue = ((data[1] & 0xFF) << 8) | (data[2] & 0xFF);
+          console.log(`🔋 [HC03] Battery raw value: ${batteryValue} (0x${batteryValue.toString(16)})`);
+          console.log(`🔋 [HC03] Battery bytes: [${data[0]}, ${data[1]}, ${data[2]}]`);
+          
           const level = this.getBatteryLevel(batteryValue);
+          console.log(`🔋 [HC03] Calculated level: ${level}%`);
           
           batteryData = {
             batteryLevel: level,
@@ -1137,6 +1141,7 @@ export class Hc03Sdk {
   // Calculate battery level from voltage (from Flutter SDK)
   private getBatteryLevel(d: number): number {
     const data = Math.floor((d / 8191.0) * 3.3 * 3 * 1000);
+    console.log(`🔋 [HC03] Voltage calculation: rawValue=${d} → voltage=${data}mV`);
     
     if (data >= 4090) return 100;
     else if (data >= 4070) return 99;
