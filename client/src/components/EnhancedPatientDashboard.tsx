@@ -931,6 +931,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BloodGlucoseWidget 
               patientId={dashboardData?.user?.patientId || ''} 
+              deviceId={connectedDeviceId || undefined}
               showControls={true}
               compact={false}
             />
