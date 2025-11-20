@@ -909,12 +909,41 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               // Handle real-time data updates from HC03 device
               console.log('HC03 data received:', data);
               
-              // Track connected device ID for ECG widget
+              // Track connected device ID for widgets
               if (data.deviceId) {
                 setConnectedDeviceId(data.deviceId);
               }
               
-              // Optionally refresh dashboard data or update specific metrics
+              // Update vital signs in real-time from HC03 device
+              if (dashboardData) {
+                setDashboardData(prev => {
+                  if (!prev) return prev;
+                  
+                  const updatedVitals = { ...prev.vitals };
+                  
+                  // Update based on data type
+                  if (data.type === 'ecg' && data.value?.hr) {
+                    updatedVitals.heartRate = data.value.hr;
+                  } else if (data.type === 'bloodOxygen' && data.value?.heartRate) {
+                    updatedVitals.heartRate = data.value.heartRate;
+                    updatedVitals.oxygenLevel = data.value.bloodOxygen || updatedVitals.oxygenLevel;
+                  } else if (data.type === 'bloodPressure' && data.value) {
+                    updatedVitals.bloodPressure = `${data.value.ps}/${data.value.pd}`;
+                  } else if (data.type === 'temperature' && data.value?.temperature) {
+                    updatedVitals.temperature = data.value.temperature.toFixed(1);
+                  }
+                  
+                  // Update timestamp
+                  updatedVitals.timestamp = data.timestamp || new Date().toISOString();
+                  
+                  return {
+                    ...prev,
+                    vitals: updatedVitals
+                  };
+                });
+              }
+              
+              // Also refresh dashboard data from API (for other stats)
               loadDashboardData();
             }}
           />
