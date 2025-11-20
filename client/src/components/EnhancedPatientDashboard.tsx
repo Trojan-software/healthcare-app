@@ -116,15 +116,46 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
         timestamp: measurementData.timestamp || new Date().toISOString()
       };
       
-      // Map measurement data to vital signs API format
+      // Map measurement data to vital signs API format - WITH VALIDATION
       if (measurementData.type === 'ecg' && measurementData.value?.hr) {
-        vitalSignData.heartRate = measurementData.value.hr;
-      } else if (measurementData.type === 'bloodOxygen') {
-        if (measurementData.value?.heartRate) {
-          vitalSignData.heartRate = measurementData.value.heartRate;
+        // Validate heart rate is in physiological range (40-200 bpm)
+        const hr = measurementData.value.hr;
+        if (hr >= 40 && hr <= 180) {
+          vitalSignData.heartRate = hr;
+        } else {
+          console.warn(`Invalid ECG heart rate: ${hr} bpm - not saving`);
+          return; // Don't save invalid measurements
         }
-        if (measurementData.value?.bloodOxygen) {
-          vitalSignData.oxygenLevel = measurementData.value.bloodOxygen;
+      } else if (measurementData.type === 'bloodOxygen') {
+        // Only save blood oxygen data if we have VALID physiological values
+        const spo2 = measurementData.value?.bloodOxygen;
+        const hr = measurementData.value?.heartRate;
+        
+        // Validate SpO2 (70-100%) and HR (40-180 bpm)
+        const validSpo2 = spo2 && spo2 >= 70 && spo2 <= 100;
+        const validHR = hr && hr >= 40 && hr <= 180;
+        
+        if (!validSpo2 && !validHR) {
+          console.log(`[BloodOxygen] Intermediate data - not saving (SpO2: ${spo2}%, HR: ${hr} bpm)`);
+          return; // Don't save incomplete/invalid blood oxygen measurements
+        }
+        
+        if (validHR) {
+          vitalSignData.heartRate = hr;
+        }
+        if (validSpo2) {
+          vitalSignData.oxygenLevel = spo2;
+        }
+        
+        console.log(`[BloodOxygen] Valid measurement - saving (SpO2: ${spo2}%, HR: ${hr} bpm)`);
+      } else if (measurementData.type === 'temperature' && measurementData.value?.temperature) {
+        // Validate temperature is in physiological range (30-45°C)
+        const temp = measurementData.value.temperature;
+        if (temp >= 30 && temp <= 45) {
+          vitalSignData.temperature = temp;
+        } else {
+          console.warn(`Invalid temperature: ${temp}°C - not saving`);
+          return;
         }
       } else if (measurementData.type === 'bloodPressure' && measurementData.value) {
         vitalSignData.bloodPressureSystolic = measurementData.value.systolic || measurementData.value.ps;
