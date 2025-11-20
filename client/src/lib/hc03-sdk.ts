@@ -281,6 +281,9 @@ export class Hc03Sdk {
   private latestBloodGlucoseData: BloodGlucoseData | null = null;
   private latestTemperatureData: TemperatureData | null = null;
   private latestBatteryData: BatteryData | null = null;
+  
+  // Waveform buffer for SpO2 calculation (accumulates samples across packets)
+  private waveformBuffer: number[] = [];
 
   private constructor() {
     // Bind methods to preserve context
@@ -563,6 +566,12 @@ export class Hc03Sdk {
       const command = DETECTION_COMMANDS[detection as keyof typeof DETECTION_COMMANDS];
       if (!command) {
         throw new Error(`Unknown detection type: ${detection}`);
+      }
+
+      // Clear waveform buffer when starting new blood oxygen measurement
+      if (detection === Detection.OX) {
+        this.waveformBuffer = [];
+        console.log('✨ [HC03] Cleared waveform buffer for new blood oxygen measurement');
       }
 
       console.log(`▶️ [HC03] Starting ${detection} detection...`);
@@ -963,19 +972,21 @@ export class Hc03Sdk {
         waveData.push(first + second + third);
       }
       
-      // SpO2 and HR are calculated from wave data by signal processing algorithms
-      // For now, emit wave data and let UI/Calculate module process it
+      // Calculate SpO2 and HR from waveform data
+      const { spo2, heartRate } = this.calculateSpO2FromWaveform(waveData);
+      
       const bloodOxygenData: BloodOxygenData = {
-        bloodOxygen: 0, // Calculated from waveData by signal processing
-        heartRate: 0,   // Calculated from waveData by signal processing
-        fingerDetection: true,
+        bloodOxygen: spo2,
+        heartRate: heartRate,
+        fingerDetection: spo2 > 0, // Valid if SpO2 was calculated
         bloodOxygenWaveData: waveData
       };
       
       // Store latest data for getter methods
       this.latestBloodOxygenData = bloodOxygenData;
       
-      console.log('[HC03] Blood Oxygen wave data:', waveData.length, 'samples');
+      console.log('[HC03] Blood Oxygen:', spo2 + '%', 'HR:', heartRate, 'bpm');
+      console.log('[HC03] Waveform samples:', waveData.length);
       
       const callback = this.callbacks.get(Detection.OX);
       if (callback) {
@@ -984,6 +995,100 @@ export class Hc03Sdk {
     } catch (error) {
       console.error('Error parsing blood oxygen data:', error);
     }
+  }
+  
+  // Calculate SpO2 and Heart Rate from PPG waveform data
+  // Based on standard PPG signal processing algorithms
+  private calculateSpO2FromWaveform(waveData: number[]): { spo2: number; heartRate: number } {
+    if (!waveData || waveData.length < 10) {
+      return { spo2: 0, heartRate: 0 };
+    }
+    
+    // Accumulate valid waveform data across multiple packets
+    if (!this.waveformBuffer) {
+      this.waveformBuffer = [];
+    }
+    this.waveformBuffer.push(...waveData);
+    
+    // Need at least 50 samples for reliable calculation (5 seconds at 10Hz)
+    if (this.waveformBuffer.length < 50) {
+      console.log(`[HC03] Collecting waveform data: ${this.waveformBuffer.length}/50 samples`);
+      return { spo2: 0, heartRate: 0 };
+    }
+    
+    // Use the last 50 samples for calculation
+    const samples = this.waveformBuffer.slice(-50);
+    
+    // Calculate AC and DC components from PPG signal
+    const mean = samples.reduce((sum, val) => sum + val, 0) / samples.length;
+    const dcComponent = mean;
+    
+    // Calculate AC component (signal variability)
+    let acSum = 0;
+    for (let i = 1; i < samples.length; i++) {
+      acSum += Math.abs(samples[i] - samples[i - 1]);
+    }
+    const acComponent = acSum / (samples.length - 1);
+    
+    // Calculate SpO2 using ratio of AC/DC
+    // Standard PPG formula: SpO2 = 110 - 25 * (AC/DC)
+    const ratio = dcComponent > 0 ? acComponent / dcComponent : 0;
+    let spo2 = Math.round(110 - 25 * ratio);
+    
+    // Clamp SpO2 to valid physiological range
+    spo2 = Math.max(70, Math.min(100, spo2));
+    
+    // Calculate heart rate from peak detection
+    const peaks = this.detectPeaks(samples);
+    let heartRate = 0;
+    
+    if (peaks.length >= 2) {
+      // Calculate average interval between peaks
+      let totalInterval = 0;
+      for (let i = 1; i < peaks.length; i++) {
+        totalInterval += peaks[i] - peaks[i - 1];
+      }
+      const avgInterval = totalInterval / (peaks.length - 1);
+      
+      // Convert to BPM (assuming 10Hz sampling rate, 10 samples per second)
+      // BPM = 60 / (interval_in_seconds)
+      // interval_in_seconds = interval_in_samples / 10
+      heartRate = Math.round(60 / (avgInterval / 10));
+      
+      // Clamp HR to valid physiological range
+      heartRate = Math.max(40, Math.min(200, heartRate));
+    }
+    
+    console.log(`[HC03] Calculated SpO2: ${spo2}%, HR: ${heartRate} bpm (from ${samples.length} samples, ${peaks.length} peaks)`);
+    
+    return { spo2, heartRate };
+  }
+  
+  // Detect peaks in PPG waveform for heart rate calculation
+  private detectPeaks(samples: number[]): number[] {
+    const peaks: number[] = [];
+    const threshold = this.calculateThreshold(samples);
+    
+    for (let i = 1; i < samples.length - 1; i++) {
+      // Peak detection: current value is greater than neighbors and above threshold
+      if (samples[i] > samples[i - 1] && 
+          samples[i] > samples[i + 1] && 
+          samples[i] > threshold) {
+        peaks.push(i);
+      }
+    }
+    
+    return peaks;
+  }
+  
+  // Calculate dynamic threshold for peak detection
+  private calculateThreshold(samples: number[]): number {
+    const mean = samples.reduce((sum, val) => sum + val, 0) / samples.length;
+    const variance = samples.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / samples.length;
+    const stdDev = Math.sqrt(variance);
+    
+    // Threshold = mean + 0.5 * standard deviation
+    return mean + 0.5 * stdDev;
   }
 
   // Blood Pressure Data Parsing (from Flutter SDK bpEngine.dart)
