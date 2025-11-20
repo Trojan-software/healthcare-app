@@ -76,6 +76,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const [dashboardData, setDashboardData] = useState<PatientDashboardData | null>(null);
   const [vitalsHistory, setVitalsHistory] = useState<VitalSigns[]>([]);
   const [loading, setLoading] = useState(true);
+  const [connectedDeviceId, setConnectedDeviceId] = useState<string>('');
   const [selectedVitalType, setSelectedVitalType] = useState('all');
   const [fromDate, setFromDate] = useState(() => {
     const date = new Date();
@@ -907,6 +908,12 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             onDataUpdate={(data) => {
               // Handle real-time data updates from HC03 device
               console.log('HC03 data received:', data);
+              
+              // Track connected device ID for ECG widget
+              if (data.deviceId) {
+                setConnectedDeviceId(data.deviceId);
+              }
+              
               // Optionally refresh dashboard data or update specific metrics
               loadDashboardData();
             }}
@@ -914,7 +921,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           
           {/* ECG Monitor - Full Width */}
           <EcgWidget 
-            deviceId="HC03-003"
+            deviceId={connectedDeviceId || "HC03-003"}
             patientId={dashboardData?.user?.patientId || ''} 
             showControls={true}
             compact={false}
