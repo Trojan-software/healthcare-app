@@ -942,15 +942,12 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                   };
                 });
               }
-              
-              // Also refresh dashboard data from API (for other stats)
-              loadDashboardData();
             }}
           />
           
           {/* ECG Monitor - Full Width */}
           <EcgWidget 
-            deviceId={connectedDeviceId || undefined}
+            deviceId={connectedDeviceId || ""}
             patientId={dashboardData?.user?.patientId || ''} 
             showControls={true}
             compact={false}
