@@ -773,11 +773,14 @@ export class Hc03Sdk {
       // Validate END marker (0x03 for HC03, 0xff for HC02)
       const endMarker = rawData[rawData.length - 1];
       const validEndMarkers = [Hc03Sdk.ATTR_END, 0xff]; // HC03 uses 0x03, HC02 uses 0xff
+      console.log(`🔧 [HC03] HC02 FIX LOADED - Checking END marker: got 0x${endMarker.toString(16)}, valid markers: [0x03, 0xff]`);
       if (!validEndMarkers.includes(endMarker)) {
         console.warn(`[HC03] Invalid END marker in tail: expected 0x03 or 0xff, got 0x${endMarker.toString(16)}`);
         this.cacheData = [];
         return null;
       }
+      console.log(`✅ [HC03] END marker valid!`);
+    
       
       // Get tail CRC (last 2 bytes before END marker)
       const tailCrc = view.getUint16(rawData.length - 3, true);
