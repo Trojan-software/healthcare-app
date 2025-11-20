@@ -206,21 +206,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Vital signs endpoints
   app.post("/api/vital-signs", async (req, res) => {
     try {
-      const { patientId, heartRate, bloodPressure, temperature, oxygenLevel, bloodGlucose } = req.body;
+      const { patientId, heartRate, bloodPressure, bloodPressureSystolic, bloodPressureDiastolic, temperature, oxygenLevel, bloodGlucose } = req.body;
 
-      if (!patientId || !heartRate || !bloodPressure || !temperature || !oxygenLevel) {
-        return res.status(400).json({ message: "Required vital signs data missing" });
+      // Only patientId is required, other vitals are optional
+      if (!patientId) {
+        return res.status(400).json({ message: "Patient ID is required" });
       }
 
-      const vitalSigns = await storage.createVitalSigns({
-        patientId: String(patientId),
-        heartRate: parseInt(heartRate),
-        bloodPressureSystolic: parseInt(bloodPressure.split('/')[0]),
-        bloodPressureDiastolic: parseInt(bloodPressure.split('/')[1]),
-        temperature: temperature.toString(),
-        oxygenLevel: parseInt(oxygenLevel),
-        bloodGlucose: bloodGlucose ? parseInt(bloodGlucose) : null
-      });
+      // Build vital signs data with only provided fields
+      const vitalSignsData: any = {
+        patientId: String(patientId)
+      };
+
+      if (heartRate) vitalSignsData.heartRate = parseInt(heartRate);
+      
+      if (bloodPressure && bloodPressure.includes('/')) {
+        vitalSignsData.bloodPressureSystolic = parseInt(bloodPressure.split('/')[0]);
+        vitalSignsData.bloodPressureDiastolic = parseInt(bloodPressure.split('/')[1]);
+      } else {
+        if (bloodPressureSystolic) vitalSignsData.bloodPressureSystolic = parseInt(bloodPressureSystolic);
+        if (bloodPressureDiastolic) vitalSignsData.bloodPressureDiastolic = parseInt(bloodPressureDiastolic);
+      }
+      
+      if (temperature) vitalSignsData.temperature = temperature.toString();
+      if (oxygenLevel) vitalSignsData.oxygenLevel = parseInt(oxygenLevel);
+      if (bloodGlucose) vitalSignsData.bloodGlucose = parseInt(bloodGlucose);
+
+      const vitalSigns = await storage.createVitalSigns(vitalSignsData);
 
       // Check for critical vitals and send email notifications
       if (isVitalsCritical(vitalSigns)) {
