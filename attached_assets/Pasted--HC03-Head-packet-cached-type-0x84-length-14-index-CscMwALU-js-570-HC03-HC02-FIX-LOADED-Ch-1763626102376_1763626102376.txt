@@ -1,0 +1,50 @@
+[HC03] Head packet cached: type=0x84, length=14
+index-CscMwALU.js:570 🔧 [HC03] HC02 FIX LOADED - Checking END marker: got 0xff, valid markers: [0x03, 0xff]
+index-CscMwALU.js:570 ✅ [HC03] END marker valid!
+index-CscMwALU.js:570 [HC03] Invalid tail CRC: expected=0x86a1, got=0x32da
+generalUnpackRawData @ index-CscMwALU.js:570
+parseData @ index-CscMwALU.js:570
+handleCharacteristicValueChanged @ index-CscMwALU.js:570Understand this warning
+index-CscMwALU.js:570 [HC03] Head packet cached: type=0x84, length=14
+index-CscMwALU.js:570 🔧 [HC03] HC02 FIX LOADED - Checking END marker: got 0xff, valid markers: [0x03, 0xff]
+index-CscMwALU.js:570 ✅ [HC03] END marker valid!
+index-CscMwALU.js:570 [HC03] Invalid tail CRC: expected=0x5e10, got=0xf341
+generalUnpackRawData @ index-CscMwALU.js:570
+parseData @ index-CscMwALU.js:570
+handleCharacteristicValueChanged @ index-CscMwALU.js:570Understand this warning
+index-CscMwALU.js:570 [HC03] Head packet cached: type=0x84, length=14
+index-CscMwALU.js:570 🔧 [HC03] HC02 FIX LOADED - Checking END marker: got 0xff, valid markers: [0x03, 0xff]
+index-CscMwALU.js:570 ✅ [HC03] END marker valid!
+index-CscMwALU.js:570 [HC03] Invalid tail CRC: expected=0xdad8, got=0xd158
+generalUnpackRawData @ index-CscMwALU.js:570
+parseData @ index-CscMwALU.js:570
+handleCharacteristicValueChanged @ index-CscMwALU.js:570Understand this warning
+index-CscMwALU.js:570 [HC03] Head packet cached: type=0x84, length=14
+index-CscMwALU.js:570 🔧 [HC03] HC02 FIX LOADED - Checking END marker: got 0xff, valid markers: [0x03, 0xff]
+index-CscMwALU.js:570 ✅ [HC03] END marker valid!
+index-CscMwALU.js:570 [HC03] Invalid tail CRC: expected=0x8d56, got=0xf88f
+generalUnpackRawData @ index-CscMwALU.js:570
+parseData @ index-CscMwALU.js:570
+handleCharacteristicValueChanged @ index-CscMwALU.js:570Understand this warning
+index-CscMwALU.js:570 [HC03] Head packet cached: type=0x84, length=14
+index-CscMwALU.js:570 🔧 [HC03] HC02 FIX LOADED - Checking END marker: got 0xff, valid markers: [0x03, 0xff]
+index-CscMwALU.js:570 ✅ [HC03] END marker valid!
+index-CscMwALU.js:570 [HC03] Invalid tail CRC: expected=0xa4fe, got=0xca0a
+generalUnpackRawData @ index-CscMwALU.js:570
+parseData @ index-CscMwALU.js:570
+handleCharacteristicValueChanged @ index-CscMwALU.js:570Understand this warning
+index-CscMwALU.js:570 [HC03] Head packet cached: type=0x84, length=14
+index-CscMwALU.js:570 🔧 [HC03] HC02 FIX LOADED - Checking END marker: got 0xff, valid markers: [0x03, 0xff]
+index-CscMwALU.js:570 ✅ [HC03] END marker valid!
+index-CscMwALU.js:570 [HC03] Invalid tail CRC: expected=0xf074, got=0x51b3
+generalUnpackRawData @ index-CscMwALU.js:570
+parseData @ index-CscMwALU.js:570
+handleCharacteristicValueChanged @ index-CscMwALU.js:570Understand this warning
+index-CscMwALU.js:570 [HC03] Head packet cached: type=0x84, length=14
+index-CscMwALU.js:570 🔧 [HC03] HC02 FIX LOADED - Checking END marker: got 0xff, valid markers: [0x03, 0xff]
+index-CscMwALU.js:570 ✅ [HC03] END marker valid!
+index-CscMwALU.js:570 [HC03] Invalid tail CRC: expected=0x3561, got=0x716e
+generalUnpackRawData @ index-CscMwALU.js:570
+parseData @ index-CscMwALU.js:570
+handleCharacteristicValueChanged @ index-CscMwALU.js:570Understand this warning
+index-CscMwALU.js:570 [HC03] Head packet cached: type
