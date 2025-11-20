@@ -106,6 +106,7 @@ export default function BatteryWidget({ patientId, compact = false }: BatteryWid
 
   const getDeviceName = (deviceId: string) => {
     const names: Record<string, string> = {
+      'HC02-F1B51D': t('healthMonitor'),
       'HC03-001': t('glucoseMonitor'),
       'HC03-002': t('bloodPressureMonitor'),
       'HC03-003': t('ecgMonitor')

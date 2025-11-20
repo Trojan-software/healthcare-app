@@ -23,7 +23,7 @@ interface BloodGlucoseWidgetProps {
   compact?: boolean;
 }
 
-export default function BloodGlucoseWidget({ patientId, deviceId = 'HC03-001', showControls = false, compact = false }: BloodGlucoseWidgetProps) {
+export default function BloodGlucoseWidget({ patientId, deviceId, showControls = false, compact = false }: BloodGlucoseWidgetProps) {
   const [glucoseData, setGlucoseData] = useState<BloodGlucoseReading[]>([]);
   const [loading, setLoading] = useState(true);
   const [measuring, setMeasuring] = useState(false);
@@ -61,7 +61,7 @@ export default function BloodGlucoseWidget({ patientId, deviceId = 'HC03-001', s
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           patientId,
-          deviceId: deviceId || 'HC03-001',
+          deviceId: deviceId || 'HC02-F1B51D',
           glucoseLevel
         })
       });

@@ -950,7 +950,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           
           {/* ECG Monitor - Full Width */}
           <EcgWidget 
-            deviceId={connectedDeviceId || "HC03-003"}
+            deviceId={connectedDeviceId || undefined}
             patientId={dashboardData?.user?.patientId || ''} 
             showControls={true}
             compact={false}

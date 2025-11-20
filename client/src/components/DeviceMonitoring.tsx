@@ -37,8 +37,8 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
       // Simulate device data - in production this would come from API
       const deviceData: Device[] = [
         {
-          id: 'HC03-001',
-          name: 'HC03 Health Monitor',
+          id: 'HC02-F1B51D',
+          name: 'HC02 Health Monitor',
           patientId: 'PT001',
           patientName: 'John Doe',
           macAddress: '00:1B:44:11:3A:B7',
@@ -47,39 +47,9 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
           isCharging: false,
           lastSync: '2025-06-21T15:30:00.000Z',
           connectionStatus: 'connected',
-          supportedVitals: ['Heart Rate', 'Blood Pressure', 'Temperature', 'Oxygen Level'],
+          supportedVitals: ['Heart Rate', 'Blood Pressure', 'Temperature', 'Blood Oxygen', 'ECG', 'Blood Glucose'],
           totalReadings: 342,
           lastReading: '2025-06-21T15:25:00.000Z'
-        },
-        {
-          id: 'HC03-002',
-          name: 'HC03 Health Monitor',
-          patientId: 'PT149898',
-          patientName: 'Test Patient',
-          macAddress: '00:1B:44:11:3A:C8',
-          firmwareVersion: '2.1.3',
-          batteryLevel: 42,
-          isCharging: true,
-          lastSync: '2025-06-21T14:45:00.000Z',
-          connectionStatus: 'connected',
-          supportedVitals: ['Heart Rate', 'Blood Pressure', 'Temperature'],
-          totalReadings: 128,
-          lastReading: '2025-06-21T14:40:00.000Z'
-        },
-        {
-          id: 'HC03-003',
-          name: 'HC03 Health Monitor',
-          patientId: 'pt1000',
-          patientName: 'Ahmed Eldeip',
-          macAddress: '00:1B:44:11:3A:D9',
-          firmwareVersion: '2.0.8',
-          batteryLevel: 15,
-          isCharging: false,
-          lastSync: '2025-06-21T12:00:00.000Z',
-          connectionStatus: 'disconnected',
-          supportedVitals: ['Heart Rate', 'Blood Pressure'],
-          totalReadings: 89,
-          lastReading: '2025-06-21T11:55:00.000Z'
         }
       ];
 
@@ -87,7 +57,7 @@ export default function DeviceMonitoring({ onClose }: DeviceMonitoringProps) {
       setLoading(false);
     } catch (error) {
       // Log error for debugging but handle gracefully
-      handleApiError('DeviceMonitoring', 'loadDeviceData', error as Error, { patientId });
+      handleApiError('DeviceMonitoring', 'loadDeviceData', error as Error, {});
       setLoading(false);
     }
   };

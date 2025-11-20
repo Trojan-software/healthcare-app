@@ -1,7 +1,9 @@
 # 24/7 Tele H - Health Monitoring System
 
 ## Overview
-The 24/7 Tele H platform is a comprehensive telemedicine and health monitoring system for healthcare professionals and patients. It provides real-time vital signs monitoring, integrates with HC03 medical devices, and offers a mobile-first Progressive Web App (PWA) experience. The system aims to enhance patient care through continuous monitoring, early alerts, and robust data analytics, improving health outcomes and operational efficiency.
+The 24/7 Tele H platform is a comprehensive telemedicine and health monitoring system for healthcare professionals and patients. It provides real-time vital signs monitoring, integrates with **HC02-F1B51D** medical devices (with HC03 backward compatibility), and offers a mobile-first Progressive Web App (PWA) experience. The system aims to enhance patient care through continuous monitoring, early alerts, and robust data analytics, improving health outcomes and operational efficiency.
+
+**Primary Device: HC02-F1B51D** - All measurements (ECG, blood oxygen, blood pressure, temperature, blood glucose) are read from this single device throughout the entire system.
 
 ## User Preferences
 ```
@@ -16,12 +18,19 @@ The system employs a modern full-stack architecture. The frontend uses **React 1
 **Key Features and Design Decisions:**
 -   **Enhanced Patient Registration**: Comprehensive signup, UAE mobile validation, patient ID generation, Abu Dhabi hospital selection, OTP email verification, secure passwords, and role-based access.
 -   **Health Monitoring**: Tracks heart rate, blood pressure, temperature, oxygen, blood glucose, and integrates with HC03 devices via Bluetooth for real-time ECG and blood oxygen monitoring. Includes health analytics and a critical event alert system.
--   **Complete HC03/HC02 Bluetooth Architecture (Nov 2025)**: 
-    - **Web Bluetooth (PWA)**: Full HC03/HC02 protocol in `hc03-sdk.ts` with frame unpacking, multi-packet reconstruction, CRC validation (encryHead/encryTail), and all 6 sensor parsers (Battery, Temperature, Glucose, Oxygen, Pressure, ECG). Name-based device filtering (HC02/HC03 prefixes) for maximum compatibility.
+-   **Complete HC02/HC03 Bluetooth Architecture (Nov 2025)**: 
+    - **Web Bluetooth (PWA)**: Full HC02/HC03 protocol in `hc03-sdk.ts` with frame unpacking, multi-packet reconstruction, CRC validation (encryHead/encryTail), and all 6 sensor parsers (Battery, Temperature, Glucose, Oxygen, Pressure, ECG). Name-based device filtering (HC02/HC03 prefixes) for maximum compatibility.
     - **HC02-F1B51D Full Support (Nov 20, 2025)**: ✅ **PRODUCTION READY** - HC02-F1B51D successfully integrated with Web Bluetooth API. Auto-detection by device name prefix, uses service UUID `0000ff27` (vs HC03's `00001822`), accepts `0xff` END marker (vs HC03's `0x03`), and bypasses CRC validation (different algorithm). Real-time blood oxygen streaming confirmed working with Windows 11 + Chrome.
+    - **System-Wide HC02-F1B51D Integration (Nov 20, 2025)**: ✅ **COMPLETE** - HC02-F1B51D is now the primary device throughout the entire system:
+      - Top metric cards (Heart Rate, Blood Pressure, Temperature, Oxygen Level) update in real-time from HC02-F1B51D measurements
+      - All measurement buttons (ECG, Blood O₂, Blood Pressure, Temperature, Blood Glucose) connect to HC02-F1B51D
+      - ECG Widget, Blood Glucose Widget, Battery Widget all use connected HC02-F1B51D device ID
+      - Device Monitoring page shows HC02-F1B51D with full sensor capabilities
+      - Removed all hardcoded HC03-001, HC03-002, HC03-003 references
     - **Android Native BLE**: BluetoothAdapter + GATT with TRANSPORT_LE flag, proper permission handling (BLUETOOTH_SCAN/CONNECT), GATT error handling (status 133), notification enable verification, onDescriptorWrite callback
     - **iOS Native BLE**: Single CBCentralManager instance, service-agnostic scanning, auto-start on power-on, CoreBluetooth delegates for connection/data
     - **Unified Data Flow**: All platforms feed raw notify bytes → `generalUnpackRawData()` → `routeData()` → sensor parsers → JavaScript events. HC02/HC03 auto-detection ensures correct protocol handling.
+    - **Real-Time Data Updates**: HC03DeviceWidget onDataUpdate callback now updates dashboard vitals in real-time (heart rate, blood pressure, temperature, oxygen level) from connected HC02-F1B51D
 -   **Multi-Device Bluetooth Integration**: Supports all UNKTOP medical peripherals with a unified SDK wrapper, auto-pairing, and real-time data synchronization for various sensors (ECG, SpO2, BP, glucose, temperature). Features device-specific dashboard widgets with Chart.js.
 -   **Mobile-First Design**: PWA with offline support, mobile-optimized dashboards, direct device installation, push notifications, and cross-platform compatibility.
 -   **Data Flow**: Secure JWT authentication, real-time data capture from HC03 devices, data validation and storage, immediate alert generation, and an analytics pipeline.

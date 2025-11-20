@@ -201,6 +201,7 @@ export interface Translation {
   hc03DeviceStatusManagement: string;
   hc03DevicesOnline: string;
   hc03StatusAndBattery: string;
+  healthMonitor: string;
   healthMonitoring: string;
   healthMonitoringStatus: string;
   healthOverview: string;
@@ -666,6 +667,7 @@ export const translations: Record<Language, Translation> = {
     hc03DeviceStatusManagement: 'HC03 Device Status & Management',
     hc03DevicesOnline: 'HC03 devices online',
     hc03StatusAndBattery: 'HC03 status & battery',
+    healthMonitor: 'Health Monitor',
     healthMonitoring: 'Health Monitoring',
     healthMonitoringStatus: 'Health Monitoring Status',
     healthOverview: 'Health Overview',
@@ -1129,6 +1131,7 @@ export const translations: Record<Language, Translation> = {
     hc03DeviceStatusManagement: 'حالة وإدارة أجهزة HC03',
     hc03DevicesOnline: 'أجهزة HC03 متصلة',
     hc03StatusAndBattery: 'حالة HC03 والبطارية',
+    healthMonitor: 'جهاز مراقبة الصحة',
     healthMonitoring: 'مراقبة الصحة',
     healthMonitoringStatus: 'حالة مراقبة الصحة',
     healthOverview: 'نظرة عامة على الصحة',
