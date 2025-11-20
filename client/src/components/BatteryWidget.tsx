@@ -60,7 +60,23 @@ export default function BatteryWidget({ patientId, compact = false, deviceId, cu
       const response = await fetch(`/api/battery/patient/${patientId}`);
       if (response.ok) {
         const data = await response.json();
-        setDevicesBattery(data);
+        
+        // Merge database data with real-time data - preserve real-time values if available
+        setDevicesBattery(prev => {
+          // If we have real-time data for a device, keep it instead of overwriting with database data
+          const updatedData = data.map((dbDevice: DeviceBattery) => {
+            const realtimeDevice = prev.find(d => d.deviceId === dbDevice.deviceId);
+            // Only use database data if we don't have real-time data for this device
+            return realtimeDevice || dbDevice;
+          });
+          
+          // Add any real-time devices that aren't in the database yet
+          const newRealtimeDevices = prev.filter(
+            rtDevice => !data.some((dbDevice: DeviceBattery) => dbDevice.deviceId === rtDevice.deviceId)
+          );
+          
+          return [...updatedData, ...newRealtimeDevices];
+        });
       }
     } catch (error) {
       handleApiError('BatteryWidget', 'loadBatteryData', error as Error, { patientId });
