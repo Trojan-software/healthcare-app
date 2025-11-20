@@ -1039,16 +1039,32 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                   
                   const updatedVitals = { ...prev.vitals };
                   
-                  // Update based on data type
+                  // Update based on data type - WITH VALIDATION
                   if (data.type === 'ecg' && data.value?.hr) {
-                    updatedVitals.heartRate = data.value.hr;
-                  } else if (data.type === 'bloodOxygen' && data.value?.heartRate) {
-                    updatedVitals.heartRate = data.value.heartRate;
-                    updatedVitals.oxygenLevel = data.value.bloodOxygen || updatedVitals.oxygenLevel;
+                    // Only update if heart rate is in valid range
+                    if (data.value.hr >= 40 && data.value.hr <= 180) {
+                      updatedVitals.heartRate = data.value.hr;
+                    }
+                  } else if (data.type === 'bloodOxygen') {
+                    // Only update if values are in valid physiological ranges
+                    if (data.value?.heartRate && data.value.heartRate >= 40 && data.value.heartRate <= 180) {
+                      updatedVitals.heartRate = data.value.heartRate;
+                    }
+                    if (data.value?.bloodOxygen && data.value.bloodOxygen >= 70 && data.value.bloodOxygen <= 100) {
+                      updatedVitals.oxygenLevel = data.value.bloodOxygen;
+                    }
                   } else if (data.type === 'bloodPressure' && data.value) {
-                    updatedVitals.bloodPressure = `${data.value.systolic}/${data.value.diastolic}`;
+                    // Validate blood pressure values
+                    const systolic = data.value.systolic || data.value.ps;
+                    const diastolic = data.value.diastolic || data.value.pd;
+                    if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130) {
+                      updatedVitals.bloodPressure = `${systolic}/${diastolic}`;
+                    }
                   } else if (data.type === 'temperature' && data.value?.temperature) {
-                    updatedVitals.temperature = data.value.temperature.toFixed(1);
+                    // Only update if temperature is in valid range (30-45°C)
+                    if (data.value.temperature >= 30 && data.value.temperature <= 45) {
+                      updatedVitals.temperature = data.value.temperature.toFixed(1);
+                    }
                   }
                   
                   // Update timestamp
