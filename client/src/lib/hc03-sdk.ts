@@ -770,10 +770,11 @@ export class Hc03Sdk {
       type = this.cacheType;
       length = this.cacheData.length;
       
-      // Validate END marker
+      // Validate END marker (0x03 for HC03, 0xff for HC02)
       const endMarker = rawData[rawData.length - 1];
-      if (endMarker !== Hc03Sdk.ATTR_END) {
-        console.warn(`[HC03] Invalid END marker in tail: expected 0x03, got 0x${endMarker.toString(16)}`);
+      const validEndMarkers = [Hc03Sdk.ATTR_END, 0xff]; // HC03 uses 0x03, HC02 uses 0xff
+      if (!validEndMarkers.includes(endMarker)) {
+        console.warn(`[HC03] Invalid END marker in tail: expected 0x03 or 0xff, got 0x${endMarker.toString(16)}`);
         this.cacheData = [];
         return null;
       }
@@ -1152,6 +1153,16 @@ export class Hc03Sdk {
     try {
       if (!this.server) {
         throw new Error('Device not connected');
+      }
+      
+      // HC02 devices don't have the standard battery service (0000180f)
+      // They use the HC03 protocol command 0x0f (CHECK_BATTARY) instead
+      const deviceName = this.device?.name || '';
+      if (deviceName.startsWith('HC02-')) {
+        console.log('[HC03] HC02 device detected, battery query via protocol command (not standard service)');
+        // Note: Battery level will be received via notification when we send battery command
+        // For now, return null and rely on protocol-based battery monitoring
+        return null;
       }
       
       const batteryService = await this.server.getPrimaryService(BATTERY_SERVICE_UUID);
