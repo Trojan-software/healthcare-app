@@ -1,0 +1,33 @@
+ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:833 [HC03] Multi-packet reconstructed: type=0x84, length=31
+hc03-sdk.ts:962 [HC03] Blood Oxygen wave data: 10 samples
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:01:31.123Z', deviceId: ''}
+hc03-sdk.ts:766 [HC03] Head packet cached: type=0x84, length=14
+hc03-sdk.ts:804 🔍 [HC03] CRC validation check (tail): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:827 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:833 [HC03] Multi-packet reconstructed: type=0x84, length=31
+hc03-sdk.ts:962 [HC03] Blood Oxygen wave data: 10 samples
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:01:31.168Z', deviceId: ''}
+hc03-sdk.ts:766 [HC03] Head packet cached: type=0x84, length=14
+hc03-sdk.ts:804 🔍 [HC03] CRC validation check (tail): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:827 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:833 [HC03] Multi-packet reconstructed: type=0x84, length=31
+hc03-sdk.ts:962 [HC03] Blood Oxygen wave data: 10 samples
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:01:31.170Z', deviceId: ''}
+hc03-sdk.ts:766 [HC03] Head packet cached: type=0x84, length=14
+hc03-sdk.ts:804 🔍 [HC03] CRC validation check (tail): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:827 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:833 [HC03] Multi-packet reconstructed: type=0x84, length=31
+hc03-sdk.ts:962 [HC03] Blood Oxygen wave data: 10 samples
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:01:31.213Z', deviceId: ''}
+﻿
+
+Press ctrl i to turn on code suggestions. Press ctrl x to disable code suggestions.
+ctrl
+i
+ to turn on code suggestions. Don't show again NEW
+
