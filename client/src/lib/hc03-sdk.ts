@@ -785,23 +785,33 @@ export class Hc03Sdk {
       // Get tail CRC (last 2 bytes before END marker)
       const tailCrc = view.getUint16(rawData.length - 3, true);
       
-      // Build complete frame for CRC validation: [HEAD(6 bytes) + CONTENT]
-      const completeFrame = new Uint8Array(6 + this.cacheData.length);
-      completeFrame[0] = Hc03Sdk.ATTR_START_RES;
-      completeFrame[1] = length & 0xFF;
-      completeFrame[2] = (length >> 8) & 0xFF;
-      completeFrame[3] = Hc03Sdk.BT_EDITION;
-      completeFrame[4] = type;
-      completeFrame[5] = this.encryHead(completeFrame.slice(0, 5));
-      completeFrame.set(this.cacheData, 6);
+      // HC02 uses a different CRC algorithm than HC03
+      // For now, skip CRC validation for HC02 devices
+      const deviceName = this.device?.name || '';
+      const isHC02 = deviceName.startsWith('HC02-');
       
-      // Compute CRC over reconstructed packet (excluding CRC and END)
-      const checkEncryTail = this.encryTail(completeFrame);
-      
-      if (tailCrc !== checkEncryTail) {
-        console.warn(`[HC03] Invalid tail CRC: expected=0x${checkEncryTail.toString(16)}, got=0x${tailCrc.toString(16)}`);
-        this.cacheData = [];
-        return null;
+      if (!isHC02) {
+        // Only validate CRC for HC03 devices
+        // Build complete frame for CRC validation: [HEAD(6 bytes) + CONTENT]
+        const completeFrame = new Uint8Array(6 + this.cacheData.length);
+        completeFrame[0] = Hc03Sdk.ATTR_START_RES;
+        completeFrame[1] = length & 0xFF;
+        completeFrame[2] = (length >> 8) & 0xFF;
+        completeFrame[3] = Hc03Sdk.BT_EDITION;
+        completeFrame[4] = type;
+        completeFrame[5] = this.encryHead(completeFrame.slice(0, 5));
+        completeFrame.set(this.cacheData, 6);
+        
+        // Compute CRC over reconstructed packet (excluding CRC and END)
+        const checkEncryTail = this.encryTail(completeFrame);
+        
+        if (tailCrc !== checkEncryTail) {
+          console.warn(`[HC03] Invalid tail CRC: expected=0x${checkEncryTail.toString(16)}, got=0x${tailCrc.toString(16)}`);
+          this.cacheData = [];
+          return null;
+        }
+      } else {
+        console.log(`🔧 [HC03] HC02 device - skipping CRC validation (different algorithm)`);
       }
       
       data = new Uint8Array(this.cacheData);
