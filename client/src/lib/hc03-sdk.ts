@@ -723,19 +723,27 @@ export class Hc03Sdk {
       const tailCrc = view.getUint16(tailCrcIndex, true);
       const endMarker = rawData[tailCrcIndex + 2];
       
-      // Validate END marker
-      if (endMarker !== Hc03Sdk.ATTR_END) {
-        console.warn(`[HC03] Invalid END marker: expected 0x03, got 0x${endMarker.toString(16)}`);
+      // Validate END marker (0x03 for HC03, 0xff for HC02)
+      const validEndMarkers = [Hc03Sdk.ATTR_END, 0xff];
+      if (!validEndMarkers.includes(endMarker)) {
+        console.warn(`[HC03] Invalid END marker: expected 0x03 or 0xff, got 0x${endMarker.toString(16)}`);
         return null;
       }
       
-      // Compute CRC over [START ... CONTENT] (excluding CRC and END)
-      const tailBytes = rawData.slice(Hc03Sdk.PACKAGE_INDEX_START, tailCrcIndex);
-      const checkEncryTail = this.encryTail(tailBytes);
+      // HC02 uses a different CRC algorithm, skip CRC validation for HC02 devices
+      const deviceName = this.device?.name || '';
+      const isHC02 = deviceName.startsWith('HC02-');
       
-      if (tailCrc !== checkEncryTail) {
-        console.warn(`[HC03] Invalid tail CRC: expected 0x${checkEncryTail.toString(16)}, got 0x${tailCrc.toString(16)}`);
-        return null;
+      if (!isHC02) {
+        // Only validate CRC for HC03 devices
+        // Compute CRC over [START ... CONTENT] (excluding CRC and END)
+        const tailBytes = rawData.slice(Hc03Sdk.PACKAGE_INDEX_START, tailCrcIndex);
+        const checkEncryTail = this.encryTail(tailBytes);
+        
+        if (tailCrc !== checkEncryTail) {
+          console.warn(`[HC03] Invalid tail CRC: expected 0x${checkEncryTail.toString(16)}, got 0x${tailCrc.toString(16)}`);
+          return null;
+        }
       }
       
       data = rawData.slice(Hc03Sdk.PACKAGE_INDEX_CONTENT, Hc03Sdk.PACKAGE_INDEX_CONTENT + length);
@@ -773,13 +781,11 @@ export class Hc03Sdk {
       // Validate END marker (0x03 for HC03, 0xff for HC02)
       const endMarker = rawData[rawData.length - 1];
       const validEndMarkers = [Hc03Sdk.ATTR_END, 0xff]; // HC03 uses 0x03, HC02 uses 0xff
-      console.log(`🔧 [HC03] HC02 FIX LOADED - Checking END marker: got 0x${endMarker.toString(16)}, valid markers: [0x03, 0xff]`);
       if (!validEndMarkers.includes(endMarker)) {
         console.warn(`[HC03] Invalid END marker in tail: expected 0x03 or 0xff, got 0x${endMarker.toString(16)}`);
         this.cacheData = [];
         return null;
       }
-      console.log(`✅ [HC03] END marker valid!`);
     
       
       // Get tail CRC (last 2 bytes before END marker)
@@ -810,9 +816,8 @@ export class Hc03Sdk {
           this.cacheData = [];
           return null;
         }
-      } else {
-        console.log(`🔧 [HC03] HC02 device - skipping CRC validation (different algorithm)`);
       }
+      // HC02 uses different CRC algorithm - skip validation
       
       data = new Uint8Array(this.cacheData);
       this.cacheData = [];
