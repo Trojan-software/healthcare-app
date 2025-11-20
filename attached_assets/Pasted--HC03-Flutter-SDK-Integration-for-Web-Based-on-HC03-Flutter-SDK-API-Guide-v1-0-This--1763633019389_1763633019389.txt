@@ -544,28 +544,12 @@ export class Hc03Sdk {
     }
 
     try {
-      // IMPORTANT: Stop all other active measurements first
-      // HC02/HC03 devices can only run one measurement at a time
-      const otherDetections = Array.from(this.activeDetections).filter(d => d !== detection);
-      if (otherDetections.length > 0) {
-        console.log(`⏹️ [HC03] Stopping ${otherDetections.length} active measurement(s) before starting ${detection}...`);
-        for (const activeDetection of otherDetections) {
-          try {
-            await this.stopDetect(activeDetection);
-          } catch (e) {
-            console.warn(`⚠️ [HC03] Failed to stop ${activeDetection}:`, e);
-          }
-        }
-        // Wait for stop commands to process
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      
       const command = DETECTION_COMMANDS[detection as keyof typeof DETECTION_COMMANDS];
       if (!command) {
         throw new Error(`Unknown detection type: ${detection}`);
       }
 
-      console.log(`▶️ [HC03] Starting ${detection} detection...`);
+      console.log(`Starting ${detection} detection...`);
       await this.writeCharacteristic.writeValue(command);
       this.activeDetections.add(detection);
       
@@ -575,7 +559,7 @@ export class Hc03Sdk {
         callback({ type: 'measurementStarted', detection });
       }
     } catch (error) {
-      console.error(`❌ [HC03] Failed to start ${detection} detection:`, error);
+      console.error(`Failed to start ${detection} detection:`, error);
       throw error;
     }
   }
