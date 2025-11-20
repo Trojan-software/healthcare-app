@@ -57,7 +57,72 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
   const [showTroubleshooting, setShowTroubleshooting] = useState(false);
   const [lastConnectionError, setLastConnectionError] = useState<string>('');
   const [isTroubleshootingOpen, setIsTroubleshootingOpen] = useState(true);
+  const [environmentCheck, setEnvironmentCheck] = useState<string>('');
   const { toast } = useToast();
+
+  // Check Bluetooth environment on component mount
+  useEffect(() => {
+    checkBluetoothEnvironment();
+  }, []);
+
+  const checkBluetoothEnvironment = () => {
+    const ua = navigator.userAgent.toLowerCase();
+    let issues: string[] = [];
+    
+    // Check Web Bluetooth API
+    if (!navigator.bluetooth) {
+      issues.push('❌ Web Bluetooth API NOT available');
+      
+      // Detect browser
+      if (ua.includes('safari') && !ua.includes('chrome')) {
+        issues.push('🔴 BLOCKER: Safari does NOT support Web Bluetooth');
+        issues.push('✅ Solution: Use Chrome, Edge, or Opera browser');
+      } else if (ua.includes('firefox')) {
+        issues.push('🔴 BLOCKER: Firefox does NOT support Web Bluetooth');
+        issues.push('✅ Solution: Use Chrome, Edge, or Opera browser');
+      } else if (/iphone|ipad|ipod/.test(ua)) {
+        issues.push('🔴 BLOCKER: iOS does NOT support Web Bluetooth');
+        issues.push('✅ Solution: Use Android device or desktop computer');
+      } else {
+        issues.push('🔴 BLOCKER: Your browser does NOT support Web Bluetooth');
+        issues.push('✅ Solution: Use Chrome, Edge, or Opera browser');
+      }
+    } else {
+      issues.push('✅ Web Bluetooth API available');
+      
+      // Detect platform
+      if (ua.includes('android')) {
+        issues.push('📱 Android detected');
+        issues.push('⚠️ IMPORTANT: Enable Location/GPS in system settings');
+        issues.push('⚠️ Grant location permission when browser asks');
+      } else if (/iphone|ipad|ipod/.test(ua)) {
+        issues.push('🔴 BLOCKER: iOS detected - Web Bluetooth not supported on iOS');
+        issues.push('✅ Solution: Use Android or desktop');
+      } else {
+        issues.push('✅ Desktop platform detected');
+      }
+      
+      // Detect browser
+      if (ua.includes('chrome') && !ua.includes('edge')) {
+        issues.push('✅ Chrome browser detected - good!');
+      } else if (ua.includes('edg/')) {
+        issues.push('✅ Edge browser detected - good!');
+      } else if (ua.includes('opera') || ua.includes('opr/')) {
+        issues.push('✅ Opera browser detected - good!');
+      }
+    }
+    
+    setEnvironmentCheck(issues.join('\n'));
+    
+    // Show alert if there are blockers
+    if (issues.some(i => i.includes('BLOCKER'))) {
+      console.error('🔴 BLUETOOTH BLOCKER DETECTED:');
+      console.error(issues.join('\n'));
+    } else {
+      console.log('🔍 Bluetooth Environment Check:');
+      console.log(issues.join('\n'));
+    }
+  };
 
   // Load patient's HC03 devices
   useEffect(() => {
@@ -414,12 +479,32 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
               </div>
             </div>
           ) : (
-            <div className="text-center py-6">
-              <BluetoothOff className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">No HC03 device connected</p>
-              <Button onClick={connectToDevice} disabled={isConnecting} data-testid="button-connect-device">
-                {isConnecting ? 'Connecting...' : 'Connect Device'}
-              </Button>
+            <div className="space-y-4">
+              {/* Environment Check Alert */}
+              {environmentCheck && (
+                <Alert 
+                  variant={environmentCheck.includes('BLOCKER') ? 'destructive' : 'default'}
+                  className="text-left"
+                  data-testid="environment-check-alert"
+                >
+                  <AlertDescription>
+                    <div className="font-semibold mb-2">
+                      {environmentCheck.includes('BLOCKER') ? '🔴 Connection Blocked' : '🔍 Your Environment'}
+                    </div>
+                    <pre className="whitespace-pre-wrap text-sm font-mono">
+                      {environmentCheck}
+                    </pre>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              <div className="text-center py-6">
+                <BluetoothOff className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">No HC03 device connected</p>
+                <Button onClick={connectToDevice} disabled={isConnecting} data-testid="button-connect-device">
+                  {isConnecting ? 'Connecting...' : 'Connect Device'}
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
