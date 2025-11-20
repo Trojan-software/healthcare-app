@@ -1,0 +1,80 @@
+🔍 [HC03] Checking Web Bluetooth API availability...
+index-UztZDhAx.js:543 🔍 [HC03] User agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+index-UztZDhAx.js:543 🔍 [HC03] navigator.bluetooth exists? true
+index-UztZDhAx.js:553 🔍 [HC03] Bluetooth available? true
+index-UztZDhAx.js:558 ✅ [HC03] SDK initialized successfully
+index-UztZDhAx.js:570 HC03 SDK initialized successfully
+index-UztZDhAx.js:570 🔍 [HC03] Starting device scan...
+index-UztZDhAx.js:558 🔍 [HC03] Requesting Bluetooth device...
+index-UztZDhAx.js:558 🔍 [HC03] Will search for HC03-XXX and HC02-XXX devices
+index-UztZDhAx.js:558 🔍 [HC03] Calling navigator.bluetooth.requestDevice()...
+index-UztZDhAx.js:558 ✅ [HC03] Device selected successfully!
+index-UztZDhAx.js:558 ✅ [HC03] Device name: HC02-F1B51D
+index-UztZDhAx.js:558 ✅ [HC03] Device ID: 4DyDYlELafbOlEdtrsw0jg==
+index-UztZDhAx.js:558 🔗 [HC03] Connecting to GATT server...
+index-UztZDhAx.js:558 ✅ [HC03] GATT server connected!
+index-UztZDhAx.js:558 🔍 [HC03] Discovering all available services...
+index-UztZDhAx.js:558 📡 [HC03] Found 3 services:
+index-UztZDhAx.js:558   📍 Service UUID: 0000ff27-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558      ↳ 5 characteristics:
+index-UztZDhAx.js:558        - Characteristic UUID: 0000fff1-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 0000fff2-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 0000fff3-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 0000fff4-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 0000fff5-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558   📍 Service UUID: 0000180a-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558      ↳ 8 characteristics:
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a23-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a24-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a26-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a27-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a28-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a29-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a2a-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a50-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558   📍 Service UUID: 00001800-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558      ↳ 4 characteristics:
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a00-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a01-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a02-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558        - Characteristic UUID: 00002a04-0000-1000-8000-00805f9b34fb
+index-UztZDhAx.js:558          Properties: {}
+index-UztZDhAx.js:558 🔍 [HC03] Looking for HC03 service UUID: 00001822-0000-1000-8000-00805f9b34fb...
+index-UztZDhAx.js:558 Failed to connect to HC03 device: NotFoundError: No Services matching UUID 00001822-0000-1000-8000-00805f9b34fb found in Device.
+connectDevice @ index-UztZDhAx.js:558
+await in connectDevice
+B @ index-UztZDhAx.js:570
+await in B
+PN @ index-UztZDhAx.js:37
+DN @ index-UztZDhAx.js:37
+MN @ index-UztZDhAx.js:37
+Hp @ index-UztZDhAx.js:37
+Bp @ index-UztZDhAx.js:37
+(anonymous) @ index-UztZDhAx.js:37
+Tf @ index-UztZDhAx.js:40
+qm @ index-UztZDhAx.js:37
+Ru @ index-UztZDhAx.js:37
+uu @ index-UztZDhAx.js:37
+ZN @ index-UztZDhAx.js:37Understand this error
+index-UztZDhAx.js:570 Error scanning for devices: Error: No HC03 device found. Make sure:
+• Your HC03 device is turned on and in pairing mode (LED should be blinking)
+• The device is within 10 meters
+• The device is not already connected to another phone
+    at He.connectDevice (index-UztZDhAx.js:558:3245)
+    at async B (index-UztZDhAx.js:570:23072)

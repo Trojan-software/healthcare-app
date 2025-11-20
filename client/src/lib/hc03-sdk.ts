@@ -18,8 +18,14 @@ export enum Detection {
 
 // HC03/HC02 Device Service and Characteristic UUIDs (from Official HC03 Flutter SDK)
 // Source: HC03_Flutter_V1.0.1/lib/src/common/constant.dart
-const HC03_FILTER_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // Official SDK FILTER_UUID
-const HC03_SERVICE_UUID = '00001822-0000-1000-8000-00805f9b34fb'; // Official SDK UUID_SERVICE
+// 
+// IMPORTANT: HC02 and HC03 devices use DIFFERENT service UUIDs!
+// - HC02 devices (e.g., HC02-F1B51D) use service UUID: 0000ff27 (HC03_FILTER_UUID)
+// - HC03 devices use service UUID: 00001822 (HC03_SERVICE_UUID)
+// Both share the same characteristic UUIDs (fff1 for write, fff4 for notify)
+const HC02_SERVICE_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // HC02 devices use this service
+const HC03_FILTER_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // Official SDK FILTER_UUID (same as HC02)
+const HC03_SERVICE_UUID = '00001822-0000-1000-8000-00805f9b34fb'; // Official SDK UUID_SERVICE (HC03 only)
 const HC03_WRITE_CHARACTERISTIC = '0000fff1-0000-1000-8000-00805f9b34fb'; // Official SDK WRITE_UUID
 const HC03_NOTIFY_CHARACTERISTIC = '0000fff4-0000-1000-8000-00805f9b34fb'; // Official SDK NOTIFY_UUID (was fff2, CORRECTED to fff4!)
 const BATTERY_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb';
@@ -421,31 +427,50 @@ export class Hc03Sdk {
       this.server = await this.device.gatt!.connect();
       console.log('✅ [HC03] GATT server connected!');
       
-      // DISCOVERY MODE: Scan all services to find what this device actually has
-      console.log('🔍 [HC03] Discovering all available services...');
-      try {
-        const services = await this.server.getPrimaryServices();
-        console.log(`📡 [HC03] Found ${services.length} services:`);
-        for (const service of services) {
-          console.log(`  📍 Service UUID: ${service.uuid}`);
-          try {
-            const characteristics = await service.getCharacteristics();
-            console.log(`     ↳ ${characteristics.length} characteristics:`);
-            for (const char of characteristics) {
-              console.log(`       - Characteristic UUID: ${char.uuid}`);
-              console.log(`         Properties: ${JSON.stringify(char.properties)}`);
-            }
-          } catch (e) {
-            console.log(`     ↳ Could not read characteristics: ${e}`);
-          }
-        }
-      } catch (e) {
-        console.warn('⚠️ [HC03] Could not discover all services:', e);
+      // Auto-detect device type based on name
+      const deviceName = this.device.name || '';
+      const isHC02 = deviceName.startsWith('HC02-');
+      const isHC03 = deviceName.startsWith('HC03-');
+      
+      console.log(`🔍 [HC03] Device type detection:`);
+      console.log(`   Device name: ${deviceName}`);
+      console.log(`   Is HC02: ${isHC02}`);
+      console.log(`   Is HC03: ${isHC03}`);
+      
+      // Select the appropriate service UUID based on device type
+      let serviceUUID: string;
+      if (isHC02) {
+        serviceUUID = HC02_SERVICE_UUID; // HC02 uses 0000ff27
+        console.log(`✅ [HC03] Using HC02 service UUID: ${serviceUUID}`);
+      } else if (isHC03) {
+        serviceUUID = HC03_SERVICE_UUID; // HC03 uses 00001822
+        console.log(`✅ [HC03] Using HC03 service UUID: ${serviceUUID}`);
+      } else {
+        // Unknown device, try HC03 first, then fall back to HC02
+        console.warn(`⚠️ [HC03] Unknown device type, will try HC03 service first...`);
+        serviceUUID = HC03_SERVICE_UUID;
       }
       
-      // Try to get main HC03 service
-      console.log(`🔍 [HC03] Looking for HC03 service UUID: ${HC03_SERVICE_UUID}...`);
-      this.service = await this.server.getPrimaryService(HC03_SERVICE_UUID);
+      // Try to get main service
+      console.log(`🔍 [HC03] Connecting to service ${serviceUUID}...`);
+      try {
+        this.service = await this.server.getPrimaryService(serviceUUID);
+        console.log(`✅ [HC03] Connected to service successfully!`);
+      } catch (error) {
+        // If HC03 service fails and we haven't tried HC02, try HC02 as fallback
+        if (serviceUUID === HC03_SERVICE_UUID) {
+          console.warn(`⚠️ [HC03] HC03 service not found, trying HC02 service as fallback...`);
+          try {
+            this.service = await this.server.getPrimaryService(HC02_SERVICE_UUID);
+            console.log(`✅ [HC03] Connected to HC02 service successfully!`);
+          } catch (fallbackError) {
+            console.error(`❌ [HC03] Both HC03 and HC02 services failed`);
+            throw error; // Throw the original error
+          }
+        } else {
+          throw error;
+        }
+      }
       
       // Get write and notify characteristics
       this.writeCharacteristic = await this.service.getCharacteristic(HC03_WRITE_CHARACTERISTIC);
