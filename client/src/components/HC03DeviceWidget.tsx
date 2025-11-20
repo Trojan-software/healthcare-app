@@ -226,18 +226,48 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
   };
 
   const handleTemperatureData = (event: any) => {
-    // TEMPERATURE MEASUREMENT DISABLED
-    // Missing ~800 lines of calibration logic from Flutter SDK
-    // Risk: Could display incorrect values (e.g., 19°C instead of 37°C)
-    console.warn('[HC03] Temperature measurement is disabled - missing calibration logic');
-    
-    toast({
-      title: "Temperature Measurement Unavailable",
-      description: "Temperature sensing requires additional calibration. Please use other vital sign measurements.",
-      variant: "destructive"
-    });
-    
-    return;
+    if (event.type === 'data') {
+      const tempData = event.data as TemperatureData;
+      const measurementData: MeasurementData = {
+        type: 'temperature',
+        value: {
+          temperature: tempData.temperature
+        },
+        timestamp: new Date().toISOString(),
+        deviceId: selectedDevice?.deviceId || ''
+      };
+      
+      addMeasurementData(measurementData);
+      
+      // Auto-stop after receiving valid temperature data
+      if (tempData.temperature && measurementInProgress === Detection.BT) {
+        if (!validDataReceived.current) {
+          validDataReceived.current = true;
+          
+          // Stop measurement after 2 seconds to ensure data is saved
+          setTimeout(async () => {
+            await stopMeasurement(Detection.BT);
+            toast({
+              title: "Temperature Measurement Complete",
+              description: `Body Temperature: ${tempData.temperature.toFixed(1)}°C`,
+            });
+          }, 2000);
+        }
+      }
+    } else if (event.type === 'measurementStarted') {
+      validDataReceived.current = false;
+      setMeasurementInProgress(Detection.BT);
+      toast({
+        title: "Temperature Measurement Started",
+        description: "Measuring body temperature...",
+      });
+    } else if (event.type === 'measurementCompleted') {
+      setMeasurementInProgress(null);
+      toast({
+        title: "Temperature Measurement Complete",
+        description: "Temperature measurement completed successfully",
+      });
+    }
   };
 
   const handleBloodGlucoseData = (event: any) => {

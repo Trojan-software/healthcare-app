@@ -988,9 +988,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                   } else if (data.type === 'bloodPressure' && data.value) {
                     updatedVitals.bloodPressure = `${data.value.systolic}/${data.value.diastolic}`;
                   } else if (data.type === 'temperature' && data.value?.temperature) {
-                    // Temperature measurement disabled - skip update
-                    console.warn('[Dashboard] Temperature measurement disabled');
-                    return prev;
+                    updatedVitals.temperature = data.value.temperature.toFixed(1);
                   }
                   
                   // Update timestamp
