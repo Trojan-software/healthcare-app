@@ -151,22 +151,6 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
       };
       
       addMeasurementData(measurementData);
-      
-      // Auto-stop after receiving valid blood oxygen data (SpO2 > 0 and HR > 0)
-      if (oxData.bloodOxygen > 0 && oxData.heartRate > 0 && measurementInProgress === Detection.OX) {
-        if (!validDataReceived.current) {
-          validDataReceived.current = true;
-          
-          // Stop measurement after 2 seconds to ensure data is saved
-          setTimeout(async () => {
-            await stopMeasurement(Detection.OX);
-            toast({
-              title: "Blood Oxygen Measurement Complete",
-              description: `SpO2: ${oxData.bloodOxygen}% | HR: ${oxData.heartRate} bpm`,
-            });
-          }, 2000);
-        }
-      }
     } else if (event.type === 'measurementStarted') {
       validDataReceived.current = false;
       setMeasurementInProgress(Detection.OX);
@@ -174,6 +158,16 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate }: HC03Device
         title: "Blood Oxygen Measurement Started",
         description: "Please keep your finger steady on the sensor",
       });
+      
+      // Auto-stop after 10 seconds of data collection
+      setTimeout(() => {
+        stopMeasurement(Detection.OX).then(() => {
+          toast({
+            title: "Blood Oxygen Measurement Complete",
+            description: "Measurement completed successfully",
+          });
+        });
+      }, 10000);
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
       toast({
