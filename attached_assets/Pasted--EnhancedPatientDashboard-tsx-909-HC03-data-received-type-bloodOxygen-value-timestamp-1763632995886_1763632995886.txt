@@ -1,0 +1,64 @@
+
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.423Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.427Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.468Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.580Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.582Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.625Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.627Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.670Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.716Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.783Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.828Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.830Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.873Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.918Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:56.985Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.030Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.032Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.076Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.120Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.187Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.233Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.235Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.278Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.323Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.368Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.436Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.438Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:909 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-20T10:02:57.481Z', deviceId: ''}
+﻿
+
+Press ctrl i to turn on code suggestions. Press ctrl x to disable code suggestions.
+ctrl
+i
+ to turn on code suggestions. Don't show again NEW
+
