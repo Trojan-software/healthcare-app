@@ -236,12 +236,18 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
     } else if (event.type === 'measurementStarted') {
       validDataReceived.current = false;
       setMeasurementInProgress(Detection.BP);
+      if (onMeasurementStateChange) {
+        onMeasurementStateChange('bloodPressure', true);
+      }
       toast({
         title: "Blood Pressure Measurement Started",
         description: "Please remain still during measurement",
       });
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
+      if (onMeasurementStateChange) {
+        onMeasurementStateChange('bloodPressure', false);
+      }
       toast({
         title: "Blood Pressure Measurement Complete",
         description: "Blood pressure measurement completed successfully",

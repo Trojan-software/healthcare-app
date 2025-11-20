@@ -78,6 +78,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const [loading, setLoading] = useState(true);
   const [connectedDeviceId, setConnectedDeviceId] = useState<string>('');
   const [isEcgInProgress, setIsEcgInProgress] = useState(false);
+  const [isBpInProgress, setIsBpInProgress] = useState(false);
   const [selectedVitalType, setSelectedVitalType] = useState('all');
   const [fromDate, setFromDate] = useState(() => {
     const date = new Date();
@@ -885,7 +886,16 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           <div className="bg-gradient-to-br from-green-500 to-emerald-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('bloodPressure')} data-testid="card-blood-pressure">
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-3xl font-bold mb-1">{dashboardData.vitals.bloodPressure}</div>
+                <div className="text-3xl font-bold mb-1">
+                  {isBpInProgress ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                      <span className="text-lg">Measuring...</span>
+                    </div>
+                  ) : (
+                    dashboardData.vitals.bloodPressure
+                  )}
+                </div>
                 <div className="text-green-100 text-sm">{t('bloodPressure')}</div>
               </div>
               <div className="text-right">
@@ -967,6 +977,8 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             onMeasurementStateChange={(type, isInProgress) => {
               if (type === 'ecg') {
                 setIsEcgInProgress(isInProgress);
+              } else if (type === 'bloodPressure') {
+                setIsBpInProgress(isInProgress);
               }
             }}
             onDataUpdate={(data) => {
