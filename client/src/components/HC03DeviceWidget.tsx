@@ -269,30 +269,42 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       
       addMeasurementData(measurementData);
       
-      // Auto-stop after receiving valid temperature data
-      if (tempData.temperature && measurementInProgress === Detection.BT) {
+      // Auto-stop immediately after receiving valid temperature data
+      if (tempData.temperature && tempData.temperature > 30 && measurementInProgress === Detection.BT) {
         if (!validDataReceived.current) {
           validDataReceived.current = true;
           
-          // Stop measurement after 2 seconds to ensure data is saved
+          console.log(`[HC03] Temperature received: ${tempData.temperature}°C - Auto-stopping in 1 second`);
+          
+          // Stop measurement after 1 second to ensure data is saved
           setTimeout(async () => {
+            console.log('[HC03] Auto-stopping temperature measurement');
             await stopMeasurement(Detection.BT);
+            if (onMeasurementStateChange) {
+              onMeasurementStateChange('temperature', false);
+            }
             toast({
               title: "Temperature Measurement Complete",
               description: `Body Temperature: ${tempData.temperature.toFixed(1)}°C`,
             });
-          }, 2000);
+          }, 1000);
         }
       }
     } else if (event.type === 'measurementStarted') {
       validDataReceived.current = false;
       setMeasurementInProgress(Detection.BT);
+      if (onMeasurementStateChange) {
+        onMeasurementStateChange('temperature', true);
+      }
       toast({
         title: "Temperature Measurement Started",
         description: "Measuring body temperature...",
       });
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
+      if (onMeasurementStateChange) {
+        onMeasurementStateChange('temperature', false);
+      }
       toast({
         title: "Temperature Measurement Complete",
         description: "Temperature measurement completed successfully",
