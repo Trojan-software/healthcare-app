@@ -731,8 +731,11 @@ export class Hc03Sdk {
       }
       
       // HC02 uses a different CRC algorithm, skip CRC validation for HC02 devices
+      // Detect HC02 by device name or END marker (HC02 uses 0xff)
       const deviceName = this.device?.name || '';
-      const isHC02 = deviceName.startsWith('HC02-');
+      const isHC02 = deviceName.startsWith('HC02-') || endMarker === 0xff;
+      
+      console.log(`🔍 [HC03] CRC validation check (single): deviceName="${deviceName}", endMarker=0x${endMarker.toString(16)}, isHC02=${isHC02}`);
       
       if (!isHC02) {
         // Only validate CRC for HC03 devices
@@ -744,6 +747,8 @@ export class Hc03Sdk {
           console.warn(`[HC03] Invalid tail CRC: expected 0x${checkEncryTail.toString(16)}, got 0x${tailCrc.toString(16)}`);
           return null;
         }
+      } else {
+        console.log(`✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)`);
       }
       
       data = rawData.slice(Hc03Sdk.PACKAGE_INDEX_CONTENT, Hc03Sdk.PACKAGE_INDEX_CONTENT + length);
@@ -792,9 +797,11 @@ export class Hc03Sdk {
       const tailCrc = view.getUint16(rawData.length - 3, true);
       
       // HC02 uses a different CRC algorithm than HC03
-      // For now, skip CRC validation for HC02 devices
+      // Detect HC02 by device name or END marker (HC02 uses 0xff)
       const deviceName = this.device?.name || '';
-      const isHC02 = deviceName.startsWith('HC02-');
+      const isHC02 = deviceName.startsWith('HC02-') || endMarker === 0xff;
+      
+      console.log(`🔍 [HC03] CRC validation check (tail): deviceName="${deviceName}", endMarker=0x${endMarker.toString(16)}, isHC02=${isHC02}`);
       
       if (!isHC02) {
         // Only validate CRC for HC03 devices
@@ -816,8 +823,9 @@ export class Hc03Sdk {
           this.cacheData = [];
           return null;
         }
+      } else {
+        console.log(`✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)`);
       }
-      // HC02 uses different CRC algorithm - skip validation
       
       data = new Uint8Array(this.cacheData);
       this.cacheData = [];
