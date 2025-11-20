@@ -80,6 +80,8 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const [isEcgInProgress, setIsEcgInProgress] = useState(false);
   const [isBpInProgress, setIsBpInProgress] = useState(false);
   const [isGlucoseInProgress, setIsGlucoseInProgress] = useState(false);
+  const [currentBatteryLevel, setCurrentBatteryLevel] = useState<number>(0);
+  const [currentChargingStatus, setCurrentChargingStatus] = useState<boolean>(false);
   const [selectedVitalType, setSelectedVitalType] = useState('all');
   const [fromDate, setFromDate] = useState(() => {
     const date = new Date();
@@ -993,6 +995,12 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                 setConnectedDeviceId(data.deviceId);
               }
               
+              // Update battery status from HC02-F1B51D
+              if (data.type === 'battery' && data.value) {
+                setCurrentBatteryLevel(data.value.batteryLevel || 0);
+                setCurrentChargingStatus(data.value.chargingStatus || false);
+              }
+              
               // Update vital signs in real-time from HC03 device
               if (dashboardData) {
                 setDashboardData(prev => {
@@ -1050,6 +1058,9 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             <BatteryWidget 
               patientId={dashboardData?.user?.patientId || ''} 
               compact={false}
+              deviceId={connectedDeviceId || undefined}
+              currentBatteryLevel={currentBatteryLevel}
+              currentChargingStatus={currentChargingStatus}
             />
           </div>
         </div>

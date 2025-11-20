@@ -15,12 +15,37 @@ interface DeviceBattery {
 interface BatteryWidgetProps {
   patientId: string;
   compact?: boolean;
+  deviceId?: string;
+  currentBatteryLevel?: number;
+  currentChargingStatus?: boolean;
 }
 
-export default function BatteryWidget({ patientId, compact = false }: BatteryWidgetProps) {
+export default function BatteryWidget({ patientId, compact = false, deviceId, currentBatteryLevel, currentChargingStatus }: BatteryWidgetProps) {
   const [devicesBattery, setDevicesBattery] = useState<DeviceBattery[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
+  
+  // Update battery data when HC02-F1B51D provides real-time data
+  useEffect(() => {
+    if (deviceId && currentBatteryLevel !== undefined) {
+      setDevicesBattery(prev => {
+        const existing = prev.find(d => d.deviceId === deviceId);
+        if (existing) {
+          return prev.map(d => 
+            d.deviceId === deviceId 
+              ? { ...d, batteryLevel: currentBatteryLevel, isCharging: currentChargingStatus || false }
+              : d
+          );
+        } else {
+          return [...prev, {
+            deviceId,
+            batteryLevel: currentBatteryLevel,
+            isCharging: currentChargingStatus || false
+          }];
+        }
+      });
+    }
+  }, [deviceId, currentBatteryLevel, currentChargingStatus]);
 
   useEffect(() => {
     loadBatteryData();
