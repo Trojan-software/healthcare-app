@@ -832,16 +832,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const alerts = await storage.getAlertsByPatient(patientId);
       const reminderSettings = await storage.getReminderSettings(patientId);
 
+      // Format vitals data to match frontend expectations
+      const formattedVitals = latestVitals ? {
+        heartRate: latestVitals.heartRate || '--',
+        bloodPressure: (latestVitals.bloodPressureSystolic && latestVitals.bloodPressureDiastolic) 
+          ? `${latestVitals.bloodPressureSystolic}/${latestVitals.bloodPressureDiastolic}`
+          : '--/--',
+        temperature: latestVitals.temperature ? parseFloat(latestVitals.temperature as string).toFixed(1) : '--',
+        oxygenLevel: latestVitals.oxygenLevel || '--',
+        bloodGlucose: latestVitals.bloodGlucose || '--',
+        timestamp: latestVitals.timestamp
+      } : {
+        heartRate: '--',
+        bloodPressure: '--/--',
+        temperature: '--',
+        oxygenLevel: '--',
+        bloodGlucose: '--',
+        timestamp: new Date()
+      };
+
       const stats = {
         user: formatPatientData(user),
-        vitals: latestVitals || {
-          heartRate: 72,
-          bloodPressure: "120/80",
-          temperature: 36.6,
-          oxygenLevel: 98,
-          bloodGlucose: null,
-          timestamp: new Date()
-        },
+        vitals: formattedVitals,
         vitalsHistory: vitalsHistory.slice(-30),
         checkupHistory: checkupHistory.slice(-10),
         alerts: alerts.slice(-5),
