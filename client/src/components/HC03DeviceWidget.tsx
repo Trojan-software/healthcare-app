@@ -1167,9 +1167,27 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
                     onClick={() => startMeasurement(Detection.BP)}
                     disabled={measurementInProgress === Detection.BP}
                     data-testid="button-pressure-measurement"
+                    className={measurementInProgress === Detection.BP ? 'bg-green-500 text-white hover:bg-green-600' : ''}
                   >
                     <Activity className="h-4 w-4 mr-2" />
-                    {measurementInProgress === Detection.BP ? 'Measuring...' : 'Blood Pressure'}
+                    <div className="flex flex-col items-start">
+                      {measurementInProgress === Detection.BP ? (
+                        <>
+                          <span className="font-semibold">Measuring...</span>
+                          <span className="text-xs">Blood Pressure</span>
+                        </>
+                      ) : (() => {
+                        const latestBP = realtimeData.find(d => d.type === 'bloodPressure');
+                        return latestBP ? (
+                          <>
+                            <span className="text-xs text-muted-foreground">Blood Pressure</span>
+                            <span className="font-semibold">{latestBP.value.systolic}/{latestBP.value.diastolic} mmHg</span>
+                          </>
+                        ) : (
+                          <span>Blood Pressure</span>
+                        );
+                      })()}
+                    </div>
                   </Button>
                   
                   <Button
