@@ -931,7 +931,7 @@ export class Hc03Sdk {
         break;
       case Hc03Sdk.BG_RES_TYPE:
         console.log('🍬 [HC03] → Parsing BLOOD GLUCOSE');
-        this.parseBloodGlucoseData(data);
+        this.parseBloodGlucoseData(data).catch(e => console.error('BG parsing error:', e));
         break;
       case Hc03Sdk.OX_RES_TYPE_NORMAL:
         console.log('🫀 [HC03] → Parsing BLOOD OXYGEN');
@@ -1377,40 +1377,116 @@ export class Hc03Sdk {
   }
 
   // Blood Glucose Data Parsing (from Flutter SDK bloodglucose.dart)
-  private parseBloodGlucoseData(data: Uint8Array): void {
+  // Handles three types: SendData, PaperState, PaperData
+  private async parseBloodGlucoseData(data: Uint8Array): Promise<void> {
     try {
-      if (data.length < 2) {
+      console.log(`[HC03] BG raw data: ${Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')} (length: ${data.length})`);
+      
+      if (data.length < 1) {
         console.warn('[HC03] Blood glucose data too short');
         return;
       }
       
-      // Big-endian 16-bit value, divide by 10
-      const glucoseRaw = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
-      const glucose = glucoseRaw / 10.0;
+      const contentType = data[0] & 0xFF;
+      console.log(`[HC03] BG content type: 0x${contentType.toString(16)}`);
       
-      const bloodGlucoseData: BloodGlucoseData = {
-        bloodGlucoseSendData: { rawValue: glucoseRaw },
-        bloodGlucosePaperState: 'complete',
-        bloodGlucosePaperData: glucose
-      };
-      
-      // Store latest data for getter methods
-      this.latestBloodGlucoseData = bloodGlucoseData;
-      
-      console.log('[HC03] ✅ Blood Glucose:', glucose, 'mmol/L');
-      
-      // Send callback FIRST to ensure data reaches dashboard
-      const callback = this.callbacks.get(Detection.BG);
-      if (callback) {
-        callback({ type: 'data', detection: Detection.BG, data: bloodGlucoseData });
+      // Type 1: BloodGlucoseSendData - Device needs us to send command back
+      // The device sends configuration/setup data that must be sent back
+      if (contentType === 0x00 || contentType === 0x01 || contentType === 0x02) {
+        console.log('[HC03] 📤 BG SendData - sending command back to device...');
+        
+        // The data array IS the sendList - write it back to the device
+        if (this.writeCharacteristic) {
+          try {
+            await this.writeCharacteristic.writeValue(data);
+            console.log('[HC03] ✅ Sent BG command back to device');
+            
+            // Emit SendData event
+            window.dispatchEvent(new CustomEvent('hc03:bloodglucose:send', { 
+              detail: { sendList: Array.from(data) } 
+            }));
+          } catch (error) {
+            console.error('[HC03] ❌ Failed to send BG command:', error);
+          }
+        }
+        return;
       }
       
-      // Auto-stop blood glucose measurement after getting valid reading (async, non-blocking)
-      if (glucose >= 2.2 && glucose <= 35) { // Valid range: 40-600 mg/dL
-        setTimeout(() => {
-          console.log('✅ [HC03] Valid blood glucose received, auto-stopping measurement...');
-          this.stopDetect(Detection.BG).catch(e => console.warn('Auto-stop failed:', e));
-        }, 500);
+      // Type 2: BloodGlucosePaperState - Test strip status messages
+      // Messages like "Insert test strip", "Waiting for blood", "Testing..."
+      if (contentType === 0x03 || contentType === 0x04 || contentType === 0x05 || contentType === 0x06) {
+        const stateMessages: { [key: number]: string } = {
+          0x03: 'Please insert test strip (Code: C16)',
+          0x04: 'Test strip detected - waiting for blood specimen',
+          0x05: 'Blood specimen detected - analyzing...',
+          0x06: 'Test in progress...'
+        };
+        
+        const message = stateMessages[contentType] || `Test strip status: 0x${contentType.toString(16)}`;
+        console.log(`[HC03] 📋 BG PaperState: ${message}`);
+        
+        // Emit PaperState event
+        window.dispatchEvent(new CustomEvent('hc03:bloodglucose:paperstate', { 
+          detail: { message, statusCode: contentType } 
+        }));
+        
+        const callback = this.callbacks.get(Detection.BG);
+        if (callback) {
+          callback({ 
+            type: 'status', 
+            detection: Detection.BG, 
+            data: { 
+              bloodGlucosePaperState: message,
+              statusCode: contentType 
+            } 
+          });
+        }
+        return;
+      }
+      
+      // Type 3: BloodGlucosePaperData - Final glucose measurement result
+      // The actual blood glucose value in mmol/L
+      if (data.length >= 2) {
+        // Big-endian 16-bit value, divide by 10 to get mmol/L
+        const glucoseRaw = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+        const glucose = glucoseRaw / 10.0;
+        
+        console.log(`[HC03] BG result parsed: raw=${glucoseRaw}, glucose=${glucose} mmol/L`);
+        
+        // Validate range (2.2-35 mmol/L = 40-600 mg/dL)
+        if (glucose >= 2.2 && glucose <= 35) {
+          const bloodGlucoseData: BloodGlucoseData = {
+            bloodGlucoseSendData: { rawValue: glucoseRaw },
+            bloodGlucosePaperState: 'Test complete',
+            bloodGlucosePaperData: glucose
+          };
+          
+          // Store latest data for getter methods
+          this.latestBloodGlucoseData = bloodGlucoseData;
+          
+          console.log('[HC03] ✅ Blood Glucose Result:', glucose, 'mmol/L');
+          
+          // Emit PaperData event
+          window.dispatchEvent(new CustomEvent('hc03:bloodglucose:paperdata', { 
+            detail: { data: glucose, units: 'mmol/L' } 
+          }));
+          
+          // Send callback with result
+          const callback = this.callbacks.get(Detection.BG);
+          if (callback) {
+            callback({ type: 'data', detection: Detection.BG, data: bloodGlucoseData });
+          }
+          
+          // Auto-stop blood glucose measurement after getting valid reading
+          setTimeout(() => {
+            console.log('✅ [HC03] Valid blood glucose received, auto-stopping measurement...');
+            this.stopDetect(Detection.BG).catch(e => console.warn('Auto-stop failed:', e));
+          }, 500);
+        } else {
+          console.warn(`[HC03] BG value out of range: ${glucose} mmol/L (expected 2.2-35)`);
+        }
+      } else {
+        console.log(`[HC03] Unknown BG data format (type: 0x${contentType.toString(16)}, length: ${data.length})`);
       }
     } catch (error) {
       console.error('Error parsing blood glucose data:', error);
