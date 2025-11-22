@@ -593,10 +593,16 @@ export class Hc03Sdk {
 
   // Start detection as per HC03 API
   public async startDetect(detection: Detection): Promise<void> {
+    console.log(`[HC03] 🔵 startDetect called for ${detection}`);
+    console.log(`[HC03] 🔵 Connection status: ${this.getConnectionStatus()}, writeChar exists: ${!!this.writeCharacteristic}`);
+    
     if (!this.getConnectionStatus() || !this.writeCharacteristic) {
-      throw new Error('Device not connected or characteristics not available. Please connect to your HC03 device first.');
+      const error = `Device not connected (status: ${this.getConnectionStatus()}) or characteristics not available (writeChar: ${!!this.writeCharacteristic}). Please connect to your HC03 device first.`;
+      console.error(`[HC03] ❌ ${error}`);
+      throw new Error(error);
     }
 
+    console.log(`[HC03] ✅ Proceeding with ${detection} detection...`);
     try {
       // IMPORTANT: Stop all other active measurements first
       // HC02/HC03 devices can only run one measurement at a time
