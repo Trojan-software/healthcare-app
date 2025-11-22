@@ -968,69 +968,43 @@ export class Hc03Sdk {
     console.log('[HC03] ECG data received (processed by NeuroSky SDK)');
   }
 
-  // Blood Oxygen Data Parsing - HC02 vs HC03 specific handling
+  // Blood Oxygen Data Parsing (from Flutter SDK oxEngine.dart)
   private parseBloodOxygenData(data: Uint8Array): void {
     try {
-      if (this.deviceType === 'HC02') {
-        // HC02-F1B51D: Simple format with SpO2 and heart rate
-        // Format: [SpO2 (byte), HR (2 bytes little-endian)]
-        if (data.length < 3) {
-          console.warn('[HC03] HC02 Blood oxygen data too short:', data.length);
-          return;
-        }
-        
-        const spo2 = data[0] & 0xFF;  // SpO2 as percentage (0-100)
-        const heartRate = ((data[2] & 0xFF) << 8) | (data[1] & 0xFF);  // Little-endian HR in BPM
-        
-        const bloodOxygenData: BloodOxygenData = {
-          bloodOxygen: spo2,
-          heartRate: heartRate,
-          fingerDetection: spo2 > 0,  // Valid if SpO2 > 0
-          bloodOxygenWaveData: []
-        };
-        
-        this.latestBloodOxygenData = bloodOxygenData;
-        
-        console.log(`🫁 [HC03] HC02 Blood Oxygen: SpO2=${spo2}%, HR=${heartRate} bpm`);
-        console.log(`   Data bytes: [${Array.from(data.slice(0, Math.min(5, data.length))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(', ')}]`);
-        
-        const callback = this.callbacks.get(Detection.OX);
-        if (callback) {
-          callback({ type: 'data', detection: Detection.OX, data: bloodOxygenData });
-        }
-      } else {
-        // HC03: Complex waveform format (30 bytes -> 10 values, 3 bytes each)
-        if (data.length < 30) {
-          console.warn('[HC03] HC03 Blood oxygen data incomplete:', data.length);
-          return;
-        }
-        
-        const waveData: number[] = [];
-        for (let i = 0; i < 30; i += 3) {
-          const first = (data[i] & 0xFF) << 16;
-          const second = (data[i + 1] & 0xFF) << 8;
-          const third = data[i + 2] & 0xFF;
-          waveData.push(first + second + third);
-        }
-        
-        const { spo2, heartRate } = this.calculateSpO2FromWaveform(waveData);
-        
-        const bloodOxygenData: BloodOxygenData = {
-          bloodOxygen: spo2,
-          heartRate: heartRate,
-          fingerDetection: spo2 > 0,
-          bloodOxygenWaveData: waveData
-        };
-        
-        this.latestBloodOxygenData = bloodOxygenData;
-        
-        console.log('[HC03] HC03 Blood Oxygen:', spo2 + '%', 'HR:', heartRate, 'bpm');
-        console.log('[HC03] Waveform samples:', waveData.length);
-        
-        const callback = this.callbacks.get(Detection.OX);
-        if (callback) {
-          callback({ type: 'data', detection: Detection.OX, data: bloodOxygenData });
-        }
+      if (data.length < 30) {
+        console.warn('[HC03] Blood oxygen data incomplete:', data.length);
+        return;
+      }
+      
+      // Resolve wave data (30 bytes -> 10 values, 3 bytes each as 24-bit)
+      // Note: Flutter SDK's Calculate class computes SpO2 and HR from these waveforms
+      const waveData: number[] = [];
+      for (let i = 0; i < 30; i += 3) {
+        const first = (data[i] & 0xFF) << 16;
+        const second = (data[i + 1] & 0xFF) << 8;
+        const third = data[i + 2] & 0xFF;
+        waveData.push(first + second + third);
+      }
+      
+      // Calculate SpO2 and HR from waveform data
+      const { spo2, heartRate } = this.calculateSpO2FromWaveform(waveData);
+      
+      const bloodOxygenData: BloodOxygenData = {
+        bloodOxygen: spo2,
+        heartRate: heartRate,
+        fingerDetection: spo2 > 0, // Valid if SpO2 was calculated
+        bloodOxygenWaveData: waveData
+      };
+      
+      // Store latest data for getter methods
+      this.latestBloodOxygenData = bloodOxygenData;
+      
+      console.log('[HC03] Blood Oxygen:', spo2 + '%', 'HR:', heartRate, 'bpm');
+      console.log('[HC03] Waveform samples:', waveData.length);
+      
+      const callback = this.callbacks.get(Detection.OX);
+      if (callback) {
+        callback({ type: 'data', detection: Detection.OX, data: bloodOxygenData });
       }
     } catch (error) {
       console.error('Error parsing blood oxygen data:', error);
@@ -1131,83 +1105,49 @@ export class Hc03Sdk {
     return mean + 0.5 * stdDev;
   }
 
-  // Blood Pressure Data Parsing - HC02 vs HC03 specific handling
+  // Blood Pressure Data Parsing (from Flutter SDK bpEngine.dart)
   private parseBloodPressureData(data: Uint8Array): void {
     try {
-      if (this.deviceType === 'HC02') {
-        // HC02-F1B51D: Format [ContentType, SysLo, SysHi, DiaLo, DiaHi, HRLo, HRHi, ...]
-        // All values are 16-bit little-endian (low byte first, high byte second)
-        if (data.length < 7) {
-          console.warn('[HC03] HC02 Blood pressure data too short:', data.length);
-          return;
-        }
-        
-        const contentType = data[0] & 0xFF;
-        const systolic = ((data[2] & 0xFF) << 8) | (data[1] & 0xFF);  // Little-endian 16-bit
-        const diastolic = ((data[4] & 0xFF) << 8) | (data[3] & 0xFF);  // Little-endian 16-bit
-        const heartRate = ((data[6] & 0xFF) << 8) | (data[5] & 0xFF);  // Little-endian 16-bit
-        
-        console.log(`💉 [HC03] HC02 Blood Pressure parsing:`);
-        console.log(`   Content type: 0x${contentType.toString(16)}`);
-        console.log(`   Raw systolic: [${data[1].toString(16)}, ${data[2].toString(16)}] = ${systolic}`);
-        console.log(`   Raw diastolic: [${data[3].toString(16)}, ${data[4].toString(16)}] = ${diastolic}`);
-        console.log(`   Raw HR: [${data[5].toString(16)}, ${data[6].toString(16)}] = ${heartRate}`);
-        
-        const bloodPressureData: BloodPressureData = {
-          ps: systolic,
-          pd: diastolic,
-          hr: heartRate
-        };
-        
-        this.latestBloodPressureData = bloodPressureData;
-        
-        console.log(`💉 [HC03] HC02 Blood Pressure: ${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
-        
-        const callback = this.callbacks.get(Detection.BP);
-        if (callback) {
-          callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
+      if (data.length < 2) {
+        console.warn('[HC03] Blood pressure data too short');
+        return;
+      }
+      
+      const contentType = data[0] & 0xFF;
+      const BP_RES_CONTENT_PRESSURE_DATA = 0x03;
+      
+      if (contentType === BP_RES_CONTENT_PRESSURE_DATA) {
+        if (data.length >= 7) {
+          // Little-endian 16-bit values
+          const systolic = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
+          const diastolic = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
+          const heartRate = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
+          
+          const bloodPressureData: BloodPressureData = {
+            ps: systolic,
+            pd: diastolic,
+            hr: heartRate
+          };
+          
+          // Store latest data for getter methods
+          this.latestBloodPressureData = bloodPressureData;
+          
+          console.log('[HC03] Blood Pressure:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
+          
+          const callback = this.callbacks.get(Detection.BP);
+          if (callback) {
+            callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
+          }
         }
       } else {
-        // HC03: Complex format with content type byte
-        if (data.length < 2) {
-          console.warn('[HC03] HC03 Blood pressure data too short');
-          return;
-        }
-        
-        const contentType = data[0] & 0xFF;
-        const BP_RES_CONTENT_PRESSURE_DATA = 0x03;
-        
-        if (contentType === BP_RES_CONTENT_PRESSURE_DATA) {
-          if (data.length >= 7) {
-            const systolic = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
-            const diastolic = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
-            const heartRate = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
-            
-            const bloodPressureData: BloodPressureData = {
-              ps: systolic,
-              pd: diastolic,
-              hr: heartRate
-            };
-            
-            this.latestBloodPressureData = bloodPressureData;
-            
-            console.log('[HC03] HC03 Blood Pressure:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
-            
-            const callback = this.callbacks.get(Detection.BP);
-            if (callback) {
-              callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
-            }
-          }
-        } else {
-          console.log('[HC03] BP calibration/setup data received, type:', contentType);
-        }
+        console.log('[HC03] BP calibration/setup data received, type:', contentType);
       }
     } catch (error) {
       console.error('Error parsing blood pressure data:', error);
     }
   }
 
-  // Blood Glucose Data Parsing - HC02 vs HC03 specific handling
+  // Blood Glucose Data Parsing (from Flutter SDK bloodglucose.dart)
   private parseBloodGlucoseData(data: Uint8Array): void {
     try {
       if (data.length < 2) {
@@ -1215,26 +1155,9 @@ export class Hc03Sdk {
         return;
       }
       
-      let glucose: number;
-      let glucoseRaw: number;
-      
-      if (this.deviceType === 'HC02') {
-        // HC02-F1B51D: Little-endian 16-bit format, divide by 10
-        glucoseRaw = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
-        glucose = glucoseRaw / 10.0;
-        
-        console.log(`🩸 [HC03] HC02 Blood Glucose parsing:`);
-        console.log(`   Raw value: ${glucoseRaw} (0x${glucoseRaw.toString(16)})`);
-        console.log(`   Parsed value: ${glucose} mmol/L`);
-      } else {
-        // HC03: Big-endian 16-bit value, divide by 10
-        glucoseRaw = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
-        glucose = glucoseRaw / 10.0;
-        
-        console.log(`🩸 [HC03] HC03 Blood Glucose parsing:`);
-        console.log(`   Raw value: ${glucoseRaw} (0x${glucoseRaw.toString(16)})`);
-        console.log(`   Parsed value: ${glucose} mmol/L`);
-      }
+      // Big-endian 16-bit value, divide by 10
+      const glucoseRaw = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+      const glucose = glucoseRaw / 10.0;
       
       const bloodGlucoseData: BloodGlucoseData = {
         bloodGlucoseSendData: { rawValue: glucoseRaw },
@@ -1242,9 +1165,10 @@ export class Hc03Sdk {
         bloodGlucosePaperData: glucose
       };
       
+      // Store latest data for getter methods
       this.latestBloodGlucoseData = bloodGlucoseData;
       
-      console.log('[HC03] Blood Glucose:', glucose, 'mmol/L (Device: ' + (this.deviceType || 'Unknown') + ')');
+      console.log('[HC03] Blood Glucose:', glucose, 'mmol/L');
       
       const callback = this.callbacks.get(Detection.BG);
       if (callback) {
@@ -1255,55 +1179,25 @@ export class Hc03Sdk {
     }
   }
 
-  // Temperature Data Parsing - HC02 vs HC03 specific handling
+  // Temperature Data Parsing (from Flutter SDK Temperature.dart)
   private parseTemperatureData(data: Uint8Array): void {
     try {
-      if (data.length < 2) {
+      if (data.length < 4) {
         console.warn('[HC03] Temperature data too short');
         return;
       }
       
-      let roundedTemp: number;
+      // Little-endian 16-bit values
+      const temperatureBdF = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
+      const temperatureEvF = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
       
-      // HC02 and HC03 use different temperature formats
-      if (this.deviceType === 'HC02') {
-        // HC02-F1B51D: Simple 16-bit little-endian format
-        // Raw value represents temperature in 0.01°C units (e.g., 3700 = 37.00°C)
-        const tempRaw = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
-        roundedTemp = Math.round(tempRaw / 100.0 * 10) / 10.0;
-        
-        console.log(`🌡️ [HC03] HC02 Temperature parsing:`);
-        console.log(`   Raw value: ${tempRaw} (0x${tempRaw.toString(16)})`);
-        console.log(`   Parsed value: ${roundedTemp}°C`);
-        console.log(`   Data bytes: [${Array.from(data.slice(0, Math.min(4, data.length))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(', ')}]`);
-      } else {
-        // HC03: Complex formula with two temperature values (body temp + environment compensation)
-        if (data.length < 4) {
-          console.warn('[HC03] HC03 Temperature data requires at least 4 bytes');
-          return;
-        }
-        
-        // Little-endian 16-bit values
-        const temperatureBdF = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
-        const temperatureEvF = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
-        
-        // Convert to Celsius
-        const tempBT = temperatureBdF * 0.02 - 273.15;
-        const tempET = temperatureEvF * 0.02 - 273.15;
-        
-        // Apply body temperature calculation
-        const bodyTemp = tempBT + (tempET / 100.0);
-        roundedTemp = Math.round(bodyTemp * 10) / 10.0;
-        
-        console.log(`🌡️ [HC03] HC03 Temperature parsing:`);
-        console.log(`   BdF: ${temperatureBdF}, EvF: ${temperatureEvF}`);
-        console.log(`   Calculated value: ${roundedTemp}°C`);
-      }
+      // Convert to Celsius
+      const tempBT = temperatureBdF * 0.02 - 273.15;
+      const tempET = temperatureEvF * 0.02 - 273.15;
       
-      // Validate temperature is within physiological range
-      if (roundedTemp < 30 || roundedTemp > 45) {
-        console.warn(`⚠️ [HC03] Temperature ${roundedTemp}°C outside normal range (30-45°C), may be invalid`);
-      }
+      // Apply body temperature calculation
+      const bodyTemp = tempBT + (tempET / 100.0);
+      const roundedTemp = Math.round(bodyTemp * 10) / 10.0;
       
       const temperatureData: TemperatureData = {
         temperature: roundedTemp
@@ -1312,7 +1206,7 @@ export class Hc03Sdk {
       // Store latest data for getter methods
       this.latestTemperatureData = temperatureData;
       
-      console.log('[HC03] Temperature:', roundedTemp, '°C (Device: ' + (this.deviceType || 'Unknown') + ')');
+      console.log('[HC03] Temperature:', roundedTemp, '°C');
       
       const callback = this.callbacks.get(Detection.BT);
       if (callback) {
