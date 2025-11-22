@@ -1503,18 +1503,22 @@ export class Hc03Sdk {
         const pressureValues: number[] = [];
         for (let i = 1; i < data.length - 1; i += 2) {
           if (i + 1 < data.length) {
-            const pressureRaw = ((data[i] & 0xff) << 8) + (data[i + 1] & 0xff);
+            // Little-endian: LOW byte first, HIGH byte second
+            const pressureRaw = (data[i] & 0xff) + ((data[i + 1] & 0xff) << 8);
             pressureValues.push(pressureRaw);
           }
         }
         
+        console.log(`[HC03] 📊 Extracted ${pressureValues.length} pressure values from packet:`, pressureValues.slice(0, 3));
+        
         // Check if we need to start inflation after collecting zero calibration samples
         if (!this.bpInflationStarted) {
           this.bpZeroSampleCount += pressureValues.length;
+          console.log(`[HC03] 🔢 Zero sample count: ${this.bpZeroSampleCount} (need 10 to start inflation)`);
           
           // After collecting 10-15 zero calibration samples, start inflation
           if (this.bpZeroSampleCount >= 10) {
-            console.log('[HC03] 🎈 Starting cuff inflation - sending quick charging command...');
+            console.log(`[HC03] 🎈 Starting cuff inflation - sending quick charging command... (writeChar: ${!!this.writeCharacteristic})`);
             
             if (this.writeCharacteristic) {
               try {
@@ -1528,8 +1532,7 @@ export class Hc03Sdk {
                   if (this.writeCharacteristic && !this.bpCalculated) {
                     try {
                       const pwmChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [
-                        PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM,
-                        PROTOCOL.BP_REQ_CONTENT_PWM_GAS
+                        PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM
                       ]);
                       await this.writeCharacteristic.writeValueWithoutResponse(pwmChargeCmd);
                       console.log('[HC03] ✅ Sent PWM charging command - controlled inflation');
