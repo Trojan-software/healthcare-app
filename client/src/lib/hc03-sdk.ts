@@ -1527,10 +1527,7 @@ export class Hc03Sdk {
                 setTimeout(async () => {
                   if (this.writeCharacteristic && !this.bpCalculated) {
                     try {
-                      const pwmChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [
-                        PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM,
-                        PROTOCOL.BP_REQ_CONTENT_PWM_GAS
-                      ]);
+                      const pwmChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM]);
                       await this.writeCharacteristic.writeValueWithoutResponse(pwmChargeCmd);
                       console.log('[HC03] ✅ Sent PWM charging command - controlled inflation');
                     } catch (error) {
