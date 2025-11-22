@@ -1712,11 +1712,30 @@ export class Hc03Sdk {
             amplitude: oscillationAmp,
             timestamp: Date.now()
           });
+          console.log(`[HC03] 📉 Deflating: ${latestPressure.toFixed(1)} mmHg, oscillation: ${oscillationAmp.toFixed(2)}, collected: ${this.bpOscillationData.length} points`);
         }
         
-        // Check if deflation is complete (pressure below threshold or timeout)
+        // CRITICAL: Check if cuff is actually deflating
+        // If pressure hasn't dropped by at least 5 mmHg in the last 10 samples, something is wrong
+        if (this.bpPressureHistory.length >= 10) {
+          const tenSamplesAgo = this.bpPressureHistory[this.bpPressureHistory.length - 10];
+          const pressureDrop = tenSamplesAgo - latestPressure;
+          
+          if (pressureDrop < 5 && latestPressure > 50) {
+            console.error(`[HC03] ⚠️ DEFLATION STALLED! Pressure hasn't dropped (was ${tenSamplesAgo.toFixed(1)}, now ${latestPressure.toFixed(1)}). Sending additional STOP commands...`);
+            // Try sending stop command again to force deflation
+            if (this.writeCharacteristic) {
+              const stopCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]);
+              this.writeCharacteristic.writeValueWithoutResponse(stopCmd).catch(e => 
+                console.error('[HC03] Failed to send emergency stop:', e)
+              );
+            }
+          }
+        }
+        
+        // Check if deflation is complete (pressure below threshold)
         if (latestPressure < 40) {
-          console.log('[HC03] ✅ Deflation complete (pressure < 40 mmHg), calculating BP...');
+          console.log(`[HC03] ✅ Deflation complete (pressure < 40 mmHg), calculating BP from ${this.bpOscillationData.length} oscillation points...`);
           this.transitionToCalculating();
         }
         break;
@@ -1733,12 +1752,24 @@ export class Hc03Sdk {
   private async transitionToHold(): Promise<void> {
     this.bpState = 'holding';
     
-    // Send stop charging command to halt inflation
+    // Send stop charging command to halt inflation AND initiate deflation
     if (this.writeCharacteristic) {
       try {
         const stopCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]);
         await this.writeCharacteristic.writeValueWithoutResponse(stopCmd);
-        console.log('[HC03] 🛑 Sent STOP charging command - cuff holding pressure');
+        console.log('[HC03] 🛑 Sent STOP charging command - cuff should start deflating');
+        
+        // Send stop command AGAIN after 500ms to ensure valve opens (some devices need this)
+        setTimeout(async () => {
+          if (this.writeCharacteristic && this.bpState === 'holding') {
+            try {
+              await this.writeCharacteristic.writeValueWithoutResponse(stopCmd);
+              console.log('[HC03] 🛑 Sent 2nd STOP command to ensure deflation');
+            } catch (error) {
+              console.error('[HC03] ❌ Failed to send 2nd stop command:', error);
+            }
+          }
+        }, 500);
       } catch (error) {
         console.error('[HC03] ❌ Failed to send stop command:', error);
       }
@@ -1746,9 +1777,17 @@ export class Hc03Sdk {
     
     // After 2 second hold, transition to deflation
     setTimeout(() => {
-      console.log('[HC03] 📉 Starting DEFLATION phase...');
+      console.log('[HC03] 📉 Transitioning to DEFLATION phase - monitoring pressure drop...');
       this.bpState = 'deflating';
       this.bpOscillationData = []; // Clear oscillation buffer
+      
+      // Set timeout for deflation (if pressure doesn't drop in 30 seconds, force calculation)
+      setTimeout(() => {
+        if (this.bpState === 'deflating' && !this.bpCalculated) {
+          console.warn('[HC03] ⚠️ Deflation timeout (30s) - forcing calculation with available data');
+          this.transitionToCalculating();
+        }
+      }, 30000); // 30 second deflation timeout
     }, 2000);
   }
   
