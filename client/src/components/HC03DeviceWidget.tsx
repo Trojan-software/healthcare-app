@@ -70,6 +70,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
   
   const wsConnection = useRef<WebSocket | null>(null);
   const measurementTimeout = useRef<NodeJS.Timeout | null>(null);
+  const temperatureDialogTimeout = useRef<NodeJS.Timeout | null>(null);
   const validDataReceived = useRef<boolean>(false);
   const temperatureMeasurementStarted = useRef<boolean>(false);
   const { toast } = useToast();
@@ -308,9 +309,10 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       
       // If no data received within 10 seconds, prompt for manual entry
       // This is a workaround for devices that don't have temperature sensors
-      if (measurementTimeout.current) clearTimeout(measurementTimeout.current);
-      measurementTimeout.current = setTimeout(() => {
-        if (temperatureMeasurementStarted.current && !validDataReceived.current) {
+      // Use SEPARATE timeout ref to not interfere with 30-second auto-stop
+      if (temperatureDialogTimeout.current) clearTimeout(temperatureDialogTimeout.current);
+      temperatureDialogTimeout.current = setTimeout(() => {
+        if (temperatureMeasurementStarted.current && !validDataReceived.current && measurementInProgress === Detection.BT) {
           console.log('[HC03] No temperature data received - prompting for manual entry');
           setShowManualTemperature(true);
         }
@@ -705,15 +707,20 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
     if (!hc03Sdk.getConnectionStatus()) return;
     
     try {
-      // Clear timeout
+      // Clear all timeouts
       if (measurementTimeout.current) {
         clearTimeout(measurementTimeout.current);
         measurementTimeout.current = null;
+      }
+      if (temperatureDialogTimeout.current) {
+        clearTimeout(temperatureDialogTimeout.current);
+        temperatureDialogTimeout.current = null;
       }
       
       await hc03Sdk.stopDetect(type);
       setMeasurementInProgress(null);
       validDataReceived.current = false;
+      temperatureMeasurementStarted.current = false;
     } catch (error) {
       console.error(`Error stopping ${type} measurement:`, error);
     }
@@ -776,6 +783,12 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
   };
 
   const cleanup = () => {
+    if (measurementTimeout.current) {
+      clearTimeout(measurementTimeout.current);
+    }
+    if (temperatureDialogTimeout.current) {
+      clearTimeout(temperatureDialogTimeout.current);
+    }
     if (hc03Sdk.getConnectionStatus()) {
       hc03Sdk.disconnect();
     }
