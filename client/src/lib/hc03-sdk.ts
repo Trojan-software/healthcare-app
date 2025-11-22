@@ -164,7 +164,8 @@ const DETECTION_COMMANDS: Record<Detection, Uint8Array> = {
 const STOP_COMMANDS: Partial<Record<Detection, Uint8Array>> = {
   [Detection.ECG]: obtainCommandData(PROTOCOL.ELECTROCARDIOGRAM, [PROTOCOL.ECG_STOP]),
   [Detection.OX]: obtainCommandData(PROTOCOL.OX_REQ_TYPE_NORMAL, [PROTOCOL.OX_REQ_CONTENT_STOP_NORMAL]),
-  [Detection.BP]: obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]),
+  // BP does NOT use stop command - device automatically deflates from pre-inflated state
+  // [Detection.BP]: obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]),
   [Detection.BT]: obtainCommandData(PROTOCOL.TEMPERATURE, [PROTOCOL.TEP_STOP_NORMAL]),
   [Detection.BG]: obtainCommandData(PROTOCOL.BLOOD_GLUCOSE, [PROTOCOL.TEST_PAPER_ADC_STOP]),
 };
@@ -305,25 +306,25 @@ export class Hc03Sdk {
   // Waveform buffer for SpO2 calculation (accumulates samples across packets)
   private waveformBuffer: number[] = [];
   
-  // Blood Pressure measurement state machine (layered over existing sampling)
-  private bpState: 'idle' | 'calibration' | 'inflating' | 'holding' | 'deflating' | 'calculating' = 'idle';
+  // Blood Pressure measurement state machine (PASSIVE DEFLATION MODEL)
+  // HC02-F1B51D pre-inflates cuff, then gradually deflates automatically
+  // We only listen to pressure data during deflation - NO pump commands
+  private bpState: 'idle' | 'calibration' | 'deflation-sampling' | 'calculating' = 'idle';
   
   // Existing sampling variables (keep for backward compatibility)
   private bpPressureBuffer: number[] = [];
   private bpSampleCount: number = 0;
   private bpMaxSamples: number = 100;
   private bpCalculated: boolean = false;
-  private bpInflationStarted: boolean = false;
   private bpZeroSampleCount: number = 0;
   
-  // New state machine variables
+  // Deflation sampling variables
   private bpOscillationData: Array<{ pressure: number; amplitude: number; timestamp: number }> = [];
   private bpCalibrationCoeffs: { c1: number; c2: number; c3: number; c4: number; c5: number } | null = null;
   private bpCurrentPressure: number = 0;
-  private bpMaxPressure: number = 0;
-  private bpTargetInflation: number = 180; // Target inflation pressure in mmHg
-  private bpInflationCheckInterval: any = null;
+  private bpMaxPressure: number = 0; // Track highest pressure seen (cuff was pre-inflated to this)
   private bpPressureHistory: number[] = []; // For moving average baseline (oscillation detection)
+  private bpDeflationStartTime: number = 0; // When deflation sampling began
 
   private constructor() {
     // Bind methods to preserve context
@@ -641,13 +642,14 @@ export class Hc03Sdk {
         this.bpSampleCount = 0;
         this.bpCalculated = false;
         this.bpCalibrationCoeffs = null;
-        this.bpInflationStarted = false;
         this.bpZeroSampleCount = 0;
         this.bpOscillationData = [];
         this.bpPressureHistory = [];
         this.bpCurrentPressure = 0;
         this.bpMaxPressure = 0;
+        this.bpDeflationStartTime = 0;
         console.log('[HC03] 🎬 BP measurement started, state: IDLE → waiting for calibration');
+        console.log('[HC03] ℹ️  Ensure cuff is pre-inflated before measurement');
         console.log('✨ [HC03] Cleared BP buffers for new measurement');
       }
 
@@ -1549,40 +1551,25 @@ export class Hc03Sdk {
         
         console.log(`[HC03] 📊 Extracted ${pressureValues.length} pressure values from packet:`, pressureValues.slice(0, 3));
         
-        // NEW STATE MACHINE: Update BP state and control inflation/deflation
+        // NEW STATE MACHINE: Monitor pressure during passive deflation
         this.updateBPStateMachine(pressureValues);
         
-        // Check if we need to start inflation after collecting zero calibration samples
-        if (!this.bpInflationStarted && this.bpState === 'calibration') {
+        // After collecting zero calibration samples, transition to deflation-sampling
+        // The device has already pre-inflated the cuff and is now deflating
+        if (this.bpState === 'calibration') {
           this.bpZeroSampleCount += pressureValues.length;
-          console.log(`[HC03] 🔢 Zero sample count: ${this.bpZeroSampleCount} (need 10 to start inflation)`);
+          console.log(`[HC03] 🔢 Zero samples collected: ${this.bpZeroSampleCount}`);
           
-          // After collecting 10-15 zero calibration samples, start inflation
+          // After 10 zero calibration samples, device starts sending real pressure data
+          // Transition to deflation-sampling state
           if (this.bpZeroSampleCount >= 10) {
-            console.log(`[HC03] 🎈 Starting cuff inflation - transitioning to INFLATING state...`);
-            this.bpState = 'inflating';
+            console.log(`[HC03] 📉 Zero calibration complete - transitioning to DEFLATION-SAMPLING`);
+            console.log(`[HC03] ℹ️  Device is automatically deflating from pre-inflated state`);
+            this.bpState = 'deflation-sampling';
+            this.bpOscillationData = [];
+            this.bpDeflationStartTime = Date.now();
             this.bpMaxPressure = 0;
             this.bpCurrentPressure = 0;
-            
-            if (this.writeCharacteristic) {
-              try {
-                // Send quick charging command to start rapid inflation
-                const quickChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_QUICK_CHARGING_GAS]);
-                await this.writeCharacteristic.writeValueWithoutResponse(quickChargeCmd);
-                console.log('[HC03] ✅ Sent quick charging command - cuff should start inflating');
-                
-                // Send PWM charging for controlled inflation
-                setTimeout(async () => {
-                  if (this.writeCharacteristic && this.bpState === 'inflating') {
-                    await this.sendPWMCharge();
-                  }
-                }, 500);
-                
-                this.bpInflationStarted = true;
-              } catch (error) {
-                console.error('[HC03] ❌ Failed to send inflation command:', error);
-              }
-            }
           }
         }
         
@@ -1676,8 +1663,9 @@ export class Hc03Sdk {
   }
 
   /**
-   * BP State Machine Controller
-   * Monitors pressure and controls inflation/deflation based on current state
+   * BP State Machine Controller (PASSIVE DEFLATION MODEL)
+   * HC02-F1B51D device automatically deflates from pre-inflated state
+   * We only monitor pressure and collect oscillation data - NO pump commands
    */
   private updateBPStateMachine(pressureValues: number[]): void {
     if (pressureValues.length === 0) return;
@@ -1693,33 +1681,18 @@ export class Hc03Sdk {
       this.bpPressureHistory.shift();
     }
     
-    console.log(`[HC03] 🎈 BP State: ${this.bpState}, Pressure: ${latestPressure.toFixed(1)} mmHg (max: ${this.bpMaxPressure.toFixed(1)})`);
+    console.log(`[HC03] 🩺 BP State: ${this.bpState}, Pressure: ${latestPressure.toFixed(1)} mmHg (peak: ${this.bpMaxPressure.toFixed(1)})`);
     
     // State machine transitions
     switch (this.bpState) {
       case 'idle':
       case 'calibration':
-        // Waiting for calibration to complete
+        // Waiting for zero calibration to complete
+        // Once we get pressure data after zero calibration, transition to deflation-sampling
         break;
         
-      case 'inflating':
-        // Check if we've reached target inflation pressure
-        if (latestPressure >= this.bpTargetInflation) {
-          console.log(`[HC03] 🎯 Target pressure reached: ${latestPressure.toFixed(1)} mmHg, transitioning to HOLD`);
-          this.transitionToHold();
-        } else if (this.bpMaxPressure > 5 && latestPressure < this.bpMaxPressure - 10) {
-          // Pressure is dropping - cuff might be leaking, send more PWM charges
-          console.log('[HC03] ⚠️ Pressure dropping during inflation, sending additional PWM charge...');
-          this.sendPWMCharge();
-        }
-        break;
-        
-      case 'holding':
-        // Hold phase completes automatically via timeout
-        break;
-        
-      case 'deflating':
-        // Calculate oscillation amplitude and store data point
+      case 'deflation-sampling':
+        // Device is automatically deflating - collect oscillation data
         const oscillationAmp = this.calculateOscillationAmplitude();
         if (oscillationAmp > 0) {
           this.bpOscillationData.push({
@@ -1727,30 +1700,19 @@ export class Hc03Sdk {
             amplitude: oscillationAmp,
             timestamp: Date.now()
           });
-          console.log(`[HC03] 📉 Deflating: ${latestPressure.toFixed(1)} mmHg, oscillation: ${oscillationAmp.toFixed(2)}, collected: ${this.bpOscillationData.length} points`);
-        }
-        
-        // CRITICAL: Check if cuff is actually deflating
-        // If pressure hasn't dropped by at least 5 mmHg in the last 10 samples, something is wrong
-        if (this.bpPressureHistory.length >= 10) {
-          const tenSamplesAgo = this.bpPressureHistory[this.bpPressureHistory.length - 10];
-          const pressureDrop = tenSamplesAgo - latestPressure;
-          
-          if (pressureDrop < 5 && latestPressure > 50) {
-            console.error(`[HC03] ⚠️ DEFLATION STALLED! Pressure hasn't dropped (was ${tenSamplesAgo.toFixed(1)}, now ${latestPressure.toFixed(1)}). Sending additional STOP commands...`);
-            // Try sending stop command again to force deflation
-            if (this.writeCharacteristic) {
-              const stopCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]);
-              this.writeCharacteristic.writeValueWithoutResponse(stopCmd).catch(e => 
-                console.error('[HC03] Failed to send emergency stop:', e)
-              );
-            }
-          }
+          console.log(`[HC03] 📉 Sampling: ${latestPressure.toFixed(1)} mmHg, oscillation: ${oscillationAmp.toFixed(2)}, points: ${this.bpOscillationData.length}`);
         }
         
         // Check if deflation is complete (pressure below threshold)
         if (latestPressure < 40) {
           console.log(`[HC03] ✅ Deflation complete (pressure < 40 mmHg), calculating BP from ${this.bpOscillationData.length} oscillation points...`);
+          this.transitionToCalculating();
+        }
+        
+        // Safety: if we've been sampling for >60 seconds, force calculation
+        const samplingDuration = (Date.now() - this.bpDeflationStartTime) / 1000;
+        if (samplingDuration > 60 && this.bpOscillationData.length > 10) {
+          console.warn(`[HC03] ⚠️ Deflation timeout (${samplingDuration.toFixed(0)}s), forcing calculation with ${this.bpOscillationData.length} points`);
           this.transitionToCalculating();
         }
         break;
@@ -1762,51 +1724,6 @@ export class Hc03Sdk {
   }
   
   /**
-   * Transition to HOLD state - stop inflation and wait before deflation
-   */
-  private async transitionToHold(): Promise<void> {
-    this.bpState = 'holding';
-    
-    // Send stop charging command to halt inflation AND initiate deflation
-    if (this.writeCharacteristic) {
-      try {
-        const stopCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]);
-        await this.writeCharacteristic.writeValueWithoutResponse(stopCmd);
-        console.log('[HC03] 🛑 Sent STOP charging command - cuff should start deflating');
-        
-        // Send stop command AGAIN after 500ms to ensure valve opens (some devices need this)
-        setTimeout(async () => {
-          if (this.writeCharacteristic && this.bpState === 'holding') {
-            try {
-              await this.writeCharacteristic.writeValueWithoutResponse(stopCmd);
-              console.log('[HC03] 🛑 Sent 2nd STOP command to ensure deflation');
-            } catch (error) {
-              console.error('[HC03] ❌ Failed to send 2nd stop command:', error);
-            }
-          }
-        }, 500);
-      } catch (error) {
-        console.error('[HC03] ❌ Failed to send stop command:', error);
-      }
-    }
-    
-    // After 2 second hold, transition to deflation
-    setTimeout(() => {
-      console.log('[HC03] 📉 Transitioning to DEFLATION phase - monitoring pressure drop...');
-      this.bpState = 'deflating';
-      this.bpOscillationData = []; // Clear oscillation buffer
-      
-      // Set timeout for deflation (if pressure doesn't drop in 30 seconds, force calculation)
-      setTimeout(() => {
-        if (this.bpState === 'deflating' && !this.bpCalculated) {
-          console.warn('[HC03] ⚠️ Deflation timeout (30s) - forcing calculation with available data');
-          this.transitionToCalculating();
-        }
-      }, 30000); // 30 second deflation timeout
-    }, 2000);
-  }
-  
-  /**
    * Transition to CALCULATING state - process oscillation data
    */
   private transitionToCalculating(): void {
@@ -1815,21 +1732,6 @@ export class Hc03Sdk {
     
     // Use new oscillometric calculation
     this.calculateOscillometricBP();
-  }
-  
-  /**
-   * Send PWM charge command for controlled inflation
-   */
-  private async sendPWMCharge(): Promise<void> {
-    if (this.writeCharacteristic && this.bpState === 'inflating') {
-      try {
-        const pwmCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM]);
-        await this.writeCharacteristic.writeValueWithoutResponse(pwmCmd);
-        console.log('[HC03] ⚡ Sent PWM charge command');
-      } catch (error) {
-        console.error('[HC03] ❌ Failed to send PWM charge:', error);
-      }
-    }
   }
   
   /**

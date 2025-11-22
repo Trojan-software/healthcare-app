@@ -245,7 +245,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       }
       toast({
         title: "Blood Pressure Measurement Started",
-        description: "Please remain still during measurement",
+        description: "Ensure the cuff is inflated, then remain still as the device gradually releases air to measure your blood pressure",
       });
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
