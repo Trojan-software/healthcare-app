@@ -1540,7 +1540,7 @@ export class Hc03Sdk {
         return;
       }
       
-      // Unknown content type - log for debugging
+      // recUnknown content type - log for debugging
       console.log(`[HC03] Unknown BP content type: 0x${contentType.toString(16)}, length: ${data.length}`);
       
       // If data looks like it could be a result (has enough bytes)
