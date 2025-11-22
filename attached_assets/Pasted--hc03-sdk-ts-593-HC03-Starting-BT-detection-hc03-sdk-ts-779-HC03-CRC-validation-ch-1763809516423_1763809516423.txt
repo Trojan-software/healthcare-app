@@ -1,0 +1,33 @@
+
+﻿
+hc03-sdk.ts:593 ▶️ [HC03] Starting BT detection...
+hc03-sdk.ts:779 🔍 [HC03] CRC validation check (single): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:792 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:911 📍 [HC03] Routing type 0x10 with 2 bytes: 0x02 0x00
+hc03-sdk.ts:935 ⚠️ [HC03] Unknown type: 0x10, data: 0x02 0x00
+hc03-sdk.ts:779 🔍 [HC03] CRC validation check (single): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:792 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:911 📍 [HC03] Routing type 0x82 with 8 bytes: 0x70 0x3a 0x54 0x3a 0x85 0x3b 0x54 0x3a
+hc03-sdk.ts:919 🌡️ [HC03] → Parsing TEMPERATURE
+hc03-sdk.ts:1348 [HC03] Temperature: 26.3 °C
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'temperature', value: {…}, timestamp: '2025-11-22T11:04:21.626Z', deviceId: ''}
+hc03-sdk.ts:779 🔍 [HC03] CRC validation check (single): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:792 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:911 📍 [HC03] Routing type 0x82 with 8 bytes: 0xb0 0x3b 0x56 0x3a 0xac 0x3b 0x56 0x3a
+hc03-sdk.ts:919 🌡️ [HC03] → Parsing TEMPERATURE
+hc03-sdk.ts:1348 [HC03] Temperature: 32.7 °C
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'temperature', value: {…}, timestamp: '2025-11-22T11:04:22.414Z', deviceId: ''}
+hc03-sdk.ts:779 🔍 [HC03] CRC validation check (single): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:792 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:911 📍 [HC03] Routing type 0x82 with 8 bytes: 0xb3 0x3b 0x56 0x3a 0xb5 0x3b 0x54 0x3a
+hc03-sdk.ts:919 🌡️ [HC03] → Parsing TEMPERATURE
+hc03-sdk.ts:1348 [HC03] Temperature: 32.8 °C
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'temperature', value: {…}, timestamp: '2025-11-22T11:04:23.224Z', deviceId: ''}
+hc03-sdk.ts:617 Stopping BT detection...
+hc03-sdk.ts:779 🔍 [HC03] CRC validation check (single): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:792 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:911 📍 [HC03] Routing type 0x10 with 2 bytes: 0x02 0x01
+hc03-sdk.ts:935 ⚠️ [HC03] Unknown type: 0x10, data: 0x02 0x01

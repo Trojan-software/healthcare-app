@@ -1020,6 +1020,11 @@ export class Hc03Sdk {
       
       if (spo2 > 0) {
         console.log('[HC03] ✅ Blood Oxygen:', spo2 + '%', 'HR:', heartRate, 'bpm');
+        // Auto-stop blood oxygen measurement after getting valid reading
+        if (spo2 >= 70 && spo2 <= 100 && heartRate >= 40 && heartRate <= 200) {
+          console.log('✅ [HC03] Valid blood oxygen received, auto-stopping measurement...');
+          this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
+        }
       } else {
         console.log('[HC03] 📊 Blood Oxygen: collecting data (', Math.floor((this.redBuffer?.length || 0) / 5) + 'secs', ')');
       }
@@ -1271,6 +1276,10 @@ export class Hc03Sdk {
           
           console.log('[HC03] ✅ Blood Pressure:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
           
+          // Auto-stop blood pressure measurement after getting valid reading
+          console.log('✅ [HC03] Valid blood pressure received, auto-stopping measurement...');
+          this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
+          
           const callback = this.callbacks.get(Detection.BP);
           if (callback) {
             callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
@@ -1307,7 +1316,13 @@ export class Hc03Sdk {
       // Store latest data for getter methods
       this.latestBloodGlucoseData = bloodGlucoseData;
       
-      console.log('[HC03] Blood Glucose:', glucose, 'mmol/L');
+      console.log('[HC03] ✅ Blood Glucose:', glucose, 'mmol/L');
+      
+      // Auto-stop blood glucose measurement after getting valid reading
+      if (glucose >= 2.2 && glucose <= 35) { // Valid range: 40-600 mg/dL
+        console.log('✅ [HC03] Valid blood glucose received, auto-stopping measurement...');
+        this.stopDetect(Detection.BG).catch(e => console.warn('Auto-stop failed:', e));
+      }
       
       const callback = this.callbacks.get(Detection.BG);
       if (callback) {
@@ -1326,17 +1341,20 @@ export class Hc03Sdk {
         return;
       }
       
-      // Little-endian 16-bit values
-      const temperatureBdF = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
-      const temperatureEvF = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
+      // Little-endian 16-bit values - temperature is encoded in 1/100°C increments
+      const tempValue1 = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
+      const tempValue2 = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
       
-      // Convert to Celsius
-      const tempBT = temperatureBdF * 0.02 - 273.15;
-      const tempET = temperatureEvF * 0.02 - 273.15;
+      // Convert from raw counts to Celsius (1/100°C per unit = divide by 100)
+      // Formula: value / 100 = temperature in °C
+      const temp1 = tempValue1 / 100.0;
+      const temp2 = tempValue2 / 100.0;
       
-      // Apply body temperature calculation
-      const bodyTemp = tempBT + (tempET / 100.0);
-      const roundedTemp = Math.round(bodyTemp * 10) / 10.0;
+      // Average the two readings
+      const temperature = (temp1 + temp2) / 2.0;
+      const roundedTemp = Math.round(temperature * 10) / 10.0;
+      
+      console.log(`[HC03] 🌡️ Raw values: ${tempValue1} (${temp1.toFixed(1)}°C), ${tempValue2} (${temp2.toFixed(1)}°C) -> Average: ${roundedTemp}°C`);
       
       const temperatureData: TemperatureData = {
         temperature: roundedTemp
@@ -1345,7 +1363,11 @@ export class Hc03Sdk {
       // Store latest data for getter methods
       this.latestTemperatureData = temperatureData;
       
-      console.log('[HC03] Temperature:', roundedTemp, '°C');
+      // Auto-stop temperature measurement after getting valid reading
+      if (roundedTemp >= 30 && roundedTemp <= 45) {
+        console.log('✅ [HC03] Valid temperature received, auto-stopping measurement...');
+        this.stopDetect(Detection.BT).catch(e => console.warn('Auto-stop failed:', e));
+      }
       
       const callback = this.callbacks.get(Detection.BT);
       if (callback) {
