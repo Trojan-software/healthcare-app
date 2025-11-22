@@ -614,6 +614,15 @@ export class Hc03Sdk {
         this.bloodOxygenStartTime = Date.now(); // Track start time for 30-second measurement
         console.log('✨ [HC03] Cleared all buffers for new 30-second blood oxygen measurement');
       }
+      
+      // Clear BP buffers and flags when starting new blood pressure measurement
+      if (detection === Detection.BP) {
+        this.bpPressureBuffer = [];
+        this.bpSampleCount = 0;
+        this.bpCalculated = false;
+        this.bpCalibrationCoeffs = null;
+        console.log('✨ [HC03] Cleared BP buffers for new measurement');
+      }
 
       console.log(`▶️ [HC03] Starting ${detection} detection...`);
       await this.writeCharacteristic.writeValue(command);
@@ -1478,6 +1487,11 @@ export class Hc03Sdk {
       // Type 3: BP_RES_CONTENT_PRESSURE_DATA - Pressure measurement data
       // This is the actual pressure data during measurement
       if (contentType === PROTOCOL.BP_RES_CONTENT_PRESSURE_DATA) {
+        // Skip if already calculated to prevent accumulating unnecessary data
+        if (this.bpCalculated) {
+          return;
+        }
+        
         console.log('[HC03] 📊 BP Pressure Data - collecting samples...');
         
         // Extract pressure values from the packet (5 values per packet, 2 bytes each)
@@ -1490,9 +1504,11 @@ export class Hc03Sdk {
           }
         }
         
-        // Add to buffer
-        this.bpPressureBuffer.push(...pressureValues);
-        this.bpSampleCount += pressureValues.length;
+        // Add to buffer (only if we haven't reached max samples yet)
+        if (this.bpSampleCount < this.bpMaxSamples) {
+          this.bpPressureBuffer.push(...pressureValues);
+          this.bpSampleCount += pressureValues.length;
+        }
         
         const progress = Math.min(Math.round((this.bpSampleCount / this.bpMaxSamples) * 100), 100);
         const currentPressure = pressureValues.length > 0 ? pressureValues[pressureValues.length - 1] : 0;
