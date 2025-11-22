@@ -906,24 +906,31 @@ export class Hc03Sdk {
 
   // Route data to appropriate parser based on HC03 type
   private routeData(type: number, data: Uint8Array): void {
+    console.log(`📍 [HC03] Routing type 0x${type.toString(16).padStart(2, '0')} with ${data.length} bytes: ${Array.from(data.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}${data.length > 10 ? '...' : ''}`);
+    
     switch (type) {
       case Hc03Sdk.RESPONSE_CHECK_BATTERY:
+        console.log('🔋 [HC03] → Parsing BATTERY');
         this.parseBatteryData(data);
         break;
       case Hc03Sdk.BT_RES_TYPE:
+        console.log('🌡️ [HC03] → Parsing TEMPERATURE');
         this.parseTemperatureData(data);
         break;
       case Hc03Sdk.BG_RES_TYPE:
+        console.log('🍬 [HC03] → Parsing BLOOD GLUCOSE');
         this.parseBloodGlucoseData(data);
         break;
       case Hc03Sdk.OX_RES_TYPE_NORMAL:
+        console.log('🫀 [HC03] → Parsing BLOOD OXYGEN');
         this.parseBloodOxygenData(data);
         break;
       case Hc03Sdk.BP_RES_TYPE:
+        console.log('💪 [HC03] → Parsing BLOOD PRESSURE');
         this.parseBloodPressureData(data);
         break;
       default:
-        console.log(`[HC03] Unknown type: 0x${type.toString(16)}`);
+        console.log(`⚠️ [HC03] Unknown type: 0x${type.toString(16)}, data: ${Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}`);
     }
   }
 
@@ -1108,21 +1115,27 @@ export class Hc03Sdk {
   // Blood Pressure Data Parsing (from Flutter SDK bpEngine.dart)
   private parseBloodPressureData(data: Uint8Array): void {
     try {
+      console.log(`[HC03] BP raw data: ${Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')} (length: ${data.length})`);
+      
       if (data.length < 2) {
         console.warn('[HC03] Blood pressure data too short');
         return;
       }
       
       const contentType = data[0] & 0xFF;
-      const BP_RES_CONTENT_PRESSURE_DATA = 0x03;
+      console.log(`[HC03] BP content type: 0x${contentType.toString(16)}`);
       
-      if (contentType === BP_RES_CONTENT_PRESSURE_DATA) {
-        if (data.length >= 7) {
-          // Little-endian 16-bit values
-          const systolic = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
-          const diastolic = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
-          const heartRate = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
-          
+      // BP can come in multiple formats - try to parse as pressure data if we have enough bytes
+      if (data.length >= 7) {
+        // Try parsing as little-endian pressure values (format: [type?, sys_low, sys_high, dia_low, dia_high, hr_low, hr_high])
+        const systolic = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
+        const diastolic = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
+        const heartRate = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
+        
+        console.log(`[HC03] BP parsed: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
+        
+        // Validate ranges before accepting
+        if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130 && heartRate >= 40 && heartRate <= 200) {
           const bloodPressureData: BloodPressureData = {
             ps: systolic,
             pd: diastolic,
@@ -1132,15 +1145,17 @@ export class Hc03Sdk {
           // Store latest data for getter methods
           this.latestBloodPressureData = bloodPressureData;
           
-          console.log('[HC03] Blood Pressure:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
+          console.log('[HC03] ✅ Blood Pressure:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
           
           const callback = this.callbacks.get(Detection.BP);
           if (callback) {
             callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
           }
+        } else {
+          console.warn(`[HC03] BP values out of range: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         }
       } else {
-        console.log('[HC03] BP calibration/setup data received, type:', contentType);
+        console.log('[HC03] BP data incomplete for parsing (need >= 7 bytes)');
       }
     } catch (error) {
       console.error('Error parsing blood pressure data:', error);

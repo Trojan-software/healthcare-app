@@ -15,6 +15,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
+import { hc03Sdk, Detection } from "@/lib/hc03-sdk";
 
 ChartJS.register(
   CategoryScale,
@@ -29,40 +30,81 @@ ChartJS.register(
 
 export default function VitalSignsCard() {
   const [vitals, setVitals] = useState({
-    heartRate: 72,
-    bloodPressure: { systolic: 120, diastolic: 80 },
-    temperature: 98.6,
-    oxygenLevel: 98,
+    heartRate: 0,
+    bloodPressure: { systolic: 0, diastolic: 0 },
+    temperature: 0,
+    oxygenLevel: 0,
   });
 
   const [isLive, setIsLive] = useState(true);
+  const [history, setHistory] = useState({
+    heartRate: [0, 0, 0, 0, 0, 0],
+    systolic: [0, 0, 0, 0, 0, 0],
+  });
 
-  // Simulate real-time updates
+  // Subscribe to HC03 device data
   useEffect(() => {
     if (!isLive) return;
 
-    const interval = setInterval(() => {
-      setVitals(prev => ({
-        heartRate: Math.max(60, Math.min(100, prev.heartRate + (Math.random() - 0.5) * 4)),
-        bloodPressure: {
-          systolic: Math.max(110, Math.min(140, prev.bloodPressure.systolic + (Math.random() - 0.5) * 6)),
-          diastolic: Math.max(70, Math.min(90, prev.bloodPressure.diastolic + (Math.random() - 0.5) * 4)),
-        },
-        temperature: Math.max(97.0, Math.min(100.0, prev.temperature + (Math.random() - 0.5) * 0.2)),
-        oxygenLevel: Math.max(95, Math.min(100, prev.oxygenLevel + (Math.random() - 0.5) * 2)),
-      }));
-    }, 5000);
+    // Listen to blood oxygen (includes heart rate)
+    hc03Sdk.setCallback(Detection.OX, (data: any) => {
+      const oxyData = data.data;
+      if (oxyData?.bloodOxygen > 0) {
+        setVitals(prev => ({
+          ...prev,
+          oxygenLevel: oxyData.bloodOxygen,
+          heartRate: oxyData.heartRate > 0 ? oxyData.heartRate : prev.heartRate,
+        }));
+        // Update heart rate history
+        setHistory(prev => ({
+          ...prev,
+          heartRate: [...prev.heartRate.slice(1), oxyData.heartRate || prev.heartRate[5]],
+        }));
+      }
+    });
 
-    return () => clearInterval(interval);
+    // Listen to blood pressure
+    hc03Sdk.setCallback(Detection.BP, (data: any) => {
+      const bpData = data.data;
+      if (bpData?.ps > 0 && bpData?.pd > 0) {
+        setVitals(prev => ({
+          ...prev,
+          bloodPressure: { systolic: bpData.ps, diastolic: bpData.pd },
+          heartRate: bpData.hr > 0 ? bpData.hr : prev.heartRate,
+        }));
+        // Update systolic history
+        setHistory(prev => ({
+          ...prev,
+          systolic: [...prev.systolic.slice(1), bpData.ps || prev.systolic[5]],
+        }));
+      }
+    });
+
+    // Listen to temperature
+    hc03Sdk.setCallback(Detection.BT, (data: any) => {
+      const tempData = data.data;
+      if (tempData?.temperature > 0) {
+        setVitals(prev => ({
+          ...prev,
+          temperature: tempData.temperature,
+        }));
+      }
+    });
+
+    return () => {
+      hc03Sdk.removeCallback(Detection.OX);
+      hc03Sdk.removeCallback(Detection.BP);
+      hc03Sdk.removeCallback(Detection.BT);
+    };
   }, [isLive]);
 
-  // Chart data
+  // Chart data (using real device history)
   const chartData = {
-    labels: ['6AM', '9AM', '12PM', '3PM', '6PM', '9PM'],
+    labels: ['T-5', 'T-4', 'T-3', 'T-2', 'T-1', 'Now'],
     datasets: [
       {
         label: 'Heart Rate (BPM)',
-        data: [68, 72, 75, 71, 69, vitals.heartRate],
+        data: history.heartRate,
         borderColor: 'hsl(var(--alert-red))',
         backgroundColor: 'hsl(var(--alert-red) / 0.1)',
         tension: 0.4,
@@ -70,7 +112,7 @@ export default function VitalSignsCard() {
       },
       {
         label: 'Blood Pressure (Systolic)',
-        data: [118, 120, 125, 122, 119, vitals.bloodPressure.systolic],
+        data: history.systolic,
         borderColor: 'hsl(var(--medical-blue))',
         backgroundColor: 'hsl(var(--medical-blue) / 0.1)',
         tension: 0.4,
