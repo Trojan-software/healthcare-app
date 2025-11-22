@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import HC03DeviceManager from '@/components/HC03DeviceManager';
 import ECGReport from '@/components/ECGReport';
+import BloodGlucoseMonitor from '@/components/BloodGlucoseMonitor';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useLanguage } from '@/lib/i18n';
@@ -24,6 +25,7 @@ export default function HealthMonitoringPage() {
   const { t, isRTL } = useLanguage();
   const patientId = "DEMO001"; // In real app, get from auth context
   const [showECGReport, setShowECGReport] = useState(false);
+  const [isGlucoseMeasuring, setIsGlucoseMeasuring] = useState(false);
 
   // Fetch comprehensive health data
   const { data: healthData, isLoading } = useQuery({
@@ -439,6 +441,22 @@ export default function HealthMonitoringPage() {
                     <p className="text-gray-500 text-center py-4">No temperature data available</p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Blood Glucose Monitor */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Droplets className="w-5 h-5" />
+                  Blood Glucose Monitoring
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BloodGlucoseMonitor 
+                  patientId={patientId}
+                  onStartTest={() => setIsGlucoseMeasuring(true)}
+                />
               </CardContent>
             </Card>
           </div>
