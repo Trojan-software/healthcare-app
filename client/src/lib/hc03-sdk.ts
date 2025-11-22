@@ -1234,10 +1234,11 @@ export class Hc03Sdk {
       
       switch (status) {
         case BATTERY_QUERY:
-          // Calculate battery level from voltage
-          const batteryValue = ((data[1] & 0xFF) << 8) | (data[2] & 0xFF);
-          console.log(`🔋 [HC03] Battery raw value: ${batteryValue} (0x${batteryValue.toString(16)})`);
-          console.log(`🔋 [HC03] Battery bytes: [${data[0]}, ${data[1]}, ${data[2]}]`);
+          // Calculate battery level from voltage (Flutter SDK: big-endian 16-bit)
+          // Format: [status, highByte, lowByte]
+          const batteryValue = ((data[1] & 0xFF) << 8) + (data[2] & 0xFF);
+          console.log(`🔋 [HC03] Battery parsing: bytes[1]=0x${(data[1] & 0xFF).toString(16).padStart(2, '0')}, bytes[2]=0x${(data[2] & 0xFF).toString(16).padStart(2, '0')}`);
+          console.log(`🔋 [HC03] Battery raw value: ${batteryValue} (0x${batteryValue.toString(16).padStart(4, '0')})`);
           
           const level = this.getBatteryLevel(batteryValue);
           console.log(`🔋 [HC03] Calculated level: ${level}%`);
