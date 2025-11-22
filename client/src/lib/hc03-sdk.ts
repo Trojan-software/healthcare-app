@@ -587,7 +587,8 @@ export class Hc03Sdk {
         this.waveformBuffer = [];
         this.redBuffer = [];
         this.irBuffer = [];
-        console.log('✨ [HC03] Cleared all buffers for new blood oxygen measurement');
+        this.bloodOxygenStartTime = Date.now(); // Track start time for 30-second measurement
+        console.log('✨ [HC03] Cleared all buffers for new 30-second blood oxygen measurement');
       }
 
       console.log(`▶️ [HC03] Starting ${detection} detection...`);
@@ -616,6 +617,11 @@ export class Hc03Sdk {
       if (command) {
         console.log(`Stopping ${detection} detection...`);
         await this.writeCharacteristic.writeValue(command);
+      }
+      
+      // Clear blood oxygen start time when stopping
+      if (detection === Detection.OX) {
+        this.bloodOxygenStartTime = null;
       }
       
       this.activeDetections.delete(detection);
@@ -1034,12 +1040,21 @@ export class Hc03Sdk {
         callback({ type: 'data', detection: Detection.OX, data: bloodOxygenData });
       }
       
-      // Auto-stop blood oxygen measurement after getting valid reading (async, non-blocking)
+      // Auto-stop blood oxygen measurement after 30 seconds of data collection
       if (spo2 >= 70 && spo2 <= 100 && heartRate >= 40 && heartRate <= 200) {
-        setTimeout(() => {
-          console.log('✅ [HC03] Valid blood oxygen received, auto-stopping measurement...');
+        const elapsedTime = this.bloodOxygenStartTime ? Date.now() - this.bloodOxygenStartTime : 0;
+        const remainingTime = Math.max(0, 30000 - elapsedTime); // 30 seconds = 30000ms
+        
+        if (remainingTime === 0) {
+          console.log('✅ [HC03] 30-second blood oxygen measurement complete, auto-stopping...');
           this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
-        }, 500);
+        } else {
+          console.log(`[HC03] 📊 Valid reading obtained, continuing measurement (${Math.ceil(remainingTime / 1000)}s remaining)...`);
+          setTimeout(() => {
+            console.log('✅ [HC03] 30-second blood oxygen measurement complete, auto-stopping...');
+            this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
+          }, remainingTime);
+        }
       }
     } catch (error) {
       console.error('Error parsing blood oxygen data:', error);
@@ -1049,6 +1064,7 @@ export class Hc03Sdk {
   // Initialize RED/IR buffers
   private redBuffer: number[] = [];
   private irBuffer: number[] = [];
+  private bloodOxygenStartTime: number | null = null;
 
   // Calculate SpO2 and Heart Rate from RED/IR channel pairs
   // Based on Flutter SDK's Calculate.addSignalData and ACF ratio method
@@ -1063,8 +1079,8 @@ export class Hc03Sdk {
     
     console.log(`[HC03] 📊 Buffer: ${this.redBuffer.length} RED, ${this.irBuffer.length} IR samples`);
     
-    // Keep buffer size manageable (last 50 samples = ~5-10 seconds at 5-10Hz)
-    if (this.redBuffer.length > 50) {
+    // Keep buffer size manageable (last 300 samples = ~30 seconds at 10Hz)
+    if (this.redBuffer.length > 300) {
       this.redBuffer.shift();
       this.irBuffer.shift();
     }
