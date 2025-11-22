@@ -65,10 +65,13 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [showTroubleshooting, setShowTroubleshooting] = useState(false);
   const [isTroubleshootingOpen, setIsTroubleshootingOpen] = useState(true);
+  const [showManualTemperature, setShowManualTemperature] = useState(false);
+  const [manualTemperature, setManualTemperature] = useState<string>('');
   
   const wsConnection = useRef<WebSocket | null>(null);
   const measurementTimeout = useRef<NodeJS.Timeout | null>(null);
   const validDataReceived = useRef<boolean>(false);
+  const temperatureMeasurementStarted = useRef<boolean>(false);
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
 
@@ -273,6 +276,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       if (tempData.temperature && tempData.temperature > 30 && measurementInProgress === Detection.BT) {
         if (!validDataReceived.current) {
           validDataReceived.current = true;
+          temperatureMeasurementStarted.current = false;
           
           console.log(`[HC03] Temperature received: ${tempData.temperature}°C - Auto-stopping in 1 second`);
           
@@ -292,6 +296,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       }
     } else if (event.type === 'measurementStarted') {
       validDataReceived.current = false;
+      temperatureMeasurementStarted.current = true;
       setMeasurementInProgress(Detection.BT);
       if (onMeasurementStateChange) {
         onMeasurementStateChange('temperature', true);
@@ -300,7 +305,18 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
         title: "Temperature Measurement Started",
         description: "Measuring body temperature...",
       });
+      
+      // If no data received within 10 seconds, prompt for manual entry
+      // This is a workaround for devices that don't have temperature sensors
+      if (measurementTimeout.current) clearTimeout(measurementTimeout.current);
+      measurementTimeout.current = setTimeout(() => {
+        if (temperatureMeasurementStarted.current && !validDataReceived.current) {
+          console.log('[HC03] No temperature data received - prompting for manual entry');
+          setShowManualTemperature(true);
+        }
+      }, 10000);
     } else if (event.type === 'measurementCompleted') {
+      temperatureMeasurementStarted.current = false;
       setMeasurementInProgress(null);
       if (onMeasurementStateChange) {
         onMeasurementStateChange('temperature', false);
@@ -703,6 +719,44 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
     }
   };
 
+  const handleManualTemperatureSubmit = async () => {
+    const tempValue = parseFloat(manualTemperature);
+    if (isNaN(tempValue) || tempValue < 30 || tempValue > 45) {
+      toast({
+        title: "Invalid Temperature",
+        description: "Please enter a temperature between 30°C and 45°C",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Create measurement data from manual input
+    const measurementData: MeasurementData = {
+      type: 'temperature',
+      value: {
+        temperature: tempValue
+      },
+      timestamp: new Date().toISOString(),
+      deviceId: selectedDevice?.deviceId || ''
+    };
+    
+    addMeasurementData(measurementData);
+    
+    // Stop measurement and close dialog
+    await stopMeasurement(Detection.BT);
+    if (onMeasurementStateChange) {
+      onMeasurementStateChange('temperature', false);
+    }
+    
+    setShowManualTemperature(false);
+    setManualTemperature('');
+    
+    toast({
+      title: "Temperature Recorded",
+      description: `Body Temperature: ${tempValue.toFixed(1)}°C`,
+    });
+  };
+
   const queryBattery = async () => {
     if (!hc03Sdk.getConnectionStatus()) return;
     
@@ -1088,6 +1142,55 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
             </Button>
           </div>
         )}
+
+        {/* Manual Temperature Input Dialog */}
+        <Dialog open={showManualTemperature} onOpenChange={setShowManualTemperature}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Enter Temperature Reading</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                The device didn't provide automatic temperature data. Please enter the temperature reading manually (30-45°C).
+              </p>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Temperature (°C)</label>
+                <input
+                  type="number"
+                  min="30"
+                  max="45"
+                  step="0.1"
+                  value={manualTemperature}
+                  onChange={(e) => setManualTemperature(e.target.value)}
+                  placeholder="Enter temperature (e.g., 37.5)"
+                  className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                  data-testid="input-manual-temperature"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleManualTemperatureSubmit}
+                  className="flex-1"
+                  data-testid="button-submit-manual-temp"
+                >
+                  Submit
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowManualTemperature(false);
+                    setManualTemperature('');
+                    stopMeasurement(Detection.BT);
+                  }}
+                  className="flex-1"
+                  data-testid="button-cancel-manual-temp"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Device Details Dialog */}
         <Dialog open={showDeviceDetails} onOpenChange={setShowDeviceDetails}>
