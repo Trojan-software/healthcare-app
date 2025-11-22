@@ -646,7 +646,16 @@ export class Hc03Sdk {
       }
 
       console.log(`▶️ [HC03] Starting ${detection} detection...`);
-      await this.writeCharacteristic.writeValue(command);
+      console.log(`[HC03] 📤 Sending command:`, Array.from(command).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+      
+      try {
+        await this.writeCharacteristic.writeValue(command);
+        console.log(`[HC03] ✅ Command sent successfully for ${detection}`);
+      } catch (error) {
+        console.error(`[HC03] ❌ Failed to write command for ${detection}:`, error);
+        throw error;
+      }
+      
       this.activeDetections.add(detection);
       
       // Start active polling for BG measurements (required by HC02-F1B51D)
