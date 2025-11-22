@@ -1167,25 +1167,45 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
                     onClick={() => startMeasurement(Detection.BP)}
                     disabled={measurementInProgress === Detection.BP}
                     data-testid="button-pressure-measurement"
-                    className={measurementInProgress === Detection.BP ? 'bg-green-500 text-white hover:bg-green-600' : ''}
+                    className={(() => {
+                      const latestBP = realtimeData.find(d => d.type === 'bloodPressure');
+                      // Show green during measurement OR green with result if we have data (during auto-stop)
+                      if (measurementInProgress === Detection.BP) {
+                        return latestBP ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-green-500 text-white hover:bg-green-600';
+                      }
+                      return '';
+                    })()}
                   >
                     <Activity className="h-4 w-4 mr-2" />
                     <div className="flex flex-col items-start">
-                      {measurementInProgress === Detection.BP ? (
-                        <>
-                          <span className="font-semibold">Measuring...</span>
-                          <span className="text-xs">Blood Pressure</span>
-                        </>
-                      ) : (() => {
+                      {(() => {
                         const latestBP = realtimeData.find(d => d.type === 'bloodPressure');
-                        return latestBP ? (
-                          <>
-                            <span className="text-xs text-muted-foreground">Blood Pressure</span>
-                            <span className="font-semibold">{latestBP.value.systolic}/{latestBP.value.diastolic} mmHg</span>
-                          </>
-                        ) : (
-                          <span>Blood Pressure</span>
-                        );
+                        
+                        // Show result immediately if available (even during auto-stop)
+                        if (latestBP && measurementInProgress === Detection.BP) {
+                          return (
+                            <>
+                              <span className="text-xs opacity-90">Blood Pressure</span>
+                              <span className="font-bold text-lg">{latestBP.value.systolic}/{latestBP.value.diastolic} mmHg</span>
+                            </>
+                          );
+                        } else if (measurementInProgress === Detection.BP) {
+                          return (
+                            <>
+                              <span className="font-semibold">Measuring...</span>
+                              <span className="text-xs">Blood Pressure</span>
+                            </>
+                          );
+                        } else if (latestBP) {
+                          return (
+                            <>
+                              <span className="text-xs text-muted-foreground">Blood Pressure</span>
+                              <span className="font-semibold">{latestBP.value.systolic}/{latestBP.value.diastolic} mmHg</span>
+                            </>
+                          );
+                        } else {
+                          return <span>Blood Pressure</span>;
+                        }
                       })()}
                     </div>
                   </Button>
