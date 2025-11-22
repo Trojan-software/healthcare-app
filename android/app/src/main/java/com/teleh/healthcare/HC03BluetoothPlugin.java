@@ -41,14 +41,16 @@ import android.os.Handler;
 import android.os.Looper;
 
 /**
- * HC03 Bluetooth Plugin for Android
- * Based on HC03 Flutter SDK API Guide v1.0.1
+ * HC03/HC02 Bluetooth Plugin for Android
+ * Based on HC03 Flutter SDK API Guide v1.0.1 + HC02-F1B51D Support
  * 
- * Implements complete HC03 protocol:
+ * Implements complete HC03 and HC02 protocols:
  * - Frame structure: [START, LENGTH(2 LE), BT_EDITION, TYPE, HEADER_CRC, ...CONTENT..., TAIL_CRC(2 LE), END]
  * - CRC validation (encryHead, encryTail)
  * - Multi-packet handling (head/tail frame caching)
  * - All 6 detection types: ECG, OX, BP, BG, BATTERY, BT
+ * - HC02-F1B51D: Service UUID 0000ff27, Notify Char 0000fff4
+ * - HC03: Service UUID 00001822, Notify Char 0000fff2
  */
 @CapacitorPlugin(name = "HC03BluetoothPlugin")
 public class HC03BluetoothPlugin extends Plugin {
@@ -102,10 +104,15 @@ public class HC03BluetoothPlugin extends Plugin {
     // Active detection tracking
     private Set<String> activeDetections = new HashSet<>();
     
-    // BLE Connection Manager (from Flutter SDK bluetooth_manager.dart)
-    private static final UUID SERVICE_UUID = UUID.fromString("0000fff0-0000-1000-8000-00805f9b34fb");
+    // BLE Connection Manager - HC02 and HC03 device support
+    // HC02-F1B51D uses 0000ff27 service, HC03 uses 00001822
+    private static final UUID HC02_SERVICE_UUID = UUID.fromString("0000ff27-0000-1000-8000-00805f9b34fb");
+    private static final UUID HC03_SERVICE_UUID = UUID.fromString("00001822-0000-1000-8000-00805f9b34fb");
     private static final UUID WRITE_CHARACTERISTIC_UUID = UUID.fromString("0000fff1-0000-1000-8000-00805f9b34fb");
-    private static final UUID NOTIFY_CHARACTERISTIC_UUID = UUID.fromString("0000fff2-0000-1000-8000-00805f9b34fb");
+    
+    // HC02 uses 0000fff4, HC03 uses 0000fff2 for notify characteristic
+    private static final UUID HC02_NOTIFY_CHARACTERISTIC = UUID.fromString("0000fff4-0000-1000-8000-00805f9b34fb");
+    private static final UUID HC03_NOTIFY_CHARACTERISTIC = UUID.fromString("0000fff2-0000-1000-8000-00805f9b34fb");
     private static final UUID CLIENT_CHARACTERISTIC_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private static final long SCAN_PERIOD = 10000; // 10 seconds
     
@@ -118,6 +125,9 @@ public class HC03BluetoothPlugin extends Plugin {
     private boolean isScanning = false;
     private boolean isConnected = false;
     private List<BluetoothDevice> discoveredDevices = new ArrayList<>();
+    
+    // Track connected device name to select correct UUIDs
+    private String connectedDeviceName = null;
     
     // ECG Manager (NeuroSky SDK)
     private EcgManager ecgManager;
@@ -159,6 +169,37 @@ public class HC03BluetoothPlugin extends Plugin {
         }
         
         Log.d(TAG, "HC03 Bluetooth Plugin loaded");
+    }
+    
+    /**
+     * Select service UUID based on device name (HC02 vs HC03)
+     */
+    private UUID selectServiceUUID(String deviceName) {
+        if (deviceName != null && deviceName.startsWith("HC02")) {
+            Log.d(TAG, "HC02 device detected, using service UUID: 0000ff27");
+            return HC02_SERVICE_UUID;
+        }
+        Log.d(TAG, "HC03 device detected, using service UUID: 00001822");
+        return HC03_SERVICE_UUID;
+    }
+    
+    /**
+     * Select notify characteristic UUID based on device name
+     */
+    private UUID selectNotifyCharacteristic(String deviceName) {
+        if (deviceName != null && deviceName.startsWith("HC02")) {
+            Log.d(TAG, "HC02 device detected, using notify characteristic: 0000fff4");
+            return HC02_NOTIFY_CHARACTERISTIC;
+        }
+        Log.d(TAG, "HC03 device detected, using notify characteristic: 0000fff2");
+        return HC03_NOTIFY_CHARACTERISTIC;
+    }
+    
+    /**
+     * Determine if this device should skip CRC validation (HC02 uses different CRC algorithm)
+     */
+    private boolean shouldSkipCRCValidation(String deviceName) {
+        return deviceName != null && deviceName.startsWith("HC02");
     }
     
     /**
@@ -880,6 +921,10 @@ public class HC03BluetoothPlugin extends Plugin {
                 return;
             }
             
+            // Store device name for UUID selection (HC02 vs HC03)
+            connectedDeviceName = device.getName();
+            Log.d(TAG, "Connecting to device: " + connectedDeviceName + " (" + deviceAddress + ")");
+            
             Context context = getContext();
             // Use TRANSPORT_LE for proper BLE connection (API 23+)
             if (android.os.Build.VERSION.SDK_INT >= 23) {
@@ -928,6 +973,7 @@ public class HC03BluetoothPlugin extends Plugin {
         isConnected = false;
         writeCharacteristic = null;
         notifyCharacteristic = null;
+        connectedDeviceName = null;  // Clear device name on disconnect
         Log.d(TAG, "Disconnected from device");
     }
     
@@ -1037,10 +1083,17 @@ public class HC03BluetoothPlugin extends Plugin {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                BluetoothGattService service = gatt.getService(SERVICE_UUID);
+                // Select correct service UUID based on device type (HC02 vs HC03)
+                UUID serviceUUID = selectServiceUUID(connectedDeviceName);
+                BluetoothGattService service = gatt.getService(serviceUUID);
+                
                 if (service != null) {
+                    Log.d(TAG, "Service found: " + serviceUUID);
                     writeCharacteristic = service.getCharacteristic(WRITE_CHARACTERISTIC_UUID);
-                    notifyCharacteristic = service.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
+                    
+                    // Select correct notify characteristic UUID based on device type
+                    UUID notifyUUID = selectNotifyCharacteristic(connectedDeviceName);
+                    notifyCharacteristic = service.getCharacteristic(notifyUUID);
                     
                     if (notifyCharacteristic != null) {
                         // Enable notifications on the client side
@@ -1059,7 +1112,8 @@ public class HC03BluetoothPlugin extends Plugin {
                                 if (!writeResult) {
                                     Log.e(TAG, "Failed to write notification descriptor");
                                 }
-                                Log.d(TAG, "HC03 service found, notifications enabled: " + writeResult);
+                                Log.d(TAG, "Device service found (" + (connectedDeviceName != null ? connectedDeviceName : "Unknown") 
+                                    + "), notifications enabled: " + writeResult);
                             } catch (SecurityException e) {
                                 Log.e(TAG, "Permission denied while enabling notifications", e);
                             }
@@ -1067,10 +1121,10 @@ public class HC03BluetoothPlugin extends Plugin {
                             Log.e(TAG, "Client Characteristic Config descriptor not found");
                         }
                     } else {
-                        Log.e(TAG, "Notify characteristic not found");
+                        Log.e(TAG, "Notify characteristic not found for UUID: " + notifyUUID);
                     }
                 } else {
-                    Log.e(TAG, "HC03 service not found");
+                    Log.e(TAG, "Service not found for UUID: " + serviceUUID + " (Device: " + connectedDeviceName + ")");
                 }
             } else {
                 Log.e(TAG, "Service discovery failed with status: " + status);
@@ -1120,10 +1174,12 @@ public class HC03BluetoothPlugin extends Plugin {
         
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            if (NOTIFY_CHARACTERISTIC_UUID.equals(characteristic.getUuid())) {
+            // Check both HC02 (fff4) and HC03 (fff2) notify characteristics
+            UUID charUUID = characteristic.getUuid();
+            if (HC02_NOTIFY_CHARACTERISTIC.equals(charUUID) || HC03_NOTIFY_CHARACTERISTIC.equals(charUUID)) {
                 byte[] data = characteristic.getValue();
                 if (data != null && data.length > 0) {
-                    // Feed raw data to parseData() for HC03 protocol processing
+                    // Feed raw data to parseData() for HC02/HC03 protocol processing
                     OriginData originData = generalUnpackRawData(data);
                     if (originData != null) {
                         routeData(originData.type, originData.data);
