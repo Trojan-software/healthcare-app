@@ -1802,8 +1802,8 @@ export class Hc03Sdk {
    */
   private calculateOscillometricBP(): void {
     if (this.bpOscillationData.length < 10) {
-      console.warn('[HC03] ⚠️ Not enough oscillation data, using fallback calculation');
-      this.calculateBloodPressure(); // Use old method as fallback
+      console.warn(`[HC03] ⚠️ Not enough oscillation data (${this.bpOscillationData.length} points), using legacy fallback calculation with ${this.bpPressureBuffer.length} raw samples`);
+      this.calculateBloodPressure(); // Use old method as fallback (expects RAW ADC values in bpPressureBuffer)
       return;
     }
     
