@@ -757,6 +757,47 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
         }, 100); // Poll every 100ms
       }
       
+      // For blood pressure measurements, actively poll getBloodPressureData()
+      if (type === Detection.BP) {
+        setMeasurementInProgress(Detection.BP);
+        
+        const bpInterval = setInterval(() => {
+          if (!measurementInProgress || validDataReceived.current) {
+            clearInterval(bpInterval);
+            return;
+          }
+          
+          const bpData = hc03Sdk.getBloodPressureData();
+          // BloodPressureResult has: ps (systolic), pd (diastolic), hr (heart rate)
+          if (bpData?.ps && bpData?.pd && bpData.ps > 0 && bpData.pd > 0) {
+            console.log(`[HC03] Blood Pressure polled: ${bpData.ps}/${bpData.pd} mmHg, HR: ${bpData.hr} bpm`);
+            validDataReceived.current = true;
+            clearInterval(bpInterval);
+            
+            // Create and add measurement data
+            const measurementData: MeasurementData = {
+              type: 'bloodPressure',
+              value: {
+                systolic: bpData.ps,
+                diastolic: bpData.pd,
+                heartRate: bpData.hr
+              },
+              timestamp: new Date().toISOString(),
+              deviceId: selectedDevice?.deviceId || ''
+            };
+            addMeasurementData(measurementData);
+            
+            // Auto-stop after getting data
+            setTimeout(() => stopMeasurement(Detection.BP), 500);
+            
+            toast({
+              title: "Blood Pressure Measurement Complete",
+              description: `BP: ${bpData.ps}/${bpData.pd} mmHg | HR: ${bpData.hr} bpm`,
+            });
+          }
+        }, 100); // Poll every 100ms
+      }
+      
       // Set timeout to auto-stop measurement after 30 seconds
       measurementTimeout.current = setTimeout(async () => {
         if (measurementInProgress === type) {
