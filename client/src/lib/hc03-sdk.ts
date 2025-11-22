@@ -1049,6 +1049,7 @@ export class Hc03Sdk {
   }
 
   // Blood Oxygen Data Parsing (from Flutter SDK oxEngine.dart)
+  // Emits three types: BloodOxygenData, FingerDetection, BloodOxygenWaveData
   private parseBloodOxygenData(data: Uint8Array): void {
     try {
       if (data.length < 6) {
@@ -1076,46 +1077,93 @@ export class Hc03Sdk {
       console.log(`[HC03] 🫀 Extracted RED samples: ${redSamples.join(', ')}`);
       console.log(`[HC03] 🫀 Extracted IR samples: ${irSamples.join(', ')}`);
       
+      // Type 1: BloodOxygenWaveData - Emit waveform data for visualization
+      // This is sent every time new samples arrive
+      const callback = this.callbacks.get(Detection.OX);
+      if (callback && redSamples.length > 0) {
+        // Emit waveform data event
+        window.dispatchEvent(new CustomEvent('hc03:bloodoxygen:wave', {
+          detail: {
+            red: redSamples,
+            ir: irSamples,
+            wave: redSamples // Use RED channel for waveform display
+          }
+        }));
+        
+        callback({
+          type: 'wave',
+          detection: Detection.OX,
+          data: {
+            red: redSamples,
+            ir: irSamples,
+            wave: redSamples
+          }
+        });
+      }
+      
       // Calculate SpO2 and HR using RED/IR channels
       const { spo2, heartRate } = this.calculateSpO2FromChannels(redSamples, irSamples);
       
-      const bloodOxygenData: BloodOxygenData = {
-        bloodOxygen: spo2,
-        heartRate: heartRate,
-        fingerDetection: spo2 > 0, // Valid if SpO2 was calculated
-        bloodOxygenWaveData: [...redSamples, ...irSamples]
-      };
+      // Type 2: FingerDetection - Emit finger touch status
+      // Detection is positive if we're receiving valid signal data
+      const isFingerDetected = redSamples.some(v => v > 1000) && irSamples.some(v => v > 1000);
+      window.dispatchEvent(new CustomEvent('hc03:bloodoxygen:finger', {
+        detail: { isTouch: isFingerDetected }
+      }));
       
-      // Store latest data for getter methods
-      this.latestBloodOxygenData = bloodOxygenData;
-      
-      if (spo2 > 0) {
-        console.log('[HC03] ✅ Blood Oxygen:', spo2 + '%', 'HR:', heartRate, 'bpm');
-      } else {
-        console.log('[HC03] 📊 Blood Oxygen: collecting data (', Math.floor((this.redBuffer?.length || 0) / 5) + 'secs', ')');
-      }
-      
-      // Send callback FIRST to ensure data reaches dashboard
-      const callback = this.callbacks.get(Detection.OX);
       if (callback) {
-        callback({ type: 'data', detection: Detection.OX, data: bloodOxygenData });
+        callback({
+          type: 'finger',
+          detection: Detection.OX,
+          data: { isTouch: isFingerDetected }
+        });
       }
       
-      // Auto-stop blood oxygen measurement after 30 seconds of data collection
-      if (spo2 >= 70 && spo2 <= 100 && heartRate >= 40 && heartRate <= 200) {
-        const elapsedTime = this.bloodOxygenStartTime ? Date.now() - this.bloodOxygenStartTime : 0;
-        const remainingTime = Math.max(0, 30000 - elapsedTime); // 30 seconds = 30000ms
+      // Type 3: BloodOxygenData - Emit calculated SpO2 and heart rate
+      // Only emit when we have valid measurements
+      if (spo2 > 0 && heartRate > 0) {
+        const bloodOxygenData: BloodOxygenData = {
+          bloodOxygen: spo2,
+          heartRate: heartRate,
+          fingerDetection: isFingerDetected,
+          bloodOxygenWaveData: [...redSamples, ...irSamples]
+        };
         
-        if (remainingTime === 0) {
-          console.log('✅ [HC03] 30-second blood oxygen measurement complete, auto-stopping...');
-          this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
-        } else {
-          console.log(`[HC03] 📊 Valid reading obtained, continuing measurement (${Math.ceil(remainingTime / 1000)}s remaining)...`);
-          setTimeout(() => {
+        // Store latest data for getter methods
+        this.latestBloodOxygenData = bloodOxygenData;
+        
+        console.log('[HC03] ✅ Blood Oxygen:', spo2 + '%', 'HR:', heartRate, 'bpm');
+        
+        // Emit blood oxygen result event
+        window.dispatchEvent(new CustomEvent('hc03:bloodoxygen:data', {
+          detail: {
+            bloodOxygen: spo2,
+            heartRate: heartRate
+          }
+        }));
+        
+        if (callback) {
+          callback({ type: 'data', detection: Detection.OX, data: bloodOxygenData });
+        }
+        
+        // Auto-stop blood oxygen measurement after 30 seconds of data collection
+        if (spo2 >= 70 && spo2 <= 100 && heartRate >= 40 && heartRate <= 200) {
+          const elapsedTime = this.bloodOxygenStartTime ? Date.now() - this.bloodOxygenStartTime : 0;
+          const remainingTime = Math.max(0, 30000 - elapsedTime); // 30 seconds = 30000ms
+          
+          if (remainingTime === 0) {
             console.log('✅ [HC03] 30-second blood oxygen measurement complete, auto-stopping...');
             this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
-          }, remainingTime);
+          } else {
+            console.log(`[HC03] 📊 Valid reading obtained, continuing measurement (${Math.ceil(remainingTime / 1000)}s remaining)...`);
+            setTimeout(() => {
+              console.log('✅ [HC03] 30-second blood oxygen measurement complete, auto-stopping...');
+              this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
+            }, remainingTime);
+          }
         }
+      } else {
+        console.log('[HC03] 📊 Blood Oxygen: collecting data (', Math.floor((this.redBuffer?.length || 0) / 5) + 'secs', ')');
       }
     } catch (error) {
       console.error('Error parsing blood oxygen data:', error);
