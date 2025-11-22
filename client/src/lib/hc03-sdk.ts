@@ -1020,18 +1020,22 @@ export class Hc03Sdk {
       
       if (spo2 > 0) {
         console.log('[HC03] ✅ Blood Oxygen:', spo2 + '%', 'HR:', heartRate, 'bpm');
-        // Auto-stop blood oxygen measurement after getting valid reading
-        if (spo2 >= 70 && spo2 <= 100 && heartRate >= 40 && heartRate <= 200) {
-          console.log('✅ [HC03] Valid blood oxygen received, auto-stopping measurement...');
-          this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
-        }
       } else {
         console.log('[HC03] 📊 Blood Oxygen: collecting data (', Math.floor((this.redBuffer?.length || 0) / 5) + 'secs', ')');
       }
       
+      // Send callback FIRST to ensure data reaches dashboard
       const callback = this.callbacks.get(Detection.OX);
       if (callback) {
         callback({ type: 'data', detection: Detection.OX, data: bloodOxygenData });
+      }
+      
+      // Auto-stop blood oxygen measurement after getting valid reading (async, non-blocking)
+      if (spo2 >= 70 && spo2 <= 100 && heartRate >= 40 && heartRate <= 200) {
+        setTimeout(() => {
+          console.log('✅ [HC03] Valid blood oxygen received, auto-stopping measurement...');
+          this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
+        }, 500);
       }
     } catch (error) {
       console.error('Error parsing blood oxygen data:', error);
@@ -1276,14 +1280,17 @@ export class Hc03Sdk {
           
           console.log('[HC03] ✅ Blood Pressure:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
           
-          // Auto-stop blood pressure measurement after getting valid reading
-          console.log('✅ [HC03] Valid blood pressure received, auto-stopping measurement...');
-          this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
-          
+          // Send callback FIRST to ensure data reaches dashboard
           const callback = this.callbacks.get(Detection.BP);
           if (callback) {
             callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
           }
+          
+          // Auto-stop blood pressure measurement after getting valid reading (async, non-blocking)
+          setTimeout(() => {
+            console.log('✅ [HC03] Valid blood pressure received, auto-stopping measurement...');
+            this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
+          }, 500);
         } else {
           console.warn(`[HC03] BP values out of range: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         }
@@ -1318,15 +1325,18 @@ export class Hc03Sdk {
       
       console.log('[HC03] ✅ Blood Glucose:', glucose, 'mmol/L');
       
-      // Auto-stop blood glucose measurement after getting valid reading
-      if (glucose >= 2.2 && glucose <= 35) { // Valid range: 40-600 mg/dL
-        console.log('✅ [HC03] Valid blood glucose received, auto-stopping measurement...');
-        this.stopDetect(Detection.BG).catch(e => console.warn('Auto-stop failed:', e));
-      }
-      
+      // Send callback FIRST to ensure data reaches dashboard
       const callback = this.callbacks.get(Detection.BG);
       if (callback) {
         callback({ type: 'data', detection: Detection.BG, data: bloodGlucoseData });
+      }
+      
+      // Auto-stop blood glucose measurement after getting valid reading (async, non-blocking)
+      if (glucose >= 2.2 && glucose <= 35) { // Valid range: 40-600 mg/dL
+        setTimeout(() => {
+          console.log('✅ [HC03] Valid blood glucose received, auto-stopping measurement...');
+          this.stopDetect(Detection.BG).catch(e => console.warn('Auto-stop failed:', e));
+        }, 500);
       }
     } catch (error) {
       console.error('Error parsing blood glucose data:', error);
@@ -1363,15 +1373,18 @@ export class Hc03Sdk {
       // Store latest data for getter methods
       this.latestTemperatureData = temperatureData;
       
-      // Auto-stop temperature measurement after getting valid reading
-      if (roundedTemp >= 30 && roundedTemp <= 45) {
-        console.log('✅ [HC03] Valid temperature received, auto-stopping measurement...');
-        this.stopDetect(Detection.BT).catch(e => console.warn('Auto-stop failed:', e));
-      }
-      
+      // Send callback FIRST to ensure data reaches dashboard
       const callback = this.callbacks.get(Detection.BT);
       if (callback) {
         callback({ type: 'data', detection: Detection.BT, data: temperatureData });
+      }
+      
+      // Auto-stop temperature measurement after getting valid reading (async, non-blocking)
+      if (roundedTemp >= 30 && roundedTemp <= 45) {
+        setTimeout(() => {
+          console.log('✅ [HC03] Valid temperature received, auto-stopping measurement...');
+          this.stopDetect(Detection.BT).catch(e => console.warn('Auto-stop failed:', e));
+        }, 500);
       }
     } catch (error) {
       console.error('Error parsing temperature data:', error);
