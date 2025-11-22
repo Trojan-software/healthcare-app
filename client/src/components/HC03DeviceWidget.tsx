@@ -721,6 +721,42 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
         }, 100); // Poll every 100ms
       }
       
+      // For blood glucose measurements, actively poll getBloodGlucoseData()
+      if (type === Detection.BG) {
+        setMeasurementInProgress(Detection.BG);
+        
+        const glucoseInterval = setInterval(() => {
+          if (!measurementInProgress || validDataReceived.current) {
+            clearInterval(glucoseInterval);
+            return;
+          }
+          
+          const glucoseData = hc03Sdk.getBloodGlucoseData();
+          if (glucoseData?.bloodGlucosePaperData && glucoseData.bloodGlucosePaperData > 0) {
+            console.log(`[HC03] Blood Glucose polled: ${glucoseData.bloodGlucosePaperData} mmol/L`);
+            validDataReceived.current = true;
+            clearInterval(glucoseInterval);
+            
+            // Create and add measurement data
+            const measurementData: MeasurementData = {
+              type: 'bloodGlucose',
+              value: glucoseData,
+              timestamp: new Date().toISOString(),
+              deviceId: selectedDevice?.deviceId || ''
+            };
+            addMeasurementData(measurementData);
+            
+            // Auto-stop after getting data
+            setTimeout(() => stopMeasurement(Detection.BG), 500);
+            
+            toast({
+              title: "Blood Glucose Measurement Complete",
+              description: `Glucose: ${glucoseData.bloodGlucosePaperData.toFixed(1)} mmol/L`,
+            });
+          }
+        }, 100); // Poll every 100ms
+      }
+      
       // Set timeout to auto-stop measurement after 30 seconds
       measurementTimeout.current = setTimeout(async () => {
         if (measurementInProgress === type) {
