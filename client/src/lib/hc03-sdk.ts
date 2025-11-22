@@ -161,10 +161,9 @@ const STOP_COMMANDS: Partial<Record<Detection, Uint8Array>> = {
 };
 
 // Polling commands - actively request data from device during measurement
-// Required by HC02-F1B51D for BP and BG measurements
-// These commands are sent repeatedly (every 100ms) to fetch data from the device
+// Blood Glucose requires active polling every 100ms
+// Blood Pressure does NOT need polling - it sends data automatically via notifications
 const POLLING_COMMANDS: Partial<Record<Detection, Uint8Array>> = {
-  [Detection.BP]: obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_CALIBRATE_PARAMETER]),
   [Detection.BG]: obtainCommandData(PROTOCOL.BLOOD_GLUCOSE, [PROTOCOL.TEST_PAPER_GET_VER]),
 };
 
@@ -603,8 +602,9 @@ export class Hc03Sdk {
       await this.writeCharacteristic.writeValue(command);
       this.activeDetections.add(detection);
       
-      // Start active polling for BP and BG measurements (required by HC02-F1B51D)
-      if (detection === Detection.BP || detection === Detection.BG) {
+      // Start active polling for BG measurements (required by HC02-F1B51D)
+      // BP does NOT need polling - it sends data automatically via notifications
+      if (detection === Detection.BG) {
         this.startPolling(detection);
       }
       
@@ -632,8 +632,8 @@ export class Hc03Sdk {
         await this.writeCharacteristic.writeValue(command);
       }
       
-      // Stop active polling for BP and BG measurements
-      if (detection === Detection.BP || detection === Detection.BG) {
+      // Stop active polling for BG measurements
+      if (detection === Detection.BG) {
         this.stopPolling(detection);
       }
       
@@ -655,9 +655,9 @@ export class Hc03Sdk {
     }
   }
 
-  // Start active polling for BP and BG measurements
-  // HC02-F1B51D requires actively calling getBloodPressureData() / getBloodGlucoseData() 
-  // every 100ms while measurement is active
+  // Start active polling for BG measurements
+  // HC02-F1B51D requires actively calling getBloodGlucoseData() every 100ms while measurement is active
+  // Note: Blood Pressure does NOT need polling - it sends data automatically via notifications
   private startPolling(detection: Detection): void {
     if (this.pollingIntervals.has(detection)) {
       // Already polling
@@ -684,7 +684,7 @@ export class Hc03Sdk {
     this.pollingIntervals.set(detection, intervalId);
   }
 
-  // Stop active polling for BP and BG measurements
+  // Stop active polling for BG measurements
   private stopPolling(detection: Detection): void {
     const intervalId = this.pollingIntervals.get(detection);
     if (intervalId) {
