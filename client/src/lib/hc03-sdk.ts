@@ -160,6 +160,14 @@ const STOP_COMMANDS: Partial<Record<Detection, Uint8Array>> = {
   [Detection.BG]: obtainCommandData(PROTOCOL.BLOOD_GLUCOSE, [PROTOCOL.TEST_PAPER_ADC_STOP]),
 };
 
+// Polling commands - actively request data from device during measurement
+// Required by HC02-F1B51D for BP and BG measurements
+// These commands are sent repeatedly (every 100ms) to fetch data from the device
+const POLLING_COMMANDS: Partial<Record<Detection, Uint8Array>> = {
+  [Detection.BP]: obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_CALIBRATE_PARAMETER]),
+  [Detection.BG]: obtainCommandData(PROTOCOL.BLOOD_GLUCOSE, [PROTOCOL.TEST_PAPER_GET_VER]),
+};
+
 // HC03 Data Structures as per API documentation
 export interface ECGData {
   wave: number[];              // Data used for drawing waveforms
@@ -595,6 +603,11 @@ export class Hc03Sdk {
       await this.writeCharacteristic.writeValue(command);
       this.activeDetections.add(detection);
       
+      // Start active polling for BP and BG measurements (required by HC02-F1B51D)
+      if (detection === Detection.BP || detection === Detection.BG) {
+        this.startPolling(detection);
+      }
+      
       // Emit measurement started event
       const callback = this.callbacks.get(detection);
       if (callback) {
@@ -619,6 +632,11 @@ export class Hc03Sdk {
         await this.writeCharacteristic.writeValue(command);
       }
       
+      // Stop active polling for BP and BG measurements
+      if (detection === Detection.BP || detection === Detection.BG) {
+        this.stopPolling(detection);
+      }
+      
       // Clear blood oxygen start time when stopping
       if (detection === Detection.OX) {
         this.bloodOxygenStartTime = null;
@@ -634,6 +652,45 @@ export class Hc03Sdk {
     } catch (error) {
       console.error(`Failed to stop ${detection} detection:`, error);
       throw error;
+    }
+  }
+
+  // Start active polling for BP and BG measurements
+  // HC02-F1B51D requires actively calling getBloodPressureData() / getBloodGlucoseData() 
+  // every 100ms while measurement is active
+  private startPolling(detection: Detection): void {
+    if (this.pollingIntervals.has(detection)) {
+      // Already polling
+      return;
+    }
+
+    const pollingCommand = POLLING_COMMANDS[detection];
+    if (!pollingCommand || !this.writeCharacteristic) {
+      return;
+    }
+
+    console.log(`🔄 [HC03] Starting active polling for ${detection} (every ${this.POLLING_INTERVAL_MS}ms)`);
+    
+    const intervalId = window.setInterval(async () => {
+      try {
+        // Send polling command to request data from device
+        await this.writeCharacteristic!.writeValue(pollingCommand);
+      } catch (error) {
+        console.error(`[HC03] Polling error for ${detection}:`, error);
+        this.stopPolling(detection);
+      }
+    }, this.POLLING_INTERVAL_MS);
+
+    this.pollingIntervals.set(detection, intervalId);
+  }
+
+  // Stop active polling for BP and BG measurements
+  private stopPolling(detection: Detection): void {
+    const intervalId = this.pollingIntervals.get(detection);
+    if (intervalId) {
+      console.log(`⏹️ [HC03] Stopping active polling for ${detection}`);
+      window.clearInterval(intervalId);
+      this.pollingIntervals.delete(detection);
     }
   }
 
@@ -707,6 +764,10 @@ export class Hc03Sdk {
   // Multi-packet frame cache
   private cacheType: number = 0;
   private cacheData: number[] = [];
+  
+  // Active polling intervals for BP and BG (required by HC02-F1B51D)
+  private pollingIntervals: Map<Detection, number> = new Map();
+  private readonly POLLING_INTERVAL_MS = 100; // Poll every 100ms as per Flutter SDK
 
   // Parse incoming data using HC03 protocol with multi-packet reconstruction
   public parseData(data: ArrayBuffer): void {
