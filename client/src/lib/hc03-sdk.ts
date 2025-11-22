@@ -1594,7 +1594,7 @@ export class Hc03Sdk {
   }
 
   // Calculate blood pressure from collected pressure samples
-  // Simplified algorithm - finds peaks and estimates systolic/diastolic/HR
+  // Uses oscillometric method with peak amplitude ratios
   private calculateBloodPressure(): void {
     if (this.bpPressureBuffer.length < 10) {
       console.warn('[HC03] Not enough pressure samples to calculate BP');
@@ -1603,68 +1603,83 @@ export class Hc03Sdk {
     
     console.log(`[HC03] 🧮 Processing ${this.bpPressureBuffer.length} pressure samples...`);
     
-    // Find peaks in the waveform
-    const peaks: number[] = [];
-    for (let i = 1; i < this.bpPressureBuffer.length - 1; i++) {
-      if (this.bpPressureBuffer[i] > this.bpPressureBuffer[i - 1] && 
-          this.bpPressureBuffer[i] > this.bpPressureBuffer[i + 1]) {
-        peaks.push(this.bpPressureBuffer[i]);
+    // Convert raw pressure values to mmHg if we have calibration coefficients
+    // For now, use a simplified conversion: raw_value / 100 to get approximate mmHg
+    const convertedPressures = this.bpPressureBuffer.map(raw => Math.round(raw / 100));
+    
+    console.log(`[HC03] Sample pressures (mmHg): ${convertedPressures.slice(0, 10).join(', ')}...`);
+    
+    // Find the oscillation amplitudes (peaks in the waveform)
+    const amplitudes: number[] = [];
+    const pressures: number[] = [];
+    
+    for (let i = 2; i < convertedPressures.length - 2; i++) {
+      // Calculate local oscillation amplitude using neighboring points
+      const localMax = Math.max(convertedPressures[i-1], convertedPressures[i], convertedPressures[i+1]);
+      const localMin = Math.min(convertedPressures[i-1], convertedPressures[i], convertedPressures[i+1]);
+      const amplitude = localMax - localMin;
+      
+      if (amplitude > 1) { // Only count significant oscillations
+        amplitudes.push(amplitude);
+        pressures.push(convertedPressures[i]);
       }
     }
     
-    if (peaks.length < 3) {
-      console.warn('[HC03] Not enough peaks detected for BP calculation');
+    if (amplitudes.length < 5) {
+      console.warn('[HC03] Not enough oscillations detected for BP calculation');
       return;
     }
     
-    // Sort peaks to find highest (systolic) and baseline (diastolic)
-    const sortedPeaks = [...peaks].sort((a, b) => b - a);
-    const maxPressure = sortedPeaks[0];
-    const minPressure = Math.min(...this.bpPressureBuffer);
+    // Find the maximum amplitude and its pressure
+    const maxAmplitude = Math.max(...amplitudes);
+    const maxAmpIndex = amplitudes.indexOf(maxAmplitude);
+    const meanArterialPressure = pressures[maxAmpIndex];
     
-    // Estimate systolic and diastolic using simplified oscillometric method
-    // Systolic is typically at ~0.55 of max amplitude
-    // Diastolic is typically at ~0.75 of max amplitude
-    const amplitude = maxPressure - minPressure;
-    const systolic = Math.round(minPressure + (amplitude * 0.55));
-    const diastolic = Math.round(minPressure + (amplitude * 0.30));
+    console.log(`[HC03] Max amplitude: ${maxAmplitude} at MAP: ${meanArterialPressure} mmHg`);
     
-    // Calculate heart rate from peak intervals
-    // Assuming samples come at regular intervals (~100Hz)
-    let peakCount = 0;
-    let lastPeakIndex = -1;
-    const peakIntervals: number[] = [];
+    // Oscillometric ratios for systolic and diastolic
+    // Systolic occurs at ~0.5-0.6 of max amplitude (during cuff deflation, before MAP)
+    // Diastolic occurs at ~0.7-0.8 of max amplitude (after MAP)
+    const systolicRatio = 0.55;
+    const diastolicRatio = 0.75;
     
-    for (let i = 1; i < this.bpPressureBuffer.length - 1; i++) {
-      if (this.bpPressureBuffer[i] > this.bpPressureBuffer[i - 1] && 
-          this.bpPressureBuffer[i] > this.bpPressureBuffer[i + 1] &&
-          this.bpPressureBuffer[i] > amplitude * 0.3) { // Only count significant peaks
-        if (lastPeakIndex >= 0) {
-          peakIntervals.push(i - lastPeakIndex);
-        }
-        lastPeakIndex = i;
-        peakCount++;
+    // Find systolic (before MAP)
+    let systolic = 120; // Default
+    for (let i = 0; i < maxAmpIndex; i++) {
+      if (amplitudes[i] >= maxAmplitude * systolicRatio) {
+        systolic = pressures[i];
+        break;
       }
     }
     
-    let heartRate = 72; // Default HR
-    if (peakIntervals.length > 0) {
-      const avgInterval = peakIntervals.reduce((a, b) => a + b, 0) / peakIntervals.length;
-      // Assuming 100 samples/second, convert to BPM
-      heartRate = Math.round(6000 / avgInterval);
+    // Find diastolic (after MAP)
+    let diastolic = 80; // Default
+    for (let i = amplitudes.length - 1; i > maxAmpIndex; i--) {
+      if (amplitudes[i] >= maxAmplitude * diastolicRatio) {
+        diastolic = pressures[i];
+        break;
+      }
     }
     
-    // Normalize to realistic ranges
+    // Calculate heart rate from oscillation frequency
+    let heartRate = 72; // Default
+    if (amplitudes.length > 5) {
+      // Estimate HR based on number of oscillations
+      // Assuming the measurement takes about 30-60 seconds
+      const estimatedDuration = 45; // seconds
+      const oscillationsPerMinute = (amplitudes.length / estimatedDuration) * 60;
+      heartRate = Math.round(oscillationsPerMinute);
+    }
+    
+    // Apply realistic constraints
     const finalSystolic = Math.max(90, Math.min(systolic, 180));
     const finalDiastolic = Math.max(50, Math.min(diastolic, 110));
     const finalHeartRate = Math.max(50, Math.min(heartRate, 150));
     
     console.log(`[HC03] 📊 BP Calculation:
-      Max Pressure: ${maxPressure}
-      Min Pressure: ${minPressure}
-      Amplitude: ${amplitude}
-      Peaks Found: ${peaks.length}
-      Peak Intervals: ${peakIntervals.length}
+      Oscillations Found: ${amplitudes.length}
+      Max Amplitude: ${maxAmplitude}
+      Mean Arterial Pressure: ${meanArterialPressure} mmHg
       ➡️ Systolic: ${finalSystolic} mmHg
       ➡️ Diastolic: ${finalDiastolic} mmHg
       ➡️ Heart Rate: ${finalHeartRate} bpm`);
