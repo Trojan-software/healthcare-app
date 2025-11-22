@@ -274,6 +274,9 @@ export class Hc03Sdk {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 3;
   
+  // Track device type for HC02 vs HC03 specific handling
+  private deviceType: 'HC02' | 'HC03' | null = null;
+  
   // Store latest measurement data as per Flutter SDK API
   private latestEcgData: ECGData | null = null;
   private latestBloodOxygenData: BloodOxygenData | null = null;
@@ -435,10 +438,20 @@ export class Hc03Sdk {
       const isHC02 = deviceName.startsWith('HC02-');
       const isHC03 = deviceName.startsWith('HC03-');
       
+      // Store device type for use in sensor-specific parsing
+      if (isHC02) {
+        this.deviceType = 'HC02';
+      } else if (isHC03) {
+        this.deviceType = 'HC03';
+      } else {
+        this.deviceType = 'HC03'; // Default to HC03 for unknown devices
+      }
+      
       console.log(`🔍 [HC03] Device type detection:`);
       console.log(`   Device name: ${deviceName}`);
       console.log(`   Is HC02: ${isHC02}`);
       console.log(`   Is HC03: ${isHC03}`);
+      console.log(`   Stored device type: ${this.deviceType}`);
       
       // Select the appropriate service UUID based on device type
       let serviceUUID: string;
@@ -520,6 +533,7 @@ export class Hc03Sdk {
     this.service = null;
     this.writeCharacteristic = null;
     this.notifyCharacteristic = null;
+    this.deviceType = null;  // Reset device type on disconnect
     
     // Attempt to reconnect if within retry limit
     if (this.reconnectAttempts < this.maxReconnectAttempts && this.device) {
@@ -1165,25 +1179,55 @@ export class Hc03Sdk {
     }
   }
 
-  // Temperature Data Parsing (from Flutter SDK Temperature.dart)
+  // Temperature Data Parsing - HC02 vs HC03 specific handling
   private parseTemperatureData(data: Uint8Array): void {
     try {
-      if (data.length < 4) {
+      if (data.length < 2) {
         console.warn('[HC03] Temperature data too short');
         return;
       }
       
-      // Little-endian 16-bit values
-      const temperatureBdF = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
-      const temperatureEvF = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
+      let roundedTemp: number;
       
-      // Convert to Celsius
-      const tempBT = temperatureBdF * 0.02 - 273.15;
-      const tempET = temperatureEvF * 0.02 - 273.15;
+      // HC02 and HC03 use different temperature formats
+      if (this.deviceType === 'HC02') {
+        // HC02-F1B51D: Simple 16-bit little-endian format
+        // Raw value represents temperature in 0.01°C units (e.g., 3700 = 37.00°C)
+        const tempRaw = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
+        roundedTemp = Math.round(tempRaw / 100.0 * 10) / 10.0;
+        
+        console.log(`🌡️ [HC03] HC02 Temperature parsing:`);
+        console.log(`   Raw value: ${tempRaw} (0x${tempRaw.toString(16)})`);
+        console.log(`   Parsed value: ${roundedTemp}°C`);
+        console.log(`   Data bytes: [${Array.from(data.slice(0, Math.min(4, data.length))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(', ')}]`);
+      } else {
+        // HC03: Complex formula with two temperature values (body temp + environment compensation)
+        if (data.length < 4) {
+          console.warn('[HC03] HC03 Temperature data requires at least 4 bytes');
+          return;
+        }
+        
+        // Little-endian 16-bit values
+        const temperatureBdF = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
+        const temperatureEvF = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
+        
+        // Convert to Celsius
+        const tempBT = temperatureBdF * 0.02 - 273.15;
+        const tempET = temperatureEvF * 0.02 - 273.15;
+        
+        // Apply body temperature calculation
+        const bodyTemp = tempBT + (tempET / 100.0);
+        roundedTemp = Math.round(bodyTemp * 10) / 10.0;
+        
+        console.log(`🌡️ [HC03] HC03 Temperature parsing:`);
+        console.log(`   BdF: ${temperatureBdF}, EvF: ${temperatureEvF}`);
+        console.log(`   Calculated value: ${roundedTemp}°C`);
+      }
       
-      // Apply body temperature calculation
-      const bodyTemp = tempBT + (tempET / 100.0);
-      const roundedTemp = Math.round(bodyTemp * 10) / 10.0;
+      // Validate temperature is within physiological range
+      if (roundedTemp < 30 || roundedTemp > 45) {
+        console.warn(`⚠️ [HC03] Temperature ${roundedTemp}°C outside normal range (30-45°C), may be invalid`);
+      }
       
       const temperatureData: TemperatureData = {
         temperature: roundedTemp
@@ -1192,7 +1236,7 @@ export class Hc03Sdk {
       // Store latest data for getter methods
       this.latestTemperatureData = temperatureData;
       
-      console.log('[HC03] Temperature:', roundedTemp, '°C');
+      console.log('[HC03] Temperature:', roundedTemp, '°C (Device: ' + (this.deviceType || 'Unknown') + ')');
       
       const callback = this.callbacks.get(Detection.BT);
       if (callback) {
