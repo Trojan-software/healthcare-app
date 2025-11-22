@@ -1,3 +1,84 @@
+/**
+ * HC03 Flutter SDK Integration for Web
+ * Based on HC03_Flutter SDK API Guide v1.0
+ * 
+ * This service provides BLE connectivity and data processing
+ * for HC03 health monitoring devices using Web Bluetooth API
+ */
+
+// HC03 Detection Types as per API documentation
+export enum Detection {
+  BT = 'BT',           // Temperature
+  OX = 'OX',           // Blood oxygen
+  ECG = 'ECG',         // Electrocardiogram
+  BP = 'BP',           // Blood pressure
+  BATTERY = 'BATTERY', // Battery
+  BG = 'BG'            // Blood glucose
+}
+
+// HC03/HC02 Device Service and Characteristic UUIDs (from Official HC03 Flutter SDK)
+// Source: HC03_Flutter_V1.0.1/lib/src/common/constant.dart
+// 
+// IMPORTANT: HC02 and HC03 devices use DIFFERENT service UUIDs!
+// - HC02 devices (e.g., HC02-F1B51D) use service UUID: 0000ff27 (HC03_FILTER_UUID)
+// - HC03 devices use service UUID: 00001822 (HC03_SERVICE_UUID)
+// Both share the same characteristic UUIDs (fff1 for write, fff4 for notify)
+const HC02_SERVICE_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // HC02 devices use this service
+const HC03_FILTER_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // Official SDK FILTER_UUID (same as HC02)
+const HC03_SERVICE_UUID = '00001822-0000-1000-8000-00805f9b34fb'; // Official SDK UUID_SERVICE (HC03 only)
+const HC03_WRITE_CHARACTERISTIC = '0000fff1-0000-1000-8000-00805f9b34fb'; // Official SDK WRITE_UUID
+const HC03_NOTIFY_CHARACTERISTIC = '0000fff4-0000-1000-8000-00805f9b34fb'; // Official SDK NOTIFY_UUID (was fff2, CORRECTED to fff4!)
+const BATTERY_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb';
+const BATTERY_LEVEL_CHARACTERISTIC = '00002a19-0000-1000-8000-00805f9b34fb';
+
+// HC03 Protocol Constants (from baseCommon.dart)
+const PROTOCOL = {
+  PACKAGE_TOTAL_LENGTH: 10,
+  PACKAGE_INDEX_START: 0,
+  PACKAGE_INDEX_LENGTH: 1,
+  PACKAGE_INDEX_BT_EDITION: 3,
+  PACKAGE_INDEX_TYPE: 4,
+  PACKAGE_INDEX_HEADER_CRC: 5,
+  PACKAGE_INDEX_CONTENT: 6,
+  ATTR_START_REQ: 0x01,
+  ATTR_START_RES: 0x02,
+  ATTR_END_REQ: 0xff,
+  BT_EDITION: 0x04,
+  
+  // Command types (from baseCommon.dart)
+  ELECTROCARDIOGRAM: 0x05,
+  TEMPERATURE: 0x02,
+  OX_REQ_TYPE_NORMAL: 0x04,
+  BP_REQ_TYPE: 0x01,
+  BLOOD_GLUCOSE: 0x03,
+  CHECK_BATTARY: 0x0f,
+  
+  // Command contents (from baseCommon.dart)
+  ECG_START: 0x01,
+  ECG_STOP: 0x02,
+  TEP_START_NORMAL: 0x00,
+  TEP_STOP_NORMAL: 0x01,
+  OX_REQ_CONTENT_START_NORMAL: 0x00,
+  OX_REQ_CONTENT_STOP_NORMAL: 0x01,
+  BP_REQ_CONTENT_CALIBRATE_PARAMETER: 0x01,
+  BP_REQ_CONTENT_CALIBRATE_TEMPERATURE: 0x02,
+  BP_REQ_CONTENT_CALIBRATE_ZERO: 0x03,
+  BP_REQ_CONTENT_START_QUICK_CHARGING_GAS: 0x04,
+  BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM: 0x05,
+  BP_REQ_CONTENT_STOP_CHARGING_GAS: 0x07,
+  TEST_PAPER_GET_VER: 0x01,
+  TEST_PAPER_ADC_STOP: 0x04,
+  BATTERY_QUERY: 0x00,
+  
+  // Response types
+  BT_RES_TYPE: 0x82,
+  OX_RES_TYPE_NORMAL: 0x84,
+  BP_RES_TYPE: 0x81,
+  BG_RES_TYPE: 0x83,
+  RESPONSE_CHECK_BATTERY: 0x8f,
+  
+  // BP Response content types
+  BP_RES_CONTENT_CALIBRATE_PARAMETER: 0x01,
   BP_RES_CONTENT_CALIBRATE_TEMPERATURE: 0x02,
   BP_RES_CONTENT_PRESSURE_DATA: 0x03,
 };
