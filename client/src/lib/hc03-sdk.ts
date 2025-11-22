@@ -585,7 +585,9 @@ export class Hc03Sdk {
       // Clear waveform buffer when starting new blood oxygen measurement
       if (detection === Detection.OX) {
         this.waveformBuffer = [];
-        console.log('✨ [HC03] Cleared waveform buffer for new blood oxygen measurement');
+        this.redBuffer = [];
+        this.irBuffer = [];
+        console.log('✨ [HC03] Cleared all buffers for new blood oxygen measurement');
       }
 
       console.log(`▶️ [HC03] Starting ${detection} detection...`);
