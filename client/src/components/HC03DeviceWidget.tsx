@@ -245,7 +245,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       }
       toast({
         title: "Blood Pressure Measurement Started",
-        description: "Ensure the cuff is inflated, then remain still as the device gradually releases air to measure your blood pressure",
+        description: "Please remain still during measurement",
       });
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
@@ -662,8 +662,6 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
   };
 
   const startMeasurement = async (type: Detection) => {
-    console.log(`[HC03DeviceWidget] 🚀 startMeasurement called for type: ${type}`);
-    
     if (!hc03Sdk.getConnectionStatus()) {
       toast({
         title: "Device Not Connected",
@@ -682,9 +680,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       // Reset valid data flag
       validDataReceived.current = false;
       
-      console.log(`[HC03DeviceWidget] ✅ Starting ${type} detection via SDK...`);
       await hc03Sdk.startDetect(type);
-      console.log(`[HC03DeviceWidget] ✅ ${type} detection started successfully`);
       
       // For temperature measurements, actively poll getTemperatureData()
       if (type === Detection.BT) {
