@@ -1,0 +1,67 @@
+⏹️ [HC03] Stopping 1 active measurement(s) before starting BP...
+hc03-sdk.ts:601 ▶️ [HC03] Starting BP detection...
+hc03-sdk.ts:779 [HC03] 📥 Raw data received (20 bytes): 0x02 0x02 0x00 0x04 0x10 0x14 0x01 0x01 0x69 0xf0 0xff 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+hc03-sdk.ts:850 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:863 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:982 📍 [HC03] Routing type 0x10 with 2 bytes: 0x01 0x01
+hc03-sdk.ts:1006 ⚠️ [HC03] Unknown type: 0x10, data: 0x01 0x01
+hc03-sdk.ts:779 [HC03] 📥 Raw data received (20 bytes): 0x02 0x07 0x00 0x04 0x81 0x80 0x01 0x6c 0x39 0xa5 0xe1 0xbc 0x13 0xac 0x5e 0xff 0x00 0x00 0x00 0x00
+hc03-sdk.ts:850 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:863 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:982 📍 [HC03] Routing type 0x81 with 7 bytes: 0x01 0x6c 0x39 0xa5 0xe1 0xbc 0x13
+hc03-sdk.ts:1002 💪 [HC03] → Parsing BLOOD PRESSURE
+hc03-sdk.ts:1381 [HC03] BP raw data: 0x01 0x6c 0x39 0xa5 0xe1 0xbc 0x13 (length: 7)
+hc03-sdk.ts:1389 [HC03] BP content type: 0x1
+hc03-sdk.ts:1394 [HC03] 📤 BP SendData - sending command back to device...
+hc03-sdk.ts:1407 [HC03] ❌ Failed to send BP command: NotSupportedError: GATT operation failed for unknown reason.
+parseBloodPressureData @ hc03-sdk.ts:1407
+await in parseBloodPressureData
+routeData @ hc03-sdk.ts:1003
+parseData @ hc03-sdk.ts:791
+handleCharacteristicValueChanged @ hc03-sdk.ts:740Understand this error
+hc03-sdk.ts:537 HC03 device disconnected
+hc03-sdk.ts:548 Attempting to reconnect (1/3)...
+hc03-sdk.ts:384 🔍 [HC03] Requesting Bluetooth device...
+hc03-sdk.ts:385 🔍 [HC03] Will search for HC03-XXX and HC02-XXX devices
+hc03-sdk.ts:388 🔍 [HC03] Calling navigator.bluetooth.requestDevice()...
+hc03-sdk.ts:431 ❌ [HC03] navigator.bluetooth.requestDevice() failed
+connectDevice @ hc03-sdk.ts:431
+await in connectDevice
+reconnectDevice @ hc03-sdk.ts:557
+(anonymous) @ hc03-sdk.ts:549
+setTimeout
+handleDisconnection @ hc03-sdk.ts:549Understand this error
+hc03-sdk.ts:432 ❌ [HC03] Error name: NotFoundError
+connectDevice @ hc03-sdk.ts:432
+await in connectDevice
+reconnectDevice @ hc03-sdk.ts:557
+(anonymous) @ hc03-sdk.ts:549
+setTimeout
+handleDisconnection @ hc03-sdk.ts:549Understand this error
+hc03-sdk.ts:433 ❌ [HC03] Error message: User cancelled the requestDevice() chooser.
+connectDevice @ hc03-sdk.ts:433
+await in connectDevice
+reconnectDevice @ hc03-sdk.ts:557
+(anonymous) @ hc03-sdk.ts:549
+setTimeout
+handleDisconnection @ hc03-sdk.ts:549Understand this error
+hc03-sdk.ts:434 ❌ [HC03] Full error: NotFoundError: User cancelled the requestDevice() chooser.
+connectDevice @ hc03-sdk.ts:434
+await in connectDevice
+reconnectDevice @ hc03-sdk.ts:557
+(anonymous) @ hc03-sdk.ts:549
+setTimeout
+handleDisconnection @ hc03-sdk.ts:549Understand this error
+hc03-sdk.ts:515 Failed to connect to HC03 device: NotFoundError: User cancelled the requestDevice() chooser.
+connectDevice @ hc03-sdk.ts:515
+await in connectDevice
+reconnectDevice @ hc03-sdk.ts:557
+(anonymous) @ hc03-sdk.ts:549
+setTimeout
+handleDisconnection @ hc03-sdk.ts:549Understand this error
+hc03-sdk.ts:560 Reconnection failed: Error: No HC03 device found. Make sure:
+• Your HC03 device is turned on and in pairing mode (LED should be blinking)
+• The device is within 10 meters
+• The device is not already connected to another phone
+    at Hc03Sdk.connectDevice (hc03-sdk.ts:519:15)
+    at async Hc03Sdk.reconnectDevice (hc03-sdk.ts:557:9)

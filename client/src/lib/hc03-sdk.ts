@@ -260,6 +260,7 @@ declare global {
   interface BluetoothRemoteGATTCharacteristic {
     value?: DataView;
     writeValue(value: BufferSource): Promise<void>;
+    writeValueWithoutResponse(value: BufferSource): Promise<void>;
     readValue(): Promise<DataView>;
     startNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
     addEventListener(type: 'characteristicvaluechanged', listener: (event: Event) => void): void;
@@ -1396,8 +1397,16 @@ export class Hc03Sdk {
         // The data array IS the sendList - write it back to the device
         if (this.writeCharacteristic) {
           try {
-            await this.writeCharacteristic.writeValue(data);
-            console.log('[HC03] ✅ Sent BP command back to device');
+            // Use writeValueWithoutResponse for faster, non-blocking communication
+            // This prevents GATT "operation failed" errors during real-time measurements
+            if (typeof this.writeCharacteristic.writeValueWithoutResponse === 'function') {
+              await this.writeCharacteristic.writeValueWithoutResponse(data);
+              console.log('[HC03] ✅ Sent BP command back to device (no response mode)');
+            } else {
+              // Fallback to writeValue if writeValueWithoutResponse not available
+              await this.writeCharacteristic.writeValue(data);
+              console.log('[HC03] ✅ Sent BP command back to device');
+            }
             
             // Emit SendData event
             window.dispatchEvent(new CustomEvent('hc03:bloodpressure:send', { 
@@ -1405,6 +1414,7 @@ export class Hc03Sdk {
             }));
           } catch (error) {
             console.error('[HC03] ❌ Failed to send BP command:', error);
+            // Don't throw - let measurement continue even if write fails
           }
         }
         return;
