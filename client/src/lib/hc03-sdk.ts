@@ -305,17 +305,25 @@ export class Hc03Sdk {
   // Waveform buffer for SpO2 calculation (accumulates samples across packets)
   private waveformBuffer: number[] = [];
   
-  // Blood Pressure measurement state machine
+  // Blood Pressure measurement state machine (layered over existing sampling)
   private bpState: 'idle' | 'calibration' | 'inflating' | 'holding' | 'deflating' | 'calculating' = 'idle';
+  
+  // Existing sampling variables (keep for backward compatibility)
   private bpPressureBuffer: number[] = [];
+  private bpSampleCount: number = 0;
+  private bpMaxSamples: number = 100;
+  private bpCalculated: boolean = false;
+  private bpInflationStarted: boolean = false;
+  private bpZeroSampleCount: number = 0;
+  
+  // New state machine variables
   private bpOscillationData: Array<{ pressure: number; amplitude: number; timestamp: number }> = [];
   private bpCalibrationCoeffs: { c1: number; c2: number; c3: number; c4: number; c5: number } | null = null;
   private bpCurrentPressure: number = 0;
   private bpMaxPressure: number = 0;
   private bpTargetInflation: number = 180; // Target inflation pressure in mmHg
   private bpInflationCheckInterval: any = null;
-  private bpCalculated: boolean = false; // Flag to ensure we only calculate once per measurement
-  private bpZeroSampleCount: number = 0; // Count zero calibration samples before starting inflation
+  private bpPressureHistory: number[] = []; // For moving average baseline (oscillation detection)
 
   private constructor() {
     // Bind methods to preserve context
@@ -622,12 +630,18 @@ export class Hc03Sdk {
       
       // Clear BP buffers and flags when starting new blood pressure measurement
       if (detection === Detection.BP) {
+        this.bpState = 'idle'; // Will transition to 'calibration' when coefficients received
         this.bpPressureBuffer = [];
         this.bpSampleCount = 0;
         this.bpCalculated = false;
         this.bpCalibrationCoeffs = null;
         this.bpInflationStarted = false;
         this.bpZeroSampleCount = 0;
+        this.bpOscillationData = [];
+        this.bpPressureHistory = [];
+        this.bpCurrentPressure = 0;
+        this.bpMaxPressure = 0;
+        console.log('[HC03] 🎬 BP measurement started, state: IDLE → waiting for calibration');
         console.log('✨ [HC03] Cleared BP buffers for new measurement');
       }
 
@@ -1444,10 +1458,16 @@ export class Hc03Sdk {
           this.bpCalibrationCoeffs = { c1, c2, c3, c4, c5 };
           console.log(`[HC03] ✅ BP Coefficients stored: c1=${c1}, c2=${c2}, c3=${c3}, c4=${c4}, c5=${c5}`);
           
-          // Reset pressure buffer and flags for new measurement
+          // Initialize state machine for new measurement
+          this.bpState = 'calibration';
           this.bpPressureBuffer = [];
           this.bpSampleCount = 0;
           this.bpCalculated = false;
+          this.bpOscillationData = [];
+          this.bpPressureHistory = [];
+          this.bpCurrentPressure = 0;
+          this.bpMaxPressure = 0;
+          console.log('[HC03] 🎬 BP State Machine initialized: CALIBRATION phase');
         }
         
         // Respond with temperature calibration request
@@ -1514,14 +1534,20 @@ export class Hc03Sdk {
         
         console.log(`[HC03] 📊 Extracted ${pressureValues.length} pressure values from packet:`, pressureValues.slice(0, 3));
         
+        // NEW STATE MACHINE: Update BP state and control inflation/deflation
+        this.updateBPStateMachine(pressureValues);
+        
         // Check if we need to start inflation after collecting zero calibration samples
-        if (!this.bpInflationStarted) {
+        if (!this.bpInflationStarted && this.bpState === 'calibration') {
           this.bpZeroSampleCount += pressureValues.length;
           console.log(`[HC03] 🔢 Zero sample count: ${this.bpZeroSampleCount} (need 10 to start inflation)`);
           
           // After collecting 10-15 zero calibration samples, start inflation
           if (this.bpZeroSampleCount >= 10) {
-            console.log(`[HC03] 🎈 Starting cuff inflation - sending quick charging command... (writeChar: ${!!this.writeCharacteristic})`);
+            console.log(`[HC03] 🎈 Starting cuff inflation - transitioning to INFLATING state...`);
+            this.bpState = 'inflating';
+            this.bpMaxPressure = 0;
+            this.bpCurrentPressure = 0;
             
             if (this.writeCharacteristic) {
               try {
@@ -1530,20 +1556,12 @@ export class Hc03Sdk {
                 await this.writeCharacteristic.writeValueWithoutResponse(quickChargeCmd);
                 console.log('[HC03] ✅ Sent quick charging command - cuff should start inflating');
                 
-                // Wait a moment, then send PWM charging for controlled inflation
+                // Send PWM charging for controlled inflation
                 setTimeout(async () => {
-                  if (this.writeCharacteristic && !this.bpCalculated) {
-                    try {
-                      const pwmChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [
-                        PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM
-                      ]);
-                      await this.writeCharacteristic.writeValueWithoutResponse(pwmChargeCmd);
-                      console.log('[HC03] ✅ Sent PWM charging command - controlled inflation');
-                    } catch (error) {
-                      console.error('[HC03] ❌ Failed to send PWM charging command:', error);
-                    }
+                  if (this.writeCharacteristic && this.bpState === 'inflating') {
+                    await this.sendPWMCharge();
                   }
-                }, 500); // Wait 500ms before PWM charging
+                }, 500);
                 
                 this.bpInflationStarted = true;
               } catch (error) {
@@ -1642,7 +1660,223 @@ export class Hc03Sdk {
     }
   }
 
-  // Calculate blood pressure from collected pressure samples
+  /**
+   * BP State Machine Controller
+   * Monitors pressure and controls inflation/deflation based on current state
+   */
+  private updateBPStateMachine(pressureValues: number[]): void {
+    if (pressureValues.length === 0) return;
+    
+    // Update current pressure (convert raw ADC to mmHg: raw / 100)
+    const latestPressure = pressureValues[pressureValues.length - 1] / 100;
+    this.bpCurrentPressure = latestPressure;
+    this.bpMaxPressure = Math.max(this.bpMaxPressure, latestPressure);
+    
+    // Track pressure history for oscillation detection (keep last 20 samples ~2 seconds)
+    this.bpPressureHistory.push(latestPressure);
+    if (this.bpPressureHistory.length > 20) {
+      this.bpPressureHistory.shift();
+    }
+    
+    console.log(`[HC03] 🎈 BP State: ${this.bpState}, Pressure: ${latestPressure.toFixed(1)} mmHg (max: ${this.bpMaxPressure.toFixed(1)})`);
+    
+    // State machine transitions
+    switch (this.bpState) {
+      case 'idle':
+      case 'calibration':
+        // Waiting for calibration to complete
+        break;
+        
+      case 'inflating':
+        // Check if we've reached target inflation pressure
+        if (latestPressure >= this.bpTargetInflation) {
+          console.log(`[HC03] 🎯 Target pressure reached: ${latestPressure.toFixed(1)} mmHg, transitioning to HOLD`);
+          this.transitionToHold();
+        } else if (this.bpMaxPressure > 5 && latestPressure < this.bpMaxPressure - 10) {
+          // Pressure is dropping - cuff might be leaking, send more PWM charges
+          console.log('[HC03] ⚠️ Pressure dropping during inflation, sending additional PWM charge...');
+          this.sendPWMCharge();
+        }
+        break;
+        
+      case 'holding':
+        // Hold phase completes automatically via timeout
+        break;
+        
+      case 'deflating':
+        // Calculate oscillation amplitude and store data point
+        const oscillationAmp = this.calculateOscillationAmplitude();
+        if (oscillationAmp > 0) {
+          this.bpOscillationData.push({
+            pressure: latestPressure,
+            amplitude: oscillationAmp,
+            timestamp: Date.now()
+          });
+        }
+        
+        // Check if deflation is complete (pressure below threshold or timeout)
+        if (latestPressure < 40) {
+          console.log('[HC03] ✅ Deflation complete (pressure < 40 mmHg), calculating BP...');
+          this.transitionToCalculating();
+        }
+        break;
+        
+      case 'calculating':
+        // Already calculating, ignore new data
+        break;
+    }
+  }
+  
+  /**
+   * Transition to HOLD state - stop inflation and wait before deflation
+   */
+  private async transitionToHold(): Promise<void> {
+    this.bpState = 'holding';
+    
+    // Send stop charging command to halt inflation
+    if (this.writeCharacteristic) {
+      try {
+        const stopCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]);
+        await this.writeCharacteristic.writeValueWithoutResponse(stopCmd);
+        console.log('[HC03] 🛑 Sent STOP charging command - cuff holding pressure');
+      } catch (error) {
+        console.error('[HC03] ❌ Failed to send stop command:', error);
+      }
+    }
+    
+    // After 2 second hold, transition to deflation
+    setTimeout(() => {
+      console.log('[HC03] 📉 Starting DEFLATION phase...');
+      this.bpState = 'deflating';
+      this.bpOscillationData = []; // Clear oscillation buffer
+    }, 2000);
+  }
+  
+  /**
+   * Transition to CALCULATING state - process oscillation data
+   */
+  private transitionToCalculating(): void {
+    this.bpState = 'calculating';
+    this.bpCalculated = true;
+    
+    // Use new oscillometric calculation
+    this.calculateOscillometricBP();
+  }
+  
+  /**
+   * Send PWM charge command for controlled inflation
+   */
+  private async sendPWMCharge(): Promise<void> {
+    if (this.writeCharacteristic && this.bpState === 'inflating') {
+      try {
+        const pwmCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM]);
+        await this.writeCharacteristic.writeValueWithoutResponse(pwmCmd);
+        console.log('[HC03] ⚡ Sent PWM charge command');
+      } catch (error) {
+        console.error('[HC03] ❌ Failed to send PWM charge:', error);
+      }
+    }
+  }
+  
+  /**
+   * Calculate oscillation amplitude from pressure history using detrending
+   * Returns the high-pass filtered amplitude (oscillation around baseline trend)
+   */
+  private calculateOscillationAmplitude(): number {
+    if (this.bpPressureHistory.length < 5) return 0;
+    
+    // Calculate moving average baseline (low-pass filter)
+    const windowSize = Math.min(10, this.bpPressureHistory.length);
+    const recent = this.bpPressureHistory.slice(-windowSize);
+    const baseline = recent.reduce((sum, val) => sum + val, 0) / recent.length;
+    
+    // Current pressure deviation from baseline (high-pass residual)
+    const currentPressure = this.bpPressureHistory[this.bpPressureHistory.length - 1];
+    const amplitude = Math.abs(currentPressure - baseline);
+    
+    return amplitude;
+  }
+  
+  /**
+   * Calculate blood pressure using oscillometric method from oscillation data
+   */
+  private calculateOscillometricBP(): void {
+    if (this.bpOscillationData.length < 10) {
+      console.warn('[HC03] ⚠️ Not enough oscillation data, using fallback calculation');
+      this.calculateBloodPressure(); // Use old method as fallback
+      return;
+    }
+    
+    console.log(`[HC03] 🧮 Oscillometric BP calculation with ${this.bpOscillationData.length} data points`);
+    
+    // Find maximum oscillation amplitude (MAP)
+    const maxOscillation = this.bpOscillationData.reduce((max, point) => 
+      point.amplitude > max.amplitude ? point : max
+    );
+    
+    const meanArterialPressure = maxOscillation.pressure;
+    const maxAmplitude = maxOscillation.amplitude;
+    
+    console.log(`[HC03] 📊 MAP: ${meanArterialPressure.toFixed(1)} mmHg at max amplitude: ${maxAmplitude.toFixed(2)}`);
+    
+    // Find systolic (55% of max amplitude, BEFORE MAP during deflation)
+    const systolicThreshold = maxAmplitude * 0.55;
+    let systolic = 120;
+    for (let i = 0; i < this.bpOscillationData.length; i++) {
+      if (this.bpOscillationData[i].pressure > meanArterialPressure && 
+          this.bpOscillationData[i].amplitude >= systolicThreshold) {
+        systolic = Math.round(this.bpOscillationData[i].pressure);
+        break;
+      }
+    }
+    
+    // Find diastolic (75% of max amplitude, AFTER MAP during deflation)
+    const diastolicThreshold = maxAmplitude * 0.75;
+    let diastolic = 80;
+    for (let i = this.bpOscillationData.length - 1; i >= 0; i--) {
+      if (this.bpOscillationData[i].pressure < meanArterialPressure && 
+          this.bpOscillationData[i].amplitude >= diastolicThreshold) {
+        diastolic = Math.round(this.bpOscillationData[i].pressure);
+        break;
+      }
+    }
+    
+    // Calculate pulse rate from oscillation frequency
+    const duration = (this.bpOscillationData[this.bpOscillationData.length - 1].timestamp - 
+                      this.bpOscillationData[0].timestamp) / 1000; // seconds
+    const pulsesPerMinute = (this.bpOscillationData.length / duration) * 60;
+    const heartRate = Math.round(Math.max(50, Math.min(pulsesPerMinute, 180)));
+    
+    console.log(`[HC03] ✅ Oscillometric BP: ${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
+    
+    // Emit result
+    const bloodPressureData: BloodPressureData = {
+      ps: systolic,
+      pd: diastolic,
+      hr: heartRate
+    };
+    
+    this.latestBloodPressureData = bloodPressureData;
+    
+    window.dispatchEvent(new CustomEvent('hc03:bloodpressure:result', { 
+      detail: bloodPressureData 
+    }));
+    
+    const callback = this.callbacks.get(Detection.BP);
+    if (callback) {
+      callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
+    }
+    
+    // Auto-stop measurement
+    setTimeout(() => {
+      if (this.activeDetections.has(Detection.BP)) {
+        console.log('✅ [HC03] Oscillometric BP complete, auto-stopping...');
+        this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
+      }
+    }, 500);
+  }
+
+  // Calculate blood pressure from collected pressure samples (LEGACY FALLBACK)
   // Uses oscillometric method with peak amplitude ratios
   private calculateBloodPressure(): void {
     if (this.bpPressureBuffer.length < 10) {
