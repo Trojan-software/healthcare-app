@@ -265,6 +265,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Consolidated vital signs endpoint - saves all vitals in ONE record per check
+  app.post("/api/vital-signs/consolidated", async (req, res) => {
+    try {
+      const { patientId, deviceId, heartRate, systolic, diastolic, temperature, oxygenLevel, bloodGlucose } = req.body;
+
+      if (!patientId) {
+        return res.status(400).json({ message: "Patient ID is required" });
+      }
+
+      // Build consolidated vital signs data
+      const vitalSignsData: any = {
+        patientId: String(patientId)
+      };
+
+      if (deviceId) vitalSignsData.deviceId = deviceId;
+      if (heartRate !== undefined && heartRate !== null) vitalSignsData.heartRate = parseInt(heartRate);
+      if (systolic !== undefined && systolic !== null) vitalSignsData.bloodPressureSystolic = parseInt(systolic);
+      if (diastolic !== undefined && diastolic !== null) vitalSignsData.bloodPressureDiastolic = parseInt(diastolic);
+      if (temperature !== undefined && temperature !== null) vitalSignsData.temperature = temperature.toString();
+      if (oxygenLevel !== undefined && oxygenLevel !== null) vitalSignsData.oxygenLevel = parseInt(oxygenLevel);
+      if (bloodGlucose !== undefined && bloodGlucose !== null) vitalSignsData.bloodGlucose = parseInt(bloodGlucose);
+
+      // Calculate status based on all vitals
+      vitalSignsData.status = calculateVitalSignsStatus(vitalSignsData);
+
+      const vitalSigns = await storage.createVitalSigns(vitalSignsData);
+
+      // Create alert if critical
+      if (vitalSignsData.status === "critical") {
+        await storage.createAlert({
+          patientId,
+          type: "critical",
+          title: "Critical Vital Signs Alert",
+          description: `Critical vital signs detected at ${new Date().toLocaleTimeString()}`
+        });
+      }
+
+      res.status(201).json(vitalSigns);
+    } catch (error) {
+      console.error("Error creating consolidated vital signs:", error);
+      res.status(500).json({ message: "Failed to record vital signs" });
+    }
+  });
+
+  // Retrieve consolidated vital signs (one row per check with all vitals)
+  app.get("/api/vital-signs/consolidated/:patientId", async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const vitalSigns = await storage.getVitalSignsByPatient(patientId);
+      
+      // Return consolidated records sorted by timestamp descending
+      const consolidated = vitalSigns
+        .slice(0, limit)
+        .map((vs: any) => ({
+          id: vs.id,
+          timestamp: vs.timestamp,
+          heartRate: vs.heartRate,
+          bloodPressure: vs.bloodPressureSystolic && vs.bloodPressureDiastolic ? `${vs.bloodPressureSystolic}/${vs.bloodPressureDiastolic}` : 'N/A',
+          systolic: vs.bloodPressureSystolic,
+          diastolic: vs.bloodPressureDiastolic,
+          temperature: vs.temperature,
+          oxygenLevel: vs.oxygenLevel,
+          bloodGlucose: vs.bloodGlucose,
+          status: vs.status || 'normal'
+        }));
+      
+      res.json(consolidated);
+    } catch (error) {
+      console.error("Error fetching consolidated vital signs:", error);
+      res.status(500).json({ message: "Failed to fetch vital signs" });
+    }
+  });
+
   // Blood Glucose API Endpoints
   app.get("/api/blood-glucose/:patientId", async (req, res) => {
     try {
@@ -1381,6 +1456,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     );
     
     return Math.round((patientsWithRecentVitals.size / Math.max(activePatients.length, 1)) * 100 * 10) / 10;
+  }
+
+  // Consolidated vital signs status calculation
+  function calculateVitalSignsStatus(vitals: any): string {
+    if (!vitals) return "normal";
+    
+    // Critical conditions
+    if (vitals.heartRate && (vitals.heartRate > 120 || vitals.heartRate < 50)) return "critical";
+    if (vitals.bloodPressureSystolic && vitals.bloodPressureSystolic > 180) return "critical";
+    if (vitals.bloodPressureDiastolic && vitals.bloodPressureDiastolic > 120) return "critical";
+    if (vitals.temperature && (vitals.temperature > 39.0 || vitals.temperature < 35.0)) return "critical";
+    if (vitals.oxygenLevel && vitals.oxygenLevel < 90) return "critical";
+    if (vitals.bloodGlucose && (vitals.bloodGlucose > 300 || vitals.bloodGlucose < 70)) return "critical";
+    
+    // Attention conditions
+    if (vitals.heartRate && (vitals.heartRate > 100 || vitals.heartRate < 60)) return "attention";
+    if (vitals.bloodPressureSystolic && vitals.bloodPressureSystolic > 140) return "attention";
+    if (vitals.temperature && (vitals.temperature > 38.0 || vitals.temperature < 36.1)) return "attention";
+    if (vitals.oxygenLevel && vitals.oxygenLevel < 95) return "attention";
+    if (vitals.bloodGlucose && (vitals.bloodGlucose > 200 || vitals.bloodGlucose < 100)) return "attention";
+    
+    return "normal";
   }
 
   function generateTrendsData(vitalsData: any[]) {

@@ -17,6 +17,7 @@ import {
 import HC03DeviceManager from '@/components/HC03DeviceManager';
 import ECGReport from '@/components/ECGReport';
 import BloodGlucoseMonitor from '@/components/BloodGlucoseMonitor';
+import ConsolidatedVitalsTable from '@/components/ConsolidatedVitalsTable';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useLanguage } from '@/lib/i18n';
@@ -303,6 +304,9 @@ export default function HealthMonitoringPage() {
 
         {/* History Tab */}
         <TabsContent value="history" className="space-y-6">
+          {/* Consolidated Vital Signs Table - ONE ROW PER CHECK WITH ALL VITALS */}
+          <ConsolidatedVitalsTable patientId={patientId} />
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* ECG History */}
             <Card>

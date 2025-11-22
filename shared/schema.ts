@@ -41,6 +41,7 @@ export const vitalSigns = pgTable("vital_signs", {
   temperature: decimal("temperature", { precision: 4, scale: 1 }),
   oxygenLevel: integer("oxygen_level"),
   bloodGlucose: integer("blood_glucose"),
+  status: text("status").default("normal"), // 'normal', 'attention', 'critical'
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
@@ -200,6 +201,7 @@ export const insertVitalSignsSchema = createInsertSchema(vitalSigns).pick({
   temperature: true,
   oxygenLevel: true,
   bloodGlucose: true,
+  status: true,
 });
 
 export const insertCheckupLogSchema = createInsertSchema(checkupLogs).pick({
