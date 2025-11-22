@@ -1496,17 +1496,18 @@ export class Hc03Sdk {
           return;
         }
         
-        console.log('[HC03] 📊 BP Pressure Data - collecting samples...');
-        
         // Extract pressure values from the packet (5 values per packet, 2 bytes each)
         // Format: [type, p1_low, p1_high, p2_low, p2_high, p3_low, p3_high, p4_low, p4_high, p5_low, p5_high]
         const pressureValues: number[] = [];
         for (let i = 1; i < data.length - 1; i += 2) {
           if (i + 1 < data.length) {
-            const pressureRaw = ((data[i] & 0xff) << 8) + (data[i + 1] & 0xff);
+            // Little-endian: low byte first, then high byte
+            const pressureRaw = (data[i] & 0xff) | ((data[i + 1] & 0xff) << 8);
             pressureValues.push(pressureRaw);
           }
         }
+        
+        console.log(`[HC03] 📊 BP Pressure Data - extracted ${pressureValues.length} values:`, pressureValues.slice(0, 5));
         
         // Check if we need to start inflation after collecting zero calibration samples
         if (!this.bpInflationStarted) {
