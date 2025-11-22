@@ -1,0 +1,95 @@
+
+﻿
+HC03DeviceWidget.tsx:528 🔍 [HC03] Starting device scan...
+hc03-sdk.ts:377 🔍 [HC03] Requesting Bluetooth device...
+hc03-sdk.ts:378 🔍 [HC03] Will search for HC03-XXX and HC02-XXX devices
+hc03-sdk.ts:381 🔍 [HC03] Calling navigator.bluetooth.requestDevice()...
+hc03-sdk.ts:420 ✅ [HC03] Device selected successfully!
+hc03-sdk.ts:421 ✅ [HC03] Device name: HC03
+hc03-sdk.ts:422 ✅ [HC03] Device ID: Fik9JXPxogd0+cwa/iObAQ==
+hc03-sdk.ts:432 🔗 [HC03] Connecting to GATT server...
+hc03-sdk.ts:434 ✅ [HC03] GATT server connected!
+hc03-sdk.ts:450 🔍 [HC03] Device type detection:
+hc03-sdk.ts:451    Device name: HC03
+hc03-sdk.ts:452    Is HC02: false
+hc03-sdk.ts:453    Is HC03: false
+hc03-sdk.ts:454    Stored device type: HC03
+hc03-sdk.ts:466 ⚠️ [HC03] Unknown device type, will try HC03 service first...
+hc03-sdk.ts:471 🔍 [HC03] Connecting to service 00001822-0000-1000-8000-00805f9b34fb...
+hc03-sdk.ts:478 ⚠️ [HC03] HC03 service not found, trying HC02 service as fallback...
+hc03-sdk.ts:481 ✅ [HC03] Connected to HC02 service successfully!
+hc03-sdk.ts:505 HC03 device connected successfully
+hc03-sdk.ts:591 ▶️ [HC03] Starting BATTERY detection...
+hc03-sdk.ts:777 🔍 [HC03] CRC validation check (single): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:790 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:909 📍 [HC03] Routing type 0x10 with 2 bytes: 0x0f 0x00
+hc03-sdk.ts:933 ⚠️ [HC03] Unknown type: 0x10, data: 0x0f 0x00
+hc03-sdk.ts:1356 Error querying battery level: NotFoundError: No Services matching UUID 0000180f-0000-1000-8000-00805f9b34fb found in Device.
+hc03-sdk.ts:777 🔍 [HC03] CRC validation check (single): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:790 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:909 📍 [HC03] Routing type 0x8f with 3 bytes: 0x00 0x0c 0xb3
+hc03-sdk.ts:913 🔋 [HC03] → Parsing BATTERY
+hc03-sdk.ts:1255 🔋 [HC03] Battery parsing: bytes[1]=0x0c, bytes[2]=0xb3
+hc03-sdk.ts:1256 🔋 [HC03] Battery raw value: 3251 (0x0cb3)
+hc03-sdk.ts:1303 🔋 [HC03] Voltage calculation: rawValue=3251 → voltage=3929mV
+hc03-sdk.ts:1259 🔋 [HC03] Calculated level: 73%
+hc03-sdk.ts:1289 [HC03] Battery: 73% 
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'battery', value: {…}, timestamp: '2025-11-22T10:38:15.207Z', deviceId: ''}
+hc03-sdk.ts:568 ⏹️ [HC03] Stopping 1 active measurement(s) before starting OX...
+hc03-sdk.ts:588 ✨ [HC03] Cleared waveform buffer for new blood oxygen measurement
+hc03-sdk.ts:591 ▶️ [HC03] Starting OX detection...
+hc03-sdk.ts:777 🔍 [HC03] CRC validation check (single): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:790 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:909 📍 [HC03] Routing type 0x10 with 2 bytes: 0x04 0x00
+hc03-sdk.ts:933 ⚠️ [HC03] Unknown type: 0x10, data: 0x04 0x00
+hc03-sdk.ts:805 [HC03] Head packet cached: type=0x84, length=14
+hc03-sdk.ts:843 🔍 [HC03] CRC validation check (tail): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:866 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:872 [HC03] Multi-packet reconstructed: type=0x84, length=31
+hc03-sdk.ts:909 📍 [HC03] Routing type 0x84 with 31 bytes: 0x0d 0x51 0x85 0x02 0x9a 0xc0 0x0d 0x51 0x3f 0x02...
+hc03-sdk.ts:925 🫀 [HC03] → Parsing BLOOD OXYGEN
+hc03-sdk.ts:1036 [HC03] Collecting waveform data: 10/100 samples
+hc03-sdk.ts:1009 [HC03] Blood Oxygen: 0% HR: 0 bpm
+hc03-sdk.ts:1010 [HC03] Waveform samples: 10
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-22T10:38:28.049Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:139 [BloodOxygen] Intermediate data - not saving (SpO2: 0%, HR: 0 bpm)
+hc03-sdk.ts:805 [HC03] Head packet cached: type=0x84, length=14
+hc03-sdk.ts:843 🔍 [HC03] CRC validation check (tail): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:866 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:872 [HC03] Multi-packet reconstructed: type=0x84, length=31
+hc03-sdk.ts:909 📍 [HC03] Routing type 0x84 with 31 bytes: 0x0d 0x51 0x1b 0x02 0x9a 0x78 0x0d 0x51 0x00 0x02...
+hc03-sdk.ts:925 🫀 [HC03] → Parsing BLOOD OXYGEN
+hc03-sdk.ts:1036 [HC03] Collecting waveform data: 20/100 samples
+hc03-sdk.ts:1009 [HC03] Blood Oxygen: 0% HR: 0 bpm
+hc03-sdk.ts:1010 [HC03] Waveform samples: 10
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-22T10:38:28.069Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:139 [BloodOxygen] Intermediate data - not saving (SpO2: 0%, HR: 0 bpm)
+hc03-sdk.ts:805 [HC03] Head packet cached: type=0x84, length=14
+hc03-sdk.ts:843 🔍 [HC03] CRC validation check (tail): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:866 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:872 [HC03] Multi-packet reconstructed: type=0x84, length=31
+hc03-sdk.ts:909 📍 [HC03] Routing type 0x84 with 31 bytes: 0x0d 0x51 0x30 0x02 0x9a 0x88 0x0d 0x50 0xde 0x02...
+hc03-sdk.ts:925 🫀 [HC03] → Parsing BLOOD OXYGEN
+hc03-sdk.ts:1036 [HC03] Collecting waveform data: 30/100 samples
+hc03-sdk.ts:1009 [HC03] Blood Oxygen: 0% HR: 0 bpm
+hc03-sdk.ts:1010 [HC03] Waveform samples: 10
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-22T10:38:28.070Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:139 [BloodOxygen] Intermediate data - not saving (SpO2: 0%, HR: 0 bpm)
+hc03-sdk.ts:805 [HC03] Head packet cached: type=0x84, length=14
+hc03-sdk.ts:843 🔍 [HC03] CRC validation check (tail): deviceName="HC03", endMarker=0xff, isHC02=true
+hc03-sdk.ts:866 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:872 [HC03] Multi-packet reconstructed: type=0x84, length=31
+hc03-sdk.ts:909 📍 [HC03] Routing type 0x84 with 31 bytes: 0x0d 0x50 0xf1 0x02 0x9a 0x51 0x0d 0x50 0x94 0x02...
+hc03-sdk.ts:925 🫀 [HC03] → Parsing BLOOD OXYGEN
+hc03-sdk.ts:1036 [HC03] Collecting waveform data: 40/100 samples
+hc03-sdk.ts:1009 [HC03] Blood Oxygen: 0% HR: 0 bpm
+hc03-sdk.ts:1010 [HC03] Waveform samples: 10
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'bloodOxygen', value: {…}, timestamp: '2025-11-22T10:38:28.087Z', deviceId: ''}
+EnhancedPatientDashboard.tsx:139 [BloodOxygen] Intermediate data - not saving (SpO2: 0%, HR: 0 bpm)
+hc03-sdk.ts:805 [HC03] Head packet cached: type=0x84, length=14
+﻿

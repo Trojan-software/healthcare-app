@@ -978,36 +978,49 @@ export class Hc03Sdk {
   // Blood Oxygen Data Parsing (from Flutter SDK oxEngine.dart)
   private parseBloodOxygenData(data: Uint8Array): void {
     try {
-      if (data.length < 30) {
+      if (data.length < 6) {
         console.warn('[HC03] Blood oxygen data incomplete:', data.length);
         return;
       }
       
-      // Resolve wave data (30 bytes -> 10 values, 3 bytes each as 24-bit)
-      // Note: Flutter SDK's Calculate class computes SpO2 and HR from these waveforms
-      const waveData: number[] = [];
-      for (let i = 0; i < 30; i += 3) {
-        const first = (data[i] & 0xFF) << 16;
-        const second = (data[i + 1] & 0xFF) << 8;
-        const third = data[i + 2] & 0xFF;
-        waveData.push(first + second + third);
+      // Parse RED and IR channel pairs (30 bytes = 5 pairs of RED+IR, each 24-bit)
+      // Format: [RED(3 bytes), IR(3 bytes), RED(3 bytes), IR(3 bytes), ...]
+      const redSamples: number[] = [];
+      const irSamples: number[] = [];
+      
+      for (let i = 0; i < data.length; i += 6) {
+        if (i + 6 <= data.length) {
+          // Parse RED channel (3 bytes, big-endian)
+          const red = ((data[i] & 0xFF) << 16) | ((data[i+1] & 0xFF) << 8) | (data[i+2] & 0xFF);
+          // Parse IR channel (3 bytes, big-endian)
+          const ir = ((data[i+3] & 0xFF) << 16) | ((data[i+4] & 0xFF) << 8) | (data[i+5] & 0xFF);
+          
+          redSamples.push(red);
+          irSamples.push(ir);
+        }
       }
       
-      // Calculate SpO2 and HR from waveform data
-      const { spo2, heartRate } = this.calculateSpO2FromWaveform(waveData);
+      console.log(`[HC03] 🫀 Extracted RED samples: ${redSamples.join(', ')}`);
+      console.log(`[HC03] 🫀 Extracted IR samples: ${irSamples.join(', ')}`);
+      
+      // Calculate SpO2 and HR using RED/IR channels
+      const { spo2, heartRate } = this.calculateSpO2FromChannels(redSamples, irSamples);
       
       const bloodOxygenData: BloodOxygenData = {
         bloodOxygen: spo2,
         heartRate: heartRate,
         fingerDetection: spo2 > 0, // Valid if SpO2 was calculated
-        bloodOxygenWaveData: waveData
+        bloodOxygenWaveData: [...redSamples, ...irSamples]
       };
       
       // Store latest data for getter methods
       this.latestBloodOxygenData = bloodOxygenData;
       
-      console.log('[HC03] Blood Oxygen:', spo2 + '%', 'HR:', heartRate, 'bpm');
-      console.log('[HC03] Waveform samples:', waveData.length);
+      if (spo2 > 0) {
+        console.log('[HC03] ✅ Blood Oxygen:', spo2 + '%', 'HR:', heartRate, 'bpm');
+      } else {
+        console.log('[HC03] 📊 Blood Oxygen: collecting data (', Math.floor((this.redBuffer?.length || 0) / 5) + 'secs', ')');
+      }
       
       const callback = this.callbacks.get(Detection.OX);
       if (callback) {
@@ -1018,6 +1031,98 @@ export class Hc03Sdk {
     }
   }
   
+  // Initialize RED/IR buffers
+  private redBuffer: number[] = [];
+  private irBuffer: number[] = [];
+
+  // Calculate SpO2 and Heart Rate from RED/IR channel pairs
+  // Based on Flutter SDK's Calculate.addSignalData and ACF ratio method
+  private calculateSpO2FromChannels(redSamples: number[], irSamples: number[]): { spo2: number; heartRate: number } {
+    if (!redSamples || !irSamples || redSamples.length === 0) {
+      return { spo2: 0, heartRate: 0 };
+    }
+    
+    // Accumulate RED/IR samples across multiple packets
+    this.redBuffer.push(...redSamples);
+    this.irBuffer.push(...irSamples);
+    
+    // Keep buffer size manageable (last 50 samples = ~5-10 seconds at 5-10Hz)
+    if (this.redBuffer.length > 50) {
+      this.redBuffer.shift();
+      this.irBuffer.shift();
+    }
+    
+    // Need at least 30 samples for reliable calculation
+    if (this.redBuffer.length < 30) {
+      console.log(`[HC03] 📊 Collecting signal data: ${this.redBuffer.length}/30 samples`);
+      return { spo2: 0, heartRate: 0 };
+    }
+    
+    // Use all buffered samples for calculation
+    const redData = [...this.redBuffer];
+    const irData = [...this.irBuffer];
+    
+    // Apply low-pass filter to smooth the signal
+    const redFiltered = this.applyLowPassFilter(redData);
+    const irFiltered = this.applyLowPassFilter(irData);
+    
+    // Calculate AC/DC components for SpO2
+    const redMean = redFiltered.reduce((a, b) => a + b) / redFiltered.length;
+    const irMean = irFiltered.reduce((a, b) => a + b) / irFiltered.length;
+    
+    // Calculate AC amplitude (peak-to-peak or std dev)
+    let redAC = 0, irAC = 0;
+    for (const val of redFiltered) {
+      redAC += Math.abs(val - redMean);
+    }
+    for (const val of irFiltered) {
+      irAC += Math.abs(val - irMean);
+    }
+    redAC /= redFiltered.length;
+    irAC /= irFiltered.length;
+    
+    // Calculate SpO2 using ACF (AC component Fraction) ratio
+    // SpO2 = 110 - 25 * (AC_RED/DC_RED) / (AC_IR/DC_IR)
+    const ratioRed = redMean > 0 ? redAC / redMean : 0;
+    const ratioIr = irMean > 0 ? irAC / irMean : 0;
+    const ratio = ratioIr > 0 ? ratioRed / ratioIr : 0;
+    
+    let spo2 = Math.round(110 - 25 * ratio);
+    spo2 = Math.max(70, Math.min(100, spo2)); // Clamp to valid range
+    
+    // Calculate heart rate from peak detection on IR channel (typically stronger signal)
+    const peaks = this.detectPeaks(irFiltered);
+    let heartRate = 0;
+    
+    if (peaks.length >= 2) {
+      let totalInterval = 0;
+      for (let i = 1; i < peaks.length; i++) {
+        totalInterval += peaks[i] - peaks[i - 1];
+      }
+      const avgInterval = totalInterval / (peaks.length - 1);
+      // Assuming 5Hz sampling rate (1 sample per 200ms from 5 samples per packet)
+      heartRate = Math.round((60 / avgInterval) * 5);
+      heartRate = Math.max(40, Math.min(200, heartRate));
+    }
+    
+    if (spo2 > 0 && heartRate > 0) {
+      console.log(`[HC03] ✅ Calculated SpO2: ${spo2}%, HR: ${heartRate} bpm (ACF: ${ratio.toFixed(3)})`);
+    }
+    
+    return { spo2, heartRate };
+  }
+  
+  // Low-pass filter for signal smoothing
+  private applyLowPassFilter(data: number[]): number[] {
+    if (data.length < 2) return data;
+    const filtered = [data[0]];
+    const alpha = 0.3; // Filter coefficient
+    for (let i = 1; i < data.length; i++) {
+      filtered.push(alpha * data[i] + (1 - alpha) * filtered[i - 1]);
+    }
+    return filtered;
+  }
+
   // Calculate SpO2 and Heart Rate from PPG waveform data
   // Based on standard PPG signal processing algorithms
   private calculateSpO2FromWaveform(waveData: number[]): { spo2: number; heartRate: number } {
@@ -1031,9 +1136,9 @@ export class Hc03Sdk {
     }
     this.waveformBuffer.push(...waveData);
     
-    // Need at least 100 samples for reliable calculation (10 seconds at 10Hz)
-    if (this.waveformBuffer.length < 100) {
-      console.log(`[HC03] Collecting waveform data: ${this.waveformBuffer.length}/100 samples`);
+    // Need at least 50 samples for reliable calculation (5 seconds at 10Hz)
+    if (this.waveformBuffer.length < 50) {
+      console.log(`[HC03] Collecting waveform data: ${this.waveformBuffer.length}/50 samples`);
       return { spo2: 0, heartRate: 0 };
     }
     
