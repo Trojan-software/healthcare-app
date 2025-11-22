@@ -311,6 +311,8 @@ export class Hc03Sdk {
   private bpSampleCount: number = 0;
   private bpMaxSamples: number = 100; // Collect up to 100 samples before calculating
   private bpCalculated: boolean = false; // Flag to ensure we only calculate once per measurement
+  private bpInflationStarted: boolean = false; // Flag to track if cuff inflation has been triggered
+  private bpZeroSampleCount: number = 0; // Count zero calibration samples before starting inflation
 
   private constructor() {
     // Bind methods to preserve context
@@ -621,6 +623,8 @@ export class Hc03Sdk {
         this.bpSampleCount = 0;
         this.bpCalculated = false;
         this.bpCalibrationCoeffs = null;
+        this.bpInflationStarted = false;
+        this.bpZeroSampleCount = 0;
         console.log('✨ [HC03] Cleared BP buffers for new measurement');
       }
 
@@ -1501,6 +1505,45 @@ export class Hc03Sdk {
           if (i + 1 < data.length) {
             const pressureRaw = ((data[i] & 0xff) << 8) + (data[i + 1] & 0xff);
             pressureValues.push(pressureRaw);
+          }
+        }
+        
+        // Check if we need to start inflation after collecting zero calibration samples
+        if (!this.bpInflationStarted) {
+          this.bpZeroSampleCount += pressureValues.length;
+          
+          // After collecting 10-15 zero calibration samples, start inflation
+          if (this.bpZeroSampleCount >= 10) {
+            console.log('[HC03] 🎈 Starting cuff inflation - sending quick charging command...');
+            
+            if (this.writeCharacteristic) {
+              try {
+                // Send quick charging command to start rapid inflation
+                const quickChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_QUICK_CHARGING_GAS]);
+                await this.writeCharacteristic.writeValueWithoutResponse(quickChargeCmd);
+                console.log('[HC03] ✅ Sent quick charging command - cuff should start inflating');
+                
+                // Wait a moment, then send PWM charging for controlled inflation
+                setTimeout(async () => {
+                  if (this.writeCharacteristic && !this.bpCalculated) {
+                    try {
+                      const pwmChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [
+                        PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM,
+                        PROTOCOL.BP_REQ_CONTENT_PWM_GAS
+                      ]);
+                      await this.writeCharacteristic.writeValueWithoutResponse(pwmChargeCmd);
+                      console.log('[HC03] ✅ Sent PWM charging command - controlled inflation');
+                    } catch (error) {
+                      console.error('[HC03] ❌ Failed to send PWM charging command:', error);
+                    }
+                  }
+                }, 500); // Wait 500ms before PWM charging
+                
+                this.bpInflationStarted = true;
+              } catch (error) {
+                console.error('[HC03] ❌ Failed to send inflation command:', error);
+              }
+            }
           }
         }
         
