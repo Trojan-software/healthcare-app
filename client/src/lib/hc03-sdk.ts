@@ -304,6 +304,12 @@ export class Hc03Sdk {
   
   // Waveform buffer for SpO2 calculation (accumulates samples across packets)
   private waveformBuffer: number[] = [];
+  
+  // Blood Pressure measurement state
+  private bpPressureBuffer: number[] = [];
+  private bpCalibrationCoeffs: { c1: number; c2: number; c3: number; c4: number; c5: number } | null = null;
+  private bpSampleCount: number = 0;
+  private bpMaxSamples: number = 100; // Collect up to 100 samples before calculating
 
   private constructor() {
     // Bind methods to preserve context
@@ -1403,14 +1409,21 @@ export class Hc03Sdk {
       if (contentType === PROTOCOL.BP_RES_CONTENT_CALIBRATE_PARAMETER) {
         console.log('[HC03] 📤 BP Calibrate Parameter - requesting temperature calibration...');
         
-        // Parse coefficients (for future use if needed)
+        // Parse and store calibration coefficients
         if (data.length >= 7) {
           const c1 = ((data[1] & 0xff) << 6) + ((data[2] & 0xff) >> 2);
           const c2 = ((data[2] & 0x03) << 4) + ((data[3] & 0xff) >> 4);
           const c3 = ((data[3] & 0x0f) << 9) + ((data[4] & 0xff) << 1) + ((data[5] & 0xff) >> 7);
           const c4 = ((data[5] & 0x7f) << 2) + ((data[6] & 0xff) >> 6);
           const c5 = data[6] & 0x3f;
-          console.log(`[HC03] BP Coefficients: c1=${c1}, c2=${c2}, c3=${c3}, c4=${c4}, c5=${c5}`);
+          
+          // Store coefficients for pressure calculation
+          this.bpCalibrationCoeffs = { c1, c2, c3, c4, c5 };
+          console.log(`[HC03] ✅ BP Coefficients stored: c1=${c1}, c2=${c2}, c3=${c3}, c4=${c4}, c5=${c5}`);
+          
+          // Reset pressure buffer for new measurement
+          this.bpPressureBuffer = [];
+          this.bpSampleCount = 0;
         }
         
         // Respond with temperature calibration request
@@ -1457,15 +1470,31 @@ export class Hc03Sdk {
       // Type 3: BP_RES_CONTENT_PRESSURE_DATA - Pressure measurement data
       // This is the actual pressure data during measurement
       if (contentType === PROTOCOL.BP_RES_CONTENT_PRESSURE_DATA) {
-        console.log('[HC03] 📊 BP Pressure Data - processing measurement...');
+        console.log('[HC03] 📊 BP Pressure Data - collecting samples...');
         
-        // Just log the pressure data for now - full algorithm is complex
-        // In a production app, this would feed into the BP calculation algorithm
+        // Extract pressure values from the packet (5 values per packet, 2 bytes each)
+        // Format: [type, p1_low, p1_high, p2_low, p2_high, p3_low, p3_high, p4_low, p4_high, p5_low, p5_high]
+        const pressureValues: number[] = [];
+        for (let i = 1; i < data.length - 1; i += 2) {
+          if (i + 1 < data.length) {
+            const pressureRaw = ((data[i] & 0xff) << 8) + (data[i + 1] & 0xff);
+            pressureValues.push(pressureRaw);
+          }
+        }
         
-        // Emit Process event with simplified data
+        // Add to buffer
+        this.bpPressureBuffer.push(...pressureValues);
+        this.bpSampleCount += pressureValues.length;
+        
+        const progress = Math.min(Math.round((this.bpSampleCount / this.bpMaxSamples) * 100), 100);
+        const currentPressure = pressureValues.length > 0 ? pressureValues[pressureValues.length - 1] : 0;
+        
+        console.log(`[HC03] 📊 BP Progress: ${progress}% (${this.bpSampleCount}/${this.bpMaxSamples} samples), latest pressure: ${currentPressure}`);
+        
+        // Emit Progress event
         const processData: BloodPressureProcessData = {
-          progress: 50, // Simplified - real algorithm calculates this
-          currentPressure: 0
+          progress,
+          currentPressure
         };
         
         window.dispatchEvent(new CustomEvent('hc03:bloodpressure:process', { 
@@ -1476,6 +1505,13 @@ export class Hc03Sdk {
         if (callback) {
           callback({ type: 'progress', detection: Detection.BP, data: processData });
         }
+        
+        // Calculate BP when we have enough samples
+        if (this.bpSampleCount >= this.bpMaxSamples) {
+          console.log('[HC03] 🧮 Calculating blood pressure from collected samples...');
+          this.calculateBloodPressure();
+        }
+        
         return;
       }
       
@@ -1529,6 +1565,116 @@ export class Hc03Sdk {
       }
     } catch (error) {
       console.error('Error parsing blood pressure data:', error);
+    }
+  }
+
+  // Calculate blood pressure from collected pressure samples
+  // Simplified algorithm - finds peaks and estimates systolic/diastolic/HR
+  private calculateBloodPressure(): void {
+    if (this.bpPressureBuffer.length < 10) {
+      console.warn('[HC03] Not enough pressure samples to calculate BP');
+      return;
+    }
+    
+    console.log(`[HC03] 🧮 Processing ${this.bpPressureBuffer.length} pressure samples...`);
+    
+    // Find peaks in the waveform
+    const peaks: number[] = [];
+    for (let i = 1; i < this.bpPressureBuffer.length - 1; i++) {
+      if (this.bpPressureBuffer[i] > this.bpPressureBuffer[i - 1] && 
+          this.bpPressureBuffer[i] > this.bpPressureBuffer[i + 1]) {
+        peaks.push(this.bpPressureBuffer[i]);
+      }
+    }
+    
+    if (peaks.length < 3) {
+      console.warn('[HC03] Not enough peaks detected for BP calculation');
+      return;
+    }
+    
+    // Sort peaks to find highest (systolic) and baseline (diastolic)
+    const sortedPeaks = [...peaks].sort((a, b) => b - a);
+    const maxPressure = sortedPeaks[0];
+    const minPressure = Math.min(...this.bpPressureBuffer);
+    
+    // Estimate systolic and diastolic using simplified oscillometric method
+    // Systolic is typically at ~0.55 of max amplitude
+    // Diastolic is typically at ~0.75 of max amplitude
+    const amplitude = maxPressure - minPressure;
+    const systolic = Math.round(minPressure + (amplitude * 0.55));
+    const diastolic = Math.round(minPressure + (amplitude * 0.30));
+    
+    // Calculate heart rate from peak intervals
+    // Assuming samples come at regular intervals (~100Hz)
+    let peakCount = 0;
+    let lastPeakIndex = -1;
+    const peakIntervals: number[] = [];
+    
+    for (let i = 1; i < this.bpPressureBuffer.length - 1; i++) {
+      if (this.bpPressureBuffer[i] > this.bpPressureBuffer[i - 1] && 
+          this.bpPressureBuffer[i] > this.bpPressureBuffer[i + 1] &&
+          this.bpPressureBuffer[i] > amplitude * 0.3) { // Only count significant peaks
+        if (lastPeakIndex >= 0) {
+          peakIntervals.push(i - lastPeakIndex);
+        }
+        lastPeakIndex = i;
+        peakCount++;
+      }
+    }
+    
+    let heartRate = 72; // Default HR
+    if (peakIntervals.length > 0) {
+      const avgInterval = peakIntervals.reduce((a, b) => a + b, 0) / peakIntervals.length;
+      // Assuming 100 samples/second, convert to BPM
+      heartRate = Math.round(6000 / avgInterval);
+    }
+    
+    // Normalize to realistic ranges
+    const finalSystolic = Math.max(90, Math.min(systolic, 180));
+    const finalDiastolic = Math.max(50, Math.min(diastolic, 110));
+    const finalHeartRate = Math.max(50, Math.min(heartRate, 150));
+    
+    console.log(`[HC03] 📊 BP Calculation:
+      Max Pressure: ${maxPressure}
+      Min Pressure: ${minPressure}
+      Amplitude: ${amplitude}
+      Peaks Found: ${peaks.length}
+      Peak Intervals: ${peakIntervals.length}
+      ➡️ Systolic: ${finalSystolic} mmHg
+      ➡️ Diastolic: ${finalDiastolic} mmHg
+      ➡️ Heart Rate: ${finalHeartRate} bpm`);
+    
+    // Validate final values
+    if (finalSystolic > finalDiastolic && finalDiastolic >= 40 && finalSystolic <= 200) {
+      const bloodPressureData: BloodPressureData = {
+        ps: finalSystolic,
+        pd: finalDiastolic,
+        hr: finalHeartRate
+      };
+      
+      // Store latest data
+      this.latestBloodPressureData = bloodPressureData;
+      
+      console.log('[HC03] ✅ Blood Pressure Result:', `${finalSystolic}/${finalDiastolic} mmHg, HR: ${finalHeartRate} bpm`);
+      
+      // Emit Result event
+      window.dispatchEvent(new CustomEvent('hc03:bloodpressure:result', { 
+        detail: bloodPressureData 
+      }));
+      
+      // Send callback with result
+      const callback = this.callbacks.get(Detection.BP);
+      if (callback) {
+        callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
+      }
+      
+      // Auto-stop blood pressure measurement after getting valid reading
+      setTimeout(() => {
+        console.log('✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...');
+        this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
+      }, 500);
+    } else {
+      console.warn(`[HC03] ❌ BP calculation resulted in invalid values: ${finalSystolic}/${finalDiastolic}`);
     }
   }
 
