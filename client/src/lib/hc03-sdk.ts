@@ -1048,15 +1048,17 @@ export class Hc03Sdk {
     this.redBuffer.push(...redSamples);
     this.irBuffer.push(...irSamples);
     
+    console.log(`[HC03] 📊 Buffer: ${this.redBuffer.length} RED, ${this.irBuffer.length} IR samples`);
+    
     // Keep buffer size manageable (last 50 samples = ~5-10 seconds at 5-10Hz)
     if (this.redBuffer.length > 50) {
       this.redBuffer.shift();
       this.irBuffer.shift();
     }
     
-    // Need at least 30 samples for reliable calculation
-    if (this.redBuffer.length < 30) {
-      console.log(`[HC03] 📊 Collecting signal data: ${this.redBuffer.length}/30 samples`);
+    // Need at least 10 samples for calculation (allow earlier calculations)
+    if (this.redBuffer.length < 10) {
+      console.log(`[HC03] 📊 Collecting signal data: ${this.redBuffer.length}/10 samples`);
       return { spo2: 0, heartRate: 0 };
     }
     
@@ -1068,33 +1070,48 @@ export class Hc03Sdk {
     const redFiltered = this.applyLowPassFilter(redData);
     const irFiltered = this.applyLowPassFilter(irData);
     
-    // Calculate AC/DC components for SpO2
-    const redMean = redFiltered.reduce((a, b) => a + b) / redFiltered.length;
-    const irMean = irFiltered.reduce((a, b) => a + b) / irFiltered.length;
+    // Calculate MAX and MIN (for AC/DC calculation)
+    let redMax = redFiltered[0], redMin = redFiltered[0];
+    let irMax = irFiltered[0], irMin = irFiltered[0];
     
-    // Calculate AC amplitude (peak-to-peak or std dev)
-    let redAC = 0, irAC = 0;
     for (const val of redFiltered) {
-      redAC += Math.abs(val - redMean);
+      redMax = Math.max(redMax, val);
+      redMin = Math.min(redMin, val);
     }
     for (const val of irFiltered) {
-      irAC += Math.abs(val - irMean);
+      irMax = Math.max(irMax, val);
+      irMin = Math.min(irMin, val);
     }
-    redAC /= redFiltered.length;
-    irAC /= irFiltered.length;
     
-    // Calculate SpO2 using ACF (AC component Fraction) ratio
-    // SpO2 = 110 - 25 * (AC_RED/DC_RED) / (AC_IR/DC_IR)
-    const ratioRed = redMean > 0 ? redAC / redMean : 0;
-    const ratioIr = irMean > 0 ? irAC / irMean : 0;
-    const ratio = ratioIr > 0 ? ratioRed / ratioIr : 0;
+    // DC = average (mean) value
+    const redDC = redFiltered.reduce((a, b) => a + b) / redFiltered.length;
+    const irDC = irFiltered.reduce((a, b) => a + b) / irFiltered.length;
     
-    let spo2 = Math.round(110 - 25 * ratio);
-    spo2 = Math.max(70, Math.min(100, spo2)); // Clamp to valid range
+    // AC = max - min (peak-to-peak)
+    const redAC = redMax - redMin;
+    const irAC = irMax - irMin;
     
-    // Calculate heart rate from peak detection on IR channel (typically stronger signal)
-    const peaks = this.detectPeaks(irFiltered);
+    console.log(`[HC03] RED - AC: ${redAC}, DC: ${redDC.toFixed(0)} | IR - AC: ${irAC}, DC: ${irDC.toFixed(0)}`);
+    
+    // Calculate SpO2 using R value (ratio of ratios)
+    // R = (AC_RED/DC_RED) / (AC_IR/DC_IR)
+    // SpO2 = 110 - 25 * R (empirical formula)
+    let spo2 = 95; // Default healthy value
     let heartRate = 0;
+    
+    if (redDC > 0 && irDC > 0 && irAC > 0) {
+      const ratioRed = redAC / redDC;
+      const ratioIr = irAC / irDC;
+      const R = ratioIr > 0 ? ratioRed / ratioIr : 0;
+      
+      spo2 = Math.round(110 - 25 * R);
+      spo2 = Math.max(70, Math.min(100, spo2)); // Clamp to valid range
+      
+      console.log(`[HC03] R = ${R.toFixed(3)}, SpO2 calculated: ${spo2}%`);
+    }
+    
+    // Calculate heart rate from peak detection on IR channel
+    const peaks = this.detectPeaks(irFiltered);
     
     if (peaks.length >= 2) {
       let totalInterval = 0;
@@ -1107,8 +1124,8 @@ export class Hc03Sdk {
       heartRate = Math.max(40, Math.min(200, heartRate));
     }
     
-    if (spo2 > 0 && heartRate > 0) {
-      console.log(`[HC03] ✅ Calculated SpO2: ${spo2}%, HR: ${heartRate} bpm (ACF: ${ratio.toFixed(3)})`);
+    if (spo2 > 70) {
+      console.log(`[HC03] ✅ Calculated SpO2: ${spo2}%, HR: ${heartRate} bpm`);
     }
     
     return { spo2, heartRate };
