@@ -305,13 +305,16 @@ export class Hc03Sdk {
   // Waveform buffer for SpO2 calculation (accumulates samples across packets)
   private waveformBuffer: number[] = [];
   
-  // Blood Pressure measurement state
+  // Blood Pressure measurement state machine
+  private bpState: 'idle' | 'calibration' | 'inflating' | 'holding' | 'deflating' | 'calculating' = 'idle';
   private bpPressureBuffer: number[] = [];
+  private bpOscillationData: Array<{ pressure: number; amplitude: number; timestamp: number }> = [];
   private bpCalibrationCoeffs: { c1: number; c2: number; c3: number; c4: number; c5: number } | null = null;
-  private bpSampleCount: number = 0;
-  private bpMaxSamples: number = 100; // Collect up to 100 samples before calculating
+  private bpCurrentPressure: number = 0;
+  private bpMaxPressure: number = 0;
+  private bpTargetInflation: number = 180; // Target inflation pressure in mmHg
+  private bpInflationCheckInterval: any = null;
   private bpCalculated: boolean = false; // Flag to ensure we only calculate once per measurement
-  private bpInflationStarted: boolean = false; // Flag to track if cuff inflation has been triggered
   private bpZeroSampleCount: number = 0; // Count zero calibration samples before starting inflation
 
   private constructor() {
