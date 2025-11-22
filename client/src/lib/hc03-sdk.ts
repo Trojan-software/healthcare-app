@@ -707,6 +707,10 @@ export class Hc03Sdk {
     try {
       const rawData = new Uint8Array(data);
       
+      // Log all received data for debugging
+      const hexStr = Array.from(rawData.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+      console.log(`[HC03] 📥 Raw data received (${rawData.length} bytes): ${hexStr}${rawData.length > 20 ? '...' : ''}`);
+      
       if (rawData.length < Hc03Sdk.PACKAGE_TOTAL_LENGTH - 1) {
         console.warn('Insufficient data length:', rawData.length);
         return;
