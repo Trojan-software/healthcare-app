@@ -309,7 +309,7 @@ export class Hc03Sdk {
   private bpPressureBuffer: number[] = [];
   private bpCalibrationCoeffs: { c1: number; c2: number; c3: number; c4: number; c5: number } | null = null;
   private bpSampleCount: number = 0;
-  private bpMaxSamples: number = 100; // Collect up to 100 samples before calculating
+  private bpMaxSamples: number = 50; // Collect 50 samples for faster measurement (was 100)
   private bpCalculated: boolean = false; // Flag to ensure we only calculate once per measurement
   private bpInflationStarted: boolean = false; // Flag to track if cuff inflation has been triggered
   private bpZeroSampleCount: number = 0; // Count zero calibration samples before starting inflation
@@ -1737,6 +1737,17 @@ export class Hc03Sdk {
       
       console.log('[HC03] ✅ Blood Pressure Result:', `${finalSystolic}/${finalDiastolic} mmHg, HR: ${finalHeartRate} bpm`);
       
+      // Immediately send stop charging command to deflate cuff
+      if (this.writeCharacteristic) {
+        try {
+          const stopCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]);
+          this.writeCharacteristic.writeValueWithoutResponse(stopCmd);
+          console.log('[HC03] 🛑 Sent stop charging command - cuff deflating');
+        } catch (error) {
+          console.warn('[HC03] Failed to send stop charging command:', error);
+        }
+      }
+      
       // Emit Result event
       window.dispatchEvent(new CustomEvent('hc03:bloodpressure:result', { 
         detail: bloodPressureData 
@@ -1749,13 +1760,12 @@ export class Hc03Sdk {
       }
       
       // Auto-stop blood pressure measurement after getting valid reading
-      // Use a longer delay to allow device to finish sending data
       setTimeout(() => {
         if (this.activeDetections.has(Detection.BP)) {
           console.log('✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...');
           this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
         }
-      }, 2000); // Increased delay to 2 seconds
+      }, 1000); // Reduced to 1 second since we manually deflated
     } else {
       console.warn(`[HC03] ❌ BP calculation resulted in invalid values: ${finalSystolic}/${finalDiastolic}`);
     }
