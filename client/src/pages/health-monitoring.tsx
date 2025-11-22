@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import HC03DeviceManager from '@/components/HC03DeviceManager';
 import ECGReport from '@/components/ECGReport';
+import ECGMonitor from '@/components/ECGMonitor';
 import BloodGlucoseMonitor from '@/components/BloodGlucoseMonitor';
 import ConsolidatedVitalsTable from '@/components/ConsolidatedVitalsTable';
 import { useQuery } from '@tanstack/react-query';
@@ -293,6 +294,7 @@ export default function HealthMonitoringPage() {
       <Tabs defaultValue="device" className="space-y-6">
         <TabsList>
           <TabsTrigger value="device">Device Manager</TabsTrigger>
+          <TabsTrigger value="ecg">ECG Monitor</TabsTrigger>
           <TabsTrigger value="history">Recent History</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
@@ -300,6 +302,11 @@ export default function HealthMonitoringPage() {
         {/* Device Manager Tab */}
         <TabsContent value="device">
           <HC03DeviceManager patientId={patientId} />
+        </TabsContent>
+
+        {/* ECG Monitor Tab */}
+        <TabsContent value="ecg">
+          <ECGMonitor patientId={patientId} deviceId="HC02-F1B51D" />
         </TabsContent>
 
         {/* History Tab */}
