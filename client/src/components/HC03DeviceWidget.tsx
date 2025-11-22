@@ -682,6 +682,45 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       
       await hc03Sdk.startDetect(type);
       
+      // For temperature measurements, actively poll getTemperatureData()
+      if (type === Detection.BT) {
+        temperatureMeasurementStarted.current = true;
+        setMeasurementInProgress(Detection.BT);
+        
+        let pollCount = 0;
+        const pollInterval = setInterval(() => {
+          if (!temperatureMeasurementStarted.current || validDataReceived.current) {
+            clearInterval(pollInterval);
+            return;
+          }
+          
+          const tempData = hc03Sdk.getTemperatureData();
+          if (tempData && tempData.temperature > 30) {
+            console.log(`[HC03] Temperature polled: ${tempData.temperature}°C`);
+            validDataReceived.current = true;
+            clearInterval(pollInterval);
+            
+            // Create and add measurement data
+            const measurementData: MeasurementData = {
+              type: 'temperature',
+              value: { temperature: tempData.temperature },
+              timestamp: new Date().toISOString(),
+              deviceId: selectedDevice?.deviceId || ''
+            };
+            addMeasurementData(measurementData);
+            
+            // Auto-stop after getting data
+            setTimeout(() => stopMeasurement(Detection.BT), 500);
+            
+            toast({
+              title: "Temperature Measurement Complete",
+              description: `Body Temperature: ${tempData.temperature.toFixed(1)}°C`,
+            });
+          }
+          pollCount++;
+        }, 100); // Poll every 100ms
+      }
+      
       // Set timeout to auto-stop measurement after 30 seconds
       measurementTimeout.current = setTimeout(async () => {
         if (measurementInProgress === type) {
