@@ -310,6 +310,7 @@ export class Hc03Sdk {
   private bpCalibrationCoeffs: { c1: number; c2: number; c3: number; c4: number; c5: number } | null = null;
   private bpSampleCount: number = 0;
   private bpMaxSamples: number = 100; // Collect up to 100 samples before calculating
+  private bpCalculated: boolean = false; // Flag to ensure we only calculate once per measurement
 
   private constructor() {
     // Bind methods to preserve context
@@ -1018,6 +1019,12 @@ export class Hc03Sdk {
         console.log('💪 [HC03] → Parsing BLOOD PRESSURE');
         this.parseBloodPressureData(data).catch(e => console.error('BP parsing error:', e));
         break;
+      case 0x10:
+        // Device status notification - typically sent after measurement completion
+        // Data format: [status_code, param]
+        // Example: 0x01 0x07 = measurement complete/stopped
+        console.log('📢 [HC03] Device status notification (type 0x10) - measurement complete');
+        break;
       default:
         console.log(`⚠️ [HC03] Unknown type: 0x${type.toString(16)}, data: ${Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}`);
     }
@@ -1421,9 +1428,10 @@ export class Hc03Sdk {
           this.bpCalibrationCoeffs = { c1, c2, c3, c4, c5 };
           console.log(`[HC03] ✅ BP Coefficients stored: c1=${c1}, c2=${c2}, c3=${c3}, c4=${c4}, c5=${c5}`);
           
-          // Reset pressure buffer for new measurement
+          // Reset pressure buffer and flags for new measurement
           this.bpPressureBuffer = [];
           this.bpSampleCount = 0;
+          this.bpCalculated = false;
         }
         
         // Respond with temperature calibration request
@@ -1506,9 +1514,10 @@ export class Hc03Sdk {
           callback({ type: 'progress', detection: Detection.BP, data: processData });
         }
         
-        // Calculate BP when we have enough samples
-        if (this.bpSampleCount >= this.bpMaxSamples) {
+        // Calculate BP when we have enough samples (only once)
+        if (this.bpSampleCount >= this.bpMaxSamples && !this.bpCalculated) {
           console.log('[HC03] 🧮 Calculating blood pressure from collected samples...');
+          this.bpCalculated = true; // Set flag to prevent multiple calculations
           this.calculateBloodPressure();
         }
         
@@ -1669,10 +1678,13 @@ export class Hc03Sdk {
       }
       
       // Auto-stop blood pressure measurement after getting valid reading
+      // Use a longer delay to allow device to finish sending data
       setTimeout(() => {
-        console.log('✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...');
-        this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
-      }, 500);
+        if (this.activeDetections.has(Detection.BP)) {
+          console.log('✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...');
+          this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
+        }
+      }, 2000); // Increased delay to 2 seconds
     } else {
       console.warn(`[HC03] ❌ BP calculation resulted in invalid values: ${finalSystolic}/${finalDiastolic}`);
     }

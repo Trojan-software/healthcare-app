@@ -1,0 +1,72 @@
+📍 [HC03] Routing type 0x10 with 2 bytes: 0x01 0x07
+hc03-sdk.ts:1022 ⚠️ [HC03] Unknown type: 0x10, data: 0x01 0x07
+hc03-sdk.ts:1673 ✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...
+hc03-sdk.ts:647 Stopping BP detection...
+hc03-sdk.ts:1673 ✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...
+hc03-sdk.ts:647 Stopping BP detection...
+hc03-sdk.ts:795 [HC03] 📥 Raw data received (20 bytes): 0x02 0x02 0x00 0x04 0x10 0x14 0x01 0x07 0xaf 0x90 0xff 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+hc03-sdk.ts:866 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:879 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:998 📍 [HC03] Routing type 0x10 with 2 bytes: 0x01 0x07
+hc03-sdk.ts:1022 ⚠️ [HC03] Unknown type: 0x10, data: 0x01 0x07
+EnhancedPatientDashboard.tsx:186 Vital signs saved successfully
+hc03-sdk.ts:795 [HC03] 📥 Raw data received (20 bytes): 0x02 0x02 0x00 0x04 0x10 0x14 0x01 0x07 0xaf 0x90 0xff 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+hc03-sdk.ts:866 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:879 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:998 📍 [HC03] Routing type 0x10 with 2 bytes: 0x01 0x07
+hc03-sdk.ts:1022 ⚠️ [HC03] Unknown type: 0x10, data: 0x01 0x07
+hc03-sdk.ts:1673 ✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...
+hc03-sdk.ts:647 Stopping BP detection...
+EnhancedPatientDashboard.tsx:186 Vital signs saved successfully
+hc03-sdk.ts:795 [HC03] 📥 Raw data received (20 bytes): 0x02 0x02 0x00 0x04 0x10 0x14 0x01 0x07 0xaf 0x90 0xff 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+hc03-sdk.ts:866 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:879 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:998 📍 [HC03] Routing type 0x10 with 2 bytes: 0x01 0x07
+hc03-sdk.ts:1022 ⚠️ [HC03] Unknown type: 0x10, data: 0x01 0x07
+hc03-sdk.ts:1673 ✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...
+hc03-sdk.ts:647 Stopping BP detection...
+EnhancedPatientDashboard.tsx:186 Vital signs saved successfully
+hc03-sdk.ts:795 [HC03] 📥 Raw data received (20 bytes): 0x02 0x02 0x00 0x04 0x10 0x14 0x01 0x07 0xaf 0x90 0xff 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+hc03-sdk.ts:866 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:879 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:998 📍 [HC03] Routing type 0x10 with 2 bytes: 0x01 0x07
+hc03-sdk.ts:1022 ⚠️ [HC03] Unknown type: 0x10, data: 0x01 0x07
+EnhancedPatientDashboard.tsx:186 Vital signs saved successfully
+hc03-sdk.ts:1673 ✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...
+hc03-sdk.ts:647 Stopping BP detection...
+hc03-sdk.ts:1673 ✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...
+hc03-sdk.ts:647 Stopping BP detection...
+hc03-sdk.ts:795 [HC03] 📥 Raw data received (20 bytes): 0x02 0x02 0x00 0x04 0x10 0x14 0x01 0x07 0xaf 0x90 0xff 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+hc03-sdk.ts:866 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:879 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:998 📍 [HC03] Routing type 0x10 with 2 bytes: 0x01 0x07
+hc03-sdk.ts:1022 ⚠️ [HC03] Unknown type: 0x10, data: 0x01 0x07
+EnhancedPatientDashboard.tsx:186 Vital signs saved successfully
+hc03-sdk.ts:1673 ✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...
+hc03-sdk.ts:647 Stopping BP detection...
+hc03-sdk.ts:669 Failed to stop BP detection: NetworkError: GATT operation already in progress.
+stopDetect @ hc03-sdk.ts:669
+await in stopDetect
+(anonymous) @ hc03-sdk.ts:1674
+setTimeout
+calculateBloodPressure @ hc03-sdk.ts:1672
+parseBloodPressureData @ hc03-sdk.ts:1512
+routeData @ hc03-sdk.ts:1019
+parseData @ hc03-sdk.ts:807
+handleCharacteristicValueChanged @ hc03-sdk.ts:756Understand this error
+hc03-sdk.ts:1674 Auto-stop failed: NetworkError: GATT operation already in progress.
+(anonymous) @ hc03-sdk.ts:1674
+Promise.catch
+(anonymous) @ hc03-sdk.ts:1674
+setTimeout
+calculateBloodPressure @ hc03-sdk.ts:1672
+parseBloodPressureData @ hc03-sdk.ts:1512
+routeData @ hc03-sdk.ts:1019
+parseData @ hc03-sdk.ts:807
+handleCharacteristicValueChanged @ hc03-sdk.ts:756Understand this warning
+hc03-sdk.ts:795 [HC03] 📥 Raw data received (20 bytes): 0x02 0x02 0x00 0x04 0x10 0x14 0x01 0x07 0xaf 0x90 0xff 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+hc03-sdk.ts:866 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:879 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:998 📍 [HC03] Routing type 0x10 with 2 bytes: 0x01 0x07
+hc03-sdk.ts:1022 ⚠️ [HC03] Unknown type: 0x10, data: 0x01 0x07
+5EnhancedPatientDashboard.tsx:186 Vital signs saved successfully
