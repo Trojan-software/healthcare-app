@@ -1135,15 +1135,23 @@ export class Hc03Sdk {
   private parseBloodPressureData(data: Uint8Array): void {
     try {
       if (this.deviceType === 'HC02') {
-        // HC02-F1B51D: Simple format [SYS (byte), DIA (byte), HR (2 bytes little-endian)]
-        if (data.length < 4) {
+        // HC02-F1B51D: Format [ContentType, SysLo, SysHi, DiaLo, DiaHi, HRLo, HRHi, ...]
+        // All values are 16-bit little-endian (low byte first, high byte second)
+        if (data.length < 7) {
           console.warn('[HC03] HC02 Blood pressure data too short:', data.length);
           return;
         }
         
-        const systolic = data[0] & 0xFF;  // Systolic in mmHg
-        const diastolic = data[1] & 0xFF;  // Diastolic in mmHg
-        const heartRate = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);  // Little-endian HR
+        const contentType = data[0] & 0xFF;
+        const systolic = ((data[2] & 0xFF) << 8) | (data[1] & 0xFF);  // Little-endian 16-bit
+        const diastolic = ((data[4] & 0xFF) << 8) | (data[3] & 0xFF);  // Little-endian 16-bit
+        const heartRate = ((data[6] & 0xFF) << 8) | (data[5] & 0xFF);  // Little-endian 16-bit
+        
+        console.log(`💉 [HC03] HC02 Blood Pressure parsing:`);
+        console.log(`   Content type: 0x${contentType.toString(16)}`);
+        console.log(`   Raw systolic: [${data[1].toString(16)}, ${data[2].toString(16)}] = ${systolic}`);
+        console.log(`   Raw diastolic: [${data[3].toString(16)}, ${data[4].toString(16)}] = ${diastolic}`);
+        console.log(`   Raw HR: [${data[5].toString(16)}, ${data[6].toString(16)}] = ${heartRate}`);
         
         const bloodPressureData: BloodPressureData = {
           ps: systolic,
@@ -1154,7 +1162,6 @@ export class Hc03Sdk {
         this.latestBloodPressureData = bloodPressureData;
         
         console.log(`💉 [HC03] HC02 Blood Pressure: ${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
-        console.log(`   Data bytes: [${Array.from(data.slice(0, Math.min(5, data.length))).map(b => '0x' + b.toString(16).padStart(2, '0')).join(', ')}]`);
         
         const callback = this.callbacks.get(Detection.BP);
         if (callback) {
