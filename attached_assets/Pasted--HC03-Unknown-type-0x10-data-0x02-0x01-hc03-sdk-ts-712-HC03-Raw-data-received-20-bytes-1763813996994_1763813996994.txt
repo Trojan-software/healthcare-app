@@ -1,0 +1,28 @@
+⚠️ [HC03] Unknown type: 0x10, data: 0x02 0x01
+hc03-sdk.ts:712 [HC03] 📥 Raw data received (20 bytes): 0x02 0x08 0x00 0x04 0x82 0x8c 0xca 0x3b 0x9e 0x3a 0xcd 0x3b 0xa0 0x3a 0x70 0x8c 0xff 0x00 0x00 0x00
+hc03-sdk.ts:783 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:796 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:915 📍 [HC03] Routing type 0x82 with 8 bytes: 0xca 0x3b 0x9e 0x3a 0xcd 0x3b 0xa0 0x3a
+hc03-sdk.ts:923 🌡️ [HC03] → Parsing TEMPERATURE
+hc03-sdk.ts:1371 [HC03] 🌡️ Raw values: 15306 (153.1°C), 15006 (150.1°C) -> Average: 151.6°C
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'temperature', value: {…}, timestamp: '2025-11-22T12:19:30.006Z', deviceId: ''}
+hc03-sdk.ts:712 [HC03] 📥 Raw data received (20 bytes): 0x02 0x08 0x00 0x04 0x82 0x8c 0xcd 0x3b 0xa0 0x3a 0xca 0x3b 0xa0 0x3a 0x6a 0xb5 0xff 0x00 0x00 0x00
+hc03-sdk.ts:783 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:796 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:915 📍 [HC03] Routing type 0x82 with 8 bytes: 0xcd 0x3b 0xa0 0x3a 0xca 0x3b 0xa0 0x3a
+hc03-sdk.ts:923 🌡️ [HC03] → Parsing TEMPERATURE
+hc03-sdk.ts:1371 [HC03] 🌡️ Raw values: 15309 (153.1°C), 15008 (150.1°C) -> Average: 151.6°C
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'temperature', value: {…}, timestamp: '2025-11-22T12:19:30.819Z', deviceId: ''}
+hc03-sdk.ts:712 [HC03] 📥 Raw data received (20 bytes): 0x02 0x08 0x00 0x04 0x82 0x8c 0xca 0x3b 0xa0 0x3a 0xc8 0x3b 0xa0 0x3a 0x1a 0x9f 0xff 0x00 0x00 0x00
+hc03-sdk.ts:783 🔍 [HC03] CRC validation check (single): deviceName="HC02-F1B51D", endMarker=0xff, isHC02=true
+hc03-sdk.ts:796 ✅ [HC03] Skipping CRC validation for HC02 device (different algorithm)
+hc03-sdk.ts:915 📍 [HC03] Routing type 0x82 with 8 bytes: 0xca 0x3b 0xa0 0x3a 0xc8 0x3b 0xa0 0x3a
+hc03-sdk.ts:923 🌡️ [HC03] → Parsing TEMPERATURE
+hc03-sdk.ts:1371 [HC03] 🌡️ Raw values: 15306 (153.1°C), 15008 (150.1°C) -> Average: 151.6°C
+EnhancedPatientDashboard.tsx:1022 HC03 data received: 
+{type: 'temperature', value: {…}, timestamp: '2025-11-22T12:19:31.604Z', deviceId: ''}
+chunk-PNGJSGSD.js?v=ed966185:1233 Error: <polyline> attribute points: Expected number, "10,NaN 35.217391304…".
+﻿
+

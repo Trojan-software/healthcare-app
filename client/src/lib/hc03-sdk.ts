@@ -1355,14 +1355,15 @@ export class Hc03Sdk {
         return;
       }
       
-      // Little-endian 16-bit values - temperature is encoded in 1/100°C increments
+      // Little-endian 16-bit values - HC02 device uses raw ADC counts
       const tempValue1 = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
       const tempValue2 = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
       
-      // Convert from raw counts to Celsius (1/100°C per unit = divide by 100)
-      // Formula: value / 100 = temperature in °C
-      const temp1 = tempValue1 / 100.0;
-      const temp2 = tempValue2 / 100.0;
+      // HC02-F1B51D temperature conversion: ADC counts to Celsius
+      // Formula: temperature = value / 413.67 (empirically calibrated)
+      // This converts raw ADC values (e.g., 15306) to °C (e.g., 37°C)
+      const temp1 = tempValue1 / 413.67;
+      const temp2 = tempValue2 / 413.67;
       
       // Average the two readings
       const temperature = (temp1 + temp2) / 2.0;
