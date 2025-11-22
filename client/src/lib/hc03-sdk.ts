@@ -939,7 +939,7 @@ export class Hc03Sdk {
         break;
       case Hc03Sdk.BP_RES_TYPE:
         console.log('💪 [HC03] → Parsing BLOOD PRESSURE');
-        this.parseBloodPressureData(data);
+        this.parseBloodPressureData(data).catch(e => console.error('BP parsing error:', e));
         break;
       default:
         console.log(`⚠️ [HC03] Unknown type: 0x${type.toString(16)}, data: ${Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}`);
@@ -1266,11 +1266,12 @@ export class Hc03Sdk {
   }
 
   // Blood Pressure Data Parsing (from Flutter SDK bpEngine.dart)
-  private parseBloodPressureData(data: Uint8Array): void {
+  // Handles three types: SendData, Process, Result
+  private async parseBloodPressureData(data: Uint8Array): Promise<void> {
     try {
       console.log(`[HC03] BP raw data: ${Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')} (length: ${data.length})`);
       
-      if (data.length < 2) {
+      if (data.length < 1) {
         console.warn('[HC03] Blood pressure data too short');
         return;
       }
@@ -1278,14 +1279,62 @@ export class Hc03Sdk {
       const contentType = data[0] & 0xFF;
       console.log(`[HC03] BP content type: 0x${contentType.toString(16)}`);
       
-      // BP can come in multiple formats - try to parse as pressure data if we have enough bytes
+      // Type 1: BloodPressureSendData - Device needs us to send command back
+      // The device sends us data that we need to write back immediately
+      if (contentType === 0x00 || contentType === 0x01 || contentType === 0x02 || contentType === 0x03) {
+        console.log('[HC03] 📤 BP SendData - sending command back to device...');
+        
+        // The data array IS the sendList - write it back to the device
+        if (this.writeCharacteristic) {
+          try {
+            await this.writeCharacteristic.writeValue(data);
+            console.log('[HC03] ✅ Sent BP command back to device');
+            
+            // Emit SendData event
+            window.dispatchEvent(new CustomEvent('hc03:bloodpressure:send', { 
+              detail: { sendList: Array.from(data) } 
+            }));
+          } catch (error) {
+            console.error('[HC03] ❌ Failed to send BP command:', error);
+          }
+        }
+        return;
+      }
+      
+      // Type 2: BloodPressureProcess - Progress update during measurement
+      // Usually has a progress value (0-100)
+      if (contentType === 0x04 || contentType === 0x05) {
+        const progress = data.length > 1 ? data[1] & 0xFF : 0;
+        const currentPressure = data.length > 2 ? data[2] & 0xFF : 0;
+        
+        console.log(`[HC03] 📊 BP Process: ${progress}%, pressure: ${currentPressure} mmHg`);
+        
+        const processData: BloodPressureProcessData = {
+          progress,
+          currentPressure
+        };
+        
+        // Emit Process event
+        window.dispatchEvent(new CustomEvent('hc03:bloodpressure:process', { 
+          detail: processData 
+        }));
+        
+        const callback = this.callbacks.get(Detection.BP);
+        if (callback) {
+          callback({ type: 'progress', detection: Detection.BP, data: processData });
+        }
+        return;
+      }
+      
+      // Type 3: BloodPressureResult - Final measurement result
+      // Format: [type, sys_low, sys_high, dia_low, dia_high, hr_low, hr_high]
       if (data.length >= 7) {
-        // Try parsing as little-endian pressure values (format: [type?, sys_low, sys_high, dia_low, dia_high, hr_low, hr_high])
+        // Parse as little-endian pressure values
         const systolic = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
         const diastolic = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
         const heartRate = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
         
-        console.log(`[HC03] BP parsed: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
+        console.log(`[HC03] BP result parsed: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         
         // Validate ranges before accepting
         if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130 && heartRate >= 40 && heartRate <= 200) {
@@ -1298,15 +1347,20 @@ export class Hc03Sdk {
           // Store latest data for getter methods
           this.latestBloodPressureData = bloodPressureData;
           
-          console.log('[HC03] ✅ Blood Pressure:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
+          console.log('[HC03] ✅ Blood Pressure Result:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
           
-          // Send callback FIRST to ensure data reaches dashboard
+          // Emit Result event
+          window.dispatchEvent(new CustomEvent('hc03:bloodpressure:result', { 
+            detail: bloodPressureData 
+          }));
+          
+          // Send callback with result
           const callback = this.callbacks.get(Detection.BP);
           if (callback) {
             callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
           }
           
-          // Auto-stop blood pressure measurement after getting valid reading (async, non-blocking)
+          // Auto-stop blood pressure measurement after getting valid reading
           setTimeout(() => {
             console.log('✅ [HC03] Valid blood pressure received, auto-stopping measurement...');
             this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
@@ -1315,7 +1369,7 @@ export class Hc03Sdk {
           console.warn(`[HC03] BP values out of range: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         }
       } else {
-        console.log('[HC03] BP data incomplete for parsing (need >= 7 bytes)');
+        console.log(`[HC03] Unknown BP data format (type: 0x${contentType.toString(16)}, length: ${data.length})`);
       }
     } catch (error) {
       console.error('Error parsing blood pressure data:', error);
