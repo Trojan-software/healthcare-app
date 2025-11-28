@@ -1147,9 +1147,47 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
                     onClick={() => startMeasurement(Detection.ECG)}
                     disabled={measurementInProgress === Detection.ECG}
                     data-testid="button-ecg-measurement"
+                    className={(() => {
+                      const latestECG = realtimeData.find(d => d.type === 'ecg');
+                      // Show green during measurement OR green with result if we have data (during auto-stop)
+                      if (measurementInProgress === Detection.ECG) {
+                        return latestECG ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-green-500 text-white hover:bg-green-600';
+                      }
+                      return '';
+                    })()}
                   >
                     <Heart className="h-4 w-4 mr-2" />
-                    {measurementInProgress === Detection.ECG ? 'Recording...' : 'ECG'}
+                    <div className="flex flex-col items-start">
+                      {(() => {
+                        const latestECG = realtimeData.find(d => d.type === 'ecg');
+                        
+                        // Show result immediately if available (even during auto-stop)
+                        if (latestECG && measurementInProgress === Detection.ECG) {
+                          return (
+                            <>
+                              <span className="text-xs opacity-90">ECG</span>
+                              <span className="font-bold text-lg">{latestECG.value.heartRate} bpm</span>
+                            </>
+                          );
+                        } else if (measurementInProgress === Detection.ECG) {
+                          return (
+                            <>
+                              <span className="font-semibold">Recording...</span>
+                              <span className="text-xs">ECG</span>
+                            </>
+                          );
+                        } else if (latestECG) {
+                          return (
+                            <>
+                              <span className="text-xs text-muted-foreground">ECG</span>
+                              <span className="font-semibold">{latestECG.value.heartRate} bpm</span>
+                            </>
+                          );
+                        } else {
+                          return <span>ECG</span>;
+                        }
+                      })()}
+                    </div>
                   </Button>
                   
                   <Button
