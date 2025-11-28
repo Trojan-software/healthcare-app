@@ -1262,11 +1262,46 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
                     variant="outline"
                     onClick={() => startMeasurement(Detection.BG)}
                     disabled={measurementInProgress === Detection.BG}
-                    className="col-span-2"
+                    className={`col-span-2 ${(() => {
+                      const latestBG = realtimeData.find(d => d.type === 'bloodGlucose');
+                      if (measurementInProgress === Detection.BG) {
+                        return latestBG ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-green-500 text-white hover:bg-green-600';
+                      }
+                      return '';
+                    })()}`}
                     data-testid="button-glucose-measurement"
                   >
                     <Droplets className="h-4 w-4 mr-2" />
-                    {measurementInProgress === Detection.BG ? 'Measuring...' : 'Blood Glucose'}
+                    <div className="flex flex-col items-start">
+                      {(() => {
+                        const latestBG = realtimeData.find(d => d.type === 'bloodGlucose');
+                        
+                        if (latestBG && measurementInProgress === Detection.BG) {
+                          return (
+                            <>
+                              <span className="text-xs opacity-90">Blood Glucose</span>
+                              <span className="font-bold text-lg">{latestBG.value.bloodGlucosePaperData?.toFixed(1)} mmol/L</span>
+                            </>
+                          );
+                        } else if (measurementInProgress === Detection.BG) {
+                          return (
+                            <>
+                              <span className="font-semibold">Measuring...</span>
+                              <span className="text-xs">Blood Glucose</span>
+                            </>
+                          );
+                        } else if (latestBG) {
+                          return (
+                            <>
+                              <span className="text-xs text-muted-foreground">Blood Glucose</span>
+                              <span className="font-semibold">{latestBG.value.bloodGlucosePaperData?.toFixed(1)} mmol/L</span>
+                            </>
+                          );
+                        } else {
+                          return <span>Blood Glucose</span>;
+                        }
+                      })()}
+                    </div>
                   </Button>
                 </div>
 
