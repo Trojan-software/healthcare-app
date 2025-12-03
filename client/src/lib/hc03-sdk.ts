@@ -1618,10 +1618,11 @@ export class Hc03Sdk {
           }
           
           // Auto-stop blood pressure measurement after getting valid reading
+          // Wait 2 seconds to ensure data is saved before stopping
           setTimeout(() => {
             console.log('✅ [HC03] Valid blood pressure received, auto-stopping measurement...');
             this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
-          }, 500);
+          }, 2000);
         } else {
           console.warn(`[HC03] BP values out of range: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         }
@@ -1760,12 +1761,13 @@ export class Hc03Sdk {
       }
       
       // Auto-stop blood pressure measurement after getting valid reading
+      // Wait 2 seconds to ensure data is saved before stopping
       setTimeout(() => {
         if (this.activeDetections.has(Detection.BP)) {
           console.log('✅ [HC03] Valid blood pressure calculated, auto-stopping measurement...');
           this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
         }
-      }, 1000); // Reduced to 1 second since we manually deflated
+      }, 2000);
     } else {
       console.warn(`[HC03] ❌ BP calculation resulted in invalid values: ${finalSystolic}/${finalDiastolic}`);
     }
