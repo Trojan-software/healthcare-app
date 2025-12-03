@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { hc03Sdk, Detection, type ECGData, type BloodOxygenData, type BloodPressureData, type TemperatureData, type BatteryData } from '@/lib/hc03-sdk';
 import BluetoothTroubleshootingGuide from '@/components/BluetoothTroubleshootingGuide';
+import BloodGlucoseMeasurementDialog from '@/components/BloodGlucoseMeasurementDialog';
 
 interface HC03DeviceData {
   deviceId: string;
