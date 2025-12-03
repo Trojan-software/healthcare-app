@@ -710,7 +710,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
             addMeasurementData(measurementData);
             
             // Auto-stop after getting data
-            setTimeout(() => stopMeasurement(Detection.BT), 500);
+            setTimeout(() => stopMeasurement(Detection.BT), 2000);
             
             toast({
               title: "Temperature Measurement Complete",
@@ -747,7 +747,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
             addMeasurementData(measurementData);
             
             // Auto-stop after getting data
-            setTimeout(() => stopMeasurement(Detection.BG), 500);
+            setTimeout(() => stopMeasurement(Detection.BG), 3000);
             
             toast({
               title: "Blood Glucose Measurement Complete",
@@ -788,7 +788,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
             addMeasurementData(measurementData);
             
             // Auto-stop after getting data
-            setTimeout(() => stopMeasurement(Detection.BP), 500);
+            setTimeout(() => stopMeasurement(Detection.BP), 2000);
             
             toast({
               title: "Blood Pressure Measurement Complete",
