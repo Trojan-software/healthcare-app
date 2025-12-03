@@ -1873,10 +1873,11 @@ export class Hc03Sdk {
           }
           
           // Auto-stop blood glucose measurement after getting valid reading
+          // Wait 3 seconds to ensure data is saved before stopping
           setTimeout(() => {
             console.log('✅ [HC03] Valid blood glucose received, auto-stopping measurement...');
             this.stopDetect(Detection.BG).catch(e => console.warn('Auto-stop failed:', e));
-          }, 500);
+          }, 3000);
         } else {
           console.warn(`[HC03] BG value out of range: ${glucose} mmol/L (expected 2.2-35)`);
         }
