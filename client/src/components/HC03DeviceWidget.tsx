@@ -68,6 +68,9 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
   const [isTroubleshootingOpen, setIsTroubleshootingOpen] = useState(true);
   const [showManualTemperature, setShowManualTemperature] = useState(false);
   const [manualTemperature, setManualTemperature] = useState<string>('');
+  const [showGlucoseDialog, setShowGlucoseDialog] = useState(false);
+  const [glucoseDialogLoading, setGlucoseDialogLoading] = useState(false);
+  const [glucoseResult, setGlucoseResult] = useState<number | null>(null);
   
   const wsConnection = useRef<WebSocket | null>(null);
   const measurementTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -881,6 +884,34 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
     });
   };
 
+  const handleBloodGlucoseMeasurementStart = async (period: string, checkCode: string) => {
+    setGlucoseDialogLoading(true);
+    setGlucoseResult(null);
+    
+    try {
+      await startMeasurement(Detection.BG);
+      
+      let attempts = 0;
+      const resultInterval = setInterval(() => {
+        const latestBG = realtimeData.find(d => d.type === 'bloodGlucose');
+        if (latestBG && latestBG.value?.bloodGlucosePaperData) {
+          setGlucoseResult(latestBG.value.bloodGlucosePaperData);
+          clearInterval(resultInterval);
+          setGlucoseDialogLoading(false);
+        }
+        
+        attempts++;
+        if (attempts >= 30) {
+          clearInterval(resultInterval);
+          setGlucoseDialogLoading(false);
+        }
+      }, 1000);
+    } catch (error) {
+      console.error('Error starting blood glucose measurement:', error);
+      setGlucoseDialogLoading(false);
+    }
+  };
+
   const queryBattery = async () => {
     if (!hc03Sdk.getConnectionStatus()) return;
     
@@ -1261,7 +1292,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
                   
                   <Button
                     variant="outline"
-                    onClick={() => startMeasurement(Detection.BG)}
+                    onClick={() => setShowGlucoseDialog(true)}
                     disabled={measurementInProgress === Detection.BG}
                     className={`col-span-2 ${(() => {
                       const latestBG = realtimeData.find(d => d.type === 'bloodGlucose');
@@ -1432,6 +1463,15 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Blood Glucose Measurement Dialog */}
+        <BloodGlucoseMeasurementDialog
+          open={showGlucoseDialog}
+          onOpenChange={setShowGlucoseDialog}
+          onMeasurementStart={handleBloodGlucoseMeasurementStart}
+          isLoading={glucoseDialogLoading}
+          result={glucoseResult}
+        />
 
         {/* Device Details Dialog */}
         <Dialog open={showDeviceDetails} onOpenChange={setShowDeviceDetails}>
