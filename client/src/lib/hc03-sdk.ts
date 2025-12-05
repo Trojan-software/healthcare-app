@@ -2177,42 +2177,63 @@ export class Hc03Sdk {
   // Getter methods as per Flutter SDK API Guide
   
   /**
-   * Get latest ECG data - getEcgData equivalent from Flutter SDK
+   * Get latest ECG data - matches official Flutter SDK API: getEcgData
    */
   public getEcgData(): ECGData | null {
     return this.latestEcgData;
   }
   
   /**
-   * Get latest blood oxygen data 
+   * Get latest blood oxygen data - matches official Flutter SDK API: getBloodOxygen
+   */
+  public getBloodOxygen(): BloodOxygenData | null {
+    return this.latestBloodOxygenData;
+  }
+  
+  /**
+   * Alias for getBloodOxygen for backward compatibility
    */
   public getBloodOxygenData(): BloodOxygenData | null {
     return this.latestBloodOxygenData;
   }
   
   /**
-   * Get latest blood pressure data
+   * Get latest blood pressure data - matches official Flutter SDK API: getBloodPressureData
    */
   public getBloodPressureData(): BloodPressureData | null {
     return this.latestBloodPressureData;
   }
   
   /**
-   * Get latest blood glucose data
+   * Get latest blood glucose data - matches official Flutter SDK API: getBloodGlucoseData
    */
   public getBloodGlucoseData(): BloodGlucoseData | null {
     return this.latestBloodGlucoseData;
   }
   
   /**
-   * Get latest temperature data
+   * Get latest temperature data - matches official Flutter SDK API: getTemperature
+   */
+  public getTemperature(): TemperatureData | null {
+    return this.latestTemperatureData;
+  }
+  
+  /**
+   * Alias for getTemperature for backward compatibility
    */
   public getTemperatureData(): TemperatureData | null {
     return this.latestTemperatureData;
   }
   
   /**
-   * Get latest battery data
+   * Get latest battery data - matches official Flutter SDK API: getBattery
+   */
+  public getBattery(): BatteryData | null {
+    return this.latestBatteryData;
+  }
+  
+  /**
+   * Alias for getBattery for backward compatibility
    */
   public getBatteryData(): BatteryData | null {
     return this.latestBatteryData;
