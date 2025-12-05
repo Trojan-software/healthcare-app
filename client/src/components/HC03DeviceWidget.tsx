@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -110,8 +110,10 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
   };
 
   const handleECGData = (event: any) => {
+    console.log('💓 [HC03] ECG event received:', event.type);
     if (event.type === 'data') {
       const ecgData = event.data as ECGData;
+      console.log('💓 [HC03] ECG data:', ecgData);
       const measurementData: MeasurementData = {
         type: 'ecg',
         value: {
@@ -335,6 +337,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
   };
 
   const handleBloodGlucoseData = (event: any) => {
+    console.log('🩸 [HC03] Blood Glucose event received:', event.type, event.data);
     if (event.type === 'data') {
       const measurementData: MeasurementData = {
         type: 'bloodGlucose',
@@ -346,7 +349,8 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       addMeasurementData(measurementData);
       
       // Update dialog result if dialog is open
-      if (showGlucoseDialog && event.data?.bloodGlucosePaperData && event.data.bloodGlucosePaperData > 0) {
+      if (event.data?.bloodGlucosePaperData && event.data.bloodGlucosePaperData > 0) {
+        console.log('🩸 [HC03] Setting glucose result:', event.data.bloodGlucosePaperData);
         setGlucoseResult(event.data.bloodGlucosePaperData);
         setGlucoseDialogLoading(false);
       }
@@ -414,7 +418,12 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
   };
 
   const addMeasurementData = (measurementData: MeasurementData) => {
-    setRealtimeData(prev => [measurementData, ...prev.slice(0, 9)]);
+    console.log('📊 [HC03] Adding measurement:', measurementData.type, measurementData.value);
+    setRealtimeData(prev => {
+      const updated = [measurementData, ...prev.slice(0, 9)];
+      console.log('📊 [HC03] Updated realtimeData count:', updated.length);
+      return updated;
+    });
     
     if (onDataUpdate) {
       onDataUpdate(measurementData);
@@ -682,6 +691,8 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
     }
     
     try {
+      console.log(`[HC03] ▶️ Starting ${type} measurement...`);
+      
       // Clear any existing timeout
       if (measurementTimeout.current) {
         clearTimeout(measurementTimeout.current);
@@ -689,141 +700,111 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       
       // Reset valid data flag
       validDataReceived.current = false;
+      setMeasurementInProgress(type);
       
+      // Start measurement
       await hc03Sdk.startDetect(type);
+      console.log(`[HC03] Measurement command sent, now polling for data...`);
       
-      // For temperature measurements, actively poll getTemperatureData()
-      if (type === Detection.BT) {
-        temperatureMeasurementStarted.current = true;
-        setMeasurementInProgress(Detection.BT);
+      // POLLING APPROACH: Poll the SDK getter methods directly
+      let pollCount = 0;
+      const pollInterval = setInterval(() => {
+        pollCount++;
         
-        let pollCount = 0;
-        const pollInterval = setInterval(() => {
-          if (!temperatureMeasurementStarted.current || validDataReceived.current) {
-            clearInterval(pollInterval);
-            return;
-          }
-          
-          const tempData = hc03Sdk.getTemperatureData();
-          if (tempData && tempData.temperature > 30) {
-            console.log(`[HC03] Temperature polled: ${tempData.temperature}°C`);
-            validDataReceived.current = true;
-            clearInterval(pollInterval);
-            
-            // Create and add measurement data
-            const measurementData: MeasurementData = {
-              type: 'temperature',
-              value: { temperature: tempData.temperature },
-              timestamp: new Date().toISOString(),
-              deviceId: selectedDevice?.deviceId || ''
-            };
-            addMeasurementData(measurementData);
-            
-            // Auto-stop after getting data
-            setTimeout(() => stopMeasurement(Detection.BT), 2000);
-            
+        if (validDataReceived.current || pollCount > 300) { // 30 seconds max
+          clearInterval(pollInterval);
+          if (pollCount > 300) {
+            console.log(`[HC03] ⏱️ Poll timeout after ${pollCount} attempts`);
+            stopMeasurement(type);
             toast({
-              title: "Temperature Measurement Complete",
-              description: `Body Temperature: ${tempData.temperature.toFixed(1)}°C`,
+              title: "Measurement Timeout",
+              description: "No data received. Please try again.",
+              variant: "destructive"
             });
           }
-          pollCount++;
-        }, 100); // Poll every 100ms
-      }
-      
-      // For blood glucose measurements, actively poll getBloodGlucoseData()
-      if (type === Detection.BG) {
-        setMeasurementInProgress(Detection.BG);
-        
-        const glucoseInterval = setInterval(() => {
-          if (!measurementInProgress || validDataReceived.current) {
-            clearInterval(glucoseInterval);
-            return;
-          }
-          
-          const glucoseData = hc03Sdk.getBloodGlucoseData();
-          if (glucoseData?.bloodGlucosePaperData && glucoseData.bloodGlucosePaperData > 0) {
-            console.log(`[HC03] Blood Glucose polled: ${glucoseData.bloodGlucosePaperData} mmol/L`);
-            validDataReceived.current = true;
-            clearInterval(glucoseInterval);
-            
-            // Create and add measurement data
-            const measurementData: MeasurementData = {
-              type: 'bloodGlucose',
-              value: glucoseData,
-              timestamp: new Date().toISOString(),
-              deviceId: selectedDevice?.deviceId || ''
-            };
-            addMeasurementData(measurementData);
-            
-            // Auto-stop after getting data
-            setTimeout(() => stopMeasurement(Detection.BG), 3000);
-            
-            toast({
-              title: "Blood Glucose Measurement Complete",
-              description: `Glucose: ${glucoseData.bloodGlucosePaperData.toFixed(1)} mmol/L`,
-            });
-          }
-        }, 100); // Poll every 100ms
-      }
-      
-      // For blood pressure measurements, actively poll getBloodPressureData()
-      if (type === Detection.BP) {
-        setMeasurementInProgress(Detection.BP);
-        
-        const bpInterval = setInterval(() => {
-          if (!measurementInProgress || validDataReceived.current) {
-            clearInterval(bpInterval);
-            return;
-          }
-          
-          const bpData = hc03Sdk.getBloodPressureData();
-          // BloodPressureResult has: ps (systolic), pd (diastolic), hr (heart rate)
-          if (bpData?.ps && bpData?.pd && bpData.ps > 0 && bpData.pd > 0) {
-            console.log(`[HC03] Blood Pressure polled: ${bpData.ps}/${bpData.pd} mmHg, HR: ${bpData.hr} bpm`);
-            validDataReceived.current = true;
-            clearInterval(bpInterval);
-            
-            // Create and add measurement data
-            const measurementData: MeasurementData = {
-              type: 'bloodPressure',
-              value: {
-                systolic: bpData.ps,
-                diastolic: bpData.pd,
-                heartRate: bpData.hr
-              },
-              timestamp: new Date().toISOString(),
-              deviceId: selectedDevice?.deviceId || ''
-            };
-            addMeasurementData(measurementData);
-            
-            // Auto-stop after getting data
-            setTimeout(() => stopMeasurement(Detection.BP), 2000);
-            
-            toast({
-              title: "Blood Pressure Measurement Complete",
-              description: `BP: ${bpData.ps}/${bpData.pd} mmHg | HR: ${bpData.hr} bpm`,
-            });
-          }
-        }, 100); // Poll every 100ms
-      }
-      
-      // Set timeout to auto-stop measurement after 30 seconds
-      measurementTimeout.current = setTimeout(async () => {
-        if (measurementInProgress === type) {
-          await stopMeasurement(type);
-          toast({
-            title: "Measurement Timeout",
-            description: "Measurement stopped after 30 seconds. Please try again.",
-            variant: "destructive"
-          });
+          return;
         }
-      }, 30000);
+        
+        try {
+          let hasData = false;
+          let data: any = null;
+          
+          switch(type) {
+            case Detection.ECG:
+              data = hc03Sdk.getEcgData();
+              if (data?.hr && data.hr > 0) hasData = true;
+              break;
+            case Detection.OX:
+              data = hc03Sdk.getBloodOxygenData();
+              if (data?.bloodOxygen && data.bloodOxygen > 0) hasData = true;
+              break;
+            case Detection.BP:
+              data = hc03Sdk.getBloodPressureData();
+              if (data?.ps && data.ps > 0 && data?.pd && data.pd > 0) hasData = true;
+              break;
+            case Detection.BT:
+              data = hc03Sdk.getTemperatureData();
+              if (data?.temperature && data.temperature > 30) hasData = true;
+              break;
+            case Detection.BG:
+              data = hc03Sdk.getBloodGlucoseData();
+              if (data?.bloodGlucosePaperData && data.bloodGlucosePaperData > 0) hasData = true;
+              break;
+            case Detection.BATTERY:
+              data = hc03Sdk.getBatteryData();
+              if (data?.batteryLevel !== undefined) hasData = true;
+              break;
+          }
+          
+          if (hasData && data) {
+            console.log(`[HC03] ✅ Data received on attempt ${pollCount}:`, data);
+            validDataReceived.current = true;
+            clearInterval(pollInterval);
+            
+            // Add measurement based on type
+            const measurementData: MeasurementData = {
+              type: type === Detection.OX ? 'bloodOxygen' : 
+                    type === Detection.BP ? 'bloodPressure' :
+                    type === Detection.BT ? 'temperature' :
+                    type === Detection.BG ? 'bloodGlucose' :
+                    type === Detection.BATTERY ? 'battery' : 'ecg',
+              value: data,
+              timestamp: new Date().toISOString(),
+              deviceId: selectedDevice?.deviceId || ''
+            };
+            addMeasurementData(measurementData);
+            
+            // Auto-stop with appropriate delay
+            const stopDelay = type === Detection.ECG ? 30000 : 
+                            type === Detection.BP ? 2000 : 
+                            type === Detection.BG ? 3000 : 2000;
+            setTimeout(() => stopMeasurement(type), stopDelay);
+            
+            // Show success toast
+            const toastMsgs: Record<Detection, string> = {
+              [Detection.ECG]: `Heart Rate: ${data.hr} bpm`,
+              [Detection.OX]: `Blood O₂: ${data.bloodOxygen}%`,
+              [Detection.BP]: `BP: ${data.ps}/${data.pd} mmHg`,
+              [Detection.BT]: `Temperature: ${data.temperature?.toFixed(1)}°C`,
+              [Detection.BG]: `Glucose: ${data.bloodGlucosePaperData?.toFixed(1)} mmol/L`,
+              [Detection.BATTERY]: `Battery: ${data.batteryLevel}%`
+            };
+            
+            toast({
+              title: "Measurement Complete",
+              description: toastMsgs[type] || 'Measurement successful'
+            });
+          }
+        } catch (err) {
+          console.warn(`[HC03] Poll error on attempt ${pollCount}:`, err);
+        }
+      }, 100); // Poll every 100ms
+      
     } catch (error) {
       console.error(`Error starting ${type} measurement:`, error);
       toast({
         title: "Measurement Error",
-        description: `Failed to start ${type} measurement`,
+        description: `Failed to start ${type} measurement: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     }
