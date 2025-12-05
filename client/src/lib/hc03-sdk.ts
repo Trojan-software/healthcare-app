@@ -1257,27 +1257,47 @@ export class Hc03Sdk {
   private estimateHeartRateFromECG(samples: number[]): number {
     if (samples.length < 100) return 0;
     
-    // Calculate statistics for signed values
-    const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
-    const max = Math.max(...samples);
-    const min = Math.min(...samples);
+    // Filter out extreme values (outliers/saturation) for better statistics
+    // Keep values within 95th percentile to avoid ADC saturation effects
+    const sorted = [...samples].sort((a, b) => a - b);
+    const p5 = sorted[Math.floor(sorted.length * 0.05)];
+    const p95 = sorted[Math.floor(sorted.length * 0.95)];
+    const filtered = samples.filter(s => s >= p5 && s <= p95);
+    
+    if (filtered.length < 50) {
+      // Not enough valid samples after filtering
+      return 0;
+    }
+    
+    // Calculate statistics on filtered values
+    const mean = filtered.reduce((a, b) => a + b, 0) / filtered.length;
+    const max = Math.max(...filtered);
+    const min = Math.min(...filtered);
     const range = max - min;
     
-    // Adaptive threshold: 60% above mean (works for both positive and negative ECG waveforms)
-    const threshold = mean + range * 0.4;
+    // Adaptive threshold: find R-peaks above 60% of the range from baseline
+    const threshold = mean + range * 0.3;
     
-    console.log(`[HC03] ECG analysis: mean=${mean.toFixed(0)}, max=${max}, min=${min}, threshold=${threshold.toFixed(0)}`);
+    console.log(`[HC03] ECG analysis (filtered): mean=${mean.toFixed(0)}, max=${max}, min=${min}, range=${range}, threshold=${threshold.toFixed(0)}`);
     
     const peaks: number[] = [];
-    for (let i = 2; i < samples.length - 2; i++) {
+    // Use original samples for peak detection but with filtered threshold
+    for (let i = 3; i < samples.length - 3; i++) {
+      const val = samples[i];
+      // Skip extreme values
+      if (val < p5 || val > p95) continue;
+      
       // R-peak detection: local maximum above threshold
-      if (samples[i] > threshold && 
-          samples[i] > samples[i-1] && 
-          samples[i] > samples[i+1] &&
-          samples[i] > samples[i-2] && 
-          samples[i] > samples[i+2]) {
-        // Ensure minimum distance between peaks (200ms at 250Hz = 50 samples)
-        if (peaks.length === 0 || i - peaks[peaks.length - 1] > 50) {
+      if (val > threshold && 
+          val > samples[i-1] && 
+          val > samples[i+1] &&
+          val > samples[i-2] && 
+          val > samples[i+2] &&
+          val > samples[i-3] && 
+          val > samples[i+3]) {
+        // Ensure minimum distance between peaks (200ms at 250Hz = 50 samples, ~300 BPM max)
+        // Also ensure maximum distance not exceeded (1500ms = 375 samples, ~40 BPM min)
+        if (peaks.length === 0 || (i - peaks[peaks.length - 1] > 40)) {
           peaks.push(i);
         }
       }

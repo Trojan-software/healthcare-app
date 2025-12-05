@@ -1,0 +1,31 @@
+[HC03] 📥 Raw data received (20 bytes): 0xfe 0xee 0x00 0x82 0x01 0x7e 0x01 0xac 0x01 0x48 0x00 0x9f 0xff 0xca 0xfe 0xfb 0xfe 0x98 0xfe 0xb3
+hc03-sdk.ts:883 💓 [HC03] Raw ECG waveform data detected (unframed), parsing directly...
+hc03-sdk.ts:1170 [HC03] 💓 ECG raw data (20 bytes): 0xfe 0xee 0x00 0x82 0x01 0x7e 0x01 0xac 0x01 0x48 0x00 0x9f 0xff 0xca 0xfe 0xfb 0xfe 0x98 0xfe 0xb3
+hc03-sdk.ts:1269 [HC03] ECG analysis: mean=-89, max=32767, min=-32767, threshold=26124
+hc03-sdk.ts:1232 [HC03] 💓 ECG: HR=0 bpm, 10 samples
+HC03DeviceWidget.tsx:114 💓 [HC03] ECG event received: data
+HC03DeviceWidget.tsx:117 💓 [HC03] ECG data: {wave: Array(10), hr: 0, moodIndex: 50, rr: 0, hrv: 0, …}
+HC03DeviceWidget.tsx:439 📊 [HC03] Adding measurement: ecg {heartRate: 0, moodIndex: 50, moodText: 'balance', rrInterval: 0, hrv: 0, …}
+EnhancedPatientDashboard.tsx:1022 HC03 data received: {type: 'ecg', value: {…}, timestamp: '2025-12-05T21:47:51.953Z', deviceId: ''}
+HC03DeviceWidget.tsx:442 📊 [HC03] Updated realtimeData count: 10
+hc03-sdk.ts:872 [HC03] 📥 Raw data received (20 bytes): 0xfe 0xd8 0xfe 0xb2 0xfe 0xbc 0xff 0x99 0x01 0x3c 0x02 0x88 0x02 0x77 0x01 0x63 0x00 0x98 0x00 0xcb
+hc03-sdk.ts:883 💓 [HC03] Raw ECG waveform data detected (unframed), parsing directly...
+hc03-sdk.ts:1170 [HC03] 💓 ECG raw data (20 bytes): 0xfe 0xd8 0xfe 0xb2 0xfe 0xbc 0xff 0x99 0x01 0x3c 0x02 0x88 0x02 0x77 0x01 0x63 0x00 0x98 0x00 0xcb
+hc03-sdk.ts:1269 [HC03] ECG analysis: mean=-112, max=32767, min=-32767, threshold=26101
+hc03-sdk.ts:1232 [HC03] 💓 ECG: HR=0 bpm, 10 samples
+HC03DeviceWidget.tsx:114 💓 [HC03] ECG event received: data
+HC03DeviceWidget.tsx:117 💓 [HC03] ECG data: {wave: Array(10), hr: 0, moodIndex: 50, rr: 0, hrv: 0, …}
+HC03DeviceWidget.tsx:439 📊 [HC03] Adding measurement: ecg {heartRate: 0, moodIndex: 50, moodText: 'balance', rrInterval: 0, hrv: 0, …}
+HC03DeviceWidget.tsx:442 📊 [HC03] Updated realtimeData count: 10
+EnhancedPatientDashboard.tsx:1022 HC03 data received: {type: 'ecg', value: {…}, timestamp: '2025-12-05T21:47:52.000Z', deviceId: ''}
+hc03-sdk.ts:872 [HC03] 📥 Raw data received (20 bytes): 0x01 0x61 0x01 0x5b 0x00 0xa1 0xff 0xfe 0x00 0x10 0x00 0x8e 0x00 0xdd 0x01 0x04 0x01 0x7f 0x02 0x5d
+hc03-sdk.ts:991 Tail packet received but no head cached
+generalUnpackRawData @ hc03-sdk.ts:991
+parseData @ hc03-sdk.ts:894
+handleCharacteristicValueChanged @ hc03-sdk.ts:832Understand this warning
+hc03-sdk.ts:872 [HC03] 📥 Raw data received (20 bytes): 0x02 0xe8 0x02 0x83 0x01 0x9c 0x01 0x3c 0x02 0x07 0x03 0x93 0x04 0xe0 0x05 0x19 0x04 0x3d 0x03 0x1d
+hc03-sdk.ts:991 Tail packet received but no head cached
+generalUnpackRawData @ hc03-sdk.ts:991
+parseData @ hc03-sdk.ts:894
+handleCharacteristicValueChanged @ hc03-sdk.ts:832Understand this warning
+hc03-sdk.ts:872 [HC03] 📥 Raw data received (20 bytes): 0x02 0xc1 0x03 0x98 0x04 0xc7 0x05 0x0b 0x04 0x19 
