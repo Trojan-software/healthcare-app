@@ -56,6 +56,7 @@ const PROTOCOL = {
   // Command contents (from baseCommon.dart)
   ECG_START: 0x01,
   ECG_STOP: 0x02,
+  ECG_REALTIME_START: 0x03,  // HC02-F1B51D requires this to start real-time ECG data streaming
   TEP_START_NORMAL: 0x00,
   TEP_STOP_NORMAL: 0x01,
   OX_REQ_CONTENT_START_NORMAL: 0x00,
@@ -638,6 +639,15 @@ export class Hc03Sdk {
         this.bpZeroSampleCount = 0;
         console.log('✨ [HC03] Cleared BP buffers for new measurement');
       }
+      
+      // Clear ECG buffers and reset state when starting new ECG measurement
+      if (detection === Detection.ECG) {
+        this.ecgSampleBuffer = [];
+        this.ecgLastBeatTime = 0;
+        this.ecgBeatCount = 0;
+        this.ecgStartTime = Date.now();
+        console.log('✨ [HC03] Cleared ECG buffers for new measurement');
+      }
 
       console.log(`▶️ [HC03] Starting ${detection} detection...`);
       // Use writeValueWithoutResponse for better compatibility with HC02-F1B51D
@@ -649,6 +659,26 @@ export class Hc03Sdk {
         console.warn('[HC03] writeValueWithoutResponse failed, trying writeValue:', e);
         await this.writeCharacteristic.writeValue(command);
       }
+      
+      // HC02-F1B51D CRITICAL: Send ECG real-time start command after ECG_START
+      // Without this second command, the device stays in idle/touch-detection mode
+      // and never streams ECG data. This matches the vendor Flutter SDK behavior.
+      if (detection === Detection.ECG) {
+        console.log('💓 [HC03] Sending ECG real-time start command (0x05/0x03)...');
+        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between commands
+        
+        // Build ECG real-time start command: 0x05 (ECG type) + 0x03 (real-time start)
+        const ecgRealtimeCommand = obtainCommandData(PROTOCOL.ELECTROCARDIOGRAM, [PROTOCOL.ECG_REALTIME_START]);
+        
+        try {
+          await this.writeCharacteristic.writeValueWithoutResponse(ecgRealtimeCommand);
+          console.log('✅ [HC03] ECG real-time streaming enabled');
+        } catch (e) {
+          console.warn('[HC03] ECG real-time command writeValueWithoutResponse failed, trying writeValue:', e);
+          await this.writeCharacteristic.writeValue(ecgRealtimeCommand);
+        }
+      }
+      
       this.activeDetections.add(detection);
       
       // Start active polling for BG measurements (required by HC02-F1B51D)
