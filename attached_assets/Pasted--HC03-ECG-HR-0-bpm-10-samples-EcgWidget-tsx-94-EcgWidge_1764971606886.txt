@@ -1,0 +1,35 @@
+[HC03] 💓 ECG: HR=0 bpm, 10 samples
+EcgWidget.tsx:94 [EcgWidget] 💓 Real-time ECG wave received: 10 samples
+EcgWidget.tsx:127 [EcgWidget] 💓 Real-time ECG metrics: {wave: Array(10), hr: 0, moodIndex: 50, rr: 0, hrv: 0, …}
+HC03DeviceWidget.tsx:114 💓 [HC03] ECG event received: data
+HC03DeviceWidget.tsx:117 💓 [HC03] ECG data: {wave: Array(10), hr: 0, moodIndex: 50, rr: 0, hrv: 0, …}
+HC03DeviceWidget.tsx:439 📊 [HC03] Adding measurement: ecg {heartRate: 0, moodIndex: 50, moodText: 'balance', rrInterval: 0, hrv: 0, …}
+EnhancedPatientDashboard.tsx:1022 HC03 data received: {type: 'ecg', value: {…}, timestamp: '2025-12-05T21:52:46.139Z', deviceId: ''}
+HC03DeviceWidget.tsx:442 📊 [HC03] Updated realtimeData count: 10
+hc03-sdk.ts:872 [HC03] 📥 Raw data received (20 bytes): 0x06 0xf6 0x06 0xe8 0x05 0xde 0x03 0x2c 0xff 0xae 0xfd 0xee 0xff 0x6d 0x02 0x5d 0x03 0x5a 0x01 0x7f
+hc03-sdk.ts:883 💓 [HC03] Raw ECG waveform data detected (unframed), parsing directly...
+hc03-sdk.ts:1170 [HC03] 💓 ECG raw data (20 bytes): 0x06 0xf6 0x06 0xe8 0x05 0xde 0x03 0x2c 0xff 0xae 0xfd 0xee 0xff 0x6d 0x02 0x5d 0x03 0x5a 0x01 0x7f
+hc03-sdk.ts:1281 [HC03] ECG analysis (filtered): mean=104, max=29431, min=-29684, range=59115, threshold=17839
+hc03-sdk.ts:1232 [HC03] 💓 ECG: HR=0 bpm, 10 samples
+EcgWidget.tsx:94 [EcgWidget] 💓 Real-time ECG wave received: 10 samples
+EcgWidget.tsx:127 [EcgWidget] 💓 Real-time ECG metrics: {wave: Array(10), hr: 0, moodIndex: 50, rr: 0, hrv: 0, …}
+HC03DeviceWidget.tsx:114 💓 [HC03] ECG event received: data
+HC03DeviceWidget.tsx:117 💓 [HC03] ECG data: {wave: Array(10), hr: 0, moodIndex: 50, rr: 0, hrv: 0, …}
+HC03DeviceWidget.tsx:439 📊 [HC03] Adding measurement: ecg {heartRate: 0, moodIndex: 50, moodText: 'balance', rrInterval: 0, hrv: 0, …}
+EnhancedPatientDashboard.tsx:1022 HC03 data received: {type: 'ecg', value: {…}, timestamp: '2025-12-05T21:52:46.172Z', deviceId: ''}
+HC03DeviceWidget.tsx:745 [HC03] ⏱️ Poll timeout after 301 attempts
+hc03-sdk.ts:710 Stopping ECG detection...
+HC03DeviceWidget.tsx:442 📊 [HC03] Updated realtimeData count: 10
+hc03-sdk.ts:872 [HC03] 📥 Raw data received (20 bytes): 0xff 0xcf 0x01 0x95 0x06 0x0a 0x08 0xfe 0x07 0x74 0x03 0x19 0x00 0x3d 0x01 0x04 0x03 0xac 0x04 0xfa
+hc03-sdk.ts:883 💓 [HC03] Raw ECG waveform data detected (unframed), parsing directly...
+hc03-sdk.ts:1170 [HC03] 💓 ECG raw data (20 bytes): 0xff 0xcf 0x01 0x95 0x06 0x0a 0x08 0xfe 0x07 0x74 0x03 0x19 0x00 0x3d 0x01 0x04 0x03 0xac 0x04 0xfa
+hc03-sdk.ts:1281 [HC03] ECG analysis (filtered): mean=89, max=29210, min=-29684, range=58894, threshold=17757
+hc03-sdk.ts:1232 [HC03] 💓 ECG: HR=0 bpm, 10 samples
+EcgWidget.tsx:94 [EcgWidget] 💓 Real-time ECG wave received: 10 samples
+EcgWidget.tsx:127 [EcgWidget] 💓 Real-time ECG metrics: {wave: Array(10), hr: 0, moodIndex: 50, rr: 0, hrv: 0, …}
+HC03DeviceWidget.tsx:114 💓 [HC03] ECG event received: data
+HC03DeviceWidget.tsx:117 💓 [HC03] ECG data: {wave: Array(10), hr: 0, moodIndex: 50, rr: 0, hrv: 0, …}
+HC03DeviceWidget.tsx:439 📊 [HC03] Adding measurement: ecg {heartRate: 0, moodIndex: 50, moodText: 'balance', rrInterval: 0, hrv: 0, …}
+EnhancedPatientDashboard.tsx:1022 HC03 data received: {type: 'ecg', value: {…}, timestamp: '2025-12-05T21:52:46.182Z', deviceId: ''}
+HC03DeviceWidget.tsx:442 📊 [HC03] Updated realtimeData count: 10
+HC03DeviceWidget.tsx:114 💓 [HC03] ECG event received: measurementCompleted
