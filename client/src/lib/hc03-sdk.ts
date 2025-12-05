@@ -1637,11 +1637,11 @@ export class Hc03Sdk {
         const opt1Dia = data[2] & 0xFF;
         const opt1Hr = data[3] & 0xFF;
         
-        // Format option 2: Two-byte little-endian [type, sys_lo, sys_hi, dia_lo, dia_hi, hr_lo, hr_hi]
+        // Format option 2: Two-byte little-endian [type, dia_lo, dia_hi, sys_lo, sys_hi, hr_lo, hr_hi]
         let opt2Sys = 0, opt2Dia = 0, opt2Hr = 0;
         if (data.length >= 7) {
-          opt2Sys = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
-          opt2Dia = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
+          opt2Dia = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
+          opt2Sys = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
           opt2Hr = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
         }
         
