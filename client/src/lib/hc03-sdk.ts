@@ -1064,6 +1064,10 @@ export class Hc03Sdk {
         console.log('💪 [HC03] → Parsing BLOOD PRESSURE');
         this.parseBloodPressureData(data).catch(e => console.error('BP parsing error:', e));
         break;
+      case PROTOCOL.ELECTROCARDIOGRAM:
+        console.log('💓 [HC03] → Parsing ECG');
+        this.parseECGData(data);
+        break;
       case 0x10:
         // Device status notification - typically sent after measurement completion
         // Data format: [status_code, param]
@@ -1109,14 +1113,130 @@ export class Hc03Sdk {
     return Array.from(this.activeDetections);
   }
 
-  // ECG Data Parsing (handled by NeuroSky native SDK, not via HC03 protocol)
+  // ECG Data Parsing 
+  // HC02-F1B51D sends ECG data via Bluetooth with waveform samples
+  // Format: [waveform_samples...] - typically 10-20 samples per packet
   private parseECGData(data: Uint8Array): void {
-    // ⚠️ NOTE: ECG is processed by NeuroSky native SDK via Capacitor plugin
-    // The HC03 protocol does NOT transmit ECG data - it comes from native device APIs
-    // This method exists for completeness but HC03 type 0x05 is NOT routed to parseECGData
-    // ECG data arrives via: Capacitor.HC03BluetoothPlugin → JavaScript events (hc03:ecg:*)
-    console.log('[HC03] ECG notification (note: data comes from NeuroSky native SDK, not HC03 protocol)');
+    try {
+      console.log(`[HC03] 💓 ECG raw data (${data.length} bytes): ${Array.from(data.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}${data.length > 20 ? '...' : ''}`);
+      
+      if (data.length < 1) {
+        console.warn('[HC03] ECG data too short');
+        return;
+      }
+      
+      // Parse ECG waveform samples
+      // Each sample is typically 1 byte (8-bit ADC) or 2 bytes (16-bit ADC)
+      const waveData: number[] = [];
+      
+      // Try 16-bit samples first (little-endian)
+      if (data.length % 2 === 0) {
+        for (let i = 0; i < data.length; i += 2) {
+          const sample = (data[i] & 0xFF) | ((data[i + 1] & 0xFF) << 8);
+          waveData.push(sample);
+        }
+      } else {
+        // Fall back to 8-bit samples
+        for (let i = 0; i < data.length; i++) {
+          waveData.push(data[i] & 0xFF);
+        }
+      }
+      
+      // Accumulate samples for heart rate calculation
+      if (!this.ecgSampleBuffer) {
+        this.ecgSampleBuffer = [];
+        this.ecgLastBeatTime = 0;
+        this.ecgBeatCount = 0;
+        this.ecgStartTime = Date.now();
+      }
+      
+      this.ecgSampleBuffer.push(...waveData);
+      
+      // Keep buffer at reasonable size (10 seconds at 250 Hz = 2500 samples)
+      if (this.ecgSampleBuffer.length > 2500) {
+        this.ecgSampleBuffer = this.ecgSampleBuffer.slice(-2500);
+      }
+      
+      // Estimate heart rate from R-peak detection (simplified)
+      const heartRate = this.estimateHeartRateFromECG(this.ecgSampleBuffer);
+      
+      // Create ECG data object
+      const ecgData = {
+        wave: waveData,
+        hr: heartRate,
+        moodIndex: 50, // Neutral mood
+        rr: heartRate > 0 ? Math.round(60000 / heartRate) : 0, // RR interval in ms
+        hrv: 0, // Would need more complex calculation
+        respiratoryRate: Math.round(heartRate / 4), // Rough estimate
+        touch: true // Finger detected if we're getting data
+      };
+      
+      console.log(`[HC03] 💓 ECG: HR=${heartRate} bpm, ${waveData.length} samples`);
+      
+      // Emit ECG wave event
+      window.dispatchEvent(new CustomEvent('hc03:ecg:wave', {
+        detail: { wave: waveData }
+      }));
+      
+      // Emit ECG metrics event
+      window.dispatchEvent(new CustomEvent('hc03:ecg:metrics', {
+        detail: ecgData
+      }));
+      
+      // Call registered callback
+      const callback = this.callbacks.get(Detection.ECG);
+      if (callback) {
+        callback({ type: 'data', detection: Detection.ECG, data: ecgData });
+      }
+      
+    } catch (error) {
+      console.error('[HC03] Error parsing ECG data:', error);
+    }
   }
+  
+  // Simple heart rate estimation from ECG waveform
+  private estimateHeartRateFromECG(samples: number[]): number {
+    if (samples.length < 100) return 0;
+    
+    // Find peaks (R-waves) using simple threshold detection
+    const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
+    const max = Math.max(...samples);
+    const threshold = mean + (max - mean) * 0.6;
+    
+    const peaks: number[] = [];
+    for (let i = 1; i < samples.length - 1; i++) {
+      if (samples[i] > threshold && 
+          samples[i] > samples[i-1] && 
+          samples[i] > samples[i+1]) {
+        // Ensure minimum distance between peaks (200ms at 250Hz = 50 samples)
+        if (peaks.length === 0 || i - peaks[peaks.length - 1] > 50) {
+          peaks.push(i);
+        }
+      }
+    }
+    
+    if (peaks.length < 2) return 0;
+    
+    // Calculate average RR interval
+    let totalInterval = 0;
+    for (let i = 1; i < peaks.length; i++) {
+      totalInterval += peaks[i] - peaks[i-1];
+    }
+    const avgInterval = totalInterval / (peaks.length - 1);
+    
+    // Convert to heart rate (assuming 250 Hz sample rate)
+    const sampleRate = 250;
+    const heartRate = Math.round(60 * sampleRate / avgInterval);
+    
+    // Sanity check (30-200 BPM)
+    return heartRate >= 30 && heartRate <= 200 ? heartRate : 0;
+  }
+  
+  // ECG sample buffer for heart rate calculation
+  private ecgSampleBuffer: number[] = [];
+  private ecgLastBeatTime: number = 0;
+  private ecgBeatCount: number = 0;
+  private ecgStartTime: number = 0;
 
   // Blood Oxygen Data Parsing (from Flutter SDK oxEngine.dart)
   // Emits three types: BloodOxygenData, FingerDetection, BloodOxygenWaveData
