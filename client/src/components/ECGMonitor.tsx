@@ -61,22 +61,29 @@ export default function ECGMonitor({ patientId, deviceId }: ECGMonitorProps) {
       setRecordingTime(0);
       setWaveData([]);
       
+      // Track valid readings for auto-stop
+      let validReadingsCount = 0;
+      const MIN_VALID_READINGS_FOR_AUTO_STOP = 5; // Need 5 valid readings before auto-stop
+      
       // Set up SDK callback for ECG data
       hc03Sdk.setCallback(Detection.ECG, (response: any) => {
         if (response.type === 'data' && response.data) {
           const data = response.data;
+          const hr = data.hr || 0;
+          const touch = data.touch || false;
+          
           setMetrics({
             wave: data.wave || [],
-            hr: data.hr || 0,
+            hr: hr,
             moodIndex: data.moodIndex || 0,
             rr: data.rr || 0,
             hrv: data.hrv || 0,
             respiratoryRate: data.respiratoryRate || 0,
-            touch: data.touch || false,
+            touch: touch,
           });
           
           // Update contact status
-          setContactStatus(data.touch ? 'connected' : 'no-contact');
+          setContactStatus(touch ? 'connected' : 'no-contact');
 
           // Update waveform data for chart
           if (data.wave && Array.isArray(data.wave)) {
@@ -91,6 +98,25 @@ export default function ECGMonitor({ patientId, deviceId }: ECGMonitorProps) {
               // Keep only last 300 points for performance
               return newData.slice(-300);
             });
+          }
+          
+          // Auto-stop when valid readings received
+          // Valid reading: contact detected AND heart rate in normal range (40-200 BPM)
+          if (touch && hr >= 40 && hr <= 200) {
+            validReadingsCount++;
+            console.log(`[ECGMonitor] Valid reading ${validReadingsCount}/${MIN_VALID_READINGS_FOR_AUTO_STOP}: HR=${hr} BPM`);
+            
+            if (validReadingsCount >= MIN_VALID_READINGS_FOR_AUTO_STOP) {
+              console.log('[ECGMonitor] Auto-stopping ECG after receiving valid readings');
+              // Use setTimeout to avoid state update during render
+              setTimeout(() => {
+                handleStopECG();
+                toast({
+                  title: "ECG Recording Complete",
+                  description: `Heart rate: ${hr} BPM - Recording saved`,
+                });
+              }, 500);
+            }
           }
         }
       });
