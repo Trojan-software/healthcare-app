@@ -71,6 +71,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
   const [showGlucoseDialog, setShowGlucoseDialog] = useState(false);
   const [glucoseDialogLoading, setGlucoseDialogLoading] = useState(false);
   const [glucoseResult, setGlucoseResult] = useState<number | null>(null);
+  const [glucoseDeviceStatus, setGlucoseDeviceStatus] = useState<'idle' | 'waiting_strip' | 'strip_inserted' | 'waiting_blood' | 'blood_detected' | 'analyzing'>('idle');
   
   const wsConnection = useRef<WebSocket | null>(null);
   const measurementTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -353,6 +354,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
         console.log('🩸 [HC03] Setting glucose result:', event.data.bloodGlucosePaperData);
         setGlucoseResult(event.data.bloodGlucosePaperData);
         setGlucoseDialogLoading(false);
+        setGlucoseDeviceStatus('idle');
       }
       
       // Auto-stop after receiving valid blood glucose data
@@ -370,9 +372,24 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
           }, 2000);
         }
       }
+    } else if (event.type === 'paperState') {
+      // Handle test strip and blood detection status
+      const statusCode = event.data?.statusCode;
+      console.log('📋 [HC03] Blood Glucose PaperState:', statusCode);
+      
+      if (statusCode === 0x03) {
+        setGlucoseDeviceStatus('waiting_strip');
+      } else if (statusCode === 0x04) {
+        setGlucoseDeviceStatus('strip_inserted');
+        setTimeout(() => setGlucoseDeviceStatus('waiting_blood'), 500);
+      } else if (statusCode === 0x05 || statusCode === 0x06) {
+        setGlucoseDeviceStatus('blood_detected');
+        setTimeout(() => setGlucoseDeviceStatus('analyzing'), 500);
+      }
     } else if (event.type === 'measurementStarted') {
       validDataReceived.current = false;
       setMeasurementInProgress(Detection.BG);
+      setGlucoseDeviceStatus('waiting_strip');
       if (onMeasurementStateChange) {
         onMeasurementStateChange('bloodGlucose', true);
       }
@@ -382,6 +399,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       });
     } else if (event.type === 'measurementCompleted') {
       setMeasurementInProgress(null);
+      setGlucoseDeviceStatus('idle');
       if (onMeasurementStateChange) {
         onMeasurementStateChange('bloodGlucose', false);
       }
@@ -1414,6 +1432,7 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
           onMeasurementStart={handleBloodGlucoseMeasurementStart}
           isLoading={glucoseDialogLoading}
           result={glucoseResult}
+          deviceStatus={glucoseDeviceStatus}
         />
 
         {/* Device Details Dialog */}

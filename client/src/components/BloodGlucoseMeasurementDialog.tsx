@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle, Droplets } from 'lucide-react';
 
@@ -11,20 +10,23 @@ interface BloodGlucoseMeasurementDialogProps {
   onMeasurementStart: (period: string, checkCode: string) => void;
   isLoading?: boolean;
   result?: number | null;
+  deviceStatus?: 'idle' | 'waiting_strip' | 'strip_inserted' | 'waiting_blood' | 'blood_detected' | 'analyzing';
 }
 
-type Step = 'period' | 'code' | 'strips' | 'blood' | 'result';
+type Step = 'period' | 'code' | 'waiting_strip' | 'waiting_blood' | 'analyzing' | 'result';
 
 export default function BloodGlucoseMeasurementDialog({
   open,
   onOpenChange,
   onMeasurementStart,
   isLoading = false,
-  result = null
+  result = null,
+  deviceStatus = 'idle'
 }: BloodGlucoseMeasurementDialogProps) {
   const [step, setStep] = useState<Step>('period');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('');
   const [selectedCode, setSelectedCode] = useState<string>('C16');
+  const [statusMessage, setStatusMessage] = useState<string>('');
 
   const periods = [
     'Before Breakfast',
@@ -42,19 +44,67 @@ export default function BloodGlucoseMeasurementDialog({
       setStep('period');
       setSelectedPeriod('');
       setSelectedCode('C16');
+      setStatusMessage('');
     }
   }, [open]);
+
+  // Listen for device paper state events
+  useEffect(() => {
+    const handlePaperState = (event: CustomEvent) => {
+      const { message, statusCode } = event.detail;
+      console.log('📋 Blood Glucose PaperState:', message, statusCode);
+      setStatusMessage(message);
+      
+      // Automatically transition based on device status
+      if (statusCode === 0x03) {
+        // Device asking for strip insertion
+        if (step === 'waiting_strip') {
+          // Stay on waiting_strip, update message
+        }
+      } else if (statusCode === 0x04) {
+        // Strip detected, waiting for blood
+        if (step === 'waiting_strip') {
+          setStep('waiting_blood');
+        }
+      } else if (statusCode === 0x05 || statusCode === 0x06) {
+        // Blood detected or testing in progress
+        if (step === 'waiting_blood' || step === 'waiting_strip') {
+          setStep('analyzing');
+        }
+      }
+    };
+
+    window.addEventListener('hc03:bloodglucose:paperstate', handlePaperState as EventListener);
+    return () => {
+      window.removeEventListener('hc03:bloodglucose:paperstate', handlePaperState as EventListener);
+    };
+  }, [step]);
+
+  // Update step based on external device status prop
+  useEffect(() => {
+    if (deviceStatus === 'strip_inserted' && step === 'waiting_strip') {
+      setStep('waiting_blood');
+    } else if (deviceStatus === 'blood_detected' && (step === 'waiting_strip' || step === 'waiting_blood')) {
+      setStep('analyzing');
+    } else if (deviceStatus === 'analyzing' && step !== 'analyzing' && step !== 'result') {
+      setStep('analyzing');
+    }
+  }, [deviceStatus, step]);
+
+  // Show result when available
+  useEffect(() => {
+    if (result !== null && step === 'analyzing') {
+      setStep('result');
+    }
+  }, [result, step]);
 
   const handleNext = () => {
     if (step === 'period' && selectedPeriod) {
       setStep('code');
     } else if (step === 'code') {
-      setStep('strips');
-    } else if (step === 'strips') {
-      setStep('blood');
-    } else if (step === 'blood') {
+      // Start measurement and wait for strip
       onMeasurementStart(selectedPeriod, selectedCode);
-      setStep('result');
+      setStep('waiting_strip');
     }
   };
 
@@ -84,6 +134,7 @@ export default function BloodGlucoseMeasurementDialog({
                     variant={selectedPeriod === period ? 'default' : 'outline'}
                     className="w-full justify-start"
                     onClick={() => setSelectedPeriod(period)}
+                    data-testid={`button-period-${period.toLowerCase().replace(/\s+/g, '-')}`}
                   >
                     {period}
                   </Button>
@@ -108,6 +159,7 @@ export default function BloodGlucoseMeasurementDialog({
                       variant={selectedCode === code ? 'default' : 'outline'}
                       className="w-full"
                       onClick={() => setSelectedCode(code)}
+                      data-testid={`button-code-${code.toLowerCase()}`}
                     >
                       {code}
                     </Button>
@@ -117,56 +169,97 @@ export default function BloodGlucoseMeasurementDialog({
             </div>
           )}
 
-          {/* Step 3: Test Strips */}
-          {step === 'strips' && (
+          {/* Step 3: Waiting for Strip Insertion */}
+          {step === 'waiting_strip' && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Blood Glucose</h3>
+              <h3 className="font-semibold text-lg text-center">Blood Glucose</h3>
               <div className="flex justify-center my-8">
-                <svg width="120" height="80" viewBox="0 0 120 80" className="text-blue-400">
-                  {/* Test strips illustration */}
-                  <rect x="10" y="10" width="15" height="60" fill="currentColor" opacity="0.8" />
-                  <rect x="32" y="10" width="15" height="60" fill="currentColor" opacity="0.8" />
-                  <rect x="54" y="10" width="15" height="60" fill="currentColor" opacity="0.8" />
-                  <rect x="76" y="10" width="15" height="60" fill="currentColor" opacity="0.8" />
-                  <rect x="10" y="65" width="81" height="8" fill="currentColor" opacity="0.6" />
+                <svg width="120" height="100" viewBox="0 0 120 100" className="text-blue-400">
+                  {/* Test strip illustration with animation */}
+                  <rect x="40" y="10" width="40" height="60" fill="currentColor" opacity="0.8" rx="4">
+                    <animate attributeName="y" values="10;20;10" dur="1.5s" repeatCount="indefinite" />
+                  </rect>
+                  {/* Device slot */}
+                  <rect x="20" y="70" width="80" height="20" fill="currentColor" opacity="0.4" rx="4" />
+                  <rect x="35" y="75" width="50" height="10" fill="white" opacity="0.3" rx="2" />
                 </svg>
               </div>
-              <p className="text-center text-sm">Please put the Blood Glucose Test Strips into the Health Monitor.</p>
+              <div className="text-center space-y-2">
+                <div className="animate-pulse">
+                  <p className="font-semibold text-lg text-blue-600">Waiting for test strip...</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Please insert the blood glucose test strip into the device
+                </p>
+                {statusMessage && (
+                  <p className="text-xs text-amber-600 mt-2">{statusMessage}</p>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Step 4: Waiting for Blood */}
-          {step === 'blood' && !isLoading && (
+          {/* Step 4: Waiting for Blood Sample */}
+          {step === 'waiting_blood' && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Blood Glucose</h3>
-              <div className="flex justify-center my-8">
+              <h3 className="font-semibold text-lg text-center">Blood Glucose</h3>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-green-600 font-medium">Test strip detected</span>
+              </div>
+              <div className="flex justify-center my-6">
                 <svg width="100" height="120" viewBox="0 0 100 120" className="text-red-400">
-                  {/* Hand with lancet illustration */}
+                  {/* Hand with blood drop illustration */}
                   <path d="M 30 80 Q 30 60 40 50 Q 50 45 60 50 Q 70 45 80 55" fill="none" stroke="currentColor" strokeWidth="2" />
                   <circle cx="30" cy="80" r="8" fill="currentColor" opacity="0.7" />
                   <circle cx="48" cy="65" r="6" fill="currentColor" opacity="0.7" />
                   <circle cx="62" cy="60" r="6" fill="currentColor" opacity="0.7" />
                   <circle cx="75" cy="65" r="6" fill="currentColor" opacity="0.7" />
-                  {/* Lancet - red dot on finger */}
-                  <circle cx="62" cy="55" r="4" fill="currentColor" />
+                  {/* Blood drop animation */}
+                  <circle cx="62" cy="55" r="5" fill="#dc2626">
+                    <animate attributeName="r" values="4;6;4" dur="1s" repeatCount="indefinite" />
+                  </circle>
                 </svg>
               </div>
-              <p className="text-center font-semibold">Waiting blood specimen collection.</p>
-              <Button onClick={handleNext} className="w-full" disabled={isLoading}>
-                {isLoading ? 'Measuring...' : 'Next'}
-              </Button>
+              <div className="text-center space-y-2">
+                <div className="animate-pulse">
+                  <p className="font-semibold text-lg text-red-600">Waiting for blood sample...</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Please apply a drop of blood to the test strip
+                </p>
+                {statusMessage && (
+                  <p className="text-xs text-amber-600 mt-2">{statusMessage}</p>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Step 5: Result */}
+          {/* Step 5: Analyzing */}
+          {step === 'analyzing' && (
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg text-center">Blood Glucose</h3>
+              <div className="flex flex-col items-center gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className="text-green-600 text-sm">Test strip detected</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className="text-green-600 text-sm">Blood sample detected</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center py-6 space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <p className="text-center font-semibold text-blue-600">Analyzing sample...</p>
+                <p className="text-xs text-muted-foreground">Please wait while measuring</p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 6: Result */}
           {step === 'result' && (
             <div className="space-y-4">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                  <p className="text-center font-semibold">Analyzing sample...</p>
-                </div>
-              ) : result !== null ? (
+              {result !== null ? (
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg text-center">Blood Glucose</h3>
                   <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center space-y-2">
@@ -177,9 +270,14 @@ export default function BloodGlucoseMeasurementDialog({
                       <span className="text-sm font-medium">Measurement Complete</span>
                     </div>
                   </div>
-                  <Button onClick={handleClose} className="w-full" variant="default">
+                  <Button onClick={handleClose} className="w-full" variant="default" data-testid="button-done">
                     Done
                   </Button>
+                </div>
+              ) : isLoading ? (
+                <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                  <p className="text-center font-semibold">Analyzing sample...</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -187,7 +285,7 @@ export default function BloodGlucoseMeasurementDialog({
                     <AlertCircle className="h-5 w-5" />
                     <span>No measurement result received</span>
                   </div>
-                  <Button onClick={handleClose} className="w-full" variant="outline">
+                  <Button onClick={handleClose} className="w-full" variant="outline" data-testid="button-close">
                     Close
                   </Button>
                 </div>
@@ -195,13 +293,14 @@ export default function BloodGlucoseMeasurementDialog({
             </div>
           )}
 
-          {/* Navigation - Show Next button for steps before result */}
-          {step !== 'result' && (
+          {/* Navigation - Show Next button for initial steps */}
+          {(step === 'period' || step === 'code') && (
             <div className="flex gap-2">
               <Button
                 onClick={handleClose}
                 variant="outline"
                 className="flex-1"
+                data-testid="button-cancel"
               >
                 Cancel
               </Button>
@@ -209,10 +308,23 @@ export default function BloodGlucoseMeasurementDialog({
                 onClick={handleNext}
                 className="flex-1"
                 disabled={step === 'period' && !selectedPeriod}
+                data-testid="button-next"
               >
-                Next
+                {step === 'code' ? 'Start Measurement' : 'Next'}
               </Button>
             </div>
+          )}
+
+          {/* Cancel button for waiting steps */}
+          {(step === 'waiting_strip' || step === 'waiting_blood' || step === 'analyzing') && (
+            <Button
+              onClick={handleClose}
+              variant="outline"
+              className="w-full"
+              data-testid="button-cancel-measurement"
+            >
+              Cancel Measurement
+            </Button>
           )}
         </div>
       </DialogContent>
