@@ -132,7 +132,16 @@ export default function ECGMonitor({ patientId, deviceId }: ECGMonitorProps) {
   };
 
   const handleStopECG = async () => {
+    // Prevent double-stop
+    if (!isRecording) {
+      console.log('[ECGMonitor] Already stopped, ignoring');
+      return;
+    }
+    
     try {
+      // Set recording to false first to prevent double-stop
+      setIsRecording(false);
+      
       // Clear timers
       if (autoStopTimerRef.current) {
         clearTimeout(autoStopTimerRef.current);
@@ -145,11 +154,9 @@ export default function ECGMonitor({ patientId, deviceId }: ECGMonitorProps) {
       
       await hc03Sdk.stopDetect(Detection.ECG);
       hc03Sdk.removeCallback(Detection.ECG);
-      setIsRecording(false);
       console.log('[ECGMonitor] ECG detection stopped');
     } catch (error) {
       console.error('Error stopping ECG:', error);
-      setIsRecording(false);
     }
   };
   

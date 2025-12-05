@@ -822,6 +822,7 @@ export class Hc03Sdk {
   private static readonly BG_RES_TYPE = 0x83;  // Blood Glucose
   private static readonly OX_RES_TYPE_NORMAL = 0x84;  // Blood Oxygen
   private static readonly BP_RES_TYPE = 0x81;  // Blood Pressure
+  private static readonly ECG_RES_TYPE = 0x85;  // ECG (0x80 | ELECTROCARDIOGRAM)
   
   // Multi-packet frame cache
   private cacheType: number = 0;
@@ -1064,8 +1065,8 @@ export class Hc03Sdk {
         console.log('💪 [HC03] → Parsing BLOOD PRESSURE');
         this.parseBloodPressureData(data).catch(e => console.error('BP parsing error:', e));
         break;
-      case PROTOCOL.ELECTROCARDIOGRAM:
-        console.log('💓 [HC03] → Parsing ECG');
+      case PROTOCOL.ELECTROCARDIOGRAM:  // 0x05 - ECG uses request type directly, not 0x80 offset
+        console.log('💓 [HC03] → Parsing ECG (type 0x05)');
         this.parseECGData(data);
         break;
       case 0x10:
