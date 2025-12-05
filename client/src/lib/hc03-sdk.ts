@@ -305,6 +305,11 @@ export class Hc03Sdk {
   // Waveform buffer for SpO2 calculation (accumulates samples across packets)
   private waveformBuffer: number[] = [];
   
+  // RED/IR buffers for blood oxygen signal processing
+  private redBuffer: number[] = [];
+  private irBuffer: number[] = [];
+  private bloodOxygenStartTime: number | null = null;
+  
   // Blood Pressure measurement state
   private bpPressureBuffer: number[] = [];
   private bpCalibrationCoeffs: { c1: number; c2: number; c3: number; c4: number; c5: number } | null = null;
@@ -1205,11 +1210,6 @@ export class Hc03Sdk {
       console.error('Error parsing blood oxygen data:', error);
     }
   }
-  
-  // Initialize RED/IR buffers
-  private redBuffer: number[] = [];
-  private irBuffer: number[] = [];
-  private bloodOxygenStartTime: number | null = null;
 
   // Calculate SpO2 and Heart Rate from RED/IR channel pairs
   // Based on Flutter SDK's Calculate.addSignalData and ACF ratio method
