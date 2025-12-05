@@ -1185,6 +1185,17 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
                 <div className="grid grid-cols-2 gap-3">
                   <Button
                     variant="outline"
+                    onClick={() => startMeasurement(Detection.ECG)}
+                    disabled={measurementInProgress === Detection.ECG}
+                    data-testid="button-ecg-measurement"
+                    className={measurementInProgress === Detection.ECG ? 'bg-red-500 text-white hover:bg-red-600' : ''}
+                  >
+                    <Heart className="h-4 w-4 mr-2" />
+                    {measurementInProgress === Detection.ECG ? 'Measuring...' : 'ECG'}
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
                     onClick={() => startMeasurement(Detection.OX)}
                     disabled={measurementInProgress === Detection.OX}
                     data-testid="button-oxygen-measurement"
