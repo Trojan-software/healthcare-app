@@ -345,19 +345,25 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
       
       addMeasurementData(measurementData);
       
+      // Update dialog result if dialog is open
+      if (showGlucoseDialog && event.data?.bloodGlucosePaperData && event.data.bloodGlucosePaperData > 0) {
+        setGlucoseResult(event.data.bloodGlucosePaperData);
+        setGlucoseDialogLoading(false);
+      }
+      
       // Auto-stop after receiving valid blood glucose data
       if (event.data?.bloodGlucosePaperData && measurementInProgress === Detection.BG) {
         if (!validDataReceived.current) {
           validDataReceived.current = true;
           
-          // Stop measurement immediately after valid reading
+          // Stop measurement after 2 seconds
           setTimeout(async () => {
             await stopMeasurement(Detection.BG);
             toast({
               title: "Blood Glucose Measurement Complete",
               description: `Glucose: ${event.data.bloodGlucosePaperData.toFixed(1)} mmol/L`,
             });
-          }, 1000);
+          }, 2000);
         }
       }
     } else if (event.type === 'measurementStarted') {
@@ -889,23 +895,17 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
     setGlucoseResult(null);
     
     try {
+      // Reset valid data flag so callback will update result
+      validDataReceived.current = false;
+      
       await startMeasurement(Detection.BG);
       
-      let attempts = 0;
-      const resultInterval = setInterval(() => {
-        const latestBG = realtimeData.find(d => d.type === 'bloodGlucose');
-        if (latestBG && latestBG.value?.bloodGlucosePaperData) {
-          setGlucoseResult(latestBG.value.bloodGlucosePaperData);
-          clearInterval(resultInterval);
+      // Timeout after 40 seconds - dialog callback will update result when data arrives
+      setTimeout(() => {
+        if (glucoseResult === null) {
           setGlucoseDialogLoading(false);
         }
-        
-        attempts++;
-        if (attempts >= 30) {
-          clearInterval(resultInterval);
-          setGlucoseDialogLoading(false);
-        }
-      }, 1000);
+      }, 40000);
     } catch (error) {
       console.error('Error starting blood glucose measurement:', error);
       setGlucoseDialogLoading(false);
