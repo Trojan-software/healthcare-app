@@ -135,6 +135,12 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
   };
 
   const startRecording = async () => {
+    // Validate deviceId before starting
+    if (!deviceId || deviceId.trim() === '') {
+      console.warn('ECG Start blocked: No device connected. Please connect HC02-F1B51D first.');
+      return;
+    }
+    
     try {
       setIsRecording(true);
       await fetch('/api/ecg/start-recording', {
@@ -598,7 +604,7 @@ For immediate assistance, contact emergency services or your healthcare provider
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <Activity className="w-5 h-5 mr-2 text-green-600" />
-            {t('ecgMonitor')} - {deviceId}
+            {t('ecgMonitor')} {deviceId ? `- ${deviceId}` : ''}
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant={stats.isContactDetected ? "default" : "destructive"} 
@@ -612,6 +618,8 @@ For immediate assistance, contact emergency services or your healthcare provider
                     onClick={isRecording ? stopRecording : startRecording}
                     size="sm"
                     variant={isRecording ? "destructive" : "default"}
+                    disabled={!isRecording && (!deviceId || deviceId.trim() === '')}
+                    title={(!deviceId || deviceId.trim() === '') ? t('connectDeviceFirst') : ''}
                   >
                     {isRecording ? <Square className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
                     {isRecording ? t('stop') : t('start')}

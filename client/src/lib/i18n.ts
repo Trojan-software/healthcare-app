@@ -83,6 +83,7 @@ export interface Translation {
   confirmDeleteSchedule: string;
   confirmPassword: string;
   connectDevice: string;
+  connectDeviceFirst: string;
   connectHC03Devices: string;
   connectHc03Device: string;
   connectToExistingAccount: string;
@@ -549,6 +550,7 @@ export const translations: Record<Language, Translation> = {
     confirmDeleteSchedule: 'Are you sure you want to delete this schedule?',
     confirmPassword: 'Confirm Password',
     connectDevice: 'Connect Device',
+    connectDeviceFirst: 'Connect HC02-F1B51D device first',
     connectHC03Devices: 'Connect HC03 devices to monitor battery status',
     connectHc03Device: 'Connect HC03 Device',
     connectToExistingAccount: 'Connect device to existing account',
@@ -1013,6 +1015,7 @@ export const translations: Record<Language, Translation> = {
     confirmDeleteSchedule: 'هل أنت متأكد من رغبتك في حذف هذا الجدول؟',
     confirmPassword: 'تأكيد كلمة المرور',
     connectDevice: 'ربط الجهاز',
+    connectDeviceFirst: 'اربط جهاز HC02-F1B51D أولاً',
     connectHC03Devices: 'اربط أجهزة HC03 لمراقبة حالة البطارية',
     connectHc03Device: 'اتصال بجهاز HC03',
     connectToExistingAccount: 'ربط الجهاز بحساب موجود',
