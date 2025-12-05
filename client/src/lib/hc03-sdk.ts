@@ -1659,8 +1659,8 @@ export class Hc03Sdk {
         
         console.log(`[HC03] BP result parsed: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         
-        // Validate ranges before accepting
-        if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130 && heartRate >= 40 && heartRate <= 200) {
+        // Accept any non-zero blood pressure readings (basic validation only)
+        if (systolic > 0 && diastolic > 0) {
           const bloodPressureData: BloodPressureData = {
             ps: systolic,
             pd: diastolic,
@@ -1690,7 +1690,7 @@ export class Hc03Sdk {
             this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
           }, 2000);
         } else {
-          console.warn(`[HC03] BP values out of range: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
+          console.warn(`[HC03] BP values invalid: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         }
       } else {
         console.log(`[HC03] Unknown BP data format (type: 0x${contentType.toString(16)}, length: ${data.length})`);
