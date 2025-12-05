@@ -596,6 +596,16 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
           setConnectionStatus('connected');
           setDeviceInfo(hc03Sdk.getDeviceInfo());
           
+          // Notify parent component about device connection with deviceId
+          if (onDataUpdate) {
+            onDataUpdate({
+              type: 'battery',
+              value: { batteryLevel: 85, chargingStatus: false },
+              timestamp: new Date().toISOString(),
+              deviceId: device.id
+            });
+          }
+          
           // Clear any previous connection errors
           setError('');
           setShowTroubleshooting(false);
