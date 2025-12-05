@@ -1111,9 +1111,11 @@ export class Hc03Sdk {
 
   // ECG Data Parsing (handled by NeuroSky native SDK, not via HC03 protocol)
   private parseECGData(data: Uint8Array): void {
-    // Note: ECG is handled separately by NeuroSky SDK via native plugin
-    // This method is a placeholder for potential future direct HC03 ECG protocol
-    console.log('[HC03] ECG data received (processed by NeuroSky SDK)');
+    // ⚠️ NOTE: ECG is processed by NeuroSky native SDK via Capacitor plugin
+    // The HC03 protocol does NOT transmit ECG data - it comes from native device APIs
+    // This method exists for completeness but HC03 type 0x05 is NOT routed to parseECGData
+    // ECG data arrives via: Capacitor.HC03BluetoothPlugin → JavaScript events (hc03:ecg:*)
+    console.log('[HC03] ECG notification (note: data comes from NeuroSky native SDK, not HC03 protocol)');
   }
 
   // Blood Oxygen Data Parsing (from Flutter SDK oxEngine.dart)
@@ -1623,13 +1625,14 @@ export class Hc03Sdk {
         return;
       }
       
-      // recUnknown content type - log for debugging
-      console.log(`[HC03] Unknown BP content type: 0x${contentType.toString(16)}, length: ${data.length}`);
+      // Unknown content type - likely a direct result (no calibration needed)
+      // Log for debugging
+      console.log(`[HC03] BP content type not recognized (0x${contentType.toString(16)}), attempting direct result parse...`);
       
       // If data looks like it could be a result (has enough bytes)
-      // Format: [type, sys_low, sys_high, dia_low, dia_high, hr_low, hr_high]
+      // Format: [type, sys_low, sys_high, dia_low, dia_high, hr_low, hr_high] (little-endian)
       if (data.length >= 7) {
-        // Parse as little-endian pressure values
+        // Parse as little-endian pressure values (correct byte order!)
         const systolic = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
         const diastolic = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
         const heartRate = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
@@ -1894,9 +1897,11 @@ export class Hc03Sdk {
       
       // Type 3: BloodGlucosePaperData - Final glucose measurement result
       // The actual blood glucose value in mmol/L
-      if (data.length >= 2) {
+      // Format: [contentType (not state type), glucose_high, glucose_low]
+      if (data.length >= 3 && !(contentType >= 0x00 && contentType <= 0x06)) {
         // Big-endian 16-bit value, divide by 10 to get mmol/L
-        const glucoseRaw = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+        // Skip contentType byte, use bytes 1-2 for glucose value
+        const glucoseRaw = ((data[1] & 0xFF) << 8) | (data[2] & 0xFF);
         const glucose = glucoseRaw / 10.0;
         
         console.log(`[HC03] BG result parsed: raw=${glucoseRaw}, glucose=${glucose} mmol/L`);
