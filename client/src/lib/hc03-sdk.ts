@@ -1632,9 +1632,9 @@ export class Hc03Sdk {
       // If data looks like it could be a result (has enough bytes)
       if (data.length >= 4) {
         // Try different parsing formats to find the medically correct one
-        // Format option 1: Single bytes [type, sys, dia, hr]
-        const opt1Sys = data[1] & 0xFF;
-        const opt1Dia = data[2] & 0xFF;
+        // Format option 1: Single bytes [type, dia, sys, hr]
+        const opt1Dia = data[1] & 0xFF;
+        const opt1Sys = data[2] & 0xFF;
         const opt1Hr = data[3] & 0xFF;
         
         // Format option 2: Two-byte little-endian [type, dia_lo, dia_hi, sys_lo, sys_hi, hr_lo, hr_hi]
