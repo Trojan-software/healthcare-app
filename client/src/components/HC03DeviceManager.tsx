@@ -229,8 +229,32 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
       saveBloodOxygenData(data);
     });
 
-    // Blood Pressure callback
-    hc03Sdk.setCallback(Detection.BP, (data: BloodPressureData) => {
+    // Blood Pressure callback - handles both data and errors for patient safety
+    hc03Sdk.setCallback(Detection.BP, (response: { type: string; detection?: string; data?: BloodPressureData; error?: string }) => {
+      // Handle validation errors - SAFETY: don't display unvalidated readings
+      if (response.type === 'error') {
+        console.error('[BP] Measurement validation failed:', response.error);
+        toast({
+          title: "Blood Pressure Measurement Error",
+          description: "Unable to validate reading. Please retake measurement. Check browser console for debugging data.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Handle progress updates
+      if (response.type === 'progress') {
+        // Progress updates don't need to create vital readings
+        return;
+      }
+      
+      // Handle validated data
+      const data = response.data || response as unknown as BloodPressureData;
+      if (!data.ps || !data.pd) {
+        console.warn('[BP] Invalid data received:', data);
+        return;
+      }
+      
       const reading: VitalReading = {
         type: Detection.BP,
         value: `${data.ps}/${data.pd}`,

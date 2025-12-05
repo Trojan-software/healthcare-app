@@ -1678,79 +1678,112 @@ export class Hc03Sdk {
         
         console.log('[HC03] ==========================================');
         
-        // DECISION: Use Format B with /100 scaling as per Flutter SDK
+        // DECISION: SAFETY FIRST - Only emit validated readings
+        // We must use calibration-based scaling from Flutter SDK to get accurate values
         // The Flutter SDK uses: ps ~/= 100 and pd = getPD() ~/ 100
+        
         let systolic = 0;
         let diastolic = 0;
         let heartRate = 0;
+        let formatUsed = '';
+        let isValidated = false;
         
         // Check if Format B with /100 gives valid medical values (60-200 sys, 40-130 dia)
         const scaledB_Sys = Math.round(fmtB_Sys / 100);
         const scaledB_Dia = Math.round(fmtB_Dia / 100);
         
-        if (scaledB_Sys >= 60 && scaledB_Sys <= 250 && 
-            scaledB_Dia >= 30 && scaledB_Dia <= 150 &&
-            scaledB_Sys > scaledB_Dia) {
-          // Format B with scaling looks valid
+        // Check Format C with /100 scaling
+        const scaledC_Sys = Math.round(fmtC_Sys / 100);
+        const scaledC_Dia = Math.round(fmtC_Dia / 100);
+        
+        // Check Format D with /100 scaling  
+        const scaledD_Sys = Math.round(fmtD_Sys / 100);
+        const scaledD_Dia = Math.round(fmtD_Dia / 100);
+        
+        // Try each format with strict validation
+        if (scaledB_Sys >= 70 && scaledB_Sys <= 200 && 
+            scaledB_Dia >= 40 && scaledB_Dia <= 120 &&
+            scaledB_Sys > scaledB_Dia && (scaledB_Sys - scaledB_Dia) >= 20) {
           systolic = scaledB_Sys;
           diastolic = scaledB_Dia;
           heartRate = Math.round(fmtB_Hr / 100) || fmtA_Hr;
-          console.log(`[HC03] ✅ Using Format B (16-bit LE with /100): ${systolic}/${diastolic} mmHg`);
-        } else if (fmtA_Sys >= 60 && fmtA_Sys <= 250 && 
-                   fmtA_Dia >= 30 && fmtA_Dia <= 150 &&
-                   fmtA_Sys > fmtA_Dia) {
-          // Format A (single bytes) looks valid
-          systolic = fmtA_Sys;
-          diastolic = fmtA_Dia;
+          formatUsed = 'Format B (16-bit LE with /100)';
+          isValidated = true;
+        } else if (scaledC_Sys >= 70 && scaledC_Sys <= 200 && 
+                   scaledC_Dia >= 40 && scaledC_Dia <= 120 &&
+                   scaledC_Sys > scaledC_Dia && (scaledC_Sys - scaledC_Dia) >= 20) {
+          systolic = scaledC_Sys;
+          diastolic = scaledC_Dia;
+          heartRate = Math.round(fmtC_Hr / 100) || fmtA_Hr;
+          formatUsed = 'Format C (16-bit BE with /100)';
+          isValidated = true;
+        } else if (scaledD_Sys >= 70 && scaledD_Sys <= 200 && 
+                   scaledD_Dia >= 40 && scaledD_Dia <= 120 &&
+                   scaledD_Sys > scaledD_Dia && (scaledD_Sys - scaledD_Dia) >= 20) {
+          systolic = scaledD_Sys;
+          diastolic = scaledD_Dia;
           heartRate = fmtA_Hr;
-          console.log(`[HC03] ✅ Using Format A (single bytes): ${systolic}/${diastolic} mmHg`);
-        } else {
-          // Fallback: use whatever has sys > dia
-          if (fmtA_Sys > fmtA_Dia && fmtA_Sys > 0) {
-            systolic = fmtA_Sys;
-            diastolic = fmtA_Dia;
-            heartRate = fmtA_Hr;
-            console.log(`[HC03] ⚠️ Fallback to Format A: ${systolic}/${diastolic} mmHg`);
-          } else if (fmtA_Dia > fmtA_Sys && fmtA_Dia > 0) {
-            // Swapped order in data
-            systolic = fmtA_Dia;
-            diastolic = fmtA_Sys;
-            heartRate = fmtA_Hr;
-            console.log(`[HC03] ⚠️ Fallback with swap: ${systolic}/${diastolic} mmHg`);
-          } else {
-            console.warn('[HC03] ❌ Could not determine valid BP format');
-            return;
-          }
+          formatUsed = 'Format D (16-bit LE pd,ps with /100)';
+          isValidated = true;
         }
         
-        // Emit result if we have valid values
-        if (systolic > 0 && diastolic > 0 && systolic > diastolic) {
-          const bloodPressureData: BloodPressureData = {
-            ps: systolic,
-            pd: diastolic,
-            hr: heartRate
-          };
+        // SAFETY: Do NOT use single-byte fallback as it gives wrong readings
+        // The user confirmed 120/110 from single bytes is wrong (should be 124/84)
+        if (!isValidated) {
+          console.error('[HC03] ❌ SAFETY BLOCK: Cannot determine validated BP format');
+          console.error('[HC03] Raw bytes for debugging - copy these to analyze:');
+          console.error(`[HC03] HEX: ${hexStr}`);
+          console.error(`[HC03] DECIMAL: ${decimalStr}`);
+          console.error('[HC03] All format attempts:');
+          console.error(`  A (bytes): sys=${fmtA_Sys}, dia=${fmtA_Dia}, hr=${fmtA_Hr}`);
+          console.error(`  B (16LE/100): sys=${scaledB_Sys}, dia=${scaledB_Dia}`);
+          console.error(`  C (16BE/100): sys=${scaledC_Sys}, dia=${scaledC_Dia}`);
+          console.error(`  D (16LE pd,ps/100): sys=${scaledD_Sys}, dia=${scaledD_Dia}`);
           
-          this.latestBloodPressureData = bloodPressureData;
-          
-          console.log('[HC03] ✅ Blood Pressure Result:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
-          
-          window.dispatchEvent(new CustomEvent('hc03:bloodpressure:result', { 
-            detail: bloodPressureData 
+          // Emit error event so UI can show warning instead of wrong data
+          window.dispatchEvent(new CustomEvent('hc03:bloodpressure:error', { 
+            detail: { 
+              message: 'Unable to validate blood pressure reading. Please retake measurement.',
+              rawHex: hexStr,
+              rawDecimal: decimalStr
+            }
           }));
           
           const callback = this.callbacks.get(Detection.BP);
           if (callback) {
-            callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
+            callback({ 
+              type: 'error', 
+              detection: Detection.BP, 
+              error: 'Measurement validation failed - format not recognized'
+            });
           }
-          
-          setTimeout(() => {
-            console.log('✅ [HC03] Valid blood pressure received, auto-stopping measurement...');
-            this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
-          }, 2000);
-        } else {
-          console.warn(`[HC03] BP values invalid: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
+          return;
         }
+        
+        // Emit validated result
+        console.log(`[HC03] ✅ VALIDATED using ${formatUsed}: ${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
+        
+        const bloodPressureData: BloodPressureData = {
+          ps: systolic,
+          pd: diastolic,
+          hr: heartRate
+        };
+        
+        this.latestBloodPressureData = bloodPressureData;
+        
+        window.dispatchEvent(new CustomEvent('hc03:bloodpressure:result', { 
+          detail: bloodPressureData 
+        }));
+        
+        const callback = this.callbacks.get(Detection.BP);
+        if (callback) {
+          callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
+        }
+        
+        setTimeout(() => {
+          console.log('✅ [HC03] Validated blood pressure received, auto-stopping measurement...');
+          this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
+        }, 2000);
       } else {
         console.log(`[HC03] BP data too short for result (type: 0x${contentType.toString(16)}, length: ${data.length})`);
       }
