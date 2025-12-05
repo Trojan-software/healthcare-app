@@ -87,6 +87,71 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
     setIsRecording(isEcgMeasurementInProgress);
   }, [isEcgMeasurementInProgress]);
 
+  // Listen for real-time ECG data from HC03 SDK
+  useEffect(() => {
+    const handleEcgWave = (event: CustomEvent<{ wave: number[] }>) => {
+      const { wave } = event.detail;
+      console.log('[EcgWidget] 💓 Real-time ECG wave received:', wave.length, 'samples');
+      
+      // Convert SDK waveform to EcgData format
+      const timestamp = Date.now();
+      const newPoints: EcgWavePoint[] = wave.map((voltage, index) => ({
+        timestamp: timestamp + index * 4, // ~250 Hz = 4ms per sample
+        voltage: voltage,
+        lead: 'I'
+      }));
+      
+      setEcgData(prev => {
+        const existingPoints = prev?.wavePoints || [];
+        const allPoints = [...existingPoints, ...newPoints];
+        // Keep last 2500 points (~10 seconds at 250 Hz)
+        const trimmedPoints = allPoints.slice(-2500);
+        
+        return {
+          deviceId: deviceId,
+          wavePoints: trimmedPoints,
+          timestamp: new Date().toISOString()
+        };
+      });
+    };
+    
+    const handleEcgMetrics = (event: CustomEvent<{
+      hr: number;
+      moodIndex: number;
+      rr: number;
+      hrv: number;
+      respiratoryRate: number;
+      touch: boolean;
+    }>) => {
+      const data = event.detail;
+      console.log('[EcgWidget] 💓 Real-time ECG metrics:', data);
+      
+      setStats(prev => ({
+        ...prev,
+        heartRate: data.hr || prev.heartRate,
+        moodIndex: data.moodIndex || prev.moodIndex,
+        rrInterval: data.rr || prev.rrInterval,
+        rrVariability: data.hrv || prev.rrVariability,
+        respiratoryRate: data.respiratoryRate || prev.respiratoryRate,
+        isContactDetected: data.touch,
+        contactQuality: data.touch ? 'good' : 'poor',
+        signalStrength: data.touch ? 85 : 0,
+        // Update HR range
+        maxHeartRate: data.hr > prev.maxHeartRate ? data.hr : prev.maxHeartRate,
+        minHeartRate: data.hr > 0 && (prev.minHeartRate === 0 || data.hr < prev.minHeartRate) ? data.hr : prev.minHeartRate
+      }));
+    };
+    
+    // Add event listeners
+    window.addEventListener('hc03:ecg:wave', handleEcgWave as EventListener);
+    window.addEventListener('hc03:ecg:metrics', handleEcgMetrics as EventListener);
+    
+    return () => {
+      window.removeEventListener('hc03:ecg:wave', handleEcgWave as EventListener);
+      window.removeEventListener('hc03:ecg:metrics', handleEcgMetrics as EventListener);
+    };
+  }, [deviceId]);
+
   useEffect(() => {
     loadEcgData();
     
