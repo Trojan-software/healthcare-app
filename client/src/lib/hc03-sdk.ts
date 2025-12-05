@@ -1632,9 +1632,9 @@ export class Hc03Sdk {
       // If data looks like it could be a result (has enough bytes)
       if (data.length >= 4) {
         // Try different parsing formats to find the medically correct one
-        // Format option 1: Single bytes [type, dia, sys, hr]
-        const opt1Dia = data[1] & 0xFF;
-        const opt1Sys = data[2] & 0xFF;
+        // Format option 1: Single bytes [type, sys, dia, hr]
+        const opt1Sys = data[1] & 0xFF;
+        const opt1Dia = data[2] & 0xFF;
         const opt1Hr = data[3] & 0xFF;
         
         // Format option 2: Two-byte little-endian [type, dia_lo, dia_hi, sys_lo, sys_hi, hr_lo, hr_hi]
@@ -1646,28 +1646,21 @@ export class Hc03Sdk {
         }
         
         // Choose format that produces medically valid readings (systolic > diastolic)
+        // Try format 1 first (single bytes)
         let systolic = opt1Sys;
         let diastolic = opt1Dia;
         let heartRate = opt1Hr;
         
-        if (opt1Sys > opt1Dia && opt1Sys >= 70 && opt1Sys <= 200 && opt1Dia >= 40 && opt1Dia <= 130) {
-          systolic = opt1Sys;
-          diastolic = opt1Dia;
-          heartRate = opt1Hr;
-          console.log(`[HC03] BP: Using single-byte format: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
-        } else if (opt2Sys > opt2Dia && opt2Sys >= 70 && opt2Sys <= 200 && opt2Dia >= 40 && opt2Dia <= 130) {
-          systolic = opt2Sys;
-          diastolic = opt2Dia;
-          heartRate = opt2Hr;
-          console.log(`[HC03] BP: Using two-byte format: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
-        } else {
-          console.log(`[HC03] BP: Using fallback format: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
+        // If diastolic > systolic, they're reversed - swap them
+        if (diastolic > systolic) {
+          console.log(`[HC03] BP: Swapping reversed values: dia=${diastolic} was > sys=${systolic}`);
+          [systolic, diastolic] = [diastolic, systolic];
         }
         
         console.log(`[HC03] BP result parsed: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         
         // Validate ranges before accepting
-        if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130 && heartRate >= 40 && heartRate <= 200 && systolic > diastolic) {
+        if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130 && heartRate >= 40 && heartRate <= 200) {
           const bloodPressureData: BloodPressureData = {
             ps: systolic,
             pd: diastolic,
