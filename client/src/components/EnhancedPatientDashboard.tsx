@@ -1098,7 +1098,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             <BloodGlucoseWidget 
               patientId={dashboardData?.user?.patientId || ''} 
               deviceId={connectedDeviceId || undefined}
-              showControls={true}
+              showControls={false}
               compact={false}
               isGlucoseMeasurementInProgress={isGlucoseInProgress}
             />
