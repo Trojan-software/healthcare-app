@@ -1630,12 +1630,12 @@ export class Hc03Sdk {
       console.log(`[HC03] BP content type not recognized (0x${contentType.toString(16)}), attempting direct result parse...`);
       
       // If data looks like it could be a result (has enough bytes)
-      // Format: [type, sys_low, sys_high, dia_low, dia_high, hr_low, hr_high] (little-endian)
+      // Format: [type, dia_low, dia_high, sys_low, sys_high, hr_low, hr_high] (BIG-endian within each pair)
       if (data.length >= 7) {
-        // Parse as little-endian pressure values (correct byte order!)
-        const systolic = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
-        const diastolic = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
-        const heartRate = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
+        // Parse as big-endian pressure values (high byte first!)
+        const diastolic = ((data[1] & 0xFF) << 8) | (data[2] & 0xFF);
+        const systolic = ((data[3] & 0xFF) << 8) | (data[4] & 0xFF);
+        const heartRate = ((data[5] & 0xFF) << 8) | (data[6] & 0xFF);
         
         console.log(`[HC03] BP result parsed: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         
