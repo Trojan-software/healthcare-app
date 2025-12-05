@@ -871,6 +871,20 @@ export class Hc03Sdk {
       const hexStr = Array.from(rawData.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
       console.log(`[HC03] 📥 Raw data received (${rawData.length} bytes): ${hexStr}${rawData.length > 20 ? '...' : ''}`);
       
+      // HC02-F1B51D ECG RAW DATA DETECTION:
+      // When ECG measurement is active, HC02 sends raw waveform data WITHOUT protocol framing.
+      // Detect this by checking: (1) ECG is active, (2) first byte is NOT a protocol start marker
+      const startByte = rawData[0];
+      const isProtocolFramed = (startByte === 0x01 || startByte === 0x02);
+      const isEcgActive = this.activeDetections.has(Detection.ECG);
+      
+      if (isEcgActive && !isProtocolFramed && rawData.length >= 2) {
+        // This is raw ECG waveform data from HC02-F1B51D - parse directly
+        console.log('💓 [HC03] Raw ECG waveform data detected (unframed), parsing directly...');
+        this.parseECGData(rawData);
+        return;
+      }
+      
       if (rawData.length < Hc03Sdk.PACKAGE_TOTAL_LENGTH - 1) {
         console.warn('Insufficient data length:', rawData.length);
         return;
@@ -1161,19 +1175,28 @@ export class Hc03Sdk {
       }
       
       // Parse ECG waveform samples
-      // Each sample is typically 1 byte (8-bit ADC) or 2 bytes (16-bit ADC)
+      // HC02-F1B51D sends 16-bit SIGNED samples in little-endian format
       const waveData: number[] = [];
       
-      // Try 16-bit samples first (little-endian)
-      if (data.length % 2 === 0) {
+      // Parse as signed 16-bit little-endian samples
+      if (data.length % 2 === 0 && data.length >= 2) {
         for (let i = 0; i < data.length; i += 2) {
-          const sample = (data[i] & 0xFF) | ((data[i + 1] & 0xFF) << 8);
+          // Read as unsigned 16-bit little-endian
+          let sample = (data[i] & 0xFF) | ((data[i + 1] & 0xFF) << 8);
+          // Convert to signed 16-bit (two's complement)
+          if (sample > 32767) {
+            sample = sample - 65536;
+          }
           waveData.push(sample);
         }
       } else {
-        // Fall back to 8-bit samples
+        // Fall back to signed 8-bit samples
         for (let i = 0; i < data.length; i++) {
-          waveData.push(data[i] & 0xFF);
+          let sample = data[i] & 0xFF;
+          if (sample > 127) {
+            sample = sample - 256;
+          }
+          waveData.push(sample);
         }
       }
       
@@ -1230,19 +1253,29 @@ export class Hc03Sdk {
   }
   
   // Simple heart rate estimation from ECG waveform
+  // Works with signed 16-bit samples from HC02-F1B51D
   private estimateHeartRateFromECG(samples: number[]): number {
     if (samples.length < 100) return 0;
     
-    // Find peaks (R-waves) using simple threshold detection
+    // Calculate statistics for signed values
     const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
     const max = Math.max(...samples);
-    const threshold = mean + (max - mean) * 0.6;
+    const min = Math.min(...samples);
+    const range = max - min;
+    
+    // Adaptive threshold: 60% above mean (works for both positive and negative ECG waveforms)
+    const threshold = mean + range * 0.4;
+    
+    console.log(`[HC03] ECG analysis: mean=${mean.toFixed(0)}, max=${max}, min=${min}, threshold=${threshold.toFixed(0)}`);
     
     const peaks: number[] = [];
-    for (let i = 1; i < samples.length - 1; i++) {
+    for (let i = 2; i < samples.length - 2; i++) {
+      // R-peak detection: local maximum above threshold
       if (samples[i] > threshold && 
           samples[i] > samples[i-1] && 
-          samples[i] > samples[i+1]) {
+          samples[i] > samples[i+1] &&
+          samples[i] > samples[i-2] && 
+          samples[i] > samples[i+2]) {
         // Ensure minimum distance between peaks (200ms at 250Hz = 50 samples)
         if (peaks.length === 0 || i - peaks[peaks.length - 1] > 50) {
           peaks.push(i);
