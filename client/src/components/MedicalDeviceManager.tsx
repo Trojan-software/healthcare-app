@@ -96,7 +96,6 @@ const DEVICE_CONFIG = {
 export default function MedicalDeviceManager({ 
   patientId, 
   allowedDevices = [
-    DetectionType.ECG,
     DetectionType.OX,
     DetectionType.BP,
     DetectionType.BG,
