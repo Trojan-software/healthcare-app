@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Droplets, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -16,11 +15,9 @@ interface BloodGlucoseReading {
 
 interface BloodGlucoseMonitorProps {
   patientId: string;
-  onStartTest?: () => void;
-  isMeasuring?: boolean;
 }
 
-export default function BloodGlucoseMonitor({ patientId, onStartTest, isMeasuring = false }: BloodGlucoseMonitorProps) {
+export default function BloodGlucoseMonitor({ patientId }: BloodGlucoseMonitorProps) {
   const [readings, setReadings] = useState<BloodGlucoseReading[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,19 +66,9 @@ export default function BloodGlucoseMonitor({ patientId, onStartTest, isMeasurin
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Droplets className="h-6 w-6 text-blue-500" />
-          <h2 className="text-2xl font-bold text-foreground">Blood Glucose Monitor</h2>
-        </div>
-        <Button
-          onClick={onStartTest}
-          disabled={isMeasuring}
-          className="bg-blue-600 hover:bg-blue-700"
-          data-testid="button-start-glucose-test"
-        >
-          {isMeasuring ? 'Measuring...' : 'Start Test'}
-        </Button>
+      <div className="flex items-center gap-2">
+        <Droplets className="h-6 w-6 text-blue-500" />
+        <h2 className="text-2xl font-bold text-foreground">Blood Glucose Monitor</h2>
       </div>
 
       {/* Latest Reading Card */}
@@ -114,7 +101,7 @@ export default function BloodGlucoseMonitor({ patientId, onStartTest, isMeasurin
               </>
             ) : (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No readings yet. Click "Start Test" to begin.</p>
+                <p className="text-muted-foreground">No readings yet.</p>
               </div>
             )}
           </div>
