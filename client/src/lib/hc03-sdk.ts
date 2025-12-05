@@ -1443,7 +1443,10 @@ export class Hc03Sdk {
   // Handles three types: SendData, Process, Result
   private async parseBloodPressureData(data: Uint8Array): Promise<void> {
     try {
-      console.log(`[HC03] BP raw data: ${Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')} (length: ${data.length})`);
+      const hexStr = Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+      const decimalStr = Array.from(data).map((b, i) => `[${i}]=${b}`).join(' | ');
+      console.log(`[HC03] ⚠️ BP RAW HEX: ${hexStr}`);
+      console.log(`[HC03] ⚠️ BP RAW DECIMAL: ${decimalStr}`);
       
       if (data.length < 1) {
         console.warn('[HC03] Blood pressure data too short');
