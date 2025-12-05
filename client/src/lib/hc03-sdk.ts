@@ -1630,17 +1630,44 @@ export class Hc03Sdk {
       console.log(`[HC03] BP content type not recognized (0x${contentType.toString(16)}), attempting direct result parse...`);
       
       // If data looks like it could be a result (has enough bytes)
-      // Format: [type, dia_low, dia_high, sys_low, sys_high, hr_low, hr_high] (BIG-endian within each pair)
-      if (data.length >= 7) {
-        // Parse as big-endian pressure values (high byte first!)
-        const diastolic = ((data[1] & 0xFF) << 8) | (data[2] & 0xFF);
-        const systolic = ((data[3] & 0xFF) << 8) | (data[4] & 0xFF);
-        const heartRate = ((data[5] & 0xFF) << 8) | (data[6] & 0xFF);
+      if (data.length >= 4) {
+        // Try different parsing formats to find the medically correct one
+        // Format option 1: Single bytes [type, sys, dia, hr]
+        const opt1Sys = data[1] & 0xFF;
+        const opt1Dia = data[2] & 0xFF;
+        const opt1Hr = data[3] & 0xFF;
+        
+        // Format option 2: Two-byte little-endian [type, sys_lo, sys_hi, dia_lo, dia_hi, hr_lo, hr_hi]
+        let opt2Sys = 0, opt2Dia = 0, opt2Hr = 0;
+        if (data.length >= 7) {
+          opt2Sys = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
+          opt2Dia = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
+          opt2Hr = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
+        }
+        
+        // Choose format that produces medically valid readings (systolic > diastolic)
+        let systolic = opt1Sys;
+        let diastolic = opt1Dia;
+        let heartRate = opt1Hr;
+        
+        if (opt1Sys > opt1Dia && opt1Sys >= 70 && opt1Sys <= 200 && opt1Dia >= 40 && opt1Dia <= 130) {
+          systolic = opt1Sys;
+          diastolic = opt1Dia;
+          heartRate = opt1Hr;
+          console.log(`[HC03] BP: Using single-byte format: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
+        } else if (opt2Sys > opt2Dia && opt2Sys >= 70 && opt2Sys <= 200 && opt2Dia >= 40 && opt2Dia <= 130) {
+          systolic = opt2Sys;
+          diastolic = opt2Dia;
+          heartRate = opt2Hr;
+          console.log(`[HC03] BP: Using two-byte format: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
+        } else {
+          console.log(`[HC03] BP: Using fallback format: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
+        }
         
         console.log(`[HC03] BP result parsed: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         
         // Validate ranges before accepting
-        if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130 && heartRate >= 40 && heartRate <= 200) {
+        if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130 && heartRate >= 40 && heartRate <= 200 && systolic > diastolic) {
           const bloodPressureData: BloodPressureData = {
             ps: systolic,
             pd: diastolic,
