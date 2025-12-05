@@ -478,13 +478,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async saveBloodGlucoseData(data: any): Promise<any> {
+    // Accept both glucoseLevel (from API) and bloodGlucosePaperData (from SDK)
+    const glucoseValue = data.glucoseLevel ?? data.bloodGlucosePaperData;
+    const stripStatus = data.testStripStatus ?? data.bloodGlucosePaperState;
+    
     const [savedData] = await db
       .insert(bloodGlucoseData)
       .values({
         patientId: data.patientId,
         deviceId: data.deviceId,
-        glucoseLevel: data.bloodGlucosePaperData,
-        testStripStatus: data.bloodGlucosePaperState,
+        glucoseLevel: glucoseValue,
+        testStripStatus: stripStatus,
         measurementType: data.measurementType || 'fingerstick',
       })
       .returning();

@@ -44,7 +44,8 @@ export default function BloodGlucoseMonitor({ patientId, onStartTest, isMeasurin
     }
   };
 
-  const getGlucoseStatus = (level: number) => {
+  const getGlucoseStatus = (level: number | null | undefined) => {
+    if (level === null || level === undefined) return { label: 'Pending', color: 'bg-gray-100 text-gray-600', badge: 'secondary', icon: Minus };
     if (level < 70) return { label: 'Low', color: 'bg-red-100 text-red-800', badge: 'destructive', icon: TrendingDown };
     if (level <= 140) return { label: 'Normal', color: 'bg-green-100 text-green-800', badge: 'default', icon: Minus };
     if (level <= 180) return { label: 'Elevated', color: 'bg-yellow-100 text-yellow-800', badge: 'secondary', icon: TrendingUp };
@@ -93,7 +94,9 @@ export default function BloodGlucoseMonitor({ patientId, onStartTest, isMeasurin
                   <div>
                     <p className="text-sm text-muted-foreground">Latest Reading</p>
                     <p className="text-4xl font-bold text-blue-600 mt-2">
-                      {latestReading.glucoseLevel} <span className="text-lg">mg/dL</span>
+                      {latestReading.glucoseLevel !== null && latestReading.glucoseLevel !== undefined 
+                        ? latestReading.glucoseLevel 
+                        : '—'} <span className="text-lg">mg/dL</span>
                     </p>
                   </div>
                   {status && (
@@ -138,9 +141,11 @@ export default function BloodGlucoseMonitor({ patientId, onStartTest, isMeasurin
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">
-                        {reading.glucoseLevel} <span className="text-xs text-muted-foreground">mg/dL</span>
+                        {reading.glucoseLevel !== null && reading.glucoseLevel !== undefined 
+                          ? reading.glucoseLevel 
+                          : '—'} <span className="text-xs text-muted-foreground">mg/dL</span>
                       </p>
-                      <p className="text-xs text-muted-foreground">{reading.testStripStatus}</p>
+                      <p className="text-xs text-muted-foreground">{reading.testStripStatus || 'fingerstick'}</p>
                     </div>
                   </div>
                   <div className="text-right flex items-center gap-3">
