@@ -32,6 +32,15 @@ export interface IStorage {
   createVitalSigns(insertVitals: InsertVitalSigns): Promise<VitalSigns>;
   getVitalSignsByPatient(patientId: string): Promise<VitalSigns[]>;
   getLatestVitalSigns(patientId: string): Promise<VitalSigns | undefined>;
+  getLatestVitalsSnapshot(patientId: string): Promise<{
+    heartRate: number | null;
+    bloodPressureSystolic: number | null;
+    bloodPressureDiastolic: number | null;
+    temperature: string | null;
+    oxygenLevel: number | null;
+    bloodGlucose: number | null;
+    timestamp: Date | null;
+  }>;
 
   // Checkup log methods
   createCheckupLog(insertLog: InsertCheckupLog): Promise<CheckupLog>;
@@ -208,6 +217,68 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(vitalSigns.timestamp))
       .limit(1);
     return latest || undefined;
+  }
+
+  async getLatestVitalsSnapshot(patientId: string): Promise<{
+    heartRate: number | null;
+    bloodPressureSystolic: number | null;
+    bloodPressureDiastolic: number | null;
+    temperature: string | null;
+    oxygenLevel: number | null;
+    bloodGlucose: number | null;
+    timestamp: Date | null;
+  }> {
+    const recentVitals = await db
+      .select()
+      .from(vitalSigns)
+      .where(eq(vitalSigns.patientId, patientId))
+      .orderBy(desc(vitalSigns.timestamp))
+      .limit(50);
+    
+    let heartRate: number | null = null;
+    let bloodPressureSystolic: number | null = null;
+    let bloodPressureDiastolic: number | null = null;
+    let temperature: string | null = null;
+    let oxygenLevel: number | null = null;
+    let bloodGlucose: number | null = null;
+    let latestTimestamp: Date | null = null;
+
+    for (const vital of recentVitals) {
+      if (heartRate === null && vital.heartRate !== null) {
+        heartRate = vital.heartRate;
+      }
+      if (bloodPressureSystolic === null && vital.bloodPressureSystolic !== null && vital.bloodPressureDiastolic !== null) {
+        bloodPressureSystolic = vital.bloodPressureSystolic;
+        bloodPressureDiastolic = vital.bloodPressureDiastolic;
+      }
+      if (temperature === null && vital.temperature !== null) {
+        temperature = vital.temperature;
+      }
+      if (oxygenLevel === null && vital.oxygenLevel !== null) {
+        oxygenLevel = vital.oxygenLevel;
+      }
+      if (bloodGlucose === null && vital.bloodGlucose !== null) {
+        bloodGlucose = vital.bloodGlucose;
+      }
+      if (latestTimestamp === null && vital.timestamp) {
+        latestTimestamp = vital.timestamp;
+      }
+      
+      if (heartRate !== null && bloodPressureSystolic !== null && temperature !== null && 
+          oxygenLevel !== null && bloodGlucose !== null) {
+        break;
+      }
+    }
+
+    return {
+      heartRate,
+      bloodPressureSystolic,
+      bloodPressureDiastolic,
+      temperature,
+      oxygenLevel,
+      bloodGlucose,
+      timestamp: latestTimestamp
+    };
   }
 
   // Checkup log methods

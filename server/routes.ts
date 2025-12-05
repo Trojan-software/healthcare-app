@@ -913,29 +913,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const patientId = user.patientId || String(user.id);
-      const latestVitals = await storage.getLatestVitalSigns(patientId);
+      const vitalsSnapshot = await storage.getLatestVitalsSnapshot(patientId);
       const vitalsHistory = await storage.getVitalSignsByPatient(patientId);
       const checkupHistory = await storage.getCheckupHistory(patientId);
       const alerts = await storage.getAlertsByPatient(patientId);
       const reminderSettings = await storage.getReminderSettings(patientId);
 
-      // Format vitals data to match frontend expectations
-      const formattedVitals = latestVitals ? {
-        heartRate: latestVitals.heartRate || '--',
-        bloodPressure: (latestVitals.bloodPressureSystolic && latestVitals.bloodPressureDiastolic) 
-          ? `${latestVitals.bloodPressureSystolic}/${latestVitals.bloodPressureDiastolic}`
+      // Format vitals data using per-vital latest non-null values
+      const formattedVitals = {
+        heartRate: vitalsSnapshot.heartRate ?? '--',
+        bloodPressure: (vitalsSnapshot.bloodPressureSystolic !== null && vitalsSnapshot.bloodPressureDiastolic !== null) 
+          ? `${vitalsSnapshot.bloodPressureSystolic}/${vitalsSnapshot.bloodPressureDiastolic}`
           : '--/--',
-        temperature: latestVitals.temperature ? parseFloat(latestVitals.temperature as string).toFixed(1) : '--',
-        oxygenLevel: latestVitals.oxygenLevel || '--',
-        bloodGlucose: latestVitals.bloodGlucose || '--',
-        timestamp: latestVitals.timestamp
-      } : {
-        heartRate: '--',
-        bloodPressure: '--/--',
-        temperature: '--',
-        oxygenLevel: '--',
-        bloodGlucose: '--',
-        timestamp: new Date()
+        temperature: vitalsSnapshot.temperature ? parseFloat(vitalsSnapshot.temperature).toFixed(1) : '--',
+        oxygenLevel: vitalsSnapshot.oxygenLevel ?? '--',
+        bloodGlucose: vitalsSnapshot.bloodGlucose ?? '--',
+        timestamp: vitalsSnapshot.timestamp || new Date()
       };
 
       const stats = {
