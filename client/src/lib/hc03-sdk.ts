@@ -1628,66 +1628,122 @@ export class Hc03Sdk {
         return;
       }
       
-      // Unknown content type - likely a direct result (no calibration needed)
-      // Log for debugging
-      console.log(`[HC03] BP content type not recognized (0x${contentType.toString(16)}), attempting direct result parse...`);
+      // Unknown content type - likely a direct result (HC02-F1B51D format)
+      // HC02 uses different result format than HC03
+      console.log(`[HC03] BP content type (0x${contentType.toString(16)}), parsing HC02-style result...`);
       
-      // If data looks like it could be a result (has enough bytes)
-      if (data.length >= 4) {
-        // Try different parsing formats to find the medically correct one
-        // Format option 1: Single bytes [type, sys, dia, hr]
-        const opt1Sys = data[1] & 0xFF;
-        const opt1Dia = data[2] & 0xFF;
-        const opt1Hr = data[3] & 0xFF;
+      // Try all possible parsing formats and log each one
+      if (data.length >= 3) {
+        console.log('[HC03] ========== BP PARSING ANALYSIS ==========');
         
-        // Format option 2: Two-byte little-endian [type, dia_lo, dia_hi, sys_lo, sys_hi, hr_lo, hr_hi]
-        let opt2Sys = 0, opt2Dia = 0, opt2Hr = 0;
-        if (data.length >= 7) {
-          opt2Dia = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
-          opt2Sys = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
-          opt2Hr = (data[5] & 0xFF) | ((data[6] & 0xFF) << 8);
+        // Format A: Single bytes [type, sys, dia, hr] - values directly in bytes
+        const fmtA_Sys = data[1] & 0xFF;
+        const fmtA_Dia = data[2] & 0xFF;
+        const fmtA_Hr = data.length >= 4 ? data[3] & 0xFF : 0;
+        console.log(`[HC03] Format A (single bytes): sys=${fmtA_Sys}, dia=${fmtA_Dia}, hr=${fmtA_Hr}`);
+        
+        // Format B: 16-bit LE [type, ps_lo, ps_hi, pd_lo, pd_hi, hr_lo, hr_hi]
+        let fmtB_Sys = 0, fmtB_Dia = 0, fmtB_Hr = 0;
+        if (data.length >= 5) {
+          fmtB_Sys = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
+          fmtB_Dia = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
+          fmtB_Hr = data.length >= 7 ? ((data[5] & 0xFF) | ((data[6] & 0xFF) << 8)) : 0;
+          console.log(`[HC03] Format B (16-bit LE ps,pd): sys=${fmtB_Sys}, dia=${fmtB_Dia}, hr=${fmtB_Hr}`);
+          console.log(`[HC03] Format B with /100 scaling: sys=${fmtB_Sys/100}, dia=${fmtB_Dia/100}`);
         }
         
-        // Choose format that produces medically valid readings (systolic > diastolic)
-        // Try format 1 first (single bytes)
-        let systolic = opt1Sys;
-        let diastolic = opt1Dia;
-        let heartRate = opt1Hr;
-        
-        // If diastolic > systolic, they're reversed - swap them
-        if (diastolic > systolic) {
-          console.log(`[HC03] BP: Swapping reversed values: dia=${diastolic} was > sys=${systolic}`);
-          [systolic, diastolic] = [diastolic, systolic];
+        // Format C: 16-bit BE [type, ps_hi, ps_lo, pd_hi, pd_lo, hr_hi, hr_lo]
+        let fmtC_Sys = 0, fmtC_Dia = 0, fmtC_Hr = 0;
+        if (data.length >= 5) {
+          fmtC_Sys = ((data[1] & 0xFF) << 8) | (data[2] & 0xFF);
+          fmtC_Dia = ((data[3] & 0xFF) << 8) | (data[4] & 0xFF);
+          fmtC_Hr = data.length >= 7 ? (((data[5] & 0xFF) << 8) | (data[6] & 0xFF)) : 0;
+          console.log(`[HC03] Format C (16-bit BE ps,pd): sys=${fmtC_Sys}, dia=${fmtC_Dia}, hr=${fmtC_Hr}`);
+          console.log(`[HC03] Format C with /100 scaling: sys=${fmtC_Sys/100}, dia=${fmtC_Dia/100}`);
         }
         
-        console.log(`[HC03] BP result parsed: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
+        // Format D: [type, pd_lo, pd_hi, ps_lo, ps_hi] - diastolic first (little-endian)
+        let fmtD_Sys = 0, fmtD_Dia = 0;
+        if (data.length >= 5) {
+          fmtD_Dia = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
+          fmtD_Sys = (data[3] & 0xFF) | ((data[4] & 0xFF) << 8);
+          console.log(`[HC03] Format D (16-bit LE pd,ps): sys=${fmtD_Sys}, dia=${fmtD_Dia}`);
+          console.log(`[HC03] Format D with /100 scaling: sys=${fmtD_Sys/100}, dia=${fmtD_Dia/100}`);
+        }
         
-        // Accept any non-zero blood pressure readings (basic validation only)
-        if (systolic > 0 && diastolic > 0) {
+        // Format E: Direct byte values at positions 2,3 for sys,dia (skip type byte)
+        const fmtE_Sys = data.length >= 3 ? data[2] & 0xFF : 0;
+        const fmtE_Dia = data.length >= 4 ? data[3] & 0xFF : 0;
+        console.log(`[HC03] Format E (bytes at [2],[3]): sys=${fmtE_Sys}, dia=${fmtE_Dia}`);
+        
+        console.log('[HC03] ==========================================');
+        
+        // DECISION: Use Format B with /100 scaling as per Flutter SDK
+        // The Flutter SDK uses: ps ~/= 100 and pd = getPD() ~/ 100
+        let systolic = 0;
+        let diastolic = 0;
+        let heartRate = 0;
+        
+        // Check if Format B with /100 gives valid medical values (60-200 sys, 40-130 dia)
+        const scaledB_Sys = Math.round(fmtB_Sys / 100);
+        const scaledB_Dia = Math.round(fmtB_Dia / 100);
+        
+        if (scaledB_Sys >= 60 && scaledB_Sys <= 250 && 
+            scaledB_Dia >= 30 && scaledB_Dia <= 150 &&
+            scaledB_Sys > scaledB_Dia) {
+          // Format B with scaling looks valid
+          systolic = scaledB_Sys;
+          diastolic = scaledB_Dia;
+          heartRate = Math.round(fmtB_Hr / 100) || fmtA_Hr;
+          console.log(`[HC03] ✅ Using Format B (16-bit LE with /100): ${systolic}/${diastolic} mmHg`);
+        } else if (fmtA_Sys >= 60 && fmtA_Sys <= 250 && 
+                   fmtA_Dia >= 30 && fmtA_Dia <= 150 &&
+                   fmtA_Sys > fmtA_Dia) {
+          // Format A (single bytes) looks valid
+          systolic = fmtA_Sys;
+          diastolic = fmtA_Dia;
+          heartRate = fmtA_Hr;
+          console.log(`[HC03] ✅ Using Format A (single bytes): ${systolic}/${diastolic} mmHg`);
+        } else {
+          // Fallback: use whatever has sys > dia
+          if (fmtA_Sys > fmtA_Dia && fmtA_Sys > 0) {
+            systolic = fmtA_Sys;
+            diastolic = fmtA_Dia;
+            heartRate = fmtA_Hr;
+            console.log(`[HC03] ⚠️ Fallback to Format A: ${systolic}/${diastolic} mmHg`);
+          } else if (fmtA_Dia > fmtA_Sys && fmtA_Dia > 0) {
+            // Swapped order in data
+            systolic = fmtA_Dia;
+            diastolic = fmtA_Sys;
+            heartRate = fmtA_Hr;
+            console.log(`[HC03] ⚠️ Fallback with swap: ${systolic}/${diastolic} mmHg`);
+          } else {
+            console.warn('[HC03] ❌ Could not determine valid BP format');
+            return;
+          }
+        }
+        
+        // Emit result if we have valid values
+        if (systolic > 0 && diastolic > 0 && systolic > diastolic) {
           const bloodPressureData: BloodPressureData = {
             ps: systolic,
             pd: diastolic,
             hr: heartRate
           };
           
-          // Store latest data for getter methods
           this.latestBloodPressureData = bloodPressureData;
           
           console.log('[HC03] ✅ Blood Pressure Result:', `${systolic}/${diastolic} mmHg, HR: ${heartRate} bpm`);
           
-          // Emit Result event
           window.dispatchEvent(new CustomEvent('hc03:bloodpressure:result', { 
             detail: bloodPressureData 
           }));
           
-          // Send callback with result
           const callback = this.callbacks.get(Detection.BP);
           if (callback) {
             callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
           }
           
-          // Auto-stop blood pressure measurement after getting valid reading
-          // Wait 2 seconds to ensure data is saved before stopping
           setTimeout(() => {
             console.log('✅ [HC03] Valid blood pressure received, auto-stopping measurement...');
             this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
@@ -1696,7 +1752,7 @@ export class Hc03Sdk {
           console.warn(`[HC03] BP values invalid: sys=${systolic}, dia=${diastolic}, hr=${heartRate}`);
         }
       } else {
-        console.log(`[HC03] Unknown BP data format (type: 0x${contentType.toString(16)}, length: ${data.length})`);
+        console.log(`[HC03] BP data too short for result (type: 0x${contentType.toString(16)}, length: ${data.length})`);
       }
     } catch (error) {
       console.error('Error parsing blood pressure data:', error);
