@@ -187,6 +187,13 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
           minHeartRate: newHeartRate - Math.floor(Math.random() * 15)
         });
       }, 1000);
+      
+      // Auto-stop after 30 seconds
+      setTimeout(async () => {
+        console.log('⏱️ ECG Auto-stop: 30 seconds elapsed');
+        await stopRecording();
+      }, 30000);
+      
     } catch (error) {
       handleDeviceError('EcgWidget', 'startRecording', error as Error, { deviceId, patientId });
       setIsRecording(false);
@@ -612,17 +619,15 @@ For immediate assistance, contact emergency services or your healthcare provider
               {stats.isContactDetected ? `${t('contact')}: ${stats.contactQuality}` : t('noContact')}
             </Badge>
             <div className="flex items-center space-x-2">
-              {showControls && (
+              {showControls && isRecording && (
                 <>
                   <Button 
-                    onClick={isRecording ? stopRecording : startRecording}
+                    onClick={stopRecording}
                     size="sm"
-                    variant={isRecording ? "destructive" : "default"}
-                    disabled={!isRecording && (!deviceId || deviceId.trim() === '')}
-                    title={(!deviceId || deviceId.trim() === '') ? t('connectDeviceFirst') : ''}
+                    variant="destructive"
                   >
-                    {isRecording ? <Square className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
-                    {isRecording ? t('stop') : t('start')}
+                    <Square className="w-4 h-4 mr-1" />
+                    {t('stop')}
                   </Button>
                   <Button size="sm" variant="outline" onClick={handleExport}>
                     <Download className="w-4 h-4 mr-1" />
