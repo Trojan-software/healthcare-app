@@ -417,15 +417,14 @@ export class Hc03Sdk {
         // Service UUID filtering happens AFTER device selection during connection
         this.device = await navigator.bluetooth.requestDevice({
           filters: [
-            // Name-based filters for all HC03/HC02 device variants
-            { namePrefix: 'HC03' },       // HC03-XXXXXX devices
-            { namePrefix: 'HC02' },       // HC02-F1B5D and similar
+            // Name-based filters: prioritize HC devices first
+            { namePrefix: 'HC03-' },      // HC03-XXXXXX devices (exact)
+            { namePrefix: 'HC02-' },      // HC02-F1B51D and similar (exact)
+            { namePrefix: 'HC03' },       // HC03 variants
+            { namePrefix: 'HC02' },       // HC02 variants
             { namePrefix: 'HC-03' },      // Alternative naming
             { namePrefix: 'HC-02' },      // Alternative naming
-            { namePrefix: 'UNKTOP' },     // Brand name
-            { namePrefix: 'Health' },     // Generic health devices
-            { namePrefix: 'ECG' },        // ECG-specific devices
-            { namePrefix: 'BLE-' },       // BLE prefix devices
+            { namePrefix: 'UNKTOP' },     // Brand name (UNKTOP devices)
           ],
           optionalServices: [
             // Actual services accessed after connection (from official SDK)
@@ -523,8 +522,15 @@ export class Hc03Sdk {
       this.writeCharacteristic = await this.service.getCharacteristic(HC03_WRITE_CHARACTERISTIC);
       this.notifyCharacteristic = await this.service.getCharacteristic(HC03_NOTIFY_CHARACTERISTIC);
       
-      // Enable notifications
-      await this.notifyCharacteristic.startNotifications();
+      // Enable notifications (Web Bluetooth API handles CCCD automatically)
+      try {
+        await this.notifyCharacteristic.startNotifications();
+        console.log('✅ [HC03] Notifications enabled on characteristic (CCCD handled by browser)');
+      } catch (error) {
+        console.error('❌ [HC03] Failed to enable notifications:', error);
+        throw new Error('Could not enable notifications. The device may not support notifications or the characteristic is not writable.');
+      }
+      
       this.notifyCharacteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristicValueChanged);
       
       // Set up disconnect handler
@@ -634,7 +640,15 @@ export class Hc03Sdk {
       }
 
       console.log(`▶️ [HC03] Starting ${detection} detection...`);
-      await this.writeCharacteristic.writeValue(command);
+      // Use writeValueWithoutResponse for better compatibility with HC02-F1B51D
+      // The device will send notifications back with data
+      try {
+        await this.writeCharacteristic.writeValueWithoutResponse(command);
+      } catch (e) {
+        // Fall back to writeValue if writeValueWithoutResponse fails
+        console.warn('[HC03] writeValueWithoutResponse failed, trying writeValue:', e);
+        await this.writeCharacteristic.writeValue(command);
+      }
       this.activeDetections.add(detection);
       
       // Start active polling for BG measurements (required by HC02-F1B51D)
@@ -664,7 +678,13 @@ export class Hc03Sdk {
       const command = STOP_COMMANDS[detection];
       if (command) {
         console.log(`Stopping ${detection} detection...`);
-        await this.writeCharacteristic.writeValue(command);
+        // Use writeValueWithoutResponse for stop commands too
+        try {
+          await this.writeCharacteristic.writeValueWithoutResponse(command);
+        } catch (e) {
+          // Fall back to writeValue if needed
+          await this.writeCharacteristic.writeValue(command);
+        }
       }
       
       // Stop active polling for BG measurements
@@ -709,10 +729,17 @@ export class Hc03Sdk {
     const intervalId = window.setInterval(async () => {
       try {
         // Send polling command to request data from device
-        await this.writeCharacteristic!.writeValue(pollingCommand);
+        // Use writeValueWithoutResponse for fast polling
+        await this.writeCharacteristic!.writeValueWithoutResponse(pollingCommand);
       } catch (error) {
-        console.error(`[HC03] Polling error for ${detection}:`, error);
-        this.stopPolling(detection);
+        console.warn(`[HC03] Polling error for ${detection}, attempting writeValue:`, error);
+        try {
+          // Fall back to writeValue
+          await this.writeCharacteristic!.writeValue(pollingCommand);
+        } catch (fallbackError) {
+          console.error(`[HC03] Both write methods failed for polling:`, fallbackError);
+          this.stopPolling(detection);
+        }
       }
     }, this.POLLING_INTERVAL_MS);
 
@@ -1451,7 +1478,11 @@ export class Hc03Sdk {
         if (this.writeCharacteristic) {
           try {
             const responseCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_CALIBRATE_TEMPERATURE]);
-            await this.writeCharacteristic.writeValueWithoutResponse(responseCmd);
+            try {
+              await this.writeCharacteristic.writeValueWithoutResponse(responseCmd);
+            } catch (e) {
+              await this.writeCharacteristic.writeValue(responseCmd);
+            }
             console.log('[HC03] ✅ Sent temperature calibration request');
             
             // Emit SendData event
@@ -1474,7 +1505,11 @@ export class Hc03Sdk {
         if (this.writeCharacteristic) {
           try {
             const responseCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_CALIBRATE_ZERO]);
-            await this.writeCharacteristic.writeValueWithoutResponse(responseCmd);
+            try {
+              await this.writeCharacteristic.writeValueWithoutResponse(responseCmd);
+            } catch (e) {
+              await this.writeCharacteristic.writeValue(responseCmd);
+            }
             console.log('[HC03] ✅ Sent zero calibration request');
             
             // Emit SendData event
@@ -1520,7 +1555,11 @@ export class Hc03Sdk {
               try {
                 // Send quick charging command to start rapid inflation
                 const quickChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_QUICK_CHARGING_GAS]);
-                await this.writeCharacteristic.writeValueWithoutResponse(quickChargeCmd);
+                try {
+                  await this.writeCharacteristic.writeValueWithoutResponse(quickChargeCmd);
+                } catch (e) {
+                  await this.writeCharacteristic.writeValue(quickChargeCmd);
+                }
                 console.log('[HC03] ✅ Sent quick charging command - cuff should start inflating');
                 
                 // Wait a moment, then send PWM charging for controlled inflation
@@ -1528,7 +1567,11 @@ export class Hc03Sdk {
                   if (this.writeCharacteristic && !this.bpCalculated) {
                     try {
                       const pwmChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM]);
-                      await this.writeCharacteristic.writeValueWithoutResponse(pwmChargeCmd);
+                      try {
+                        await this.writeCharacteristic.writeValueWithoutResponse(pwmChargeCmd);
+                      } catch (e) {
+                        await this.writeCharacteristic.writeValue(pwmChargeCmd);
+                      }
                       console.log('[HC03] ✅ Sent PWM charging command - controlled inflation');
                     } catch (error) {
                       console.error('[HC03] ❌ Failed to send PWM charging command:', error);
@@ -1636,7 +1679,7 @@ export class Hc03Sdk {
 
   // Calculate blood pressure from collected pressure samples
   // Uses oscillometric method with peak amplitude ratios
-  private calculateBloodPressure(): void {
+  private async calculateBloodPressure(): Promise<void> {
     if (this.bpPressureBuffer.length < 10) {
       console.warn('[HC03] Not enough pressure samples to calculate BP');
       return;
@@ -1742,7 +1785,11 @@ export class Hc03Sdk {
       if (this.writeCharacteristic) {
         try {
           const stopCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]);
-          this.writeCharacteristic.writeValueWithoutResponse(stopCmd);
+          try {
+            await this.writeCharacteristic.writeValueWithoutResponse(stopCmd);
+          } catch (e) {
+            await this.writeCharacteristic.writeValue(stopCmd);
+          }
           console.log('[HC03] 🛑 Sent stop charging command - cuff deflating');
         } catch (error) {
           console.warn('[HC03] Failed to send stop charging command:', error);
@@ -1795,7 +1842,11 @@ export class Hc03Sdk {
         // The data array IS the sendList - write it back to the device
         if (this.writeCharacteristic) {
           try {
-            await this.writeCharacteristic.writeValue(data);
+            try {
+              await this.writeCharacteristic.writeValueWithoutResponse(data);
+            } catch (e) {
+              await this.writeCharacteristic.writeValue(data);
+            }
             console.log('[HC03] ✅ Sent BG command back to device');
             
             // Emit SendData event
