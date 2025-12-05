@@ -1065,8 +1065,12 @@ export class Hc03Sdk {
         console.log('💪 [HC03] → Parsing BLOOD PRESSURE');
         this.parseBloodPressureData(data).catch(e => console.error('BP parsing error:', e));
         break;
-      case PROTOCOL.ELECTROCARDIOGRAM:  // 0x05 - ECG uses request type directly, not 0x80 offset
+      case PROTOCOL.ELECTROCARDIOGRAM:  // 0x05 - ECG request type
         console.log('💓 [HC03] → Parsing ECG (type 0x05)');
+        this.parseECGData(data);
+        break;
+      case Hc03Sdk.ECG_RES_TYPE:  // 0x85 - ECG response type (0x80 | 0x05) - HC02 uses this
+        console.log('💓 [HC03] → Parsing ECG (type 0x85 - HC02 response)');
         this.parseECGData(data);
         break;
       case 0x10:
