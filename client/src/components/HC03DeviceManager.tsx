@@ -594,7 +594,7 @@ export default function HC03DeviceManager({ patientId }: { patientId: string }) 
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[Detection.ECG, Detection.OX, Detection.BP, Detection.BT, Detection.BG].map((detection) => (
+              {[Detection.OX, Detection.BP, Detection.BT, Detection.BG].map((detection) => (
                 <div key={detection} className="text-center">
                   <Button
                     variant={activeDetections.has(detection) ? "default" : "outline"}
