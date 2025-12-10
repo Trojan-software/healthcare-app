@@ -320,10 +320,71 @@ export class Hc03Sdk {
   private bpInflationStarted: boolean = false; // Flag to track if cuff inflation has been triggered
   private bpZeroSampleCount: number = 0; // Count zero calibration samples before starting inflation
 
+  // Command queue for serializing Bluetooth writes
+  private commandQueue: Array<{ command: Uint8Array; resolve: () => void; reject: (error: any) => void }> = [];
+  private isProcessingQueue: boolean = false;
+  private lastCommandTime: number = 0;
+  private readonly MIN_COMMAND_INTERVAL_MS = 150; // Minimum 150ms between commands
+
   private constructor() {
     // Bind methods to preserve context
     this.handleDisconnection = this.handleDisconnection.bind(this);
     this.handleCharacteristicValueChanged = this.handleCharacteristicValueChanged.bind(this);
+  }
+
+  // Queue a command for sequential execution
+  private async queueCommand(command: Uint8Array): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.commandQueue.push({ command, resolve, reject });
+      this.processCommandQueue();
+    });
+  }
+
+  // Process commands sequentially
+  private async processCommandQueue(): Promise<void> {
+    if (this.isProcessingQueue || this.commandQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessingQueue = true;
+
+    while (this.commandQueue.length > 0) {
+      const item = this.commandQueue.shift();
+      if (!item) continue;
+
+      try {
+        // Ensure minimum interval between commands
+        const now = Date.now();
+        const elapsed = now - this.lastCommandTime;
+        if (elapsed < this.MIN_COMMAND_INTERVAL_MS) {
+          await new Promise(resolve => setTimeout(resolve, this.MIN_COMMAND_INTERVAL_MS - elapsed));
+        }
+
+        if (!this.writeCharacteristic) {
+          throw new Error('Write characteristic not available');
+        }
+
+        // Send command with retry
+        try {
+          await this.writeCharacteristic.writeValueWithoutResponse(item.command);
+        } catch (e) {
+          // Retry with writeValue
+          console.warn('[HC03] writeValueWithoutResponse failed, retrying with writeValue:', e);
+          await this.writeCharacteristic.writeValue(item.command);
+        }
+
+        this.lastCommandTime = Date.now();
+        item.resolve();
+        
+        // Small delay between commands for stability
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (error) {
+        console.error('[HC03] Command write failed:', error);
+        item.reject(error);
+      }
+    }
+
+    this.isProcessingQueue = false;
   }
 
   // Singleton getInstance method as per API documentation
@@ -650,33 +711,19 @@ export class Hc03Sdk {
       }
 
       console.log(`▶️ [HC03] Starting ${detection} detection...`);
-      // Use writeValueWithoutResponse for better compatibility with HC02-F1B51D
-      // The device will send notifications back with data
-      try {
-        await this.writeCharacteristic.writeValueWithoutResponse(command);
-      } catch (e) {
-        // Fall back to writeValue if writeValueWithoutResponse fails
-        console.warn('[HC03] writeValueWithoutResponse failed, trying writeValue:', e);
-        await this.writeCharacteristic.writeValue(command);
-      }
+      // Use command queue for sequential Bluetooth writes
+      await this.queueCommand(command);
       
       // HC02-F1B51D CRITICAL: Send ECG real-time start command after ECG_START
       // Without this second command, the device stays in idle/touch-detection mode
       // and never streams ECG data. This matches the vendor Flutter SDK behavior.
       if (detection === Detection.ECG) {
         console.log('💓 [HC03] Sending ECG real-time start command (0x05/0x03)...');
-        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between commands
         
         // Build ECG real-time start command: 0x05 (ECG type) + 0x03 (real-time start)
         const ecgRealtimeCommand = obtainCommandData(PROTOCOL.ELECTROCARDIOGRAM, [PROTOCOL.ECG_REALTIME_START]);
-        
-        try {
-          await this.writeCharacteristic.writeValueWithoutResponse(ecgRealtimeCommand);
-          console.log('✅ [HC03] ECG real-time streaming enabled');
-        } catch (e) {
-          console.warn('[HC03] ECG real-time command writeValueWithoutResponse failed, trying writeValue:', e);
-          await this.writeCharacteristic.writeValue(ecgRealtimeCommand);
-        }
+        await this.queueCommand(ecgRealtimeCommand);
+        console.log('✅ [HC03] ECG real-time streaming enabled');
       }
       
       this.activeDetections.add(detection);
@@ -708,13 +755,8 @@ export class Hc03Sdk {
       const command = STOP_COMMANDS[detection];
       if (command) {
         console.log(`Stopping ${detection} detection...`);
-        // Use writeValueWithoutResponse for stop commands too
-        try {
-          await this.writeCharacteristic.writeValueWithoutResponse(command);
-        } catch (e) {
-          // Fall back to writeValue if needed
-          await this.writeCharacteristic.writeValue(command);
-        }
+        // Use command queue for sequential Bluetooth writes
+        await this.queueCommand(command);
       }
       
       // Stop active polling for BG measurements
@@ -758,18 +800,11 @@ export class Hc03Sdk {
     
     const intervalId = window.setInterval(async () => {
       try {
-        // Send polling command to request data from device
-        // Use writeValueWithoutResponse for fast polling
-        await this.writeCharacteristic!.writeValueWithoutResponse(pollingCommand);
+        // Use command queue for polling (will serialize with other commands)
+        await this.queueCommand(pollingCommand);
       } catch (error) {
-        console.warn(`[HC03] Polling error for ${detection}, attempting writeValue:`, error);
-        try {
-          // Fall back to writeValue
-          await this.writeCharacteristic!.writeValue(pollingCommand);
-        } catch (fallbackError) {
-          console.error(`[HC03] Both write methods failed for polling:`, fallbackError);
-          this.stopPolling(detection);
-        }
+        console.warn(`[HC03] Polling error for ${detection}:`, error);
+        // Don't stop polling on single error, just log it
       }
     }, this.POLLING_INTERVAL_MS);
 
@@ -1692,23 +1727,17 @@ export class Hc03Sdk {
         }
         
         // Respond with temperature calibration request
-        if (this.writeCharacteristic) {
-          try {
-            const responseCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_CALIBRATE_TEMPERATURE]);
-            try {
-              await this.writeCharacteristic.writeValueWithoutResponse(responseCmd);
-            } catch (e) {
-              await this.writeCharacteristic.writeValue(responseCmd);
-            }
-            console.log('[HC03] ✅ Sent temperature calibration request');
-            
-            // Emit SendData event
-            window.dispatchEvent(new CustomEvent('hc03:bloodpressure:send', { 
-              detail: { sendList: Array.from(responseCmd) } 
-            }));
-          } catch (error) {
-            console.error('[HC03] ❌ Failed to send BP command:', error);
-          }
+        try {
+          const responseCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_CALIBRATE_TEMPERATURE]);
+          await this.queueCommand(responseCmd);
+          console.log('[HC03] ✅ Sent temperature calibration request');
+          
+          // Emit SendData event
+          window.dispatchEvent(new CustomEvent('hc03:bloodpressure:send', { 
+            detail: { sendList: Array.from(responseCmd) } 
+          }));
+        } catch (error) {
+          console.error('[HC03] ❌ Failed to send BP command:', error);
         }
         return;
       }
@@ -1719,23 +1748,17 @@ export class Hc03Sdk {
         console.log('[HC03] 📤 BP Calibrate Temperature - requesting zero calibration...');
         
         // Respond with zero calibration request
-        if (this.writeCharacteristic) {
-          try {
-            const responseCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_CALIBRATE_ZERO]);
-            try {
-              await this.writeCharacteristic.writeValueWithoutResponse(responseCmd);
-            } catch (e) {
-              await this.writeCharacteristic.writeValue(responseCmd);
-            }
-            console.log('[HC03] ✅ Sent zero calibration request');
-            
-            // Emit SendData event
-            window.dispatchEvent(new CustomEvent('hc03:bloodpressure:send', { 
-              detail: { sendList: Array.from(responseCmd) } 
-            }));
-          } catch (error) {
-            console.error('[HC03] ❌ Failed to send BP command:', error);
-          }
+        try {
+          const responseCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_CALIBRATE_ZERO]);
+          await this.queueCommand(responseCmd);
+          console.log('[HC03] ✅ Sent zero calibration request');
+          
+          // Emit SendData event
+          window.dispatchEvent(new CustomEvent('hc03:bloodpressure:send', { 
+            detail: { sendList: Array.from(responseCmd) } 
+          }));
+        } catch (error) {
+          console.error('[HC03] ❌ Failed to send BP command:', error);
         }
         return;
       }
@@ -1768,38 +1791,28 @@ export class Hc03Sdk {
           if (this.bpZeroSampleCount >= 10) {
             console.log('[HC03] 🎈 Starting cuff inflation - sending quick charging command...');
             
-            if (this.writeCharacteristic) {
-              try {
-                // Send quick charging command to start rapid inflation
-                const quickChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_QUICK_CHARGING_GAS]);
-                try {
-                  await this.writeCharacteristic.writeValueWithoutResponse(quickChargeCmd);
-                } catch (e) {
-                  await this.writeCharacteristic.writeValue(quickChargeCmd);
-                }
-                console.log('[HC03] ✅ Sent quick charging command - cuff should start inflating');
-                
-                // Wait a moment, then send PWM charging for controlled inflation
-                setTimeout(async () => {
-                  if (this.writeCharacteristic && !this.bpCalculated) {
-                    try {
-                      const pwmChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM]);
-                      try {
-                        await this.writeCharacteristic.writeValueWithoutResponse(pwmChargeCmd);
-                      } catch (e) {
-                        await this.writeCharacteristic.writeValue(pwmChargeCmd);
-                      }
-                      console.log('[HC03] ✅ Sent PWM charging command - controlled inflation');
-                    } catch (error) {
-                      console.error('[HC03] ❌ Failed to send PWM charging command:', error);
-                    }
+            try {
+              // Send quick charging command to start rapid inflation
+              const quickChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_QUICK_CHARGING_GAS]);
+              await this.queueCommand(quickChargeCmd);
+              console.log('[HC03] ✅ Sent quick charging command - cuff should start inflating');
+              
+              // Wait a moment, then send PWM charging for controlled inflation
+              setTimeout(async () => {
+                if (!this.bpCalculated) {
+                  try {
+                    const pwmChargeCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_START_PWM_CHARGING_GAS_ARM]);
+                    await this.queueCommand(pwmChargeCmd);
+                    console.log('[HC03] ✅ Sent PWM charging command - controlled inflation');
+                  } catch (error) {
+                    console.error('[HC03] ❌ Failed to send PWM charging command:', error);
                   }
-                }, 500); // Wait 500ms before PWM charging
-                
-                this.bpInflationStarted = true;
-              } catch (error) {
-                console.error('[HC03] ❌ Failed to send inflation command:', error);
-              }
+                }
+              }, 500); // Wait 500ms before PWM charging
+              
+              this.bpInflationStarted = true;
+            } catch (error) {
+              console.error('[HC03] ❌ Failed to send inflation command:', error);
             }
           }
         }
