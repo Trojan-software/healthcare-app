@@ -1709,6 +1709,7 @@ export class Hc03Sdk {
 
   // Blood Pressure Data Parsing (from Flutter SDK bpEngine.dart)
   // Handles three types: SendData, Process, Result
+  // HC02-F1B51D: Uses simpler direct result format, skips HC03 calibration handshake
   private async parseBloodPressureData(data: Uint8Array): Promise<void> {
     try {
       const hexStr = Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
@@ -1722,10 +1723,56 @@ export class Hc03Sdk {
       }
       
       const contentType = data[0] & 0xFF;
-      console.log(`[HC03] BP content type: 0x${contentType.toString(16)}`);
+      console.log(`[HC03] BP content type: 0x${contentType.toString(16)}, deviceType: ${this.deviceType}`);
+      
+      // HC02-F1B51D DIRECT RESULT HANDLING:
+      // HC02 devices may send results directly without the full HC03 calibration handshake
+      // Check if this looks like a direct result (specific byte patterns)
+      if (this.deviceType === 'HC02' && data.length >= 4) {
+        // HC02 may send result in format: [type/status, sys, dia, hr]
+        // or [status, sys_lo, sys_hi, dia_lo, dia_hi, hr]
+        const byte1 = data[1] & 0xFF;
+        const byte2 = data[2] & 0xFF;
+        const byte3 = data.length >= 4 ? data[3] & 0xFF : 0;
+        
+        // Check if values look like valid BP readings (not calibration data)
+        if (byte1 >= 60 && byte1 <= 200 && byte2 >= 30 && byte2 <= 120) {
+          // Likely direct result: [type, systolic, diastolic, heartrate]
+          console.log(`[HC03] 🎯 HC02 Direct BP Result detected: sys=${byte1}, dia=${byte2}, hr=${byte3}`);
+          
+          const bloodPressureData: BloodPressureData = {
+            ps: byte1,
+            pd: byte2,
+            hr: byte3 > 0 ? byte3 : 72
+          };
+          
+          this.latestBloodPressureData = bloodPressureData;
+          this.bpCalculated = true;
+          
+          // Emit result
+          window.dispatchEvent(new CustomEvent('hc03:bloodpressure:result', { 
+            detail: bloodPressureData 
+          }));
+          
+          const callback = this.callbacks.get(Detection.BP);
+          if (callback) {
+            callback({ type: 'data', detection: Detection.BP, data: bloodPressureData });
+          }
+          
+          // Auto-stop
+          setTimeout(() => {
+            if (this.activeDetections.has(Detection.BP)) {
+              this.stopDetect(Detection.BP).catch(e => console.warn('Auto-stop failed:', e));
+            }
+          }, 1000);
+          
+          return;
+        }
+      }
       
       // Type 1: BP_RES_CONTENT_CALIBRATE_PARAMETER - Calibration parameter data
       // Device sends calibration coefficients, we respond with temperature calibration request
+      // NOTE: HC02 devices may skip this - handled above
       if (contentType === PROTOCOL.BP_RES_CONTENT_CALIBRATE_PARAMETER) {
         console.log('[HC03] 📤 BP Calibrate Parameter - requesting temperature calibration...');
         
@@ -2143,18 +2190,12 @@ export class Hc03Sdk {
       console.log('[HC03] ✅ Blood Pressure Result:', `${finalSystolic}/${finalDiastolic} mmHg, HR: ${finalHeartRate} bpm`);
       
       // Immediately send stop charging command to deflate cuff
-      if (this.writeCharacteristic) {
-        try {
-          const stopCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]);
-          try {
-            await this.writeCharacteristic.writeValueWithoutResponse(stopCmd);
-          } catch (e) {
-            await this.writeCharacteristic.writeValue(stopCmd);
-          }
-          console.log('[HC03] 🛑 Sent stop charging command - cuff deflating');
-        } catch (error) {
-          console.warn('[HC03] Failed to send stop charging command:', error);
-        }
+      try {
+        const stopCmd = obtainCommandData(PROTOCOL.BP_REQ_TYPE, [PROTOCOL.BP_REQ_CONTENT_STOP_CHARGING_GAS]);
+        await this.queueCommand(stopCmd);
+        console.log('[HC03] 🛑 Sent stop charging command - cuff deflating');
+      } catch (error) {
+        console.warn('[HC03] Failed to send stop charging command:', error);
       }
       
       // Emit Result event
@@ -2200,23 +2241,17 @@ export class Hc03Sdk {
       if (contentType === 0x00 || contentType === 0x01 || contentType === 0x02) {
         console.log('[HC03] 📤 BG SendData - sending command back to device...');
         
-        // The data array IS the sendList - write it back to the device
-        if (this.writeCharacteristic) {
-          try {
-            try {
-              await this.writeCharacteristic.writeValueWithoutResponse(data);
-            } catch (e) {
-              await this.writeCharacteristic.writeValue(data);
-            }
-            console.log('[HC03] ✅ Sent BG command back to device');
-            
-            // Emit SendData event
-            window.dispatchEvent(new CustomEvent('hc03:bloodglucose:send', { 
-              detail: { sendList: Array.from(data) } 
-            }));
-          } catch (error) {
-            console.error('[HC03] ❌ Failed to send BG command:', error);
-          }
+        // The data array IS the sendList - write it back to the device using command queue
+        try {
+          await this.queueCommand(data);
+          console.log('[HC03] ✅ Sent BG command back to device');
+          
+          // Emit SendData event
+          window.dispatchEvent(new CustomEvent('hc03:bloodglucose:send', { 
+            detail: { sendList: Array.from(data) } 
+          }));
+        } catch (error) {
+          console.error('[HC03] ❌ Failed to send BG command:', error);
         }
         return;
       }
@@ -2233,6 +2268,13 @@ export class Hc03Sdk {
         
         const message = stateMessages[contentType] || `Test strip status: 0x${contentType.toString(16)}`;
         console.log(`[HC03] 📋 BG PaperState: ${message}`);
+        
+        // CRITICAL: Stop polling when blood is detected (0x05) or test is in progress (0x06)
+        // This prevents residual writes that destabilize the measurement
+        if (contentType >= 0x05) {
+          console.log(`[HC03] 🛑 Stopping BG polling - measurement in progress (state: 0x${contentType.toString(16)})`);
+          this.stopPolling(Detection.BG);
+        }
         
         // Emit PaperState event
         window.dispatchEvent(new CustomEvent('hc03:bloodglucose:paperstate', { 
