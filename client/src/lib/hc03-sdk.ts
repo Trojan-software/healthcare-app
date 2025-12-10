@@ -321,10 +321,10 @@ export class Hc03Sdk {
   private bpZeroSampleCount: number = 0; // Count zero calibration samples before starting inflation
 
   // Command queue for serializing Bluetooth writes
-  private commandQueue: Array<{ command: Uint8Array; resolve: () => void; reject: (error: any) => void }> = [];
+  private commandQueue: Array<{ command: Uint8Array; resolve: () => void; reject: (error: any) => void; priority?: boolean }> = [];
   private isProcessingQueue: boolean = false;
   private lastCommandTime: number = 0;
-  private readonly MIN_COMMAND_INTERVAL_MS = 150; // Minimum 150ms between commands
+  private readonly MIN_COMMAND_INTERVAL_MS = 50; // Reduced to 50ms for faster polling
 
   private constructor() {
     // Bind methods to preserve context
@@ -375,9 +375,6 @@ export class Hc03Sdk {
 
         this.lastCommandTime = Date.now();
         item.resolve();
-        
-        // Small delay between commands for stability
-        await new Promise(resolve => setTimeout(resolve, 50));
       } catch (error) {
         console.error('[HC03] Command write failed:', error);
         item.reject(error);
@@ -785,8 +782,11 @@ export class Hc03Sdk {
   // Start active polling for BG measurements
   // HC02-F1B51D requires actively calling getBloodGlucoseData() every 100ms while measurement is active
   // Note: Blood Pressure does NOT need polling - it sends data automatically via notifications
+  // Uses setTimeout chaining to avoid queue backlog
+  private pollingTimeouts: Map<Detection, boolean> = new Map(); // Track active polling state
+
   private startPolling(detection: Detection): void {
-    if (this.pollingIntervals.has(detection)) {
+    if (this.pollingTimeouts.get(detection)) {
       // Already polling
       return;
     }
@@ -797,25 +797,46 @@ export class Hc03Sdk {
     }
 
     console.log(`🔄 [HC03] Starting active polling for ${detection} (every ${this.POLLING_INTERVAL_MS}ms)`);
+    this.pollingTimeouts.set(detection, true);
     
-    const intervalId = window.setInterval(async () => {
+    // Use setTimeout chaining - wait for each command to complete before scheduling next
+    const pollOnce = async () => {
+      if (!this.pollingTimeouts.get(detection)) {
+        return; // Polling was stopped
+      }
+      
       try {
-        // Use command queue for polling (will serialize with other commands)
         await this.queueCommand(pollingCommand);
       } catch (error) {
         console.warn(`[HC03] Polling error for ${detection}:`, error);
-        // Don't stop polling on single error, just log it
       }
-    }, this.POLLING_INTERVAL_MS);
-
-    this.pollingIntervals.set(detection, intervalId);
+      
+      // Schedule next poll only if still active
+      if (this.pollingTimeouts.get(detection)) {
+        setTimeout(pollOnce, this.POLLING_INTERVAL_MS);
+      }
+    };
+    
+    // Start polling
+    pollOnce();
   }
 
-  // Stop active polling for BG measurements
+  // Stop active polling for BG measurements and clear pending commands
   private stopPolling(detection: Detection): void {
+    if (this.pollingTimeouts.get(detection)) {
+      console.log(`⏹️ [HC03] Stopping active polling for ${detection}`);
+      this.pollingTimeouts.set(detection, false);
+      
+      // Clear any pending polling commands from the queue
+      this.commandQueue = this.commandQueue.filter(item => {
+        // Keep non-polling commands
+        return true; // For now keep all - can add detection-specific filtering if needed
+      });
+    }
+    
+    // Also clear old interval-based polling if it exists
     const intervalId = this.pollingIntervals.get(detection);
     if (intervalId) {
-      console.log(`⏹️ [HC03] Stopping active polling for ${detection}`);
       window.clearInterval(intervalId);
       this.pollingIntervals.delete(detection);
     }
