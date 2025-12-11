@@ -172,27 +172,47 @@ export default function EcgWidget({ deviceId, patientId, compact = false, showCo
   }, [ecgData]);
 
   const loadEcgData = async () => {
+    // Skip loading if no valid device ID
+    if (!deviceId || deviceId.trim() === '') {
+      setLoading(false);
+      return;
+    }
+    
     try {
       const response = await fetch(`/api/ecg/${deviceId}`);
       if (response.ok) {
-        const data = await response.json();
-        if (data.wavePoints) {
-          setEcgData(data);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (data.wavePoints) {
+            setEcgData(data);
+          }
         }
       }
     } catch (error) {
-      handleDeviceError('EcgWidget', 'loadEcgData', error as Error, { deviceId });
+      // Only log error if deviceId was valid
+      if (deviceId && deviceId.trim() !== '') {
+        handleDeviceError('EcgWidget', 'loadEcgData', error as Error, { deviceId });
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const loadWaveData = async () => {
+    // Skip loading if no valid device ID
+    if (!deviceId || deviceId.trim() === '') {
+      return;
+    }
+    
     try {
       const response = await fetch(`/api/ecg/wave/${deviceId}`);
       if (response.ok) {
-        const data = await response.json();
-        setEcgData(data);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          setEcgData(data);
+        }
       }
     } catch (error) {
       handleDeviceError('EcgWidget', 'loadWaveData', error as Error, { deviceId });
