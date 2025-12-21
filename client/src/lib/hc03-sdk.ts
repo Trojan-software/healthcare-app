@@ -1,9 +1,13 @@
 /**
- * HC03 Flutter SDK Integration for Web
- * Based on HC03_Flutter SDK API Guide v1.0
+ * HC03/HC02 SDK Integration for Web
+ * Based on Official Linktop Android SDK v2.6.4 (BleDev_release_v2.6.4.aar)
+ * and HC03_Flutter SDK API Guide v1.0
  * 
  * This service provides BLE connectivity and data processing
- * for HC03 health monitoring devices using Web Bluetooth API
+ * for HC02/HC03 health monitoring devices using Web Bluetooth API
+ * 
+ * SDK Reference: com.linktop.* classes from Android SDK
+ * ECG Algorithm: NeuroSky NskAlgoSdk for HRV, Afib, Heart Age, Stress analysis
  */
 
 // HC03 Detection Types as per API documentation
@@ -16,20 +20,121 @@ export enum Detection {
   BG = 'BG'            // Blood glucose
 }
 
-// HC03/HC02 Device Service and Characteristic UUIDs (from Official HC03 Flutter SDK)
-// Source: HC03_Flutter_V1.0.1/lib/src/common/constant.dart
-// 
+// ============================================================================
+// UUID Configuration (from com.linktop.constant.UUIDConfig)
+// ============================================================================
+
+// HC03/HC02 Device Service and Characteristic UUIDs
 // IMPORTANT: HC02 and HC03 devices use DIFFERENT service UUIDs!
-// - HC02 devices (e.g., HC02-F1B51D) use service UUID: 0000ff27 (HC03_FILTER_UUID)
+// - HC02 devices (e.g., HC02-F1B51D) use service UUID: 0000ff27 (HRP_SERVICE)
 // - HC03 devices use service UUID: 00001822 (HC03_SERVICE_UUID)
-// Both share the same characteristic UUIDs (fff1 for write, fff4 for notify)
-const HC02_SERVICE_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // HC02 devices use this service
-const HC03_FILTER_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // Official SDK FILTER_UUID (same as HC02)
-const HC03_SERVICE_UUID = '00001822-0000-1000-8000-00805f9b34fb'; // Official SDK UUID_SERVICE (HC03 only)
-const HC03_WRITE_CHARACTERISTIC = '0000fff1-0000-1000-8000-00805f9b34fb'; // Official SDK WRITE_UUID
-const HC03_NOTIFY_CHARACTERISTIC = '0000fff4-0000-1000-8000-00805f9b34fb'; // Official SDK NOTIFY_UUID (was fff2, CORRECTED to fff4!)
+const HC02_SERVICE_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // HRP_SERVICE (HC02 primary)
+const HC03_FILTER_UUID = '0000ff27-0000-1000-8000-00805f9b34fb';  // Same as HC02 for filtering
+const HC03_SERVICE_UUID = '00001822-0000-1000-8000-00805f9b34fb'; // HC03 main service
+const HC03_WRITE_CHARACTERISTIC = '0000fff1-0000-1000-8000-00805f9b34fb';  // HEART_RATE_WRITE_CHARA
+const HC03_NOTIFY_CHARACTERISTIC = '0000fff4-0000-1000-8000-00805f9b34fb'; // HEART_RATE_MEASUREMENT_CHARA
+const CCC_UUID = '00002902-0000-1000-8000-00805f9b34fb'; // Client Characteristic Configuration
+
+// Device Information Service UUIDs
+const DEV_INFO_SERVICE_UUID = '0000180a-0000-1000-8000-00805f9b34fb';     // DEV_INFO_SER_UUID
+const DEV_INFO_FIRMWARE_UUID = '00002a26-0000-1000-8000-00805f9b34fb';    // DEV_INFO_FIRMWARE_REV_UUID
+const DEV_INFO_HARDWARE_UUID = '00002a27-0000-1000-8000-00805f9b34fb';    // DEV_INFO_HARDWARE_PCB_UUID
+const DEV_INFO_SOFTWARE_UUID = '00002a28-0000-1000-8000-00805f9b34fb';    // DEV_INFO_SOFTWARE_REV_UUID
+const DEV_INFO_MODEL_UUID = '00002a24-0000-1000-8000-00805f9b34fb';       // Model Number
+
+// Thermometer Service UUIDs (for standalone thermometer devices)
+const THERM_SERVICE_UUID = '0000fff0-0000-1000-8000-00805f9b34fb';        // THERM_SERVICE
+const THERM_NOTIFY_CHARACTERISTIC = '0000fff5-0000-1000-8000-00805f9b34fb'; // THERM_CONNECT_CONFIRM
+
+// Battery Service UUIDs
 const BATTERY_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb';
 const BATTERY_LEVEL_CHARACTERISTIC = '00002a19-0000-1000-8000-00805f9b34fb';
+
+// ============================================================================
+// ECG Algorithm Constants (from com.linktop.constant.Constants)
+// Based on NeuroSky NskAlgoSdk integration
+// ============================================================================
+
+export const ECG_CONSTANTS = {
+  // Configuration options
+  CONFIG_BT_USE_TEST2: 1,
+  CONFIG_SPO2_USE_75mA: 2,
+  CONFIG_SPO2_FILE_PATH: 3,
+  CONFIG_HRV_SAMPLING_RATE: 4,
+  CONFIG_HRV_RESTING_HR: 5,
+  CONFIG_ECG_OUTPUT_ARRAY_DATA: 6,
+  CONFIG_ECG_OUTPUT_RAW_DATA: 7,
+  CONFIG_BP_SAVE_ORIG_DATA: 8,
+  CONFIG_BP_RUN_ORIG_DATA: 9,
+
+  // ECG Algorithm Keys (for OnEcgResultListener.onECGValues)
+  KEY_HEART_AGE: 1,           // Heart age estimation
+  KEY_HEART_BEAT: 2,          // Single heartbeat detection
+  KEY_HEART_RATE: 3,          // Current heart rate (BPM)
+  KEY_HRV: 4,                 // Heart Rate Variability (overall)
+  KEY_HRV_FD: 5,              // HRV Frequency Domain analysis
+  KEY_HRV_TD: 6,              // HRV Time Domain analysis
+  KEY_MOOD: 7,                // Mood index (1-100)
+  KEY_R2R: 8,                 // R-R interval (peak to peak)
+  KEY_RESPIRATORY_RATE: 9,    // Respiratory rate (breaths/min)
+  KEY_ROBUST_HR: 10,          // Noise-resistant heart rate
+  KEY_SMOOTH: 11,             // Smoothed ECG signal
+  KEY_STRESS: 12,             // Stress level index
+
+  // Sampling Rates (for PPG/ECG)
+  SAMPLING_RATE_125_HZ: 125,
+  SAMPLING_RATE_250_HZ: 250,
+  SAMPLING_RATE_500_HZ: 500,
+
+  // ECG Signal Quality levels
+  SQ_GOOD: 0,                 // Good quality signal
+  SQ_MEDIUM: 1,               // Medium quality
+  SQ_POOR: 2,                 // Poor quality
+  SQ_NOT_DETECTED: 3,         // No finger/electrode contact
+
+  // ECG Stress Levels
+  STRESS_LEVEL_INVALID: -1,   // Cannot calculate
+  STRESS_LEVEL_NO: 0,         // No stress
+  STRESS_LEVEL_LOW: 1,        // Low stress
+  STRESS_LEVEL_MEDIUM: 2,     // Medium stress
+  STRESS_LEVEL_HIGH: 3,       // High stress
+  STRESS_LEVEL_VERY_HIGH: 4,  // Very high stress
+};
+
+// ============================================================================
+// Blood Glucose TestPaper Configuration (from com.linktop.constant.TestPaper)
+// ============================================================================
+
+export const TEST_PAPER_MANUFACTURERS = {
+  BENE_CHECK: 'Bene_Check',
+  YI_CHENG: 'Yi_Cheng',
+  HMD: 'HMD',
+};
+
+// TestPaper codes for blood glucose measurement calibration
+export const TEST_PAPER_CODES = {
+  // Standard codes (C00-C35)
+  CHECK3: 'CHECK3', C00: 'C00', C01: 'C01', C02: 'C02', C03: 'C03', C04: 'C04',
+  C05: 'C05', C06: 'C06', C07: 'C07', C08: 'C08', C09: 'C09', C10: 'C10',
+  C11: 'C11', C12: 'C12', C13: 'C13', C14: 'C14', C15: 'C15', C16: 'C16',
+  C17: 'C17', C18: 'C18', C19: 'C19', C20: 'C20', C21: 'C21', C22: 'C22',
+  C23: 'C23', C24: 'C24', C25: 'C25', C26: 'C26', C27: 'C27', C28: 'C28',
+  C29: 'C29', C30: 'C30', C31: 'C31', C32: 'C32', C33: 'C33', C34: 'C34',
+  C35: 'C35',
+  // Special codes
+  _9CC3: '9CC3', C3E2: 'C3E2', C5F2: 'C5F2', b0f3: 'b0f3', b141: 'b141',
+};
+
+// TestPaper code arrays by manufacturer
+export const TEST_PAPER_CODES_BY_MANUFACTURER: Record<string, string[]> = {
+  'Bene_Check': ['CHECK3', 'C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+    'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19', 'C20', 'C21', 'C22',
+    'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29', 'C30', 'C31', 'C32', 'C33', 'C34', 'C35'],
+  'Yi_Cheng': ['C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+    'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19', 'C20', 'C21', 'C22',
+    'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29', 'C30', 'C31', 'C32', 'C33', 'C34', 'C35'],
+  'HMD': ['_9CC3', 'C3E2', 'C5F2', 'b0f3', 'b141'],
+};
 
 // HC03 Protocol Constants (from baseCommon.dart)
 const PROTOCOL = {
@@ -177,35 +282,61 @@ const POLLING_COMMANDS: Partial<Record<Detection, Uint8Array>> = {
   [Detection.BG]: obtainCommandData(PROTOCOL.BLOOD_GLUCOSE, [PROTOCOL.TEST_PAPER_GET_VER]),
 };
 
-// HC03 Data Structures as per API documentation
+// ============================================================================
+// Data Structures (from com.linktop.infs.* listener interfaces)
+// ============================================================================
+
+// ECG Data Structure (from OnEcgResultListener + NskAlgoSdk)
 export interface ECGData {
-  wave: number[];              // Data used for drawing waveforms
-  hr: number;                  // Heart rate data
-  moodIndex: number;           // Mood Index (1-20: chill, 21-40: relax, 41-60: balance, 61-80: excitation, 81-100: excitement/anxiety)
-  rr: number;                  // Peak to peak value (RR interval)
-  hrv: number;                 // Heart rate variability
-  respiratoryRate: number;     // Respiratory rate
-  touch: boolean;              // Finger detection
+  wave: number[];              // Data used for drawing waveforms (onDrawWave)
+  hr: number;                  // Heart rate data (KEY_HEART_RATE)
+  moodIndex: number;           // Mood Index 1-100 (KEY_MOOD)
+  rr: number;                  // R-R interval in ms (KEY_R2R)
+  hrv: number;                 // Heart rate variability (KEY_HRV)
+  hrvFd?: number;              // HRV Frequency Domain (KEY_HRV_FD)
+  hrvTd?: number;              // HRV Time Domain (KEY_HRV_TD)
+  respiratoryRate: number;     // Respiratory rate (KEY_RESPIRATORY_RATE)
+  touch: boolean;              // Finger/electrode detection
+  signalQuality?: number;      // Signal quality (SQ_GOOD/MEDIUM/POOR/NOT_DETECTED)
+  stressLevel?: number;        // Stress level (KEY_STRESS)
+  heartAge?: number;           // Estimated heart age (KEY_HEART_AGE)
+  robustHr?: number;           // Noise-resistant heart rate (KEY_ROBUST_HR)
+  // Advanced metrics (from EcgWidget)
+  qrsInterval?: number;        // QRS complex duration (ms)
+  qtInterval?: number;         // QT interval (ms)
+  prInterval?: number;         // PR interval (ms)
+  arrhythmiaDetected?: boolean; // Arrhythmia detection flag
+  afibDetected?: boolean;      // Atrial fibrillation detection
 }
 
+// SpO2 Data Structure (from OnSpO2ResultListener)
 export interface BloodOxygenData {
-  bloodOxygen: number;         // Blood oxygen level
-  heartRate: number;           // Heart rate
-  fingerDetection: boolean;    // Finger detection status
-  bloodOxygenWaveData: number[]; // Draw waveform data
+  bloodOxygen: number;         // SpO2 percentage (onSpO2Result)
+  heartRate: number;           // Heart rate from PPG (onSpO2Result)
+  fingerDetection: boolean;    // Finger touch status (FINGER_TOUCH/FINGER_NO_TOUCH)
+  bloodOxygenWaveData: number[]; // PPG waveform data (onSpO2Wave)
+  pi?: number;                 // Perfusion Index (optional)
 }
 
+// Blood Pressure Data Structure (from OnBpResultListener + OnBpDataListener)
 export interface BloodPressureData {
-  ps: number;                  // Systolic pressure
-  pd: number;                  // Diastolic pressure
-  hr: number;                  // Heart rate
-  progress?: number;           // Blood pressure measurement progress
+  ps: number;                  // Systolic pressure (onBpResult)
+  pd: number;                  // Diastolic pressure (onBpResult)
+  hr: number;                  // Heart rate (onBpResult)
+  progress?: number;           // Measurement progress %
+  currentPressure?: number;    // Current cuff pressure (mmHg)
+  leakError?: boolean;         // Cuff leak detected (onLeakError)
+  resultError?: boolean;       // Measurement error (onBpResultError)
 }
 
+// Blood Glucose Data Structure (from OnTestPaperResultListener)
 export interface BloodGlucoseData {
-  bloodGlucoseSendData: any;   // Data to be sent to the device
-  bloodGlucosePaperState: string; // Blood glucose test strip status
-  bloodGlucosePaperData: number;  // Blood glucose data
+  bloodGlucoseSendData: any;       // Calibration data sent to device
+  bloodGlucosePaperState: string;  // Strip status: 'inserted', 'blood_detected', 'measuring', 'result'
+  bloodGlucosePaperData: number;   // Glucose value (mg/dL or mmol/L based on unit)
+  testPaperCode?: string;          // TestPaper calibration code (C00-C35)
+  manufacturer?: string;           // TestPaper manufacturer (Bene_Check, Yi_Cheng, HMD)
+  unit?: 'mg/dL' | 'mmol/L';       // Measurement unit
 }
 
 export interface TemperatureData {

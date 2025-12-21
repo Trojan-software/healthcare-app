@@ -899,14 +899,19 @@ export default function HC03DeviceWidget({ patientId, onDataUpdate, onMeasuremen
     });
   };
 
-  const handleBloodGlucoseMeasurementStart = async (period: string, checkCode: string) => {
+  const handleBloodGlucoseMeasurementStart = async (period: string, checkCode: string, manufacturer?: string) => {
     setGlucoseDialogLoading(true);
     setGlucoseResult(null);
+    
+    // Log measurement parameters for debugging
+    console.log('[BG] Starting measurement:', { period, checkCode, manufacturer });
     
     try {
       // Reset valid data flag so callback will update result
       validDataReceived.current = false;
       
+      // TODO: Pass checkCode and manufacturer to SDK for test paper calibration
+      // The SDK should use these values when sending calibration commands
       await startMeasurement(Detection.BG);
       
       // Timeout after 40 seconds - dialog callback will update result when data arrives

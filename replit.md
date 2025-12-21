@@ -18,7 +18,11 @@ The system employs a modern full-stack architecture. The frontend uses **React 1
 **Key Features and Design Decisions:**
 -   **Enhanced Patient Registration**: Comprehensive signup, UAE mobile validation, patient ID generation, Abu Dhabi hospital selection, OTP email verification, secure passwords, and role-based access.
 -   **Health Monitoring**: Tracks heart rate, blood pressure, temperature, oxygen, blood glucose, and integrates with HC03 devices via Bluetooth for real-time ECG and blood oxygen monitoring. Includes health analytics and a critical event alert system.
--   **Complete HC02/HC03 Bluetooth Architecture (Nov 2025)**: 
+-   **Complete HC02/HC03 Bluetooth Architecture (Dec 2025)**: 
+    - **SDK Updated from Official Linktop Android SDK v2.6.4 (Dec 21, 2025)**: ✅ Extracted and integrated protocol constants from `BleDev_release_v2.6.4.aar`:
+      - UUIDs from `com.linktop.constant.UUIDConfig`: Service (0xFF27/0x1822), Write (0xFFF1), Notify (0xFFF4), Device Info (0x180A), Therm (0xFFF0)
+      - ECG Algorithm Keys from `com.linktop.constant.Constants` (NeuroSky NskAlgoSdk): Heart Age, HRV, Mood, Stress, Signal Quality, Respiratory Rate
+      - TestPaper Codes from `com.linktop.constant.TestPaper`: C00-C35 calibration codes, manufacturers (Bene_Check, Yi_Cheng, HMD)
     - **Web Bluetooth (PWA)**: Full HC02/HC03 protocol in `hc03-sdk.ts` with frame unpacking, multi-packet reconstruction, CRC validation (encryHead/encryTail), and all 6 sensor parsers (Battery, Temperature, Glucose, Oxygen, Pressure, ECG). Name-based device filtering (HC02/HC03 prefixes) for maximum compatibility.
     - **HC02-F1B51D Full Support (Nov 20, 2025)**: ✅ **PRODUCTION READY** - HC02-F1B51D successfully integrated with Web Bluetooth API. Auto-detection by device name prefix, uses service UUID `0000ff27` (vs HC03's `00001822`), accepts `0xff` END marker (vs HC03's `0x03`), and bypasses CRC validation (different algorithm). Real-time blood oxygen streaming confirmed working with Windows 11 + Chrome.
     - **Blood Oxygen Signal Processing (Nov 20, 2025)**: ✅ **FULLY OPERATIONAL** - Implemented PPG signal processing algorithms to calculate SpO₂ (70-100%) and heart rate (40-200 BPM) from HC02 raw waveform data. Uses AC/DC ratio method for SpO₂ calculation and peak detection for HR extraction. Accumulates 50 samples over 5 seconds for reliable measurements. Data now saves to backend and displays in dashboard oxygen level card.

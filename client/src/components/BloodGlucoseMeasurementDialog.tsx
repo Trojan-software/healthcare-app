@@ -3,11 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle, Droplets } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TEST_PAPER_MANUFACTURERS, TEST_PAPER_CODES_BY_MANUFACTURER } from '@/lib/hc03-sdk';
 
 interface BloodGlucoseMeasurementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onMeasurementStart: (period: string, checkCode: string) => void;
+  onMeasurementStart: (period: string, checkCode: string, manufacturer?: string) => void;
   isLoading?: boolean;
   result?: number | null;
   deviceStatus?: 'idle' | 'waiting_strip' | 'strip_inserted' | 'waiting_blood' | 'blood_detected' | 'analyzing';
@@ -25,6 +27,7 @@ export default function BloodGlucoseMeasurementDialog({
 }: BloodGlucoseMeasurementDialogProps) {
   const [step, setStep] = useState<Step>('period');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('');
+  const [selectedManufacturer, setSelectedManufacturer] = useState<string>(TEST_PAPER_MANUFACTURERS.BENE_CHECK);
   const [selectedCode, setSelectedCode] = useState<string>('C16');
   const [statusMessage, setStatusMessage] = useState<string>('');
 
@@ -37,7 +40,11 @@ export default function BloodGlucoseMeasurementDialog({
     'After Dinner'
   ];
 
-  const checkCodes = ['C15', 'C16', 'C17'];
+  // Get available codes for selected manufacturer (from official Linktop SDK)
+  const availableCodes = TEST_PAPER_CODES_BY_MANUFACTURER[selectedManufacturer] || [];
+  
+  // Default codes for quick selection (most common)
+  const quickCodes = ['C15', 'C16', 'C17', 'C18', 'C19', 'C20'];
 
   useEffect(() => {
     if (open) {
@@ -102,8 +109,8 @@ export default function BloodGlucoseMeasurementDialog({
     if (step === 'period' && selectedPeriod) {
       setStep('code');
     } else if (step === 'code') {
-      // Start measurement and wait for strip
-      onMeasurementStart(selectedPeriod, selectedCode);
+      // Start measurement and wait for strip (includes manufacturer for SDK)
+      onMeasurementStart(selectedPeriod, selectedCode, selectedManufacturer);
       setStep('waiting_strip');
     }
   };
@@ -147,23 +154,67 @@ export default function BloodGlucoseMeasurementDialog({
           {step === 'code' && (
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Blood Glucose Test Strip</h3>
-              <div className="text-center space-y-4">
-                <p className="text-sm text-muted-foreground">Check code</p>
-                <Badge variant="secondary" className="text-xl py-2 px-4">
-                  {selectedCode}
-                </Badge>
+              <div className="space-y-4">
+                {/* Manufacturer Selection */}
                 <div className="space-y-2">
-                  {checkCodes.map((code) => (
-                    <Button
-                      key={code}
-                      variant={selectedCode === code ? 'default' : 'outline'}
-                      className="w-full"
-                      onClick={() => setSelectedCode(code)}
-                      data-testid={`button-code-${code.toLowerCase()}`}
-                    >
-                      {code}
-                    </Button>
-                  ))}
+                  <p className="text-sm text-muted-foreground">Test Strip Manufacturer</p>
+                  <Select value={selectedManufacturer} onValueChange={(v) => {
+                    setSelectedManufacturer(v);
+                    const codes = TEST_PAPER_CODES_BY_MANUFACTURER[v] || [];
+                    if (codes.length > 0 && !codes.includes(selectedCode)) {
+                      setSelectedCode(codes[0]);
+                    }
+                  }}>
+                    <SelectTrigger data-testid="select-manufacturer">
+                      <SelectValue placeholder="Select manufacturer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={TEST_PAPER_MANUFACTURERS.BENE_CHECK}>Bene Check</SelectItem>
+                      <SelectItem value={TEST_PAPER_MANUFACTURERS.YI_CHENG}>Yi Cheng</SelectItem>
+                      <SelectItem value={TEST_PAPER_MANUFACTURERS.HMD}>HMD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Current Code Display */}
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Selected Code</p>
+                  <Badge variant="secondary" className="text-xl py-2 px-4 mt-1">
+                    {selectedCode}
+                  </Badge>
+                </div>
+
+                {/* Quick Code Selection */}
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Quick Select</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {quickCodes.filter(code => availableCodes.includes(code)).map((code) => (
+                      <Button
+                        key={code}
+                        variant={selectedCode === code ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedCode(code)}
+                        data-testid={`button-code-${code.toLowerCase()}`}
+                      >
+                        {code}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* All Codes Selection */}
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">All Codes ({availableCodes.length})</p>
+                  <Select value={selectedCode} onValueChange={setSelectedCode}>
+                    <SelectTrigger data-testid="select-code">
+                      <SelectValue placeholder="Select code" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-48">
+                      {availableCodes.map((code) => (
+                        <SelectItem key={code} value={code}>{code}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
