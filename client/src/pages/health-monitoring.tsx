@@ -466,7 +466,6 @@ export default function HealthMonitoringPage() {
               <CardContent>
                 <BloodGlucoseMonitor 
                   patientId={patientId}
-                  onStartTest={() => setIsGlucoseMeasuring(true)}
                 />
               </CardContent>
             </Card>

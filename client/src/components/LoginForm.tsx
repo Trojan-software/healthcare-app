@@ -16,6 +16,15 @@ const loginSchema = z.object({
 
 type LoginData = z.infer<typeof loginSchema>;
 
+interface User {
+  id: number;
+  patientId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role?: string;
+}
+
 interface LoginFormProps {
   onLogin: (user: User) => void;
   onSwitchToRegister: () => void;
@@ -60,8 +69,8 @@ export default function LoginForm({ onLogin, onSwitchToRegister, onForgotPasswor
       localStorage.setItem('user', JSON.stringify(result.user));
       
       onLogin(result.user);
-    } catch (err: unknown) {
-      setError(err.message || 'Login failed. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

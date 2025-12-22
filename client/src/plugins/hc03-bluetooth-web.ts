@@ -9,8 +9,31 @@ export class HC03BluetoothWeb extends WebPlugin implements HC03BluetoothPlugin {
     };
   }
 
-  async processEcgData(options: { data: string }): Promise<{ success: boolean }> {
-    console.log('HC03 web plugin - processEcgData not supported:', options);
+  async parseData(_options: { data: number[] }): Promise<{ success: boolean }> {
+    return { success: false };
+  }
+
+  async startDetect(_options: { detection: string }): Promise<{ success: boolean }> {
+    return { success: false };
+  }
+
+  async stopDetect(_options: { detection: string }): Promise<{ success: boolean }> {
+    return { success: false };
+  }
+
+  async startScan(): Promise<{ success: boolean; message?: string }> {
+    return { success: false, message: 'Web Bluetooth API should be used instead' };
+  }
+
+  async stopScan(): Promise<{ success: boolean; message?: string }> {
+    return { success: false };
+  }
+
+  async connect(_options: { deviceAddress: string }): Promise<{ success: boolean }> {
+    return { success: false };
+  }
+
+  async disconnect(): Promise<{ success: boolean }> {
     return { success: false };
   }
 }
