@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { DetectionType } from '@/lib/unktop-sdk';
 
-export type DetectionType = 'BT' | 'OX' | 'ECG' | 'BP' | 'BG' | 'BATTERY';
+export { DetectionType };
 
 interface ECGReading {
   heartRate?: number;
@@ -69,21 +70,21 @@ const initialConnection: DeviceConnection = {
 
 export function DeviceDataProvider({ children }: { children: ReactNode }) {
   const [connections, setConnections] = useState<Record<DetectionType, DeviceConnection>>({
-    BT: initialConnection,
-    OX: initialConnection,
-    ECG: initialConnection,
-    BP: initialConnection,
-    BG: initialConnection,
-    BATTERY: initialConnection,
+    [DetectionType.BT]: initialConnection,
+    [DetectionType.OX]: initialConnection,
+    [DetectionType.ECG]: initialConnection,
+    [DetectionType.BP]: initialConnection,
+    [DetectionType.BG]: initialConnection,
+    [DetectionType.BATTERY]: initialConnection,
   });
 
   const [liveReadings, setLiveReadings] = useState<Record<DetectionType, DeviceReading>>({
-    BT: {},
-    OX: {},
-    ECG: {},
-    BP: {},
-    BG: {},
-    BATTERY: {},
+    [DetectionType.BT]: {},
+    [DetectionType.OX]: {},
+    [DetectionType.ECG]: {},
+    [DetectionType.BP]: {},
+    [DetectionType.BG]: {},
+    [DetectionType.BATTERY]: {},
   });
 
   const updateConnection = useCallback((type: DetectionType, connection: DeviceConnection) => {

@@ -2,6 +2,7 @@ import { Droplet } from 'lucide-react';
 import DeviceWidgetCard from '@/components/DeviceWidgetCard';
 import { useDeviceMeasurements } from '@/hooks/useDeviceMeasurements';
 import { Line } from 'react-chartjs-2';
+import { DetectionType } from '@/contexts/DeviceDataContext';
 
 interface BloodGlucoseWidgetProps {
   patientId?: string;
@@ -11,7 +12,7 @@ interface BloodGlucoseWidgetProps {
 export default function BloodGlucoseWidget({ patientId, onConnect }: BloodGlucoseWidgetProps) {
   const { latestMeasurement, isConnected, connection, measurements, hasData } = useDeviceMeasurements({
     patientId,
-    detectionType: 'BG',
+    detectionType: DetectionType.BG,
   });
 
   const getStatus = () => {

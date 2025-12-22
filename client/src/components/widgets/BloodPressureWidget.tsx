@@ -2,6 +2,7 @@ import { Heart } from 'lucide-react';
 import DeviceWidgetCard from '@/components/DeviceWidgetCard';
 import { useDeviceMeasurements } from '@/hooks/useDeviceMeasurements';
 import { Line } from 'react-chartjs-2';
+import { DetectionType } from '@/contexts/DeviceDataContext';
 
 interface BloodPressureWidgetProps {
   patientId?: string;
@@ -11,7 +12,7 @@ interface BloodPressureWidgetProps {
 export default function BloodPressureWidget({ patientId, onConnect }: BloodPressureWidgetProps) {
   const { latestMeasurement, isConnected, connection, measurements, hasData } = useDeviceMeasurements({
     patientId,
-    detectionType: 'BP',
+    detectionType: DetectionType.BP,
   });
 
   const getStatus = () => {

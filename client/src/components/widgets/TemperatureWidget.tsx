@@ -4,6 +4,7 @@ import { useDeviceMeasurements } from '@/hooks/useDeviceMeasurements';
 import { Line } from 'react-chartjs-2';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { DetectionType } from '@/contexts/DeviceDataContext';
 
 interface TemperatureWidgetProps {
   patientId?: string;
@@ -14,7 +15,7 @@ export default function TemperatureWidget({ patientId, onConnect }: TemperatureW
   const [unit, setUnit] = useState<'C' | 'F'>('C');
   const { latestMeasurement, isConnected, connection, measurements, hasData } = useDeviceMeasurements({
     patientId,
-    detectionType: 'BT',
+    detectionType: DetectionType.BT,
   });
 
   const convertTemp = (celsius: number | undefined) => {

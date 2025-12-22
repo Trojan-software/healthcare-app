@@ -403,7 +403,7 @@ export default function MedicalDeviceManager({
         bloodOxygen: data.bloodOxygen,
         heartRate: data.heartRate,
         fingerDetected: data.fingerDetection,
-        wave: data.wave,
+        wave: data.waveData,
       });
     } catch (err) {
       console.error('Failed to save blood oxygen data:', err);

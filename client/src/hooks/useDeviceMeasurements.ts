@@ -14,12 +14,12 @@ export function useDeviceMeasurements({ patientId, detectionType, enabled = true
   // Map detection types to API endpoints
   const apiEndpoint = useMemo(() => {
     const endpoints: Record<DetectionType, string | null> = {
-      ECG: patientId ? `/api/ecg-data/${patientId}` : null,
-      OX: patientId ? `/api/blood-oxygen/${patientId}` : null,
-      BP: patientId ? `/api/blood-pressure/${patientId}` : null,
-      BG: patientId ? `/api/blood-glucose/${patientId}` : null,
-      BT: patientId ? `/api/temperature/${patientId}` : null,
-      BATTERY: null, // Battery doesn't have historical data
+      [DetectionType.ECG]: patientId ? `/api/ecg-data/${patientId}` : null,
+      [DetectionType.OX]: patientId ? `/api/blood-oxygen/${patientId}` : null,
+      [DetectionType.BP]: patientId ? `/api/blood-pressure/${patientId}` : null,
+      [DetectionType.BG]: patientId ? `/api/blood-glucose/${patientId}` : null,
+      [DetectionType.BT]: patientId ? `/api/temperature/${patientId}` : null,
+      [DetectionType.BATTERY]: null, // Battery doesn't have historical data
     };
     return endpoints[detectionType];
   }, [patientId, detectionType]);

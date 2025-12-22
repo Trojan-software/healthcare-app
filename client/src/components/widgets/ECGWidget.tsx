@@ -2,6 +2,7 @@ import { Heart } from 'lucide-react';
 import DeviceWidgetCard from '@/components/DeviceWidgetCard';
 import { useDeviceMeasurements } from '@/hooks/useDeviceMeasurements';
 import { Line } from 'react-chartjs-2';
+import { DetectionType } from '@/contexts/DeviceDataContext';
 
 interface ECGWidgetProps {
   patientId?: string;
@@ -11,7 +12,7 @@ interface ECGWidgetProps {
 export default function ECGWidget({ patientId, onConnect }: ECGWidgetProps) {
   const { latestMeasurement, isConnected, connection, measurements, hasData } = useDeviceMeasurements({
     patientId,
-    detectionType: 'ECG',
+    detectionType: DetectionType.ECG,
   });
 
   const getStatus = () => {
