@@ -822,6 +822,7 @@ export class Hc03Sdk {
         this.redBuffer = [];
         this.irBuffer = [];
         this.bloodOxygenStartTime = Date.now(); // Track start time for 30-second measurement
+        this.latestBloodOxygenData = null;
         console.log('✨ [HC03] Cleared all buffers for new 30-second blood oxygen measurement');
       }
       
@@ -833,6 +834,7 @@ export class Hc03Sdk {
         this.bpCalibrationCoeffs = null;
         this.bpInflationStarted = false;
         this.bpZeroSampleCount = 0;
+        this.latestBloodPressureData = null;
         console.log('✨ [HC03] Cleared BP buffers for new measurement');
       }
       
@@ -842,7 +844,14 @@ export class Hc03Sdk {
         this.ecgLastBeatTime = 0;
         this.ecgBeatCount = 0;
         this.ecgStartTime = Date.now();
+        this.latestEcgData = null;
         console.log('✨ [HC03] Cleared ECG buffers for new measurement');
+      }
+      
+      // Clear Temperature state when starting new measurement
+      if (detection === Detection.BT) {
+        this.latestTemperatureData = null;
+        console.log('✨ [HC03] Cleared Temperature state for new measurement');
       }
 
       console.log(`▶️ [HC03] Starting ${detection} detection...`);
@@ -862,6 +871,12 @@ export class Hc03Sdk {
       }
       
       this.activeDetections.add(detection);
+      
+      // Clear Blood Glucose state when starting new measurement
+      if (detection === Detection.BG) {
+        this.latestBloodGlucoseData = null;
+        console.log('✨ [HC03] Cleared Blood Glucose state for new measurement');
+      }
       
       // Start active polling for BG measurements (required by HC02-F1B51D)
       // BP does NOT need polling - it sends data automatically via notifications
