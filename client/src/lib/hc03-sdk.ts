@@ -2613,51 +2613,103 @@ export class Hc03Sdk {
       }
       
       // Type 3: BloodGlucosePaperData - Final glucose measurement result
-      // The actual blood glucose value in mmol/L
-      // Format: [contentType (not state type), glucose_high, glucose_low]
-      if (data.length >= 3 && !(contentType >= 0x00 && contentType <= 0x06)) {
-        // Big-endian 16-bit value, divide by 10 to get mmol/L
-        // Skip contentType byte, use bytes 1-2 for glucose value
-        const glucoseRaw = ((data[1] & 0xFF) << 8) | (data[2] & 0xFF);
-        const glucose = glucoseRaw / 10.0;
+      // Try multiple parsing formats for the glucose value
+      if (data.length >= 2) {
+        const hexStr = Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+        console.log(`[HC03] 🍬 BG parsing attempts from: ${hexStr}`);
         
-        console.log(`[HC03] BG result parsed: raw=${glucoseRaw}, glucose=${glucose} mmol/L`);
+        let glucose = 0;
+        let formatUsed = '';
         
-        // Validate range (2.2-35 mmol/L = 40-600 mg/dL)
-        if (glucose >= 2.2 && glucose <= 35) {
+        // Format A: Big-endian 16-bit at bytes [1,2], /10 (most common)
+        if (data.length >= 3) {
+          const rawBE = ((data[1] & 0xFF) << 8) | (data[2] & 0xFF);
+          const glucoseBE = rawBE / 10.0;
+          console.log(`[HC03] BG Format A (BE bytes[1,2]/10): ${glucoseBE.toFixed(1)} mmol/L (raw: ${rawBE})`);
+          if (glucoseBE >= 2.0 && glucoseBE <= 35) {
+            glucose = glucoseBE;
+            formatUsed = 'BE[1,2]/10';
+          }
+        }
+        
+        // Format B: Little-endian 16-bit at bytes [1,2], /10
+        if (glucose === 0 && data.length >= 3) {
+          const rawLE = (data[1] & 0xFF) | ((data[2] & 0xFF) << 8);
+          const glucoseLE = rawLE / 10.0;
+          console.log(`[HC03] BG Format B (LE bytes[1,2]/10): ${glucoseLE.toFixed(1)} mmol/L (raw: ${rawLE})`);
+          if (glucoseLE >= 2.0 && glucoseLE <= 35) {
+            glucose = glucoseLE;
+            formatUsed = 'LE[1,2]/10';
+          }
+        }
+        
+        // Format C: Big-endian 16-bit at bytes [0,1], /10
+        if (glucose === 0 && data.length >= 2) {
+          const rawBE = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+          const glucoseBE = rawBE / 10.0;
+          console.log(`[HC03] BG Format C (BE bytes[0,1]/10): ${glucoseBE.toFixed(1)} mmol/L (raw: ${rawBE})`);
+          if (glucoseBE >= 2.0 && glucoseBE <= 35) {
+            glucose = glucoseBE;
+            formatUsed = 'BE[0,1]/10';
+          }
+        }
+        
+        // Format D: Little-endian 16-bit at bytes [0,1], /10
+        if (glucose === 0 && data.length >= 2) {
+          const rawLE = (data[0] & 0xFF) | ((data[1] & 0xFF) << 8);
+          const glucoseLE = rawLE / 10.0;
+          console.log(`[HC03] BG Format D (LE bytes[0,1]/10): ${glucoseLE.toFixed(1)} mmol/L (raw: ${rawLE})`);
+          if (glucoseLE >= 2.0 && glucoseLE <= 35) {
+            glucose = glucoseLE;
+            formatUsed = 'LE[0,1]/10';
+          }
+        }
+        
+        // Format E: Direct byte value (for simple implementations)
+        if (glucose === 0) {
+          for (let i = 0; i < data.length; i++) {
+            const val = data[i] & 0xFF;
+            const valDiv10 = val / 10.0;
+            if (valDiv10 >= 2.0 && valDiv10 <= 35) {
+              glucose = valDiv10;
+              formatUsed = `byte[${i}]/10`;
+              console.log(`[HC03] BG Format E (byte[${i}]/10): ${glucose.toFixed(1)} mmol/L`);
+              break;
+            }
+          }
+        }
+        
+        if (glucose >= 2.0 && glucose <= 35) {
+          const roundedGlucose = Math.round(glucose * 10) / 10;
+          
           const bloodGlucoseData: BloodGlucoseData = {
-            bloodGlucoseSendData: { rawValue: glucoseRaw },
+            bloodGlucoseSendData: { rawValue: Math.round(glucose * 10) },
             bloodGlucosePaperState: 'Test complete',
-            bloodGlucosePaperData: glucose
+            bloodGlucosePaperData: roundedGlucose
           };
           
-          // Store latest data for getter methods
           this.latestBloodGlucoseData = bloodGlucoseData;
           
-          console.log('[HC03] ✅ Blood Glucose Result:', glucose, 'mmol/L');
+          console.log(`[HC03] ✅ Blood Glucose: ${roundedGlucose} mmol/L (format: ${formatUsed})`);
           
-          // Emit PaperData event
           window.dispatchEvent(new CustomEvent('hc03:bloodglucose:paperdata', { 
-            detail: { data: glucose, units: 'mmol/L' } 
+            detail: { data: roundedGlucose, units: 'mmol/L' } 
           }));
           
-          // Send callback with result
           const callback = this.callbacks.get(Detection.BG);
           if (callback) {
             callback({ type: 'data', detection: Detection.BG, data: bloodGlucoseData });
           }
           
-          // Auto-stop blood glucose measurement after getting valid reading
-          // Wait 3 seconds to ensure data is saved before stopping
           setTimeout(() => {
             console.log('✅ [HC03] Valid blood glucose received, auto-stopping measurement...');
             this.stopDetect(Detection.BG).catch(e => console.warn('Auto-stop failed:', e));
           }, 3000);
-        } else {
-          console.warn(`[HC03] BG value out of range: ${glucose} mmol/L (expected 2.2-35)`);
+        } else if (!(contentType >= 0x00 && contentType <= 0x06)) {
+          console.warn(`[HC03] ❌ Could not parse valid BG value from: ${hexStr}`);
         }
       } else {
-        console.log(`[HC03] Unknown BG data format (type: 0x${contentType.toString(16)}, length: ${data.length})`);
+        console.log(`[HC03] BG data too short for result (type: 0x${contentType.toString(16)}, length: ${data.length})`);
       }
     } catch (error) {
       console.error('Error parsing blood glucose data:', error);
