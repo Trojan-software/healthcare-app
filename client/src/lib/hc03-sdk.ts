@@ -2547,44 +2547,116 @@ export class Hc03Sdk {
   }
 
   // Temperature Data Parsing (from Flutter SDK Temperature.dart)
+  // HC02-F1B51D sends temperature data in multiple possible formats
   private parseTemperatureData(data: Uint8Array): void {
     try {
-      if (data.length < 4) {
+      const hexStr = Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+      console.log(`[HC03] 🌡️ Temperature RAW: ${hexStr} (${data.length} bytes)`);
+      
+      if (data.length < 2) {
         console.warn('[HC03] Temperature data too short');
         return;
       }
       
-      // Little-endian 16-bit values - HC02 device uses raw ADC counts
-      const tempValue1 = ((data[1] & 0xFF) << 8) | (data[0] & 0xFF);
-      const tempValue2 = ((data[3] & 0xFF) << 8) | (data[2] & 0xFF);
+      let temperature = 0;
+      let formatUsed = '';
       
-      // HC02-F1B51D temperature conversion: ADC counts to Celsius
-      // Formula: temperature = value / 413.67 (empirically calibrated)
-      // This converts raw ADC values (e.g., 15306) to °C (e.g., 37°C)
-      const temp1 = tempValue1 / 413.67;
-      const temp2 = tempValue2 / 413.67;
+      // Format 1: Direct value in centidegrees (value / 100)
+      // Example: 3650 = 36.50°C
+      if (data.length >= 2) {
+        const directLE = (data[0] & 0xFF) | ((data[1] & 0xFF) << 8);
+        const directBE = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+        
+        const tempLE_100 = directLE / 100;
+        const tempBE_100 = directBE / 100;
+        
+        console.log(`[HC03] Temp Format checks: LE/100=${tempLE_100.toFixed(1)}°C, BE/100=${tempBE_100.toFixed(1)}°C`);
+        
+        // Check if LE/100 gives valid body temperature
+        if (tempLE_100 >= 34 && tempLE_100 <= 42) {
+          temperature = tempLE_100;
+          formatUsed = 'LE/100';
+        }
+        // Check if BE/100 gives valid body temperature  
+        else if (tempBE_100 >= 34 && tempBE_100 <= 42) {
+          temperature = tempBE_100;
+          formatUsed = 'BE/100';
+        }
+      }
       
-      // Average the two readings
-      const temperature = (temp1 + temp2) / 2.0;
+      // Format 2: Two 16-bit readings to average (4 bytes)
+      if (temperature === 0 && data.length >= 4) {
+        // Try little-endian first
+        const val1_LE = (data[0] & 0xFF) | ((data[1] & 0xFF) << 8);
+        const val2_LE = (data[2] & 0xFF) | ((data[3] & 0xFF) << 8);
+        
+        // Try big-endian
+        const val1_BE = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+        const val2_BE = ((data[2] & 0xFF) << 8) | (data[3] & 0xFF);
+        
+        // Check /100 scaling
+        const avg_LE_100 = ((val1_LE + val2_LE) / 2) / 100;
+        const avg_BE_100 = ((val1_BE + val2_BE) / 2) / 100;
+        
+        console.log(`[HC03] Temp 4-byte: LE/100=${avg_LE_100.toFixed(1)}°C, BE/100=${avg_BE_100.toFixed(1)}°C`);
+        
+        if (avg_LE_100 >= 34 && avg_LE_100 <= 42) {
+          temperature = avg_LE_100;
+          formatUsed = '4-byte LE/100 avg';
+        } else if (avg_BE_100 >= 34 && avg_BE_100 <= 42) {
+          temperature = avg_BE_100;
+          formatUsed = '4-byte BE/100 avg';
+        }
+        
+        // Try /10 scaling for higher raw values
+        if (temperature === 0) {
+          const avg_LE_10 = ((val1_LE + val2_LE) / 2) / 10;
+          const avg_BE_10 = ((val1_BE + val2_BE) / 2) / 10;
+          
+          console.log(`[HC03] Temp 4-byte: LE/10=${avg_LE_10.toFixed(1)}°C, BE/10=${avg_BE_10.toFixed(1)}°C`);
+          
+          if (avg_LE_10 >= 34 && avg_LE_10 <= 42) {
+            temperature = avg_LE_10;
+            formatUsed = '4-byte LE/10 avg';
+          } else if (avg_BE_10 >= 34 && avg_BE_10 <= 42) {
+            temperature = avg_BE_10;
+            formatUsed = '4-byte BE/10 avg';
+          }
+        }
+      }
+      
+      // Format 3: Direct byte value (already in °C - for simple devices)
+      if (temperature === 0 && data.length >= 1) {
+        if (data[0] >= 34 && data[0] <= 42) {
+          temperature = data[0];
+          formatUsed = 'direct byte';
+        } else if (data.length >= 2 && data[1] >= 34 && data[1] <= 42) {
+          temperature = data[1];
+          formatUsed = 'direct byte[1]';
+        }
+      }
+      
+      if (temperature === 0) {
+        console.warn(`[HC03] ❌ Could not parse temperature from: ${hexStr}`);
+        return;
+      }
+      
       const roundedTemp = Math.round(temperature * 10) / 10.0;
-      
-      console.log(`[HC03] 🌡️ Raw values: ${tempValue1} (${temp1.toFixed(1)}°C), ${tempValue2} (${temp2.toFixed(1)}°C) -> Average: ${roundedTemp}°C`);
+      console.log(`[HC03] 🌡️ Temperature: ${roundedTemp}°C (format: ${formatUsed})`);
       
       const temperatureData: TemperatureData = {
         temperature: roundedTemp
       };
       
-      // Store latest data for getter methods
       this.latestTemperatureData = temperatureData;
       
-      // Send callback FIRST to ensure data reaches dashboard
       const callback = this.callbacks.get(Detection.BT);
       if (callback) {
         callback({ type: 'data', detection: Detection.BT, data: temperatureData });
       }
       
-      // Auto-stop temperature measurement after getting valid reading (async, non-blocking)
-      if (roundedTemp >= 30 && roundedTemp <= 45) {
+      // Auto-stop after valid reading
+      if (roundedTemp >= 34 && roundedTemp <= 42) {
         setTimeout(() => {
           console.log('✅ [HC03] Valid temperature received, auto-stopping measurement...');
           this.stopDetect(Detection.BT).catch(e => console.warn('Auto-stop failed:', e));
