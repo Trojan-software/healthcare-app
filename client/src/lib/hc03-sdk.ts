@@ -441,6 +441,7 @@ export class Hc03Sdk {
   private redBuffer: number[] = [];
   private irBuffer: number[] = [];
   private bloodOxygenStartTime: number | null = null;
+  private bloodOxygenAutoStopTimeout: ReturnType<typeof setTimeout> | null = null;
   
   // Blood Pressure measurement state
   private bpPressureBuffer: number[] = [];
@@ -811,6 +812,12 @@ export class Hc03Sdk {
 
       // Clear waveform buffer when starting new blood oxygen measurement
       if (detection === Detection.OX) {
+        // Cancel any existing auto-stop timeout from previous measurement
+        if (this.bloodOxygenAutoStopTimeout) {
+          clearTimeout(this.bloodOxygenAutoStopTimeout);
+          this.bloodOxygenAutoStopTimeout = null;
+          console.log('🔄 [HC03] Cancelled previous blood oxygen auto-stop timer');
+        }
         this.waveformBuffer = [];
         this.redBuffer = [];
         this.irBuffer = [];
@@ -892,9 +899,14 @@ export class Hc03Sdk {
         this.stopPolling(detection);
       }
       
-      // Clear blood oxygen start time when stopping
+      // Clear blood oxygen start time and cancel auto-stop when stopping
       if (detection === Detection.OX) {
         this.bloodOxygenStartTime = null;
+        if (this.bloodOxygenAutoStopTimeout) {
+          clearTimeout(this.bloodOxygenAutoStopTimeout);
+          this.bloodOxygenAutoStopTimeout = null;
+          console.log('🛑 [HC03] Cancelled blood oxygen auto-stop timer');
+        }
       }
       
       this.activeDetections.delete(detection);
@@ -1623,10 +1635,12 @@ export class Hc03Sdk {
           if (remainingTime === 0) {
             console.log('✅ [HC03] 30-second blood oxygen measurement complete, auto-stopping...');
             this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
-          } else {
-            console.log(`[HC03] 📊 Valid reading obtained, continuing measurement (${Math.ceil(remainingTime / 1000)}s remaining)...`);
-            setTimeout(() => {
+          } else if (!this.bloodOxygenAutoStopTimeout) {
+            // Only set timer if not already set (prevents multiple timers)
+            console.log(`[HC03] 📊 Valid reading obtained, scheduling auto-stop in ${Math.ceil(remainingTime / 1000)}s...`);
+            this.bloodOxygenAutoStopTimeout = setTimeout(() => {
               console.log('✅ [HC03] 30-second blood oxygen measurement complete, auto-stopping...');
+              this.bloodOxygenAutoStopTimeout = null;
               this.stopDetect(Detection.OX).catch(e => console.warn('Auto-stop failed:', e));
             }, remainingTime);
           }
