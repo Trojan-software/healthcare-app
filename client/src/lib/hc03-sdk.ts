@@ -1378,84 +1378,98 @@ export class Hc03Sdk {
 
   // ECG Data Parsing 
   // HC02-F1B51D sends ECG data via Bluetooth with waveform samples
-  // Format: [waveform_samples...] - typically 10-20 samples per packet
+  // Format: [waveform_samples...] - typically 10-20 samples per packet at 250Hz
   private parseECGData(data: Uint8Array): void {
     try {
-      console.log(`[HC03] 💓 ECG raw data (${data.length} bytes): ${Array.from(data.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ')}${data.length > 20 ? '...' : ''}`);
+      const hexStr = Array.from(data.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+      console.log(`[HC03] 💓 ECG raw data (${data.length} bytes): ${hexStr}${data.length > 20 ? '...' : ''}`);
       
       if (data.length < 1) {
         console.warn('[HC03] ECG data too short');
         return;
       }
       
-      // Parse ECG waveform samples
-      // HC02-F1B51D sends 16-bit SIGNED samples in little-endian format
+      // Parse ECG waveform samples - try multiple formats
       const waveData: number[] = [];
       
-      // Parse as signed 16-bit little-endian samples
+      // Format 1: 16-bit signed little-endian (most common for HC02)
       if (data.length % 2 === 0 && data.length >= 2) {
         for (let i = 0; i < data.length; i += 2) {
-          // Read as unsigned 16-bit little-endian
           let sample = (data[i] & 0xFF) | ((data[i + 1] & 0xFF) << 8);
-          // Convert to signed 16-bit (two's complement)
-          if (sample > 32767) {
-            sample = sample - 65536;
-          }
+          if (sample > 32767) sample -= 65536;
           waveData.push(sample);
         }
       } else {
-        // Fall back to signed 8-bit samples
+        // Format 2: 8-bit signed samples
         for (let i = 0; i < data.length; i++) {
           let sample = data[i] & 0xFF;
-          if (sample > 127) {
-            sample = sample - 256;
-          }
+          if (sample > 127) sample -= 256;
           waveData.push(sample);
         }
       }
+      
+      // Track packet timing for sample rate estimation
+      const now = Date.now();
+      if (!this.ecgPacketTimestamps) {
+        this.ecgPacketTimestamps = [];
+      }
+      this.ecgPacketTimestamps.push({ time: now, count: waveData.length });
+      
+      // Keep only last 10 seconds of timing data
+      const tenSecondsAgo = now - 10000;
+      this.ecgPacketTimestamps = this.ecgPacketTimestamps.filter(p => p.time > tenSecondsAgo);
+      
+      // Calculate actual sample rate from packet timing
+      let sampleRate = 250; // Default to 250Hz (standard ECG rate)
+      if (this.ecgPacketTimestamps.length >= 2) {
+        const oldest = this.ecgPacketTimestamps[0];
+        const newest = this.ecgPacketTimestamps[this.ecgPacketTimestamps.length - 1];
+        const totalSamples = this.ecgPacketTimestamps.reduce((sum, p) => sum + p.count, 0);
+        const durationSec = (newest.time - oldest.time) / 1000;
+        if (durationSec > 0.5) {
+          sampleRate = Math.round(totalSamples / durationSec);
+          console.log(`[HC03] ECG sample rate: ${sampleRate} Hz (${totalSamples} samples in ${durationSec.toFixed(1)}s)`);
+        }
+      }
+      this.ecgSampleRate = sampleRate;
       
       // Accumulate samples for heart rate calculation
       if (!this.ecgSampleBuffer) {
         this.ecgSampleBuffer = [];
-        this.ecgLastBeatTime = 0;
-        this.ecgBeatCount = 0;
-        this.ecgStartTime = Date.now();
+        this.ecgStartTime = now;
       }
       
       this.ecgSampleBuffer.push(...waveData);
       
-      // Keep buffer at reasonable size (10 seconds at 250 Hz = 2500 samples)
-      if (this.ecgSampleBuffer.length > 2500) {
-        this.ecgSampleBuffer = this.ecgSampleBuffer.slice(-2500);
+      // Keep buffer at reasonable size (10 seconds)
+      const maxBufferSize = sampleRate * 10;
+      if (this.ecgSampleBuffer.length > maxBufferSize) {
+        this.ecgSampleBuffer = this.ecgSampleBuffer.slice(-maxBufferSize);
       }
       
-      // Estimate heart rate from R-peak detection (simplified)
+      // Estimate heart rate from R-peak detection
       const heartRate = this.estimateHeartRateFromECG(this.ecgSampleBuffer);
       
-      // Create ECG data object
+      // Calculate RR interval and HRV if we have enough data
+      const rrInterval = heartRate > 0 ? Math.round(60000 / heartRate) : 0;
+      const hrv = this.calculateHRV(this.ecgSampleBuffer, sampleRate);
+      
       const ecgData = {
         wave: waveData,
         hr: heartRate,
-        moodIndex: 50, // Neutral mood
-        rr: heartRate > 0 ? Math.round(60000 / heartRate) : 0, // RR interval in ms
-        hrv: 0, // Would need more complex calculation
-        respiratoryRate: Math.round(heartRate / 4), // Rough estimate
-        touch: true // Finger detected if we're getting data
+        moodIndex: this.calculateMoodFromHRV(hrv),
+        rr: rrInterval,
+        hrv: hrv,
+        respiratoryRate: this.estimateRespiratoryRate(this.ecgSampleBuffer, sampleRate),
+        touch: true,
+        sampleRate: sampleRate
       };
       
-      console.log(`[HC03] 💓 ECG: HR=${heartRate} bpm, ${waveData.length} samples`);
+      console.log(`[HC03] 💓 ECG: HR=${heartRate} bpm, HRV=${hrv}ms, ${waveData.length} samples @ ${sampleRate}Hz`);
       
-      // Emit ECG wave event
-      window.dispatchEvent(new CustomEvent('hc03:ecg:wave', {
-        detail: { wave: waveData }
-      }));
+      window.dispatchEvent(new CustomEvent('hc03:ecg:wave', { detail: { wave: waveData } }));
+      window.dispatchEvent(new CustomEvent('hc03:ecg:metrics', { detail: ecgData }));
       
-      // Emit ECG metrics event
-      window.dispatchEvent(new CustomEvent('hc03:ecg:metrics', {
-        detail: ecgData
-      }));
-      
-      // Call registered callback
       const callback = this.callbacks.get(Detection.ECG);
       if (callback) {
         callback({ type: 'data', detection: Detection.ECG, data: ecgData });
@@ -1464,6 +1478,110 @@ export class Hc03Sdk {
     } catch (error) {
       console.error('[HC03] Error parsing ECG data:', error);
     }
+  }
+  
+  // ECG packet timestamps for sample rate calculation
+  private ecgPacketTimestamps: Array<{time: number, count: number}> = [];
+  private ecgSampleRate: number = 250;
+  
+  // Calculate HRV (Heart Rate Variability) from ECG samples
+  private calculateHRV(samples: number[], sampleRate: number): number {
+    if (samples.length < sampleRate * 5) return 0; // Need at least 5 seconds
+    
+    const rrIntervals = this.detectRRIntervals(samples, sampleRate);
+    if (rrIntervals.length < 2) return 0;
+    
+    // Calculate SDNN (Standard Deviation of NN intervals)
+    const mean = rrIntervals.reduce((a, b) => a + b, 0) / rrIntervals.length;
+    const variance = rrIntervals.reduce((sum, rr) => sum + Math.pow(rr - mean, 2), 0) / rrIntervals.length;
+    const sdnn = Math.sqrt(variance);
+    
+    return Math.round(sdnn);
+  }
+  
+  // Detect RR intervals from ECG samples
+  private detectRRIntervals(samples: number[], sampleRate: number): number[] {
+    const peaks = this.detectECGPeaks(samples, sampleRate);
+    const rrIntervals: number[] = [];
+    
+    for (let i = 1; i < peaks.length; i++) {
+      const intervalSamples = peaks[i] - peaks[i - 1];
+      const intervalMs = (intervalSamples / sampleRate) * 1000;
+      // Valid RR interval: 300-2000ms (30-200 BPM)
+      if (intervalMs >= 300 && intervalMs <= 2000) {
+        rrIntervals.push(intervalMs);
+      }
+    }
+    
+    return rrIntervals;
+  }
+  
+  // Detect ECG R-peaks for heart rate calculation
+  private detectECGPeaks(samples: number[], sampleRate: number): number[] {
+    if (samples.length < sampleRate) return [];
+    
+    const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
+    const max = Math.max(...samples);
+    const min = Math.min(...samples);
+    const range = max - min;
+    
+    // Adaptive threshold
+    const threshold = mean + range * 0.3;
+    const minPeakDistance = Math.floor(sampleRate * 0.3); // 300ms minimum between peaks
+    
+    const peaks: number[] = [];
+    for (let i = 2; i < samples.length - 2; i++) {
+      if (samples[i] > threshold &&
+          samples[i] >= samples[i - 1] &&
+          samples[i] >= samples[i + 1] &&
+          samples[i] > samples[i - 2] &&
+          samples[i] > samples[i + 2]) {
+        if (peaks.length === 0 || (i - peaks[peaks.length - 1]) >= minPeakDistance) {
+          peaks.push(i);
+        }
+      }
+    }
+    
+    return peaks;
+  }
+  
+  // Estimate respiratory rate from ECG using RSA (Respiratory Sinus Arrhythmia)
+  private estimateRespiratoryRate(samples: number[], sampleRate: number): number {
+    if (samples.length < sampleRate * 10) return 0;
+    
+    const rrIntervals = this.detectRRIntervals(samples, sampleRate);
+    if (rrIntervals.length < 10) return 0;
+    
+    // Simple FFT-like frequency detection on RR intervals
+    // Look for dominant frequency in 0.1-0.4 Hz range (6-24 breaths/min)
+    // For now, use a heuristic based on RR interval variation
+    const variations = [];
+    for (let i = 1; i < rrIntervals.length; i++) {
+      variations.push(rrIntervals[i] - rrIntervals[i - 1]);
+    }
+    
+    // Count sign changes (oscillations)
+    let signChanges = 0;
+    for (let i = 1; i < variations.length; i++) {
+      if ((variations[i] > 0 && variations[i - 1] < 0) ||
+          (variations[i] < 0 && variations[i - 1] > 0)) {
+        signChanges++;
+      }
+    }
+    
+    // Each respiratory cycle causes ~2 sign changes
+    const totalDuration = rrIntervals.reduce((a, b) => a + b, 0) / 1000; // seconds
+    const respiratoryRate = Math.round((signChanges / 2) * (60 / totalDuration));
+    
+    return Math.max(6, Math.min(30, respiratoryRate));
+  }
+  
+  // Calculate mood index from HRV (higher HRV = better mood)
+  private calculateMoodFromHRV(hrv: number): number {
+    // Map HRV 20-100ms to mood 30-90
+    if (hrv <= 0) return 50;
+    const moodIndex = Math.min(90, Math.max(30, 30 + (hrv - 20) * 0.75));
+    return Math.round(moodIndex);
   }
   
   // Simple heart rate estimation from ECG waveform
