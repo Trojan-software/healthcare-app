@@ -1586,16 +1586,22 @@ export class Hc03Sdk {
   
   // Simple heart rate estimation from ECG waveform
   // Works with signed 16-bit samples from HC02-F1B51D
+  // Uses dynamically detected sample rate from packet timing
   private estimateHeartRateFromECG(samples: number[]): number {
-    console.log(`[HC03] ECG buffer size: ${samples.length} samples`);
+    // Use dynamically detected sample rate (set by parseECGData)
+    const sampleRate = this.ecgSampleRate || 250;
     
-    if (samples.length < 200) {
-      console.log(`[HC03] Need more samples (have ${samples.length}, need 200)`);
+    console.log(`[HC03] ECG buffer size: ${samples.length} samples @ ${sampleRate}Hz`);
+    
+    // Need at least 2 seconds of data
+    const minSamples = Math.floor(sampleRate * 2);
+    if (samples.length < minSamples) {
+      console.log(`[HC03] Need more samples (have ${samples.length}, need ${minSamples})`);
       return 0;
     }
     
-    // Use recent samples for analysis (last 5 seconds worth at ~100 samples/sec)
-    const recentSamples = samples.slice(-500);
+    // Use recent samples for analysis (last 5 seconds worth at current sample rate)
+    const recentSamples = samples.slice(-(sampleRate * 5));
     
     // Calculate statistics
     const mean = recentSamples.reduce((a, b) => a + b, 0) / recentSamples.length;
@@ -1603,10 +1609,13 @@ export class Hc03Sdk {
     const min = Math.min(...recentSamples);
     const range = max - min;
     
-    // Very low threshold - just detect peaks above mean
-    const threshold = mean + range * 0.2;
+    // Adaptive threshold - detect peaks above mean
+    const threshold = mean + range * 0.25;
     
     console.log(`[HC03] ECG stats: mean=${mean.toFixed(0)}, max=${max}, min=${min}, range=${range}, threshold=${threshold.toFixed(0)}`);
+    
+    // Minimum samples between peaks (300ms refractory period)
+    const minPeakDistance = Math.floor(sampleRate * 0.3);
     
     // Find all local maxima above threshold
     const peaks: number[] = [];
@@ -1619,8 +1628,7 @@ export class Hc03Sdk {
           val >= recentSamples[i+1] &&
           val > recentSamples[i-2] && 
           val > recentSamples[i+2]) {
-        // Minimum 15 samples between peaks (~150ms at 100Hz, allows up to 400 BPM)
-        if (peaks.length === 0 || (i - peaks[peaks.length - 1] > 15)) {
+        if (peaks.length === 0 || (i - peaks[peaks.length - 1] > minPeakDistance)) {
           peaks.push(i);
         }
       }
@@ -1630,9 +1638,7 @@ export class Hc03Sdk {
     
     if (peaks.length < 2) {
       // Fallback: estimate from signal characteristics
-      // If we have a stable waveform, estimate based on typical ECG patterns
       if (range > 100) {
-        // Assume typical 70 BPM if we have a signal but can't detect peaks
         console.log('[HC03] Using fallback HR estimate (range-based)');
         return 72;
       }
@@ -1646,11 +1652,10 @@ export class Hc03Sdk {
     }
     const avgInterval = totalInterval / (peaks.length - 1);
     
-    // HC02-F1B51D sends ~10 samples per packet at ~10 packets/sec = ~100 Hz sample rate
-    const sampleRate = 100; // Estimated sample rate
+    // Calculate heart rate using dynamic sample rate
     const heartRate = Math.round(60 * sampleRate / avgInterval);
     
-    console.log(`[HC03] Calculated HR: ${heartRate} BPM (interval=${avgInterval.toFixed(1)} samples, rate=${sampleRate}Hz)`);
+    console.log(`[HC03] Calculated HR: ${heartRate} BPM (interval=${avgInterval.toFixed(1)} samples @ ${sampleRate}Hz)`);
     
     // Sanity check (30-220 BPM)
     return heartRate >= 30 && heartRate <= 220 ? heartRate : 0;
