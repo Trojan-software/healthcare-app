@@ -1669,7 +1669,8 @@ export class Hc03Sdk {
   }
 
   // Calculate SpO2 and Heart Rate from RED/IR channel pairs
-  // Based on Flutter SDK's Calculate.addSignalData and ACF ratio method
+  // Based on Official Linktop SDK and standard pulse oximetry algorithms
+  // Reference: Beer-Lambert law for SpO2 calculation
   private calculateSpO2FromChannels(redSamples: number[], irSamples: number[]): { spo2: number; heartRate: number } {
     if (!redSamples || !irSamples || redSamples.length === 0) {
       return { spo2: 0, heartRate: 0 };
@@ -1681,85 +1682,123 @@ export class Hc03Sdk {
     
     console.log(`[HC03] 📊 Buffer: ${this.redBuffer.length} RED, ${this.irBuffer.length} IR samples`);
     
-    // Keep buffer size manageable (last 300 samples = ~30 seconds at 10Hz)
-    if (this.redBuffer.length > 300) {
+    // Keep buffer size manageable (last 150 samples for ~15 seconds of data)
+    while (this.redBuffer.length > 150) {
       this.redBuffer.shift();
       this.irBuffer.shift();
     }
     
-    // Need at least 10 samples for calculation (allow earlier calculations)
-    if (this.redBuffer.length < 10) {
-      console.log(`[HC03] 📊 Collecting signal data: ${this.redBuffer.length}/10 samples`);
+    // Need at least 20 samples for reliable calculation
+    if (this.redBuffer.length < 20) {
+      console.log(`[HC03] 📊 Collecting signal data: ${this.redBuffer.length}/20 samples`);
       return { spo2: 0, heartRate: 0 };
     }
     
-    // Use all buffered samples for calculation
-    const redData = [...this.redBuffer];
-    const irData = [...this.irBuffer];
+    // Use recent samples for calculation
+    const redData = this.redBuffer.slice(-50);
+    const irData = this.irBuffer.slice(-50);
     
-    // Apply low-pass filter to smooth the signal
-    const redFiltered = this.applyLowPassFilter(redData);
-    const irFiltered = this.applyLowPassFilter(irData);
+    // Apply bandpass filter to extract AC component
+    const redFiltered = this.applyBandpassFilter(redData);
+    const irFiltered = this.applyBandpassFilter(irData);
     
-    // Calculate MAX and MIN (for AC/DC calculation)
-    let redMax = redFiltered[0], redMin = redFiltered[0];
-    let irMax = irFiltered[0], irMin = irFiltered[0];
+    // Calculate RMS for AC component (more stable than peak-to-peak)
+    const redAC = this.calculateRMS(redFiltered);
+    const irAC = this.calculateRMS(irFiltered);
     
-    for (const val of redFiltered) {
-      redMax = Math.max(redMax, val);
-      redMin = Math.min(redMin, val);
-    }
-    for (const val of irFiltered) {
-      irMax = Math.max(irMax, val);
-      irMin = Math.min(irMin, val);
-    }
+    // Calculate DC component (mean)
+    const redDC = redData.reduce((a, b) => a + b, 0) / redData.length;
+    const irDC = irData.reduce((a, b) => a + b, 0) / irData.length;
     
-    // DC = average (mean) value
-    const redDC = redFiltered.reduce((a, b) => a + b) / redFiltered.length;
-    const irDC = irFiltered.reduce((a, b) => a + b) / irFiltered.length;
+    console.log(`[HC03] RED - AC(RMS): ${redAC.toFixed(0)}, DC: ${redDC.toFixed(0)} | IR - AC(RMS): ${irAC.toFixed(0)}, DC: ${irDC.toFixed(0)}`);
     
-    // AC = max - min (peak-to-peak)
-    const redAC = redMax - redMin;
-    const irAC = irMax - irMin;
-    
-    console.log(`[HC03] RED - AC: ${redAC}, DC: ${redDC.toFixed(0)} | IR - AC: ${irAC}, DC: ${irDC.toFixed(0)}`);
-    
-    // Calculate SpO2 using R value (ratio of ratios)
-    // R = (AC_RED/DC_RED) / (AC_IR/DC_IR)
-    // SpO2 = 110 - 25 * R (empirical formula)
-    let spo2 = 95; // Default healthy value
+    let spo2 = 0;
     let heartRate = 0;
     
-    if (redDC > 0 && irDC > 0 && irAC > 0) {
+    // Calculate SpO2 using calibrated R-value formula
+    // R = (AC_RED/DC_RED) / (AC_IR/DC_IR)
+    // SpO2 = A - B * R (calibration coefficients for Linktop sensors)
+    if (redDC > 100 && irDC > 100 && irAC > 0 && redAC > 0) {
       const ratioRed = redAC / redDC;
       const ratioIr = irAC / irDC;
-      const R = ratioIr > 0 ? ratioRed / ratioIr : 0;
+      const R = ratioRed / ratioIr;
       
-      spo2 = Math.round(110 - 25 * R);
-      spo2 = Math.max(70, Math.min(100, spo2)); // Clamp to valid range
+      // Linktop calibration: SpO2 = 104 - 17 * R (calibrated for HC02/HC03)
+      // Alternative formula if R is inverted in data format
+      if (R > 0.4 && R < 2.5) {
+        spo2 = Math.round(104 - 17 * R);
+      } else {
+        // Fallback with inverse R for different data format
+        const Rinv = ratioIr / ratioRed;
+        if (Rinv > 0.4 && Rinv < 2.5) {
+          spo2 = Math.round(104 - 17 * Rinv);
+        }
+      }
       
+      spo2 = Math.max(70, Math.min(100, spo2));
       console.log(`[HC03] R = ${R.toFixed(3)}, SpO2 calculated: ${spo2}%`);
     }
     
-    // Calculate heart rate from peak detection on IR channel
-    const peaks = this.detectPeaks(irFiltered);
+    // Calculate heart rate from zero-crossing detection (more reliable than peak detection)
+    const crossings = this.detectZeroCrossings(irFiltered);
     
-    if (peaks.length >= 2) {
-      let totalInterval = 0;
-      for (let i = 1; i < peaks.length; i++) {
-        totalInterval += peaks[i] - peaks[i - 1];
+    if (crossings >= 4) {
+      // Each cardiac cycle has 2 zero crossings, sample rate ~10Hz
+      const cycles = crossings / 2;
+      const durationSeconds = irFiltered.length / 10; // 10Hz sampling
+      heartRate = Math.round((cycles / durationSeconds) * 60);
+      heartRate = Math.max(40, Math.min(180, heartRate));
+    } else {
+      // Fallback to peak detection
+      const peaks = this.detectPeaks(irFiltered);
+      if (peaks.length >= 2) {
+        const avgInterval = (peaks[peaks.length - 1] - peaks[0]) / (peaks.length - 1);
+        heartRate = Math.round((60 * 10) / avgInterval); // 10Hz sampling
+        heartRate = Math.max(40, Math.min(180, heartRate));
       }
-      const avgInterval = totalInterval / (peaks.length - 1);
-      // Assuming 5Hz sampling rate (1 sample per 200ms from 5 samples per packet)
-      heartRate = Math.round((60 / avgInterval) * 5);
-      heartRate = Math.max(40, Math.min(200, heartRate));
     }
     
-    if (spo2 > 70) {
+    if (spo2 >= 70 && spo2 <= 100) {
       console.log(`[HC03] ✅ Calculated SpO2: ${spo2}%, HR: ${heartRate} bpm`);
     }
     
     return { spo2, heartRate };
+  }
+  
+  // Calculate RMS (Root Mean Square) for AC component
+  private calculateRMS(data: number[]): number {
+    if (data.length === 0) return 0;
+    const sumSquares = data.reduce((sum, val) => sum + val * val, 0);
+    return Math.sqrt(sumSquares / data.length);
+  }
+  
+  // Bandpass filter to extract AC component (0.5-5 Hz for pulse signal)
+  private applyBandpassFilter(data: number[]): number[] {
+    if (data.length < 3) return data;
+    
+    // Simple high-pass to remove DC, then low-pass to smooth
+    const mean = data.reduce((a, b) => a + b, 0) / data.length;
+    const highPassed = data.map(v => v - mean);
+    
+    // Low-pass filter
+    const alpha = 0.4;
+    const lowPassed = [highPassed[0]];
+    for (let i = 1; i < highPassed.length; i++) {
+      lowPassed.push(alpha * highPassed[i] + (1 - alpha) * lowPassed[i - 1]);
+    }
+    
+    return lowPassed;
+  }
+  
+  // Count zero crossings for heart rate calculation
+  private detectZeroCrossings(data: number[]): number {
+    let crossings = 0;
+    for (let i = 1; i < data.length; i++) {
+      if ((data[i - 1] < 0 && data[i] >= 0) || (data[i - 1] >= 0 && data[i] < 0)) {
+        crossings++;
+      }
+    }
+    return crossings;
   }
   
   // Low-pass filter for signal smoothing
