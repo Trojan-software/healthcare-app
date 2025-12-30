@@ -28,7 +28,8 @@ The system employs a modern full-stack architecture. The frontend uses **React 1
 -   **Device Context Architecture**: Two context providers work together:
     -   `DeviceDataProvider`: Base context for device connection state and live readings (legacy compatibility)
     -   `DeviceProvider`: Wraps Linktop SDK with `useLinktopDevice` hook that bridges measurements to DeviceDataContext
--   **Translation Keys Added**: Added healthScore, appointments, lastCheckup to i18n for English/Arabic support
+-   **Dashboard Bluetooth Integration**: DeviceConnector component added to EnhancedPatientDashboard with a "Bluetooth Devices" section card. Includes improved fallback UI for unsupported browsers (amber warning instead of error).
+-   **Translation Keys Added**: Added healthScore, appointments, lastCheckup, bluetoothDevices to i18n for English/Arabic support
 
 ## ADHCC Security Compliance (November 2025)
 

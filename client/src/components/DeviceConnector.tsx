@@ -113,16 +113,32 @@ export default function DeviceConnector({
 
   if (!isBluetoothSupported()) {
     return (
-      <div className="border border-amber-200 bg-amber-50 rounded-lg p-4" data-testid="device-connector-unsupported">
-        <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <BluetoothOff className="w-6 h-6 text-amber-500" />
-          <div className={`flex-1 ${isRTL ? 'text-right' : ''}`}>
-            <p className="font-medium text-amber-700">
-              {isRTL ? 'البلوتوث غير متاح' : 'Bluetooth Unavailable'}
-            </p>
-            <p className="text-sm text-amber-600">
-              {isRTL ? 'لاستخدام أجهزة المراقبة، افتح هذا التطبيق في Chrome أو Edge على جهاز الكمبيوتر' : 'To use monitoring devices, open this app in Chrome or Edge on desktop'}
-            </p>
+      <div data-testid="device-connector-unsupported">
+        <div className="text-center py-4">
+          <Bluetooth className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-500 mb-4">
+            {isRTL ? 'لم يتم توصيل أي جهاز' : 'No device connected'}
+          </p>
+          <Button 
+            onClick={handleConnect}
+            className="gap-2 mb-4"
+            data-testid="button-connect-device"
+          >
+            <Bluetooth className="w-4 h-4" />
+            {isRTL ? 'البحث عن الأجهزة' : 'Scan for Devices'}
+          </Button>
+          <div className="border border-amber-200 bg-amber-50 rounded-lg p-3 mt-4">
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <BluetoothOff className="w-5 h-5 text-amber-500 flex-shrink-0" />
+              <div className={`${isRTL ? 'text-right' : 'text-left'}`}>
+                <p className="text-sm text-amber-700">
+                  {isRTL ? 'البلوتوث غير متاح في هذا المتصفح' : 'Bluetooth unavailable in this browser'}
+                </p>
+                <p className="text-xs text-amber-600">
+                  {isRTL ? 'استخدم Chrome أو Edge على جهاز الكمبيوتر' : 'Use Chrome or Edge on desktop'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -167,36 +183,23 @@ export default function DeviceConnector({
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            {deviceState.isConnected ? (
-              <BluetoothConnected className="w-5 h-5 text-green-500" />
-            ) : (
-              <Bluetooth className="w-5 h-5 text-gray-400" />
-            )}
-            <span>{isRTL ? 'جهاز مراقبة الصحة' : 'Health Monitor Device'}</span>
+    <div data-testid="device-connector">
+      {deviceState.isConnected && measurementState.battery && (
+        <div className={`flex items-center justify-end gap-2 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          {getBatteryIcon()}
+          <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className={`h-full ${getBatteryColor()} transition-all`}
+              style={{ width: `${measurementState.battery.level}%` }}
+            />
           </div>
-          {deviceState.isConnected && measurementState.battery && (
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              {getBatteryIcon()}
-              <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full ${getBatteryColor()} transition-all`}
-                  style={{ width: `${measurementState.battery.level}%` }}
-                />
-              </div>
-              <span className="text-sm text-gray-600">{measurementState.battery.level}%</span>
-              <Button size="icon" variant="ghost" onClick={refreshBattery}>
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {!deviceState.isConnected ? (
+          <span className="text-sm text-gray-600">{measurementState.battery.level}%</span>
+          <Button size="icon" variant="ghost" onClick={refreshBattery}>
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+      {!deviceState.isConnected ? (
           <div className="text-center py-4">
             <Bluetooth className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p className="text-gray-500 mb-4">
@@ -365,7 +368,6 @@ export default function DeviceConnector({
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }
