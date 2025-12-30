@@ -393,6 +393,7 @@ class LinktopSDK {
   }
 
   private parseECG(data: number[]): void {
+    console.log('[Linktop SDK] ECG data received:', data);
     if (data.length < 4) return;
 
     const subType = data[0];
@@ -401,6 +402,12 @@ class LinktopSDK {
       const heartRate = data[1];
       const smoothedWave = (data[2] << 8) | data[3];
       
+      // Validate heart rate
+      if (heartRate < 30 || heartRate > 220) {
+        console.log('[Linktop SDK] ECG heart rate out of range:', heartRate);
+        return;
+      }
+
       const ecgData: ECGData = {
         heartRate,
         smoothedWave,
@@ -415,6 +422,7 @@ class LinktopSDK {
         fingerTouch: true,
       };
       
+      // Extract advanced metrics if available
       if (data.length >= 8) {
         ecgData.hrv = data[4];
         ecgData.stress = data[5];
@@ -422,6 +430,20 @@ class LinktopSDK {
         ecgData.breathRate = data[7];
       }
       
+      if (data.length >= 12) {
+        ecgData.rrMax = (data[8] << 8) | data[9];
+        ecgData.rrMin = (data[10] << 8) | data[11];
+      }
+      
+      if (data.length >= 14) {
+        ecgData.r2rInterval = (data[12] << 8) | data[13];
+      }
+      
+      if (data.length >= 16) {
+        ecgData.heartAge = (data[14] << 8) | data[15];
+      }
+      
+      console.log('[Linktop SDK] Emitting ECG measurement:', ecgData);
       this.emitMeasurement({ type: 'ecg', data: ecgData });
     }
   }
@@ -462,6 +484,7 @@ class LinktopSDK {
   }
 
   private parseBloodPressure(data: number[]): void {
+    console.log('[Linktop SDK] Blood Pressure data received:', data);
     if (data.length < 4) return;
 
     const subType = data[0];
@@ -471,14 +494,28 @@ class LinktopSDK {
       const diastolic = data[2];
       const heartRate = data[3];
       
-      if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130) {
-        const bpData: BloodPressureData = { systolic, diastolic, heartRate };
-        this.emitMeasurement({ type: 'bloodPressure', data: bpData });
+      // Comprehensive validation
+      if (systolic < 50 || systolic > 250) {
+        console.log('[Linktop SDK] BP systolic out of range:', systolic);
+        return;
       }
+      if (diastolic < 30 || diastolic > 180) {
+        console.log('[Linktop SDK] BP diastolic out of range:', diastolic);
+        return;
+      }
+      if (heartRate < 30 || heartRate > 220) {
+        console.log('[Linktop SDK] BP heart rate out of range:', heartRate);
+        return;
+      }
+      
+      const bpData: BloodPressureData = { systolic, diastolic, heartRate };
+      console.log('[Linktop SDK] Emitting Blood Pressure:', bpData);
+      this.emitMeasurement({ type: 'bloodPressure', data: bpData });
     }
   }
 
   private parseTemperature(data: number[]): void {
+    console.log('[Linktop SDK] Temperature data received:', data);
     if (data.length < 3) return;
 
     const subType = data[0];
@@ -486,16 +523,22 @@ class LinktopSDK {
     if (subType === 0x01) {
       const tempInt = data[1];
       const tempDec = data[2];
-      const temperature = tempInt + (tempDec / 100);
+      const temperature = parseFloat((tempInt + (tempDec / 100)).toFixed(2));
       
-      if (temperature >= 30 && temperature <= 45) {
-        const tempData: TemperatureData = { temperature };
-        this.emitMeasurement({ type: 'temperature', data: tempData });
+      // Validate temperature (realistic human body range)
+      if (temperature < 35 || temperature > 43) {
+        console.log('[Linktop SDK] Temperature out of range:', temperature);
+        return;
       }
+      
+      const tempData: TemperatureData = { temperature };
+      console.log('[Linktop SDK] Emitting Temperature:', tempData);
+      this.emitMeasurement({ type: 'temperature', data: tempData });
     }
   }
 
   private parseBloodGlucose(data: number[]): void {
+    console.log('[Linktop SDK] Blood Glucose data received:', data);
     if (data.length < 3) return;
 
     const subType = data[0];
@@ -503,9 +546,23 @@ class LinktopSDK {
     if (subType === 0x01) {
       const valueHigh = data[1];
       const valueLow = data[2];
-      const value = ((valueHigh << 8) | valueLow) / 10;
+      const value = Math.round(((valueHigh << 8) | valueLow) / 10);
       
-      const glucoseData: BloodGlucoseData = { value, unit: 'mg/dL' };
+      // Validate glucose levels (realistic range: 40-500 mg/dL)
+      if (value < 40 || value > 500) {
+        console.log('[Linktop SDK] Glucose value out of range:', value);
+        return;
+      }
+      
+      // Check if unit data is available
+      let unit: 'mg/dL' | 'mmol/L' = 'mg/dL';
+      if (data.length >= 4 && data[3] === 1) {
+        // Convert to mmol/L if needed (1 mg/dL = 0.0555 mmol/L)
+        unit = 'mmol/L';
+      }
+      
+      const glucoseData: BloodGlucoseData = { value, unit };
+      console.log('[Linktop SDK] Emitting Blood Glucose:', glucoseData);
       this.emitMeasurement({ type: 'bloodGlucose', data: glucoseData });
     }
   }
