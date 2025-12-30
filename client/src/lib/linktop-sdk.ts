@@ -217,10 +217,25 @@ class LinktopSDK {
 
   private async sendCommand(bytes: number[]): Promise<void> {
     if (!this.writeCharacteristic) {
+      console.error('[Linktop SDK] Cannot send command - not connected');
       throw new Error('Not connected');
     }
+    console.log('[Linktop SDK] Sending command:', bytes.map(b => b.toString(16).padStart(2, '0')).join(' '));
     const command = new Uint8Array(bytes);
-    await this.writeCharacteristic.writeValue(command);
+    try {
+      // Try writeValueWithResponse first (required by some devices)
+      if (this.writeCharacteristic.properties.write) {
+        await this.writeCharacteristic.writeValueWithResponse(command);
+      } else if (this.writeCharacteristic.properties.writeWithoutResponse) {
+        await this.writeCharacteristic.writeValueWithoutResponse(command);
+      } else {
+        await this.writeCharacteristic.writeValue(command);
+      }
+      console.log('[Linktop SDK] Command sent successfully');
+    } catch (error) {
+      console.error('[Linktop SDK] Error sending command:', error);
+      throw error;
+    }
   }
 
   async requestBattery(): Promise<void> {
