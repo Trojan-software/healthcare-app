@@ -69,6 +69,51 @@ export function useLinktopDevice() {
   });
 
   const callbackId = useRef(`linktop-${Date.now()}`);
+  const measurementTimeouts = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  const autoStopEnabled = useRef(true);
+  const validReadingCounts = useRef<{ [key: string]: number }>({});
+  
+  // Auto-stop helper - stops measurement after valid reading
+  const autoStopMeasurement = useCallback(async (type: 'ecg' | 'spo2' | 'bloodPressure' | 'temperature' | 'bloodGlucose') => {
+    if (!autoStopEnabled.current) return;
+    
+    // Clear any pending timeout
+    if (measurementTimeouts.current[type]) {
+      clearTimeout(measurementTimeouts.current[type]);
+      delete measurementTimeouts.current[type];
+    }
+    
+    console.log(`[useLinktopDevice] Auto-stopping ${type} measurement after valid reading`);
+    
+    try {
+      switch (type) {
+        case 'ecg':
+          await linktopSdk.stopECG();
+          setMeasurementState(prev => ({ ...prev, ecg: { ...prev.ecg, active: false } }));
+          break;
+        case 'spo2':
+          await linktopSdk.stopSpO2();
+          setMeasurementState(prev => ({ ...prev, spo2: { ...prev.spo2, active: false } }));
+          break;
+        case 'bloodPressure':
+          await linktopSdk.stopBloodPressure();
+          setMeasurementState(prev => ({ ...prev, bloodPressure: { ...prev.bloodPressure, active: false } }));
+          break;
+        case 'temperature':
+          await linktopSdk.stopTemperature();
+          setMeasurementState(prev => ({ ...prev, temperature: { ...prev.temperature, active: false } }));
+          break;
+        case 'bloodGlucose':
+          await linktopSdk.stopBloodGlucose();
+          setMeasurementState(prev => ({ ...prev, bloodGlucose: { ...prev.bloodGlucose, active: false } }));
+          break;
+      }
+      // Reset valid reading count
+      validReadingCounts.current[type] = 0;
+    } catch (error) {
+      console.error(`Error auto-stopping ${type}:`, error);
+    }
+  }, []);
   
   const clearAllReadings = useCallback(() => {
     const allTypes = [DetectionType.ECG, DetectionType.OX, DetectionType.BP, DetectionType.BT, DetectionType.BG, DetectionType.BATTERY];
@@ -178,6 +223,11 @@ export function useLinktopDevice() {
               console.log('[useLinktopDevice] New vitalSigns:', newVitals);
               return newVitals;
             });
+            // Auto-stop after receiving valid SpO2 reading (count 2 consecutive valid readings)
+            validReadingCounts.current['spo2'] = (validReadingCounts.current['spo2'] || 0) + 1;
+            if (validReadingCounts.current['spo2'] >= 2) {
+              autoStopMeasurement('spo2');
+            }
           }
           break;
           
@@ -187,15 +237,19 @@ export function useLinktopDevice() {
             bloodPressure: { ...prev.bloodPressure, data: measurement.data },
           }));
           bridgeToDeviceDataContext('bloodPressure', measurement.data);
-          setVitalSigns(prev => ({
-            ...prev,
-            bloodPressure: { 
-              systolic: measurement.data.systolic, 
-              diastolic: measurement.data.diastolic 
-            },
-            heartRate: measurement.data.heartRate || prev.heartRate,
-            timestamp,
-          }));
+          if (measurement.data.systolic > 0 && measurement.data.diastolic > 0) {
+            setVitalSigns(prev => ({
+              ...prev,
+              bloodPressure: { 
+                systolic: measurement.data.systolic, 
+                diastolic: measurement.data.diastolic 
+              },
+              heartRate: measurement.data.heartRate || prev.heartRate,
+              timestamp,
+            }));
+            // Auto-stop after receiving valid BP reading
+            autoStopMeasurement('bloodPressure');
+          }
           break;
           
         case 'temperature':
@@ -204,11 +258,15 @@ export function useLinktopDevice() {
             temperature: { ...prev.temperature, data: measurement.data },
           }));
           bridgeToDeviceDataContext('temperature', measurement.data);
-          setVitalSigns(prev => ({
-            ...prev,
-            temperature: measurement.data.temperature,
-            timestamp,
-          }));
+          if (measurement.data.temperature > 0) {
+            setVitalSigns(prev => ({
+              ...prev,
+              temperature: measurement.data.temperature,
+              timestamp,
+            }));
+            // Auto-stop after receiving valid temperature reading
+            autoStopMeasurement('temperature');
+          }
           break;
           
         case 'bloodGlucose':
@@ -217,11 +275,15 @@ export function useLinktopDevice() {
             bloodGlucose: { ...prev.bloodGlucose, data: measurement.data },
           }));
           bridgeToDeviceDataContext('bloodGlucose', measurement.data);
-          setVitalSigns(prev => ({
-            ...prev,
-            bloodGlucose: measurement.data.value,
-            timestamp,
-          }));
+          if (measurement.data.value > 0) {
+            setVitalSigns(prev => ({
+              ...prev,
+              bloodGlucose: measurement.data.value,
+              timestamp,
+            }));
+            // Auto-stop after receiving valid blood glucose reading
+            autoStopMeasurement('bloodGlucose');
+          }
           break;
       }
     };
@@ -265,7 +327,7 @@ export function useLinktopDevice() {
       linktopSdk.offMeasurement(callbackId.current);
       linktopSdk.offConnectionChange(handleConnectionChange);
     };
-  }, [bridgeToDeviceDataContext, updateConnection, clearAllReadings]);
+  }, [bridgeToDeviceDataContext, updateConnection, clearAllReadings, autoStopMeasurement]);
 
   const isBluetoothSupported = useCallback(() => {
     return linktopSdk.isSupported();
@@ -300,6 +362,9 @@ export function useLinktopDevice() {
 
   const startMeasurement = useCallback(async (type: 'ecg' | 'spo2' | 'bloodPressure' | 'temperature' | 'bloodGlucose') => {
     if (!deviceState.isConnected) return false;
+    
+    // Reset reading count for this measurement type (for auto-stop logic)
+    validReadingCounts.current[type] = 0;
     
     try {
       switch (type) {
