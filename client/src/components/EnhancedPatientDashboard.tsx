@@ -84,6 +84,15 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   });
   const [error, setError] = useState('');
   
+  // Live device vitals state
+  const [liveVitals, setLiveVitals] = useState<{
+    heartRate?: number;
+    bloodPressure?: { systolic: number; diastolic: number };
+    oxygenLevel?: number;
+    temperature?: number;
+    bloodGlucose?: number;
+  } | null>(null);
+  
   // Modal state for detailed views
   const [selectedMetric, setSelectedMetric] = useState<'heartRate' | 'bloodPressure' | 'temperature' | 'oxygenLevel' | null>(null);
 
@@ -113,6 +122,37 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       setLoading(false);
     }
   };
+
+  // Handler for live device vitals updates
+  const handleLiveVitalsUpdate = (vitals: {
+    heartRate?: number;
+    bloodPressure?: { systolic: number; diastolic: number };
+    oxygenLevel?: number;
+    temperature?: number;
+    bloodGlucose?: number;
+  }) => {
+    setLiveVitals(prev => ({
+      ...prev,
+      ...vitals
+    }));
+  };
+
+  // Get displayed vitals (prefer live device readings over API data)
+  const getDisplayedVitals = () => {
+    if (!dashboardData) return null;
+    return {
+      heartRate: liveVitals?.heartRate ?? dashboardData.vitals.heartRate,
+      bloodPressure: liveVitals?.bloodPressure 
+        ? `${liveVitals.bloodPressure.systolic}/${liveVitals.bloodPressure.diastolic}`
+        : dashboardData.vitals.bloodPressure,
+      temperature: liveVitals?.temperature ?? dashboardData.vitals.temperature,
+      oxygenLevel: liveVitals?.oxygenLevel ?? dashboardData.vitals.oxygenLevel,
+      bloodGlucose: liveVitals?.bloodGlucose ?? dashboardData.vitals.bloodGlucose,
+      timestamp: dashboardData.vitals.timestamp
+    };
+  };
+
+  const displayedVitals = getDisplayedVitals();
 
   const loadVitalsHistory = async () => {
     try {
@@ -807,8 +847,8 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           <div className="bg-gradient-to-br from-blue-500 to-cyan-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('heartRate')} data-testid="card-heart-rate">
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-3xl font-bold mb-1">{dashboardData.vitals.heartRate}</div>
-                <div className="text-blue-100 text-sm">{t('heartRate')} ({t('bpm')})</div>
+                <div className="text-3xl font-bold mb-1">{displayedVitals?.heartRate || dashboardData.vitals.heartRate}</div>
+                <div className="text-blue-100 text-sm">{t('heartRate')} ({t('bpm')}){liveVitals?.heartRate ? ' 🔴' : ''}</div>
               </div>
               <div className="text-right">
                 <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
@@ -823,9 +863,9 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">
-                  {dashboardData.vitals.bloodPressure}
+                  {displayedVitals?.bloodPressure || dashboardData.vitals.bloodPressure}
                 </div>
-                <div className="text-green-100 text-sm">{t('bloodPressure')}</div>
+                <div className="text-green-100 text-sm">{t('bloodPressure')}{liveVitals?.bloodPressure ? ' 🔴' : ''}</div>
               </div>
               <div className="text-right">
                 <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
@@ -839,8 +879,8 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           <div className="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('temperature')} data-testid="card-temperature">
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-3xl font-bold mb-1">{dashboardData.vitals.temperature}°C</div>
-                <div className="text-pink-100 text-sm">{t('temperature')}</div>
+                <div className="text-3xl font-bold mb-1">{displayedVitals?.temperature !== undefined ? displayedVitals.temperature : dashboardData.vitals.temperature}°C</div>
+                <div className="text-pink-100 text-sm">{t('temperature')}{liveVitals?.temperature ? ' 🔴' : ''}</div>
               </div>
               <div className="text-right">
                 <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
@@ -854,8 +894,8 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           <div className="bg-gradient-to-br from-purple-500 to-violet-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('oxygenLevel')} data-testid="card-oxygen-level">
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-3xl font-bold mb-1">{dashboardData.vitals.oxygenLevel}%</div>
-                <div className="text-purple-100 text-sm">{t('oxygenLevel')}</div>
+                <div className="text-3xl font-bold mb-1">{displayedVitals?.oxygenLevel || dashboardData.vitals.oxygenLevel}%</div>
+                <div className="text-purple-100 text-sm">{t('oxygenLevel')}{liveVitals?.oxygenLevel ? ' 🔴' : ''}</div>
               </div>
               <div className="text-right">
                 <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
@@ -957,7 +997,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <DeviceConnector />
+              <DeviceConnector onVitalsUpdate={handleLiveVitalsUpdate} />
             </CardContent>
           </Card>
         </div>
