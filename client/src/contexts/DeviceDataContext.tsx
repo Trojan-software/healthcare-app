@@ -47,7 +47,12 @@ interface TemperatureReading {
   unit?: 'C' | 'F';
 }
 
-type DeviceReading = ECGReading | SpO2Reading | BloodPressureReading | BloodGlucoseReading | TemperatureReading;
+interface BatteryReading {
+  level?: number;
+  state?: 'charging' | 'discharging' | 'full' | 'low';
+}
+
+type DeviceReading = ECGReading | SpO2Reading | BloodPressureReading | BloodGlucoseReading | TemperatureReading | BatteryReading;
 
 interface DeviceConnection {
   deviceId: string | null;
@@ -68,21 +73,21 @@ interface DeviceDataContextType {
 
 const DeviceDataContext = createContext<DeviceDataContextType | undefined>(undefined);
 
-const initialConnection: DeviceConnection = {
+const createInitialConnection = (type: DetectionType): DeviceConnection => ({
   deviceId: null,
   deviceName: null,
   connected: false,
-  detectionType: null,
-};
+  detectionType: type,
+});
 
 export function DeviceDataProvider({ children }: { children: ReactNode }) {
   const [connections, setConnections] = useState<Record<DetectionType, DeviceConnection>>({
-    [DetectionType.BT]: initialConnection,
-    [DetectionType.OX]: initialConnection,
-    [DetectionType.ECG]: initialConnection,
-    [DetectionType.BP]: initialConnection,
-    [DetectionType.BG]: initialConnection,
-    [DetectionType.BATTERY]: initialConnection,
+    [DetectionType.BT]: createInitialConnection(DetectionType.BT),
+    [DetectionType.OX]: createInitialConnection(DetectionType.OX),
+    [DetectionType.ECG]: createInitialConnection(DetectionType.ECG),
+    [DetectionType.BP]: createInitialConnection(DetectionType.BP),
+    [DetectionType.BG]: createInitialConnection(DetectionType.BG),
+    [DetectionType.BATTERY]: createInitialConnection(DetectionType.BATTERY),
   });
 
   const [liveReadings, setLiveReadings] = useState<Record<DetectionType, DeviceReading>>({

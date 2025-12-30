@@ -71,7 +71,7 @@ export function useLinktopDevice() {
   const callbackId = useRef(`linktop-${Date.now()}`);
   
   const clearAllReadings = useCallback(() => {
-    const allTypes = [DetectionType.ECG, DetectionType.OX, DetectionType.BP, DetectionType.BT, DetectionType.BG];
+    const allTypes = [DetectionType.ECG, DetectionType.OX, DetectionType.BP, DetectionType.BT, DetectionType.BG, DetectionType.BATTERY];
     allTypes.forEach(type => {
       clearReading(type);
     });
@@ -83,16 +83,18 @@ export function useLinktopDevice() {
         updateReading(DetectionType.ECG, {
           heartRate: data.heartRate,
           moodIndex: data.mood,
-          rrInterval: data.rrMin && data.rrMax ? (data.rrMin + data.rrMax) / 2 : undefined,
+          rrInterval: data.r2rInterval,
           hrv: data.hrv,
-          wave: data.smoothedWave,
+          respiratoryRate: data.breathRate,
+          fingerDetected: data.fingerTouch,
+          wave: data.smoothedWave !== undefined ? [data.smoothedWave] : undefined,
         });
         break;
       case 'spo2':
         updateReading(DetectionType.OX, {
           bloodOxygen: data.oxygenLevel,
           heartRate: data.heartRate,
-          wave: data.waveform,
+          wave: data.waveValue !== undefined ? [data.waveValue] : undefined,
         });
         break;
       case 'bloodPressure':
@@ -100,8 +102,6 @@ export function useLinktopDevice() {
           systolic: data.systolic,
           diastolic: data.diastolic,
           heartRate: data.heartRate,
-          cuffPressure: data.cuffPressure,
-          measurementProgress: data.progress,
         });
         break;
       case 'temperature':
@@ -113,9 +113,19 @@ export function useLinktopDevice() {
       case 'bloodGlucose':
         updateReading(DetectionType.BG, {
           glucoseLevel: data.value,
+          measurementType: data.unit === 'mmol/L' ? 'mmol/L' : 'mg/dL',
         });
         break;
       case 'battery':
+        const batteryStateMap: Record<number, 'charging' | 'discharging' | 'full' | 'low'> = {
+          0: 'discharging',
+          1: 'charging',
+          2: 'full',
+        };
+        updateReading(DetectionType.BATTERY, {
+          level: data.level,
+          state: batteryStateMap[data.state] || 'discharging',
+        });
         break;
     }
   }, [updateReading]);
@@ -221,8 +231,8 @@ export function useLinktopDevice() {
       const allTypes = [DetectionType.ECG, DetectionType.OX, DetectionType.BP, DetectionType.BT, DetectionType.BG, DetectionType.BATTERY];
       allTypes.forEach(type => {
         updateConnection(type, {
-          deviceId: deviceInfo?.deviceId || null,
-          deviceName: deviceInfo?.deviceName || null,
+          deviceId: deviceInfo?.id || null,
+          deviceName: deviceInfo?.name || null,
           connected,
           detectionType: type,
         });
