@@ -268,26 +268,21 @@ export function useLinktopDevice() {
   }, [bridgeToDeviceDataContext, updateConnection, clearAllReadings]);
 
   const isBluetoothSupported = useCallback(() => {
-    return linktopSdk.isBluetoothSupported();
+    return linktopSdk.isSupported();
   }, []);
 
   const scanAndConnect = useCallback(async () => {
     setDeviceState(prev => ({ ...prev, isConnecting: true, error: null }));
     
     try {
-      const deviceInfo = await linktopSdk.requestDevice();
-      if (deviceInfo) {
-        await linktopSdk.connect();
-        setDeviceState(prev => ({
-          ...prev,
-          isConnected: true,
-          isConnecting: false,
-          deviceInfo,
-        }));
-        return true;
-      }
-      setDeviceState(prev => ({ ...prev, isConnecting: false }));
-      return false;
+      const deviceInfo = await linktopSdk.connect();
+      setDeviceState(prev => ({
+        ...prev,
+        isConnected: true,
+        isConnecting: false,
+        deviceInfo,
+      }));
+      return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Connection failed';
       setDeviceState(prev => ({
@@ -367,7 +362,7 @@ export function useLinktopDevice() {
 
   const refreshBattery = useCallback(async () => {
     if (deviceState.isConnected) {
-      await linktopSdk.requestBattery();
+      await linktopSdk.queryBattery();
     }
   }, [deviceState.isConnected]);
 
