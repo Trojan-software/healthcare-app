@@ -113,21 +113,19 @@ export default function DeviceConnector({
 
   if (!isBluetoothSupported()) {
     return (
-      <Card className="border-red-200 bg-red-50">
-        <CardContent className="p-4">
-          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <BluetoothOff className="w-6 h-6 text-red-500" />
-            <div className={isRTL ? 'text-right' : ''}>
-              <p className="font-medium text-red-700">
-                {isRTL ? 'البلوتوث غير مدعوم' : 'Bluetooth Not Supported'}
-              </p>
-              <p className="text-sm text-red-600">
-                {isRTL ? 'يرجى استخدام متصفح يدعم Web Bluetooth' : 'Please use a browser that supports Web Bluetooth'}
-              </p>
-            </div>
+      <div className="border border-amber-200 bg-amber-50 rounded-lg p-4" data-testid="device-connector-unsupported">
+        <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <BluetoothOff className="w-6 h-6 text-amber-500" />
+          <div className={`flex-1 ${isRTL ? 'text-right' : ''}`}>
+            <p className="font-medium text-amber-700">
+              {isRTL ? 'البلوتوث غير متاح' : 'Bluetooth Unavailable'}
+            </p>
+            <p className="text-sm text-amber-600">
+              {isRTL ? 'لاستخدام أجهزة المراقبة، افتح هذا التطبيق في Chrome أو Edge على جهاز الكمبيوتر' : 'To use monitoring devices, open this app in Chrome or Edge on desktop'}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 

@@ -15,9 +15,11 @@ import {
   TrendingUp,
   Battery,
   Wifi,
-  Monitor
+  Monitor,
+  Bluetooth
 } from 'lucide-react';
 import { useLanguage, LanguageSwitcher } from '@/lib/i18n';
+import DeviceConnector from './DeviceConnector';
 
 interface VitalSigns {
   id: number;
@@ -941,6 +943,21 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
                   <span className="font-medium">{dashboardData.lastCheckup || 'N/A'}</span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Device Connection */}
+        <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Bluetooth className="w-5 h-5 mr-2 text-blue-600" />
+                {t('bluetoothDevices')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DeviceConnector />
             </CardContent>
           </Card>
         </div>
