@@ -285,6 +285,7 @@ class LinktopSDK {
     if (!value) return;
 
     const bytes = new Uint8Array(value.buffer);
+    console.log('[Linktop SDK] Raw data received:', Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' '));
     this.processIncomingData(bytes);
   }
 
@@ -390,6 +391,7 @@ class LinktopSDK {
   }
 
   private parseSpO2(data: number[]): void {
+    console.log('[Linktop SDK] SpO2 data received:', data);
     if (data.length < 3) return;
 
     const subType = data[0];
@@ -397,10 +399,14 @@ class LinktopSDK {
     if (subType === 0x01) {
       const oxygenLevel = data[1];
       const heartRate = data[2];
+      console.log('[Linktop SDK] SpO2 values - O2:', oxygenLevel, 'HR:', heartRate);
       
       if (oxygenLevel >= 70 && oxygenLevel <= 100 && heartRate >= 40 && heartRate <= 200) {
         const spo2Data: SpO2Data = { oxygenLevel, heartRate };
+        console.log('[Linktop SDK] Emitting SpO2 measurement:', spo2Data);
         this.emitMeasurement({ type: 'spo2', data: spo2Data });
+      } else {
+        console.log('[Linktop SDK] SpO2 values out of range, not emitting');
       }
     } else if (subType === 0x02) {
       const waveValue = data[1];

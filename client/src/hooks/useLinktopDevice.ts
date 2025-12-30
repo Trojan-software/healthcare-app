@@ -132,6 +132,7 @@ export function useLinktopDevice() {
 
   useEffect(() => {
     const handleMeasurement = (measurement: MeasurementData) => {
+      console.log('[useLinktopDevice] Received measurement:', measurement);
       const timestamp = new Date().toISOString();
       
       switch (measurement.type) {
@@ -159,18 +160,24 @@ export function useLinktopDevice() {
           break;
           
         case 'spo2':
+          console.log('[useLinktopDevice] Processing SpO2:', measurement.data);
           setMeasurementState(prev => ({
             ...prev,
             spo2: { ...prev.spo2, data: measurement.data },
           }));
           bridgeToDeviceDataContext('spo2', measurement.data);
           if (measurement.data.oxygenLevel > 0) {
-            setVitalSigns(prev => ({
-              ...prev,
-              oxygenLevel: measurement.data.oxygenLevel,
-              heartRate: measurement.data.heartRate || prev.heartRate,
-              timestamp,
-            }));
+            console.log('[useLinktopDevice] Updating vitalSigns with SpO2:', measurement.data.oxygenLevel);
+            setVitalSigns(prev => {
+              const newVitals = {
+                ...prev,
+                oxygenLevel: measurement.data.oxygenLevel,
+                heartRate: measurement.data.heartRate || prev.heartRate,
+                timestamp,
+              };
+              console.log('[useLinktopDevice] New vitalSigns:', newVitals);
+              return newVitals;
+            });
           }
           break;
           
