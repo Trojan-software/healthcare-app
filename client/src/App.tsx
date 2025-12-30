@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import ComprehensiveHealthcareApp from './ComprehensiveHealthcareApp';
 import EnhancedAdminDashboard from './components/EnhancedAdminDashboard';
 import { DeviceDataProvider } from './contexts/DeviceDataContext';
+import { DeviceProvider } from './contexts/DeviceContext';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -19,16 +20,20 @@ export default function App() {
   if (currentPath.startsWith('/admin')) {
     return (
       <DeviceDataProvider>
-        <div data-testid="text-admin-wired">
-          <EnhancedAdminDashboard />
-        </div>
+        <DeviceProvider>
+          <div data-testid="text-admin-wired">
+            <EnhancedAdminDashboard />
+          </div>
+        </DeviceProvider>
       </DeviceDataProvider>
     );
   }
 
   return (
     <DeviceDataProvider>
-      <ComprehensiveHealthcareApp />
+      <DeviceProvider>
+        <ComprehensiveHealthcareApp />
+      </DeviceProvider>
     </DeviceDataProvider>
   );
 }

@@ -24,7 +24,11 @@ The system employs a modern full-stack architecture. The frontend uses **React 1
 -   **Security Implementation**: Implemented comprehensive security measures based on ADHCC assessments, including network security (HTTPS-only, certificate pinning), no hardcoded secrets, root detection, secure WebViews, disabled application logs in production, tapjacking protection, hooking detection, cryptographically secure PRNG, StrandHogg prevention, screenshot prevention, and bytecode obfuscation. Achieves compliance with HIPAA, PCI-DSS, GDPR, OWASP MASVS, and CWE.
 
 ## Recent Changes (December 2025)
--   **Bluetooth SDK Removed**: The HC02-F1B51D/HC03 Bluetooth device integration has been completely removed from the project. The system now focuses on manual vital signs entry only.
+-   **Linktop SDK Re-integrated**: Web Bluetooth integration restored with Linktop Health Monitor SDK v2.6.4 for HC02/HC03 device connectivity. Supports ECG, SpO2, blood pressure, temperature, and blood glucose measurements alongside manual vital signs input.
+-   **Device Context Architecture**: Two context providers work together:
+    -   `DeviceDataProvider`: Base context for device connection state and live readings (legacy compatibility)
+    -   `DeviceProvider`: Wraps Linktop SDK with `useLinktopDevice` hook that bridges measurements to DeviceDataContext
+-   **Translation Keys Added**: Added healthScore, appointments, lastCheckup to i18n for English/Arabic support
 
 ## ADHCC Security Compliance (November 2025)
 

@@ -210,6 +210,9 @@ export interface Translation {
   healthStatusOverview: string;
   healthTips: string;
   healthTrends: string;
+  healthScore: string;
+  appointments: string;
+  lastCheckup: string;
   healthcareDashboardEnabled: string;
   healthcareManagementDashboard: string;
   healthcareMonitoringRegistration: string;
@@ -677,6 +680,9 @@ export const translations: Record<Language, Translation> = {
     healthStatusOverview: 'Health Status Overview',
     healthTips: 'Health Tips',
     healthTrends: 'Health Trends',
+    healthScore: 'Health Score',
+    appointments: 'Appointments',
+    lastCheckup: 'Last Checkup',
     healthcareDashboardEnabled: 'Healthcare Dashboard Enabled',
     healthcareManagementDashboard: 'Healthcare Management Dashboard',
     healthcareMonitoringRegistration: 'Healthcare Monitoring Registration',
@@ -1142,6 +1148,9 @@ export const translations: Record<Language, Translation> = {
     healthStatusOverview: 'نظرة عامة على الحالة الصحية',
     healthTips: 'نصائح صحية',
     healthTrends: 'اتجاهات الصحة',
+    healthScore: 'درجة الصحة',
+    appointments: 'المواعيد',
+    lastCheckup: 'آخر فحص',
     healthcareDashboardEnabled: 'لوحة الرعاية الصحية مفعلة',
     healthcareManagementDashboard: 'لوحة إدارة الرعاية الصحية',
     healthcareMonitoringRegistration: 'تسجيل مراقبة الرعاية الصحية',
