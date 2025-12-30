@@ -161,18 +161,25 @@ class LinktopSDK {
     }
 
     try {
+      console.log('[Linktop SDK] Connecting to device...');
       this.server = await this.device.gatt?.connect() || null;
       if (!this.server) {
         throw new Error('Failed to connect to GATT server');
       }
 
+      console.log('[Linktop SDK] GATT server connected');
       const service = await this.server.getPrimaryService(UUIDConfig.HRP_SERVICE);
+      console.log('[Linktop SDK] Service discovered');
       
       this.writeCharacteristic = await service.getCharacteristic(UUIDConfig.HEART_RATE_WRITE_CHARA);
       this.notifyCharacteristic = await service.getCharacteristic(UUIDConfig.HEART_RATE_MEASUREMENT_CHARA);
 
+      console.log('[Linktop SDK] Characteristics found, starting notifications...');
       await this.notifyCharacteristic.startNotifications();
       this.notifyCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotification.bind(this));
+
+      // Give device time to stabilize
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       try {
         const deviceInfoService = await this.server.getPrimaryService(UUIDConfig.DEV_INFO_SER_UUID);
@@ -180,20 +187,25 @@ class LinktopSDK {
         const firmwareValue = await firmwareChar.readValue();
         if (this.deviceInfo) {
           this.deviceInfo.firmwareVersion = new TextDecoder().decode(firmwareValue);
+          console.log('[Linktop SDK] Firmware version:', this.deviceInfo.firmwareVersion);
         }
       } catch (e) {
-        console.log('Device info not available');
+        console.log('[Linktop SDK] Device info service not available (optional)');
       }
 
       this.isConnected = true;
       this.notifyConnectionChange(true);
+      console.log('[Linktop SDK] Device connected successfully');
       
+      // Query battery after brief delay
+      await new Promise(resolve => setTimeout(resolve, 300));
       await this.requestBattery();
       
       return true;
     } catch (error) {
-      console.error('Error connecting:', error);
+      console.error('[Linktop SDK] Error connecting:', error);
       this.isConnected = false;
+      this.notifyConnectionChange(false);
       throw error;
     }
   }
@@ -223,15 +235,17 @@ class LinktopSDK {
     console.log('[Linktop SDK] Sending command:', bytes.map(b => b.toString(16).padStart(2, '0')).join(' '));
     const command = new Uint8Array(bytes);
     try {
-      // Try writeValueWithResponse first (required by some devices)
-      if (this.writeCharacteristic.properties.write) {
-        await this.writeCharacteristic.writeValueWithResponse(command);
-      } else if (this.writeCharacteristic.properties.writeWithoutResponse) {
+      // Use writeValueWithoutResponse for Linktop devices (most reliable)
+      if (this.writeCharacteristic.properties.writeWithoutResponse) {
         await this.writeCharacteristic.writeValueWithoutResponse(command);
+      } else if (this.writeCharacteristic.properties.write) {
+        await this.writeCharacteristic.writeValueWithResponse(command);
       } else {
         await this.writeCharacteristic.writeValue(command);
       }
       console.log('[Linktop SDK] Command sent successfully');
+      // Add delay to ensure device processes command
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
       console.error('[Linktop SDK] Error sending command:', error);
       throw error;
@@ -254,9 +268,16 @@ class LinktopSDK {
   }
 
   async startSpO2(): Promise<void> {
+    console.log('[Linktop SDK] Starting SpO2 measurement...');
     this.spo2Samples = [];
-    await this.sendCommand([0xAA, 0x17, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0xD1]);
-    this.currentMeasurement = MeasureType.SPO2;
+    try {
+      await this.sendCommand([0xAA, 0x17, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0xD1]);
+      this.currentMeasurement = MeasureType.SPO2;
+      console.log('[Linktop SDK] SpO2 measurement started - device should activate red LED');
+    } catch (error) {
+      console.error('[Linktop SDK] Failed to start SpO2:', error);
+      throw error;
+    }
   }
 
   async stopSpO2(): Promise<void> {
