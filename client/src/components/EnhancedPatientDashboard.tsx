@@ -17,11 +17,6 @@ import {
   Wifi,
   Monitor
 } from 'lucide-react';
-// import VitalsChart from './VitalsChart';
-import BloodGlucoseWidget from './BloodGlucoseWidget';
-import BatteryWidget from './BatteryWidget';
-import EcgWidget from './EcgWidget';
-import HC03DeviceWidget from './HC03DeviceWidget';
 import { useLanguage, LanguageSwitcher } from '@/lib/i18n';
 
 interface VitalSigns {
@@ -76,12 +71,6 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const [dashboardData, setDashboardData] = useState<PatientDashboardData | null>(null);
   const [vitalsHistory, setVitalsHistory] = useState<VitalSigns[]>([]);
   const [loading, setLoading] = useState(true);
-  const [connectedDeviceId, setConnectedDeviceId] = useState<string>('');
-  const [isEcgInProgress, setIsEcgInProgress] = useState(false);
-  const [isBpInProgress, setIsBpInProgress] = useState(false);
-  const [isGlucoseInProgress, setIsGlucoseInProgress] = useState(false);
-  const [currentBatteryLevel, setCurrentBatteryLevel] = useState<number>(0);
-  const [currentChargingStatus, setCurrentChargingStatus] = useState<boolean>(false);
   const [selectedVitalType, setSelectedVitalType] = useState('all');
   const [fromDate, setFromDate] = useState(() => {
     const date = new Date();
@@ -105,95 +94,6 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       loadVitalsHistory();
     }
   }, [dashboardData]);
-
-  // Save vital signs to backend after measurement
-  const saveVitalSignsToBackend = async (measurementData: any, patientId: string) => {
-    if (!patientId) return;
-    
-    try {
-      const vitalSignData: any = {
-        patientId,
-        timestamp: measurementData.timestamp || new Date().toISOString()
-      };
-      
-      // Map measurement data to vital signs API format - WITH VALIDATION
-      if (measurementData.type === 'ecg' && measurementData.value?.hr) {
-        // Validate heart rate is in physiological range (40-200 bpm)
-        const hr = measurementData.value.hr;
-        if (hr >= 40 && hr <= 180) {
-          vitalSignData.heartRate = hr;
-        } else {
-          console.warn(`Invalid ECG heart rate: ${hr} bpm - not saving`);
-          return; // Don't save invalid measurements
-        }
-      } else if (measurementData.type === 'bloodOxygen') {
-        // Only save blood oxygen data if we have VALID physiological values
-        const spo2 = measurementData.value?.bloodOxygen;
-        const hr = measurementData.value?.heartRate;
-        
-        // Validate SpO2 (70-100%) and HR (40-180 bpm)
-        const validSpo2 = spo2 && spo2 >= 70 && spo2 <= 100;
-        const validHR = hr && hr >= 40 && hr <= 180;
-        
-        if (!validSpo2 && !validHR) {
-          console.log(`[BloodOxygen] Intermediate data - not saving (SpO2: ${spo2}%, HR: ${hr} bpm)`);
-          return; // Don't save incomplete/invalid blood oxygen measurements
-        }
-        
-        if (validHR) {
-          vitalSignData.heartRate = hr;
-        }
-        if (validSpo2) {
-          vitalSignData.oxygenLevel = spo2;
-        }
-        
-        console.log(`[BloodOxygen] Valid measurement - saving (SpO2: ${spo2}%, HR: ${hr} bpm)`);
-      } else if (measurementData.type === 'temperature' && measurementData.value?.temperature) {
-        // Validate temperature is in physiological range (30-45°C)
-        const temp = measurementData.value.temperature;
-        if (temp >= 30 && temp <= 45) {
-          vitalSignData.temperature = temp;
-        } else {
-          console.warn(`Invalid temperature: ${temp}°C - not saving`);
-          return;
-        }
-      } else if (measurementData.type === 'bloodPressure' && measurementData.value) {
-        vitalSignData.bloodPressureSystolic = measurementData.value.systolic || measurementData.value.ps;
-        vitalSignData.bloodPressureDiastolic = measurementData.value.diastolic || measurementData.value.pd;
-        if (measurementData.value.heartRate || measurementData.value.hr) {
-          vitalSignData.heartRate = measurementData.value.heartRate || measurementData.value.hr;
-        }
-      } else if (measurementData.type === 'bloodGlucose' && measurementData.value) {
-        vitalSignData.bloodGlucose = measurementData.value.bloodGlucosePaperData || measurementData.value;
-      }
-      
-      // Only save if we have at least one valid vital sign
-      const hasValidData = vitalSignData.heartRate || 
-                           vitalSignData.bloodPressureSystolic || 
-                           vitalSignData.oxygenLevel || 
-                           vitalSignData.bloodGlucose;
-      
-      if (hasValidData) {
-        console.log('Saving vital signs to backend:', vitalSignData);
-        
-        const response = await fetch('/api/vital-signs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(vitalSignData)
-        });
-        
-        if (response.ok) {
-          console.log('Vital signs saved successfully');
-          // Reload vitals history to show new measurement
-          await loadVitalsHistory();
-        } else {
-          console.error('Failed to save vital signs:', await response.text());
-        }
-      }
-    } catch (error) {
-      console.error('Error saving vital signs:', error);
-    }
-  };
 
   const loadDashboardData = async () => {
     try {
@@ -921,14 +821,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-3xl font-bold mb-1">
-                  {isBpInProgress ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                      <span className="text-lg">Measuring...</span>
-                    </div>
-                  ) : (
-                    dashboardData.vitals.bloodPressure
-                  )}
+                  {dashboardData.vitals.bloodPressure}
                 </div>
                 <div className="text-green-100 text-sm">{t('bloodPressure')}</div>
               </div>
@@ -1003,113 +896,53 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           </div>
         </div>
 
-        {/* Health Monitoring Widgets */}
-        <div className="space-y-6 mt-6">
-          {/* HC03 Device Control - Full Width */}
-          <HC03DeviceWidget 
-            patientId={dashboardData?.user?.patientId || ''}
-            onMeasurementStateChange={(type, isInProgress) => {
-              if (type === 'ecg') {
-                setIsEcgInProgress(isInProgress);
-              } else if (type === 'bloodPressure') {
-                setIsBpInProgress(isInProgress);
-              } else if (type === 'bloodGlucose') {
-                setIsGlucoseInProgress(isInProgress);
-              }
-            }}
-            onDataUpdate={(data) => {
-              // Handle real-time data updates from HC03 device
-              console.log('HC03 data received:', data);
-              
-              // Track connected device ID for widgets
-              if (data.deviceId) {
-                setConnectedDeviceId(data.deviceId);
-              }
-              
-              // Update battery status from HC02-F1B51D
-              if (data.type === 'battery' && data.value) {
-                setCurrentBatteryLevel(data.value.batteryLevel || 0);
-                setCurrentChargingStatus(data.value.chargingStatus || false);
-              }
-              
-              // Update vital signs in real-time from HC03 device
-              if (dashboardData) {
-                setDashboardData(prev => {
-                  if (!prev) return prev;
-                  
-                  const updatedVitals = { ...prev.vitals };
-                  
-                  // Update based on data type - WITH VALIDATION
-                  if (data.type === 'ecg' && data.value?.hr) {
-                    // Only update if heart rate is in valid range
-                    if (data.value.hr >= 40 && data.value.hr <= 180) {
-                      updatedVitals.heartRate = data.value.hr;
-                    }
-                  } else if (data.type === 'bloodOxygen') {
-                    // Only update if values are in valid physiological ranges
-                    if (data.value?.heartRate && data.value.heartRate >= 40 && data.value.heartRate <= 180) {
-                      updatedVitals.heartRate = data.value.heartRate;
-                    }
-                    if (data.value?.bloodOxygen && data.value.bloodOxygen >= 70 && data.value.bloodOxygen <= 100) {
-                      updatedVitals.oxygenLevel = data.value.bloodOxygen;
-                    }
-                  } else if (data.type === 'bloodPressure' && data.value) {
-                    // Validate blood pressure values
-                    const systolic = data.value.systolic || data.value.ps;
-                    const diastolic = data.value.diastolic || data.value.pd;
-                    if (systolic >= 70 && systolic <= 200 && diastolic >= 40 && diastolic <= 130) {
-                      updatedVitals.bloodPressure = `${systolic}/${diastolic}`;
-                    }
-                  } else if (data.type === 'temperature' && data.value?.temperature) {
-                    // Only update if temperature is in valid range (30-45°C)
-                    if (data.value.temperature >= 30 && data.value.temperature <= 45) {
-                      updatedVitals.temperature = data.value.temperature.toFixed(1);
-                    }
-                  }
-                  
-                  // Update timestamp
-                  updatedVitals.timestamp = data.timestamp || new Date().toISOString();
-                  
-                  return {
-                    ...prev,
-                    vitals: updatedVitals
-                  };
-                });
-                
-                // Persist vital signs to backend after measurement
-                if (data.type !== 'temperature') {
-                  saveVitalSignsToBackend(data, dashboardData.user?.patientId);
-                }
-              }
-            }}
-          />
+        {/* Health Summary Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="w-5 h-5 mr-2 text-green-600" />
+                {t('healthMonitoringStatus')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">{t('lastReading')}</span>
+                  <span className="font-medium">{dashboardData.vitals.timestamp || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">{t('healthScore')}</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">{dashboardData.healthScore}/100</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">{t('complianceRate')}</span>
+                  <span className="font-medium text-green-600">{dashboardData.complianceRate}%</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          {/* ECG Monitor - Full Width */}
-          <EcgWidget 
-            deviceId={connectedDeviceId || ""}
-            patientId={dashboardData?.user?.patientId || ''} 
-            showControls={true}
-            compact={false}
-            isEcgMeasurementInProgress={isEcgInProgress}
-          />
-          
-          {/* Blood Glucose and Battery - Side by Side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BloodGlucoseWidget 
-              patientId={dashboardData?.user?.patientId || ''} 
-              deviceId={connectedDeviceId || undefined}
-              showControls={false}
-              compact={false}
-              isGlucoseMeasurementInProgress={isGlucoseInProgress}
-            />
-            <BatteryWidget 
-              patientId={dashboardData?.user?.patientId || ''} 
-              compact={false}
-              deviceId={connectedDeviceId || undefined}
-              currentBatteryLevel={currentBatteryLevel}
-              currentChargingStatus={currentChargingStatus}
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+                {t('appointments')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">{t('nextAppointment')}</span>
+                  <span className="font-medium">{dashboardData.nextAppointment || 'None scheduled'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">{t('lastCheckup')}</span>
+                  <span className="font-medium">{dashboardData.lastCheckup || 'N/A'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Vitals History with Filters */}

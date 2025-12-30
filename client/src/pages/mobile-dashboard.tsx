@@ -3,7 +3,6 @@ import { Settings, Bluetooth, Heart, TrendingUp, Users, Calendar, AlertTriangle,
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import BluetoothDeviceManager from "@/components/BluetoothDeviceManager";
 import MobileVitalSignsInput from "@/components/MobileVitalSignsInput";
 import VitalSignsHistory from "@/components/VitalSignsHistory";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
@@ -11,7 +10,6 @@ import AlertsPanel from "@/components/AlertsPanel";
 import ReminderSettings from "@/components/ReminderSettings";
 import AuthWrapper from "@/components/AuthWrapper";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
-import DeviceWidgetsPanel from "@/components/DeviceWidgetsPanel";
 import { useQuery } from "@tanstack/react-query";
 
 interface DashboardStats {
@@ -162,11 +160,6 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
           {activeTab === 'monitor' && (
             <div className="space-y-4">
               <MobileVitalSignsInput />
-              <DeviceWidgetsPanel 
-                patientId={user?.id?.toString()} 
-                layout="vertical"
-                onConnectDevice={() => setActiveTab('bluetooth')}
-              />
               <div className="grid grid-cols-1 gap-4">
                 <AlertsPanel />
                 <ReminderSettings />
@@ -176,7 +169,6 @@ function MobileDashboardContent({ user, showProfile, setShowProfile, logout }: a
 
           {activeTab === 'bluetooth' && (
             <div className="space-y-4">
-              <BluetoothDeviceManager />
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">HC03 Device Info</h3>
                 <div className="space-y-3">

@@ -1,9 +1,7 @@
 # 24/7 Tele H - Health Monitoring System
 
 ## Overview
-The 24/7 Tele H platform is a comprehensive telemedicine and health monitoring system for healthcare professionals and patients. It provides real-time vital signs monitoring, integrates with **HC02-F1B51D** medical devices (with HC03 backward compatibility), and offers a mobile-first Progressive Web App (PWA) experience. The system aims to enhance patient care through continuous monitoring, early alerts, and robust data analytics, improving health outcomes and operational efficiency.
-
-**Primary Device: HC02-F1B51D** - All measurements (ECG, blood oxygen, blood pressure, temperature, blood glucose) are read from this single device throughout the entire system.
+The 24/7 Tele H platform is a comprehensive telemedicine and health monitoring system for healthcare professionals and patients. It provides vital signs tracking with manual data entry, health analytics, appointment scheduling, and offers a mobile-first Progressive Web App (PWA) experience. The system aims to enhance patient care through continuous monitoring, early alerts, and robust data analytics, improving health outcomes and operational efficiency.
 
 ## User Preferences
 ```
@@ -17,33 +15,16 @@ The system employs a modern full-stack architecture. The frontend uses **React 1
 
 **Key Features and Design Decisions:**
 -   **Enhanced Patient Registration**: Comprehensive signup, UAE mobile validation, patient ID generation, Abu Dhabi hospital selection, OTP email verification, secure passwords, and role-based access.
--   **Health Monitoring**: Tracks heart rate, blood pressure, temperature, oxygen, blood glucose, and integrates with HC03 devices via Bluetooth for real-time ECG and blood oxygen monitoring. Includes health analytics and a critical event alert system.
--   **Complete HC02/HC03 Bluetooth Architecture (Dec 2025)**: 
-    - **SDK Updated from Official Linktop Android SDK v2.6.4 (Dec 21, 2025)**: ✅ Extracted and integrated protocol constants from `BleDev_release_v2.6.4.aar`:
-      - UUIDs from `com.linktop.constant.UUIDConfig`: Service (0xFF27/0x1822), Write (0xFFF1), Notify (0xFFF4), Device Info (0x180A), Therm (0xFFF0)
-      - ECG Algorithm Keys from `com.linktop.constant.Constants` (NeuroSky NskAlgoSdk): Heart Age, HRV, Mood, Stress, Signal Quality, Respiratory Rate
-      - TestPaper Codes from `com.linktop.constant.TestPaper`: C00-C35 calibration codes, manufacturers (Bene_Check, Yi_Cheng, HMD)
-    - **Web Bluetooth (PWA)**: Full HC02/HC03 protocol in `hc03-sdk.ts` with frame unpacking, multi-packet reconstruction, CRC validation (encryHead/encryTail), and all 6 sensor parsers (Battery, Temperature, Glucose, Oxygen, Pressure, ECG). Name-based device filtering (HC02/HC03 prefixes) for maximum compatibility.
-    - **HC02-F1B51D Full Support (Nov 20, 2025)**: ✅ **PRODUCTION READY** - HC02-F1B51D successfully integrated with Web Bluetooth API. Auto-detection by device name prefix, uses service UUID `0000ff27` (vs HC03's `00001822`), accepts `0xff` END marker (vs HC03's `0x03`), and bypasses CRC validation (different algorithm). Real-time blood oxygen streaming confirmed working with Windows 11 + Chrome.
-    - **Blood Oxygen Signal Processing (Nov 20, 2025)**: ✅ **FULLY OPERATIONAL** - Implemented PPG signal processing algorithms to calculate SpO₂ (70-100%) and heart rate (40-200 BPM) from HC02 raw waveform data. Uses AC/DC ratio method for SpO₂ calculation and peak detection for HR extraction. Accumulates 50 samples over 5 seconds for reliable measurements. Data now saves to backend and displays in dashboard oxygen level card.
-    - **System-Wide HC02-F1B51D Integration (Nov 20, 2025)**: ✅ **COMPLETE** - HC02-F1B51D is now the primary device throughout the entire system:
-      - Top metric cards (Heart Rate, Blood Pressure, Temperature, Oxygen Level) update in real-time from HC02-F1B51D measurements
-      - All measurement buttons (ECG, Blood O₂, Blood Pressure, Temperature, Blood Glucose) connect to HC02-F1B51D
-      - ECG Widget, Blood Glucose Widget, Battery Widget all use connected HC02-F1B51D device ID
-      - Device Monitoring page shows HC02-F1B51D with full sensor capabilities
-      - Removed all hardcoded HC03-001, HC03-002, HC03-003 references
-    - **Android Native BLE**: BluetoothAdapter + GATT with TRANSPORT_LE flag, proper permission handling (BLUETOOTH_SCAN/CONNECT), GATT error handling (status 133), notification enable verification, onDescriptorWrite callback
-    - **iOS Native BLE**: Single CBCentralManager instance, service-agnostic scanning, auto-start on power-on, CoreBluetooth delegates for connection/data
-    - **Unified Data Flow**: All platforms feed raw notify bytes → `generalUnpackRawData()` → `routeData()` → sensor parsers → JavaScript events. HC02/HC03 auto-detection ensures correct protocol handling.
-    - **Real-Time Data Updates**: HC03DeviceWidget onDataUpdate callback now updates dashboard vitals in real-time (heart rate, blood pressure, temperature, oxygen level) from connected HC02-F1B51D
--   **Multi-Device Bluetooth Integration**: Supports all UNKTOP medical peripherals with a unified SDK wrapper, auto-pairing, and real-time data synchronization for various sensors (ECG, SpO2, BP, glucose, temperature). Features device-specific dashboard widgets with Chart.js.
+-   **Health Monitoring**: Tracks heart rate, blood pressure, temperature, oxygen, blood glucose with manual vital signs input. Includes health analytics and a critical event alert system.
 -   **Mobile-First Design**: PWA with offline support, mobile-optimized dashboards, direct device installation, push notifications, and cross-platform compatibility.
--   **Data Flow**: Secure JWT authentication, real-time data capture from HC03 devices, data validation and storage, immediate alert generation, and an analytics pipeline.
+-   **Data Flow**: Secure JWT authentication, manual data entry, data validation and storage, immediate alert generation, and an analytics pipeline.
 -   **Bilingual Support**: Comprehensive Arabic/English internationalization with RTL/LTR layouts across all interfaces.
--   **Advanced Monitoring**: ECG monitoring with interval analysis, arrhythmia detection, and clinical interpretation using NeuroSky ECG algorithms. Comprehensive battery and blood glucose monitoring.
 -   **Patient Management**: Full CRUD operations for patient records, advanced search/filtering, audit trails, and enhanced patient details view with modal interfaces.
 -   **Enhanced UI Components**: Interactive health metrics cards with detailed modal views, trend charts, health tips, and status indicators. Professional patient details interface with organized sections.
 -   **Security Implementation**: Implemented comprehensive security measures based on ADHCC assessments, including network security (HTTPS-only, certificate pinning), no hardcoded secrets, root detection, secure WebViews, disabled application logs in production, tapjacking protection, hooking detection, cryptographically secure PRNG, StrandHogg prevention, screenshot prevention, and bytecode obfuscation. Achieves compliance with HIPAA, PCI-DSS, GDPR, OWASP MASVS, and CWE.
+
+## Recent Changes (December 2025)
+-   **Bluetooth SDK Removed**: The HC02-F1B51D/HC03 Bluetooth device integration has been completely removed from the project. The system now focuses on manual vital signs entry only.
 
 ## ADHCC Security Compliance (November 2025)
 

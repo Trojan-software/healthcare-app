@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { handleApiError } from '@/lib/errorHandler';
 import FAQSection from './components/FAQSection';
-import DeviceMonitoring from './components/DeviceMonitoring';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
 import CheckupScheduling from './components/CheckupScheduling';
 import EnhancedPatientDashboard from './components/EnhancedPatientDashboard';
@@ -1280,10 +1279,6 @@ For questions, contact: support@24x7teleh.com
         {/* Modal Components */}
         {modalState.showFAQ && (
           <FAQSection onClose={() => setModalState(prev => ({ ...prev, showFAQ: false }))} />
-        )}
-        
-        {modalState.showDeviceMonitoring && (
-          <DeviceMonitoring onClose={() => setModalState(prev => ({ ...prev, showDeviceMonitoring: false }))} />
         )}
         
         {modalState.showAdvancedAnalytics && (

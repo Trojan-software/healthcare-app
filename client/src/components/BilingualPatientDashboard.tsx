@@ -31,10 +31,6 @@ import {
 } from 'lucide-react';
 import PrivacyPolicyFooter from './PrivacyPolicyFooter';
 import { useToast } from '@/hooks/use-toast';
-import BatteryWidget from './BatteryWidget';
-import BloodGlucoseWidget from './BloodGlucoseWidget';
-import EcgWidget from './EcgWidget';
-import BluetoothConnectionManager from './BluetoothConnectionManagerFixed';
 
 interface VitalSigns {
   id: number;
@@ -393,30 +389,39 @@ export default function BilingualPatientDashboard() {
           {/* Vital Signs Tab */}
           <TabsContent value="vitals" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* ECG Widget */}
+              {/* Vital Signs Summary */}
               <Card className="col-span-full">
                 <CardHeader>
                   <CardTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
                     <Activity className="w-5 h-5" />
-                    {isRTL ? 'مراقبة تخطيط القلب' : 'ECG Monitoring'}
+                    {isRTL ? 'ملخص العلامات الحيوية' : 'Vital Signs Summary'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <EcgWidget patientId={patientId} deviceId="HC03-003" />
+                  <div className="text-center py-8 text-gray-500">
+                    <p>{isRTL ? 'استخدم صفحة إدخال العلامات الحيوية لتسجيل القراءات' : 'Use the vital signs input page to record readings'}</p>
+                  </div>
                 </CardContent>
               </Card>
-
-              {/* Blood Glucose Widget */}
-              <BloodGlucoseWidget patientId={patientId} />
-
-              {/* Battery Widget */}
-              <BatteryWidget patientId={patientId} />
             </div>
           </TabsContent>
 
-          {/* Devices Tab */}
+          {/* Devices Tab - Manual Input Info */}
           <TabsContent value="devices" className="space-y-6">
-            <BluetoothConnectionManager patientId={patientId} />
+            <Card>
+              <CardHeader>
+                <CardTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+                  <Activity className="w-5 h-5" />
+                  {isRTL ? 'إدخال البيانات يدوياً' : 'Manual Data Entry'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <p>{isRTL ? 'هذا التطبيق يدعم الإدخال اليدوي للعلامات الحيوية' : 'This application supports manual vital signs entry'}</p>
+                  <p className="mt-2 text-sm">{isRTL ? 'انتقل إلى صفحة المراقبة لإدخال البيانات' : 'Go to the monitoring page to enter data'}</p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Reports Tab */}

@@ -1,7 +1,14 @@
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { DetectionType } from '@/lib/unktop-sdk';
 
-export { DetectionType };
+// Detection types (formerly from SDK)
+export enum DetectionType {
+  BT = 'BT',       // Body Temperature
+  OX = 'OX',       // Blood Oxygen
+  ECG = 'ECG',     // Electrocardiogram
+  BP = 'BP',       // Blood Pressure
+  BG = 'BG',       // Blood Glucose
+  BATTERY = 'BAT', // Battery status
+}
 
 interface ECGReading {
   heartRate?: number;

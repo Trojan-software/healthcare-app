@@ -38,8 +38,6 @@ import CriticalAlertsSystem from './CriticalAlertsSystem';
 import AdvancedHealthAnalytics from './AdvancedHealthAnalytics';
 import PatientManagementModule from './PatientManagementModule';
 import BilingualPatientManagement from './BilingualPatientManagement';
-import BloodGlucoseWidget from './BloodGlucoseWidget';
-import EcgWidget from './EcgWidget';
 import PrivacyPolicyFooter from './PrivacyPolicyFooter';
 
 interface DashboardStats {
@@ -307,21 +305,8 @@ export default function EnhancedAdminDashboard() {
 
           {/* Health Monitoring Overview */}
           <div className="space-y-6 mb-8">
-            {/* ECG Monitor - Full Width */}
-            <EcgWidget 
-              deviceId="HC03-003"
-              patientId="PAT001" 
-              showControls={false}
-              compact={false}
-            />
-            
-            {/* Blood Glucose and Status */}
+            {/* Health Status Summary */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <BloodGlucoseWidget 
-                patientId="PAT001" 
-                showControls={false}
-                compact={false}
-              />
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
