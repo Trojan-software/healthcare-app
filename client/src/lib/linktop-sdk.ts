@@ -4,10 +4,11 @@
  * Supports HC02/HC03 devices with firmware HC03_V2.9a
  */
 
-// BLE Service and Characteristic UUIDs
-const SERVICE_UUID = '0000fff0-0000-1000-8000-00805f9b34fb';
-const WRITE_CHARACTERISTIC_UUID = '0000fff2-0000-1000-8000-00805f9b34fb';
-const NOTIFY_CHARACTERISTIC_UUID = '0000fff1-0000-1000-8000-00805f9b34fb';
+// BLE Service and Characteristic UUIDs from official Flutter SDK (constant.dart)
+const FILTER_UUID = '0000ff27-0000-1000-8000-00805f9b34fb'; // Used for device scanning
+const SERVICE_UUID = '00001822-0000-1000-8000-00805f9b34fb'; // Main service UUID
+const WRITE_CHARACTERISTIC_UUID = '0000fff1-0000-1000-8000-00805f9b34fb'; // Write commands
+const NOTIFY_CHARACTERISTIC_UUID = '0000fff4-0000-1000-8000-00805f9b34fb'; // Receive data
 
 // Protocol Constants from Flutter SDK (baseCommon.dart)
 const PROTOCOL = {
@@ -263,10 +264,12 @@ class LinktopSDK {
       
       this.device = await navigator.bluetooth.requestDevice({
         filters: [
-          { namePrefix: 'HC' },
-          { services: [SERVICE_UUID] }
+          { namePrefix: 'HC' }
         ],
-        optionalServices: [SERVICE_UUID]
+        optionalServices: [SERVICE_UUID, FILTER_UUID, 
+          '0000fff0-0000-1000-8000-00805f9b34fb',
+          '0000ffe0-0000-1000-8000-00805f9b34fb'
+        ]
       });
 
       console.log('[Linktop SDK] Device selected:', this.device.name);
@@ -284,17 +287,78 @@ class LinktopSDK {
       await this.delay(500);
 
       console.log('[Linktop SDK] Getting primary service...');
-      const service = await this.server.getPrimaryService(SERVICE_UUID);
+      
+      // Try multiple service UUIDs
+      const serviceUUIDs = [
+        SERVICE_UUID,  // 00001822 - official
+        FILTER_UUID,   // 0000ff27 - filter
+        '0000fff0-0000-1000-8000-00805f9b34fb', // Common HC device service
+        '0000ffe0-0000-1000-8000-00805f9b34fb'  // Alternative service
+      ];
+      
+      let service = null;
+      for (const uuid of serviceUUIDs) {
+        try {
+          console.log('[Linktop SDK] Trying service UUID:', uuid);
+          service = await this.server.getPrimaryService(uuid);
+          console.log('[Linktop SDK] Service found:', uuid);
+          break;
+        } catch (e) {
+          console.log('[Linktop SDK] Service not found:', uuid);
+        }
+      }
+      
+      if (!service) {
+        throw new Error('No compatible service found on device');
+      }
       console.log('[Linktop SDK] Service obtained');
 
-      // Get write characteristic
+      // Try multiple write characteristic UUIDs
       console.log('[Linktop SDK] Getting write characteristic...');
-      this.writeCharacteristic = await service.getCharacteristic(WRITE_CHARACTERISTIC_UUID);
+      const writeUUIDs = [
+        WRITE_CHARACTERISTIC_UUID,  // 0000fff1 - official
+        '0000fff2-0000-1000-8000-00805f9b34fb',
+        '0000ffe1-0000-1000-8000-00805f9b34fb'
+      ];
+      
+      for (const uuid of writeUUIDs) {
+        try {
+          console.log('[Linktop SDK] Trying write UUID:', uuid);
+          this.writeCharacteristic = await service.getCharacteristic(uuid);
+          console.log('[Linktop SDK] Write characteristic found:', uuid);
+          break;
+        } catch (e) {
+          console.log('[Linktop SDK] Write characteristic not found:', uuid);
+        }
+      }
+      
+      if (!this.writeCharacteristic) {
+        throw new Error('Write characteristic not found');
+      }
       console.log('[Linktop SDK] Write characteristic obtained');
 
-      // Get notify characteristic and set up notifications
+      // Try multiple notify characteristic UUIDs
       console.log('[Linktop SDK] Getting notify characteristic...');
-      this.notifyCharacteristic = await service.getCharacteristic(NOTIFY_CHARACTERISTIC_UUID);
+      const notifyUUIDs = [
+        NOTIFY_CHARACTERISTIC_UUID,  // 0000fff4 - official
+        '0000fff1-0000-1000-8000-00805f9b34fb',
+        '0000ffe1-0000-1000-8000-00805f9b34fb'
+      ];
+      
+      for (const uuid of notifyUUIDs) {
+        try {
+          console.log('[Linktop SDK] Trying notify UUID:', uuid);
+          this.notifyCharacteristic = await service.getCharacteristic(uuid);
+          console.log('[Linktop SDK] Notify characteristic found:', uuid);
+          break;
+        } catch (e) {
+          console.log('[Linktop SDK] Notify characteristic not found:', uuid);
+        }
+      }
+      
+      if (!this.notifyCharacteristic) {
+        throw new Error('Notify characteristic not found');
+      }
       console.log('[Linktop SDK] Notify characteristic obtained');
       
       await this.notifyCharacteristic.startNotifications();
