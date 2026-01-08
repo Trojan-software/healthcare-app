@@ -23,6 +23,13 @@ The system employs a modern full-stack architecture. The frontend uses **React 1
 -   **Enhanced UI Components**: Interactive health metrics cards with detailed modal views, trend charts, health tips, and status indicators. Professional patient details interface with organized sections.
 -   **Security Implementation**: Implemented comprehensive security measures based on ADHCC assessments, including network security (HTTPS-only, certificate pinning), no hardcoded secrets, root detection, secure WebViews, disabled application logs in production, tapjacking protection, hooking detection, cryptographically secure PRNG, StrandHogg prevention, screenshot prevention, and bytecode obfuscation. Achieves compliance with HIPAA, PCI-DSS, GDPR, OWASP MASVS, and CWE.
 
+## Recent Changes (January 2026)
+-   **Security Audit Fixes (247tech.net)**: Resolved HIGH severity JWT vulnerability and LOW severity caching issues:
+    -   ✅ **Weak JWT Secret (HIGH)**: Fixed hardcoded "your-secret-key" - now uses secure `JWT_SECRET` environment variable
+    -   ✅ **Cache Control (LOW)**: Added `Cache-Control: no-store` headers to all `/api` routes to prevent caching of sensitive data
+    -   ℹ️ **GAESA Cookie Issues (LOW)**: These are infrastructure-level cookies from Google App Engine Session Affinity, controlled by hosting platform
+-   **Live Vitals Dashboard Integration**: Dashboard cards now update in real-time with Bluetooth device readings, with 🔴 indicators for live data
+
 ## Recent Changes (December 2025)
 -   **Linktop SDK Re-integrated**: Web Bluetooth integration restored with Linktop Health Monitor SDK v2.6.4 for HC02/HC03 device connectivity. Supports ECG, SpO2, blood pressure, temperature, and blood glucose measurements alongside manual vital signs input.
 -   **Device Context Architecture**: Two context providers work together:

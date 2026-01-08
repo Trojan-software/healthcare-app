@@ -7,9 +7,26 @@ import jwt from "jsonwebtoken";
 import { emailNotificationService } from "./email-notifications";
 import { generateSecurePassword, generateSecureOTP, generateSecurePatientId } from "./utils/secure-random";
 
+// Security: Use environment variable for JWT secret (fixes ADHCC HIGH severity finding)
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  throw new Error("JWT_SECRET environment variable is required for security");
+})();
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
   app.use(express.json());
+
+  // Security middleware: Add cache control headers to prevent caching of sensitive data
+  // Fixes ADHCC LOW severity finding: "Sensitive pages could be cached"
+  app.use('/api', (req, res, next) => {
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Surrogate-Control': 'no-store'
+    });
+    next();
+  });
 
   // API Routes
   app.post("/api/login", async (req, res) => {
@@ -41,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = jwt.sign(
         { userId: user.id, email: user.email, role: user.role },
-        "your-secret-key",
+        JWT_SECRET,
         { expiresIn: "24h" }
       );
 
