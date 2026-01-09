@@ -1,4 +1,15 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { Capacitor } from '@capacitor/core';
+
+// Get the base API URL - use production URL when running as native app
+function getApiBaseUrl(): string {
+  if (Capacitor.isNativePlatform()) {
+    return 'https://247tech.net';
+  }
+  return ''; // Use relative URLs in browser
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -23,7 +34,8 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(url, {
+  const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+  const res = await fetch(fullUrl, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
@@ -47,7 +59,9 @@ export const getQueryFn: <T>(options: {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const res = await fetch(queryKey[0] as string, {
+    const url = queryKey[0] as string;
+    const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+    const res = await fetch(fullUrl, {
       headers,
       credentials: "include",
     });
