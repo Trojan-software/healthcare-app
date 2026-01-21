@@ -6,7 +6,6 @@ import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebSettings;
 import android.widget.Toast;
-import android.util.Log;
 import com.getcapacitor.BridgeActivity;
 import com.teleh.healthcare.security.SecurityManager;
 
@@ -41,13 +40,9 @@ public class MainActivity extends BridgeActivity {
         }
         
         if (securityManager.isDeveloperOptionsEnabled()) {
-            if (!BuildConfig.DEBUG) {
-            }
         }
         
         if (securityManager.isAdbEnabled()) {
-            if (!BuildConfig.DEBUG) {
-            }
         }
     }
     
@@ -97,7 +92,7 @@ public class MainActivity extends BridgeActivity {
     }
     
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         applySecurityProtections();
     }

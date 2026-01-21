@@ -1,0 +1,108 @@
+Android tapjacking is a type of attack where an attacker tricks or deceives a user into tapping on a seemingly harmless element on their Android device's screen, while secretly performing malicious actions in the background without the user's knowledge or consent.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+4.8	Attack vector: LOCAL	Attack complexity: LOW
+	Privileges required: LOW	User Interaction: REQUIRED
+	Scope: UNCHANGED	Confidentiality Impact: LOW
+	Integrity Impact: LOW	Availability Impact: LOW
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M4	Insufficient Input/Output Validation
+M8	Security Misconfiguration
+ 
+
+
+CWE	CWE-1021	https://cwe.mitre.org/data/definitions/1021.html
+
+
+MSTG	MSTG-PLATFORM-9	The app protects itself against screen overlay attacks. (Android
+only)
+
+
+OWASP MASVS (v2)	MASVS-PLATFORM-3	The app uses the user interface securely.
+
+
+PCI-DSS (v4.0)	6.1	Develop and maintain secure systems and applications
+Processes and mechanisms for developing and maintaining secure systems and software are defined and understood
+6.3	Develop and maintain secure systems and applications
+Security vulnerabilities are identified and addressed
+
+
+HIPAA	164.310(c)	Physical Safeguards: Workstation Security
+
+▪	Workstation Use (Required)
+Implement physical safeguards for all workstations that access ePHI, to restrict access to authorized users.
+ 
+GDPR	Art-32-GDPR	Security of processing
+Art-25-GDPR	Data protection by design and by default
+
+Android tapjacking is a type of attack where an attacker tricks or deceives a user into tapping on a seemingly harmless element on their Android device's screen, while secretly performing malicious actions in the background.
+Cybercriminals deploy overlay attacks to steal victims’ login credentials, bank card details, and other confidential information.
+
+Vulnerable Layout - custom_dialog.xml
+
+-	The root element of the custom_dialog.xml does not have filterTouchesWhenObscured set to true
+-	Element: <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="-1" android:layout_height="-1">
+
+Vulnerable Layout - custom_in_app_message.xml
+
+-	The root element of the custom_in_app_message.xml does not have filterTouchesWhenObscured set to true
+-	Element: <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="1" android:background="@7F08009D" android:padding="20.000000dip" android:layout_width="-1" android:layout_height="-2">
+
+Vulnerable Layout - design_layout_snackbar_include.xml
+
+-	The root element of the design_layout_snackbar_include.xml does not have filterTouchesWhenObscured set to true
+-	Element: <view xmlns:android="http://schemas.android.com/apk/res/android" android:theme="@7F1202A5" android:layout_gravity="0x00000050" android:layout_width="-1" android:layout_height="-2" class="com.google.android.material.snackbar.SnackbarContentLayout">
+
+Vulnerable Layout - material_timepicker_dialog.xml
+
+-	The root element of the material_timepicker_dialog.xml does not have filterTouchesWhenObscured set to true
+-	Element: <androidx.constraintlayout.widget.ConstraintLayout xmlns:app="http:// schemas.android.com/apk/res-auto" xmlns:android="http://schemas.android.com/apk/res/android" android:paddingBottom="2.000000dip" android:layout_width="-2" android:layout_height="-2" android:accessibilityPaneTitle="@7F110092">
+
+Vulnerable Layout - mtrl_layout_snackbar_include.xml
+
+-	The root element of the mtrl_layout_snackbar_include.xml does not have filterTouchesWhenObscured set to true
+-	Element: <view xmlns:android="http://schemas.android.com/apk/res/android" android:layout_gravity="0x00000050" android:layout_width="-1" android:layout_height="-2" class="com.google.android.material.snackbar.SnackbarContentLayout">
+
+Vulnerable Layout - mtrl_picker_actions.xml
+
+-	The root element of the mtrl_picker_actions.xml does not have filterTouchesWhenObscured set to true
+-	Element: <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:gravity="0x00800005" android:orientation="0" android:id="@7F0900AF"
+ 
+android:paddingRight="@7F07019A" android:layout_width="-1" android:layout_height="@7F070199" android:paddingEnd="@7F07019A">
+
+Vulnerable Layout - material_clock_period_toggle_land.xml
+
+-	The root element of the material_clock_period_toggle_land.xml does not have filterTouchesWhenObscured set to true
+-	Element: <com.google.android.material.button.MaterialButtonToggleGroup xmlns:android="http:// schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:orientation="0" android:id="@7F09013D" android:visibility="2" android:layout_width="-2" android:layout_height="-2" app:checkedButton="@7F09013B" app:selectionRequired="true" app:singleSelection="true">
+
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http:// schemas.android.com/apk/res-auto">
+<Button android:id="@id/button_calculate_checksum" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/button_calculate_checksum" android:filterTouchesWhenObscured="true"/>
+<Button android:id="@id/button_encrypt" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/button_encrypt" android:filterTouchesWhenObscured="true"/>
+</LinearLayout> OR
+View rootView = getWindow().getDecorView().getRootView(); rootView.setFilterTouchesWhenObscured(false);
+
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http:// schemas.android.com/apk/res-auto" android:filterTouchesWhenObscured="true">
+<Button android:id="@id/button_calculate_checksum" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/button_calculate_checksum" />
+<Button android:id="@id/button_encrypt" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/button_encrypt" />
+</LinearLayout> OR
+View rootView = getWindow().getDecorView().getRootView(); rootView.setFilterTouchesWhenObscured(true);
+ 
+
+ 
+Tapjacking attacks are used to trick users into performing certain actions. A properly executed attack can lead to loss of confidential information

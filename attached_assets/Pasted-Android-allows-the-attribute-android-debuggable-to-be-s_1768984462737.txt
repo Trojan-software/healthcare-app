@@ -1,0 +1,70 @@
+Android allows the attribute android:debuggable to be set to true so that the app can be debugged. By default this attribute is disabled, i.e., it is set to false, but it may be set to true to help with debugging during development of the app. However, an app should never be released with this attribute set to true as it enables users to gain access to details of the app that should be kept secure. With the attribute set to true, users can debug the app even without access to its source code.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+7.7	Attack vector: LOCAL	Attack complexity: HIGH
+	Privileges required: NONE	User Interaction: REQUIRED
+	Scope: CHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: HIGH	Availability Impact: HIGH
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M8	Security Misconfiguration
+ 
+CWE	CWE-489	https://cwe.mitre.org/data/definitions/489.html
+
+
+MSTG	MSTG-CODE-2	The app has been built in release mode, with settings
+appropriate for a release build (e.g. non-debuggable).
+
+
+OWASP MASVS (v2)	MASVS-RESILIANCE-4	The app implements anti-dynamic analysis techniques.
+ 
+HIPAA	164.312(a)(1)	Technical Safeguards: Access Control
+
+▪	Unique User Identification (Required)
+Assign a unique name and/or number for identifying and tracking user identity
+▪	Emergency Access Procedure (Required)
+Establish (and implement as needed) procedures for obtaining necessary electronic protected health information during an emergency.
+▪	Automatic Logoff (Addressable)
+Implement electronic procedures that terminate an electronic session after a predetermined time of inactivity.
+▪	Encryption and Decryption (Addressable) Implement a method to encrypt and decrypt electronic protected health information.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+Debugging was enabled on the app which makes it easier for reverse engineers to hook a debugger to it. This allows dumping a stack trace and accessing debugging helper classes.
+Debug enabled within the app
+
+
+
+This non-compliant code example shows an app that has the android:debuggable attribute set to true being accessed to reveal sensitive data.
+
+$ adb shell
+shell@android:/ $ run-as com.example.someapp sh shell@android:/data/data/com.example.someapp $ id uid=10060(app_60) gid=10060(app_60) shell@android:/data/data/com.example.someapp $ ls files/ secret_data.txt
+shell@android:/data/data/com.example.some $ cat files/secret_data.txt password=GoogolPlex
+account_number=31974286
+
+Clearly, with the android:debuggable attribute set to true, sensitive date related to the app can be revealed to any user.
+
+
+Ensure that the android:debuggable attribute is set to false before the app is released:
+
+<application
+...
+android:debuggable="false" >
+ 
+...
+</application>
+
+Note that some development environments (including Eclipse/ADT and Ant) automatically set android:debuggable to true for incremental or debugging builds but set it to false for release builds.
+
+
+Application can be debugged and reverse engineers can debug and manipulate the runtime logic of the application.

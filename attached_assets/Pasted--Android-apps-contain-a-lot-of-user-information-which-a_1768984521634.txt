@@ -1,0 +1,295 @@
+
+ 
+
+
+Android apps contain a lot of user information which also includes some sensitive ones such as username, password, email id, banking details, etc. This information is stored by the app in SQLite database in various tables using different attributes. To keep them secure, an app is expected to keep the information in secure and encrypted format.
+Whenever an app creates a database, by default it is saved in a location: /data/data/app name/database/. This location is private to an app and not accessible to the user or other apps. To share data stored in SQLite database, an app can use Content Provider
+However, these databases don't have any built-in support for encryption and hence, all the information is stored in plain-text format in these files
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+5.8	Attack vector: LOCAL	Attack complexity: HIGH
+	Privileges required: NONE	User Interaction: REQUIRED
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: LOW	Availability Impact: LOW
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M6	Inadequate Privacy Controls
+M9	Insecure Data Storage
+ 
+
+
+CWE	CWE-922	https://cwe.mitre.org/data/definitions/922.html
+
+
+MSTG	MSTG-STORAGE-1	System credential storage facilities need to be used to store
+sensitive data, such as PII, user credentials or cryptographic keys.
+
+OWASP MASVS (v2)	MASVS-STORAGE-1	The app securely stores sensitive data.
+
+
+PCI-DSS (v4.0)	3.2	Protect Account Data
+Storage of account data is kept to a minimum
+3.3	Protect Account Data
+Sensitive authentication data (SAD) is not stored after authorization
+ 
+3.4	Protect Account Data
+Access to displays of full PAN and ability to copy cardholder data are restricted
+3.5	Protect Account Data
+Primary account number (PAN) is secured wherever it is stored
+
+
+HIPAA	164.312(a)(1)	Technical Safeguards: Access Control
+
+▪	Unique User Identification (Required)
+Assign a unique name and/or number for identifying and tracking user identity
+▪	Emergency Access Procedure (Required)
+Establish (and implement as needed) procedures for obtaining necessary electronic protected health information during an emergency.
+▪	Automatic Logoff (Addressable)
+Implement electronic procedures that terminate an electronic session after a predetermined time of inactivity.
+▪	Encryption and Decryption (Addressable) Implement a method to encrypt and decrypt electronic protected health information.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+SQLITE databases which are leaking information and their queries are listed below:
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE notification (_id INTEGER PRIMARY KEY,notification_id TEXT,android_notification_id INTEGER,group_id TEXT,collapse_id TEXT,is_summary INTEGER DEFAULT 0,opened INTEGER DEFAULT 0,dismissed INTEGER DEFAULT 0,title TEXT,message TEXT,full_data TEXT,created_time TIMESTAMP DEFAULT (strftime('%s', 'now')),expire_time TIMESTAMP);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE outcome (_id INTEGER PRIMARY KEY,notification_influence_type TEXT,iam_influence_type TEXT,notification_ids TEXT,iam_ids TEXT,name TEXT,timestamp TIMESTAMP,weight FLOAT,session_time INTEGER);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE cached_unique_outcome (_id INTEGER PRIMARY KEY,channel_influence_id TEXT,channel_type TEXT,name TEXT);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE in_app_message (_id INTEGER PRIMARY KEY,display_quantity INTEGER,last_display INTEGER,message_id TEXT,displayed_in_session INTEGER,click_ids TEXT);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_notification_id_idx ON notification(notification_id);
+ 
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_android_notification_id_idx ON notification(android_notification_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_group_id_idx ON notification(group_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_collapse_id_idx ON notification(collapse_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_created_time_idx ON notification(created_time);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_expire_time_idx ON notification(expire_time);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 9
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 1
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+create table if not exists messages ( type INTEGER NOT NULL, entry BLOB NOT NULL)
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE messages ADD COLUMN app_version TEXT;
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE messages ADD COLUMN app_version_int INTEGER;
+Reference: android.database.sqlite.SQLiteDatabase.insert transport_contexts
+Reference: android.database.sqlite.SQLiteDatabase.insert events
+Reference: android.database.sqlite.SQLiteDatabase.insert event_metadata
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE notification (_id INTEGER PRIMARY KEY,notification_id TEXT,android_notification_id INTEGER,group_id TEXT,collapse_id TEXT,is_summary INTEGER DEFAULT 0,opened INTEGER DEFAULT 0,dismissed INTEGER DEFAULT 0,title TEXT,message TEXT,full_data TEXT,created_time TIMESTAMP DEFAULT (strftime('%s', 'now')),expire_time TIMESTAMP);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE outcome (_id INTEGER PRIMARY KEY,notification_influence_type TEXT,iam_influence_type TEXT,notification_ids TEXT,iam_ids TEXT,name TEXT,timestamp TIMESTAMP,weight FLOAT,session_time INTEGER);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE cached_unique_outcome (_id INTEGER PRIMARY KEY,channel_influence_id TEXT,channel_type TEXT,name TEXT);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE in_app_message (_id INTEGER PRIMARY KEY,display_quantity INTEGER,last_display INTEGER,message_id TEXT,displayed_in_session INTEGER,click_ids TEXT);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_notification_id_idx ON notification(notification_id);
+ 
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_android_notification_id_idx ON notification(android_notification_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_group_id_idx ON notification(group_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_collapse_id_idx ON notification(collapse_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_created_time_idx ON notification(created_time);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_expire_time_idx ON notification(expire_time);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 9
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 1
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+create table if not exists messages ( type INTEGER NOT NULL, entry BLOB NOT NULL)
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE messages ADD COLUMN app_version TEXT;
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE messages ADD COLUMN app_version_int INTEGER;
+Reference: android.database.sqlite.SQLiteDatabase.insert transport_contexts
+Reference: android.database.sqlite.SQLiteDatabase.insert events
+Reference: android.database.sqlite.SQLiteDatabase.insert event_metadata
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE IF NOT EXISTS `WorkTag` (`tag` TEXT NOT NULL, `work_spec_id` TEXT NOT NULL, PRIMARY KEY(`tag`, `work_spec_id`), FOREIGN KEY(`work_spec_id`) REFERENCES `WorkSpec`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX IF NOT EXISTS `index_WorkTag_work_spec_id` ON `WorkTag` (`work_spec_id`)
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE IF NOT EXISTS `SystemIdInfo` (`work_spec_id` TEXT NOT NULL, `generation` INTEGER NOT NULL DEFAULT 0, `system_id` INTEGER NOT NULL, PRIMARY KEY(`work_spec_id`, `generation`), FOREIGN KEY(`work_spec_id`) REFERENCES `WorkSpec`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE IF NOT EXISTS `WorkName` (`name` TEXT NOT NULL, `work_spec_id` TEXT NOT NULL, PRIMARY KEY(`name`, `work_spec_id`), FOREIGN KEY(`work_spec_id`) REFERENCES `WorkSpec`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX IF NOT EXISTS `index_WorkName_work_spec_id` ON `WorkName` (`work_spec_id`)
+ 
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE events (_id INTEGER PRIMARY KEY, context_id INTEGER NOT NULL, transport_name TEXT NOT NULL, timestamp_ms INTEGER NOT NULL, uptime_ms INTEGER NOT NULL, payload BLOB NOT NULL, code INTEGER, num_attempts INTEGER NOT NULL,FOREIGN KEY (context_id) REFERENCES transport_contexts(_id) ON DELETE CASCADE)
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE IF NOT EXISTS `WorkProgress` (`work_spec_id` TEXT NOT NULL, `progress` BLOB NOT NULL, PRIMARY KEY(`work_spec_id`), FOREIGN KEY(`work_spec_id`) REFERENCES `WorkSpec`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE event_metadata (_id INTEGER PRIMARY KEY, event_id INTEGER NOT NULL, name TEXT NOT NULL, value TEXT NOT NULL,FOREIGN KEY (event_id) REFERENCES events(_id) ON DELETE CASCADE)
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE IF NOT EXISTS `Preference` (`key` TEXT NOT NULL, `long_value` INTEGER, PRIMARY KEY(`key`))
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE transport_contexts (_id INTEGER PRIMARY KEY, backend_name TEXT NOT NULL, priority INTEGER NOT NULL, next_request_ms INTEGER NOT NULL)
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5181942b9ebc31ce68dacb56c16fd79f')
+Reference: android.database.sqlite.SQLiteDatabase.execSQL CREATE INDEX events_backend_id on events(context_id)
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE UNIQUE INDEX contexts_backend_priority on transport_contexts(backend_name, priority)
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE transport_contexts ADD COLUMN extras BLOB
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 16
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE UNIQUE INDEX contexts_backend_priority_extras on transport_contexts(backend_name, priority, extras)
+Reference: android.database.sqlite.SQLiteDatabase.execSQL DROP INDEX contexts_backend_priority
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA foreign_keys = ON
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE events ADD COLUMN payload_encoding TEXT
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA temp_store = MEMORY;
+ 
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+ALTER TABLE events ADD COLUMN inline BOOLEAN NOT NULL DEFAULT 1
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA recursive_triggers='ON';
+Reference: android.database.sqlite.SQLiteDatabase.execSQL DROP TABLE IF EXISTS event_payloads
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TEMP TABLE room_table_modification_log (table_id INTEGER PRIMARY KEY, invalidated INTEGER NOT NULL DEFAULT 0)
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE event_payloads (sequence_num INTEGER NOT NULL, event_id INTEGER NOT NULL, bytes BLOB NOT NULL,FOREIGN KEY (event_id) REFERENCES events(_id) ON DELETE CASCADE,PRIMARY KEY
+(sequence_num, event_id))
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL DROP TABLE IF EXISTS log_event_dropped
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+DELETE FROM workspec WHERE state IN (2, 3, 5) AND (last_enqueue_time + minimum_retention_duration) < 1768894042233 AND (SELECT COUNT(*)=0 FROM dependency WHERE prerequisite_id=id AND	work_spec_id NOT IN	(SELECT id FROM workspec WHERE state IN (2, 3, 5)))
+Reference: android.database.sqlite.SQLiteDatabase.execSQL DROP TABLE IF EXISTS global_log_event_state
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE log_event_dropped (log_source VARCHAR(45) NOT NULL,reason INTEGER NOT NULL,events_dropped_count BIGINT NOT NULL,PRIMARY KEY(log_source, reason))
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE global_log_event_state (last_metrics_upload_ms BIGINT PRIMARY KEY)
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL INSERT INTO global_log_event_state VALUES (1768980442163)
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 5
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE notification (_id INTEGER PRIMARY KEY,notification_id TEXT,android_notification_id INTEGER,group_id TEXT,collapse_id TEXT,is_summary INTEGER DEFAULT 0,opened INTEGER DEFAULT 0,dismissed INTEGER DEFAULT 0,title TEXT,message TEXT,full_data TEXT,created_time TIMESTAMP DEFAULT (strftime('%s', 'now')),expire_time TIMESTAMP);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE outcome (_id INTEGER PRIMARY KEY,notification_influence_type TEXT,iam_influence_type TEXT,notification_ids TEXT,iam_ids TEXT,name TEXT,timestamp TIMESTAMP,weight FLOAT,session_time INTEGER);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE cached_unique_outcome (_id INTEGER PRIMARY KEY,channel_influence_id TEXT,channel_type TEXT,name TEXT);
+ 
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE in_app_message (_id INTEGER PRIMARY KEY,display_quantity INTEGER,last_display INTEGER,message_id TEXT,displayed_in_session INTEGER,click_ids TEXT);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_notification_id_idx ON notification(notification_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_android_notification_id_idx ON notification(android_notification_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_group_id_idx ON notification(group_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_collapse_id_idx ON notification(collapse_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_created_time_idx ON notification(created_time);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_expire_time_idx ON notification(expire_time);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 9
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 1
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+create table if not exists messages ( type INTEGER NOT NULL, entry BLOB NOT NULL)
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE messages ADD COLUMN app_version TEXT;
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE messages ADD COLUMN app_version_int INTEGER;
+Reference: android.database.sqlite.SQLiteDatabase.insert transport_contexts
+Reference: android.database.sqlite.SQLiteDatabase.insert events
+Reference: android.database.sqlite.SQLiteDatabase.insert event_metadata
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE notification (_id INTEGER PRIMARY KEY,notification_id TEXT,android_notification_id INTEGER,group_id TEXT,collapse_id TEXT,is_summary INTEGER DEFAULT 0,opened INTEGER DEFAULT 0,dismissed INTEGER DEFAULT 0,title TEXT,message TEXT,full_data TEXT,created_time TIMESTAMP DEFAULT (strftime('%s', 'now')),expire_time TIMESTAMP);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE outcome (_id INTEGER PRIMARY KEY,notification_influence_type TEXT,iam_influence_type TEXT,notification_ids TEXT,iam_ids TEXT,name TEXT,timestamp TIMESTAMP,weight FLOAT,session_time INTEGER);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE cached_unique_outcome (_id INTEGER PRIMARY KEY,channel_influence_id TEXT,channel_type TEXT,name TEXT);
+ 
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE TABLE in_app_message (_id INTEGER PRIMARY KEY,display_quantity INTEGER,last_display INTEGER,message_id TEXT,displayed_in_session INTEGER,click_ids TEXT);
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_notification_id_idx ON notification(notification_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 1
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_android_notification_id_idx ON notification(android_notification_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_group_id_idx ON notification(group_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+create table if not exists messages ( type INTEGER NOT NULL, entry BLOB NOT NULL)
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_collapse_id_idx ON notification(collapse_id);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_created_time_idx ON notification(created_time);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL
+CREATE INDEX notification_expire_time_idx ON notification(expire_time);
+
+Reference: android.database.sqlite.SQLiteDatabase.execSQL PRAGMA user_version = 9
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE messages ADD COLUMN app_version TEXT;
+Reference: android.database.sqlite.SQLiteDatabase.execSQL ALTER TABLE messages ADD COLUMN app_version_int INTEGER;
+Reference: android.database.sqlite.SQLiteDatabase.insert transport_contexts
+Reference: android.database.sqlite.SQLiteDatabase.insert events
+Reference: android.database.sqlite.SQLiteDatabase.insert event_metadata
+
+
+
+SQLite is an SQL database engine that stores data in .db files. The Android SDK has built-in support for SQLite databases. The main package used to manage the databases is android.database.sqlite. You may use the following code to store sensitive information within an activity:
+SQLiteDatabase notSoSecure = openOrCreateDatabase("privateNotSoSecure",MODE_PRIVATE,null); notSoSecure.execSQL("CREATE TABLE IF NOT EXISTS Accounts(Username VARCHAR, Password VARCHAR);"); notSoSecure.execSQL("INSERT INTO Accounts VALUES('admin','AdminPass');");
+notSoSecure.close();
+ 
+Once the activity has been called, the database file privateNotSoSecure will be created with the provided data and stored in the clear text file /data/data/<package-name>/databases/privateNotSoSecure
+
+
+
+1.	Wherever possible you must avoid storing sensitive data within your app.
+2.	Use libraries like SQLcipher to encrypt the information stored
+3.	set "allow backup=false" to avoid exploiting data using ADB With the library SQLCipher, SQLite databases can be password-encrypted.
+SQLiteDatabase secureDB = SQLiteDatabase.openOrCreateDatabase(database, "password123", null); secureDB.execSQL("CREATE TABLE IF NOT EXISTS Accounts(Username VARCHAR,Password VARCHAR);"); secureDB.execSQL("INSERT INTO Accounts VALUES('admin','AdminPassEnc');");
+secureDB.close();
+
+If encrypted SQLite databases are used, determine whether the password is hard-coded in the source, stored in shared preferences, or hidden somewhere else in the code or filesystem. Secure ways to retrieve the key include:
+▪	Asking the user to decrypt the database with a PIN or password once the app is opened (weak passwords and PINs are vulnerable to brute force attacks)
+▪	Storing the key on the server and allowing it to be accessed from a web service only (so that the app can be used only when the device is online)
+
+
+Failure to use encryption routines may result in the database and its associated data including user credentials getting compromised.

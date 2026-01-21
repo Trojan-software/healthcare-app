@@ -1,0 +1,56 @@
+Cross-Origin Resource Sharing (CORS) is enabled in WebView. JavaScript used in mobile application can send and receive data from arbitrary remote hosts. This can be a risk if the remote host is impersonated or compromised.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+8.1	Attack vector: NETWORK	Attack complexity: LOW
+	Privileges required: NONE	User Interaction: REQUIRED
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: HIGH	Availability Impact: NONE
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M4	Insufficient Input/Output Validation
+M8	Security Misconfiguration
+ 
+
+
+CWE	CWE-942	https://cwe.mitre.org/data/definitions/942.html
+
+
+MSTG	MSTG-PLATFORM-6	WebViews are configured to allow only the minimum set of
+protocol handlers required (ideally, only https is supported). Potentially dangerous handlers, such as file, tel and app-id, are disabled.
+
+OWASP MASVS (v2)	MASVS-PLATFORM-2	The app uses WebViews securely.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+Javascript in the Webview having CORS enabled to be loaded from file and any arbitrary URL
+
+setAllowUniversalAccessFromFileURLs is set to True which is Insecured and found in Lcom/ digitaloperaocean/webviewcode/MainActivity;->webViewSetting (Landroid/webkit/WebView;)V
+setAllowUniversalAccessFromFileURLs is set to True which is Insecured and found in Lcom/ digitaloperaocean/webviewcode/MainActivity;->webViewSetting (Landroid/webkit/WebView;)V
+ 
+setAllowFileAccessFromFileURLs is set to True which is Insecured and found in Lcom/ digitaloperaocean/webviewcode/MainActivity;->webViewSetting (Landroid/webkit/WebView;)V
+
+
+
+Example of an insecure code :
+
+WebSettings settings = getSettings(); settings.setAllowUniversalAccessFromFileURLs(true) settings.setAllowFileAccessFromFileURLs(true)
+
+
+
+Below is an example of how to prevent the application from Javascript CORS issue:
+
+WebSettings settings = getSettings(); settings.setAllowUniversalAccessFromFileURLs(false) settings.setAllowFileAccessFromFileURLs(false)
+
+
+
+▪	Android Webkit Settings Docs

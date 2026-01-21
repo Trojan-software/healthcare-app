@@ -1,0 +1,613 @@
+In Android apps, data can be communicated via intents, or data can be written to files, distributed using shared references, or stored in databases. In all these cases, if the data is sensitive, it is important to keep the data secure. That is, it should not be possible for other apps (or, more strictly, apps with different userids) to be able to access this data, or for the data to be accessible to other programs or people, if the data owner does not intend that.
+Data security (for non-intent communication channels) can be supported by creating the file, shared preference or database with MODE_PRIVATE on internal storage or with MODE_PRIVATE and encrypted (using secure encryption techniques, and using an encryption key only secure parties/apps have) on external storage. MODE_PRIVATE is a constant defined by the class android.content.Context. It may be used as the mode parameter in the methods openFileOutput(), getSharedPreferences(), andopenOrCreateDatabase() (which are all also defined in the class android.content.Context).
+Static taint flow analysis can be done for a set of apps, to trace data from each source (an input of data which cannot be fully predicted by static analysis, e.g., text input by a user) to reachable sinks (data output to a location that other applications or methods can access, e.g., sending the data over a Bluetooth connection). Taint flow analysis helps users understand many possible source to sink flows, including flows that include intents and/or static fields.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+6.1	Attack vector: LOCAL	Attack complexity: LOW
+	Privileges required: LOW	User Interaction: NONE
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: LOW	Availability Impact: NONE
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M6	Inadequate Privacy Controls
+M9	Insecure Data Storage
+ 
+
+
+CWE	CWE-922	https://cwe.mitre.org/data/definitions/922.html
+
+
+MSTG	MSTG-STORAGE-1	System credential storage facilities need to be used to store
+sensitive data, such as PII, user credentials or cryptographic keys.
+
+OWASP MASVS (v2)	MASVS-STORAGE-1	The app securely stores sensitive data.
+ 
+
+PCI-DSS (v4.0)	3.2
+
+
+3.3	Protect Account Data
+Storage of account data is kept to a minimum
+Protect Account Data
+		Sensitive authentication data (SAD) is not stored after authorization
+	3.4	Protect Account Data
+		Access to displays of full PAN and ability to copy cardholder data are restricted
+	3.5	Protect Account Data
+		Primary account number (PAN) is secured wherever it is stored
+
+HIPAA	
+164.312(a)(1)	
+Technical Safeguards: Access Control
+		▪	Unique User Identification (Required)
+Assign a unique name and/or number for identifying and tracking user identity
+▪	Emergency Access Procedure (Required)
+Establish (and implement as needed) procedures for obtaining necessary electronic protected health information during an emergency.
+▪	Automatic Logoff (Addressable)
+Implement electronic procedures that terminate an electronic session after a predetermined time of inactivity.
+▪	Encryption and Decryption (Addressable) Implement a method to encrypt and decrypt electronic protected health information.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+Insecured information was found in shared preference. One shouldn't use un-encrypted information in SharedPreference.
+Reference: android.content.SharedPreferences.Editor.putString Key: gmp_app_id
+Value: 1:482510542557:android:ad65649c0f46192b736d34
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"local-f803664e-9403-431e-ab2b-bd723b389915"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_session
+Value: [{"id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+ 
+Value: [{"id":"local-f803664e-9403-431e-ab2b-bd723b389915","type":"PUSH","optedIn":true,"address":"","status":"NO_PERMISSION","sdk":"050138", "deviceOS":"13","carrier":"","appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: previous_os_version
+Value: 13
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_identity
+Value: [{"onesignal_id":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"create-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","subscriptionId":"local-f803664e-9403-431e-ab2b-bd723b389915","type":"PUSH","enabled":false,"address":"","status":"NO_PERMISSION","id":"b475f420
+-7234-4387-92d0-3056327f36e3"},{"name":"login-user","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","id":"5edac273-b3c9-4948-b6ee-48c9dcdc4d50"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_INSTALL_ID
+Value: 06470434-8dce-496d-bbcf-03c690e7e20b
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","id":"-singleton-","timezone":"Asia\/Kolkata"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"create-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","subscriptionId":"local-f803664e-9403-431e-ab2b-bd723b389915","type":"PUSH","enabled":false,"address":"","status":"NO_PERMISSION","id":"b475f420
+-7234-4387-92d0-3056327f36e3"},{"name":"login-user","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","id":"5edac273-b3c9-4948-b6ee-48c9dcdc4d50"},{"name":"set-
+property","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","property":"timezone","value":"Asia\/ Kolkata","id":"47d7ef8a-9498-4584-91db-c60c7809c876"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_session
+Value: [{"id":"-singleton-","isValid":true,"sessionId":"96d4a170-a0bb-4d1e-a13d-13bb64829592","startTime":1768980277217,"focusTime":1768980277217}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"create-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e019148a-bfc6-4983-82e0-
+ 
+f9e4cfc9daef","subscriptionId":"local-f803664e-9403-431e-ab2b-bd723b389915","type":"PUSH","enabled":false,"address":"","status":"NO_PERMISSION","id":"b475f420
+-7234-4387-92d0-3056327f36e3"},{"name":"login-user","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","id":"5edac273-b3c9-4948-b6ee-48c9dcdc4d50"},{"name":"set-
+property","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","property":"timezone","value":"Asia\/ Kolkata","id":"47d7ef8a-9498-4584-91db-c60c7809c876"},{"name":"track-session-start","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e019148a-bfc6-4983-82e0-f9e4cfc9daef","id":"2d2a1147-9f0e-49a8-ad07-45f7b58c7ba3"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: topic_operation_queue
+Value: S!NONE,
+
+Reference: android.content.SharedPreferences.Editor.putString Key: app_instance_id
+Value: 938653722bf1114cfb719af3e2a08934
+
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_ETAG_PREFIX_CACHE_KEY_REMOTE_PARAMS
+Value: W/"220283b59106ef9853cadbb01e39023f"
+
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_HTTP_CACHE_PREFIX_CACHE_KEY_REMOTE_PARAMS
+Value: {"awl_list":{},"android_sender_id":"482510542557","chnl_lst":[],"outcomes":{"direct":
+{"enabled":false},"indirect":{"notification_attribution":
+{"minutes_since_displayed":60,"limit":10},"enabled":false},"unattributed":
+{"enabled":false}},"receive_receipts_enable":false}
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"local-f803664e-9403-431e-ab2b-bd723b389915","fcmParams":
+{},"httpGetTimeout":60000,"apiUrl":"https:\/\/ api.onesignal.com\/","opRepoExecutionInterval":5000,"foregroundFetchNotificationPermissionInter val":1000,"influenceParams":
+{"indirectNotificationAttributionWindow":60,"isUnattributedEnabled":false,"indirectIAMAttributi onWindow":1440,"notificationLimit":10,"isDirectEnabled":false,"isIndirectEnabled":false},"httpT imeout":120000,"restoreTTLFilter":true,"isInitializedWithRemote":true,"notificationChannels":"[] ","googleProjectNumber":"482510542557","receiveReceiptEnabled":false}]
+Reference: android.content.SharedPreferences.Editor.putString Key: last-used-date
+Value: 2026-01-21
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_identity
+Value: [{"onesignal_id":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","id":"-singleton-","timezone":"Asia\/Kolkata"}]
+ 
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"f3228398-a567-4512-b0bc-dce4f91ab887","fcmParams":
+{},"httpGetTimeout":60000,"apiUrl":"https:\/\/ api.onesignal.com\/","opRepoExecutionInterval":5000,"foregroundFetchNotificationPermissionInter val":1000,"influenceParams":
+{"indirectNotificationAttributionWindow":60,"isUnattributedEnabled":false,"indirectIAMAttributi onWindow":1440,"notificationLimit":10,"isDirectEnabled":false,"isIndirectEnabled":false},"httpT imeout":120000,"restoreTTLFilter":true,"isInitializedWithRemote":true,"notificationChannels":"[] ","googleProjectNumber":"482510542557","receiveReceiptEnabled":false}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value: [{"id":"f3228398-a567-4512-b0bc-
+dce4f91ab887","type":"PUSH","optedIn":true,"address":"","status":"NO_PERMISSION","sdk":"050138", "deviceOS":"13","carrier":"","appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","property":"timezone","value":"Asia\/Kolkata","id":"47d7ef8a-9498-4584-91db-c60c7809c876"},{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","id":"2d2a1147-9f0e-49a8-ad07-45f7b58c7ba3"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: |T|482510542557|*
+Value:
+{"token":"epwHzVawRAW27NKeM05fo2:APA91bGjuvlBDn2fqxj5LRpU92fcgHBEYK0gBHbMyIlEbGZfFzYCWUDgZr6PH28 2vrXgGdCp2ZESJ_VuNWhNHa6DATY2zNyTK1RRYSnFSGb9QGLyaExcdA0","appVersion":"1","timestamp":176898028 0850}
+Reference: android.content.SharedPreferences.Editor.putString Key: FirebaseToken
+Value: epwHzVawRAW27NKeM05fo2:APA91bGjuvlBDn2fqxj5LRpU92fcgHBEYK0gBHbMyIlEbGZfFzYCWUDgZr6PH282vrXgGdCp2 ZESJ_VuNWhNHa6DATY2zNyTK1RRYSnFSGb9QGLyaExcdA0
+Reference: android.content.SharedPreferences.Editor.putString Key:
+T05FU0lHTkFMX1NES19GQ01fQVBQX05BTUU+MTo3NTQ3OTU2MTQwNDI6YW5kcm9pZDpjNjgyYjgxNDRhOGRkNTJiYzFhZDYz
+|T|482510542557|*
+Value:
+{"token":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKDS8FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbe DgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-QbHlEylA19DuF5rWivtftLxM","appVersion":"1","timestamp":1768980281849}
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value: [{"id":"f3228398-a567-4512-b0bc-
+dce4f91ab887","type":"PUSH","optedIn":true,"address":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKDS8 FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbeDgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-
+ 
+QbHlEylA19DuF5rWivtftLxM","status":"NO_PERMISSION","sdk":"050138","deviceOS":"13","carrier":""," appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","property":"timezone","value":"Asia\/Kolkata","id":"47d7ef8a-9498-4584-91db-c60c7809c876"},{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","id":"2d2a1147-9f0e-49a8-ad07-45f7b58c7ba3"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","subscriptionId":"f3228398-a567-4512-b0bc-
+dce4f91ab887","type":"PUSH","enabled":false,"address":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKD S8FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbeDgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-QbHlEylA19DuF5rWivtftLxM","status":"NO_PERMISSION","id":"9032ef5d-e5bf-46d6-823f-21799357c43b"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value: [{"id":"f3228398-a567-4512-b0bc-
+dce4f91ab887","type":"PUSH","optedIn":true,"address":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKDS8 FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbeDgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-QbHlEylA19DuF5rWivtftLxM","status":"SUBSCRIBED","sdk":"050138","deviceOS":"13","carrier":"","ap pVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","property":"timezone","value":"Asia\/Kolkata","id":"47d7ef8a-9498-4584-91db-c60c7809c876"},{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","id":"2d2a1147-9f0e-49a8-ad07-45f7b58c7ba3"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","subscriptionId":"f3228398-a567-4512-b0bc-
+dce4f91ab887","type":"PUSH","enabled":false,"address":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKD S8FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbeDgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-QbHlEylA19DuF5rWivtftLxM","status":"NO_PERMISSION","id":"9032ef5d-e5bf-46d6-823f-21799357c43b"},
+{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","subscriptionId":"f3228398-a567-4512-b0bc-dce4f91ab887","type":"PUSH","enabled":true,"address":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKDS8 FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbeDgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-QbHlEylA19DuF5rWivtftLxM","status":"SUBSCRIBED","id":"3e23508f-b2a1-4aeb-a9ea-cbc0dc6ca8a0"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: topic_operation_queue
+Value:
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","id":"2d2a1147-9f0e-49a8-ad07-45f7b58c7ba3"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","subscriptionId":"f3228398-a567-4512-b0bc-
+ 
+dce4f91ab887","type":"PUSH","enabled":false,"address":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKD S8FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbeDgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-QbHlEylA19DuF5rWivtftLxM","status":"NO_PERMISSION","id":"9032ef5d-e5bf-46d6-823f-21799357c43b"},
+{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","subscriptionId":"f3228398-a567-4512-b0bc-dce4f91ab887","type":"PUSH","enabled":true,"address":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKDS8 FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbeDgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-QbHlEylA19DuF5rWivtftLxM","status":"SUBSCRIBED","id":"3e23508f-b2a1-4aeb-a9ea-cbc0dc6ca8a0"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","subscriptionId":"f3228398-a567-4512-b0bc-dce4f91ab887","type":"PUSH","enabled":false,"address":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKD S8FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbeDgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-QbHlEylA19DuF5rWivtftLxM","status":"NO_PERMISSION","id":"9032ef5d-e5bf-46d6-823f-21799357c43b"},
+{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"7a88d89e-ee0f-476b-97ff-a6efea2db1b2","subscriptionId":"f3228398-a567-4512-b0bc-dce4f91ab887","type":"PUSH","enabled":true,"address":"dzNSoks3T3ejjENndXJuzk:APA91bGk3eqrapIKDS8 FV1BeqTBs01nEZhjxh7ky1C0qxu9BD49qhlwo-1dWbeDgUJlyk_3sfvNDXsh0rgnYmLn1bSlobU-QbHlEylA19DuF5rWivtftLxM","status":"SUBSCRIBED","id":"3e23508f-b2a1-4aeb-a9ea-cbc0dc6ca8a0"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: []
+
+Reference: android.content.SharedPreferences.Editor.putString Key: origins_visited_date
+Value: 1/21/26
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"local-c87f1967-c5d4-44a0-913a-519ff53a3d4a"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_session
+Value: [{"id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value: [{"id":"local-c87f1967-
+c5d4-44a0-913a-519ff53a3d4a","type":"PUSH","optedIn":true,"address":"","status":"NO_PERMISSION", "sdk":"050138","deviceOS":"16","carrier":"","appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_identity
+Value: [{"onesignal_id":"local-2a611bbd-8f2b-4f4d-b932-654ef509cea6","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"local-2a611bbd-8f2b-4f4d-b932-654ef509cea6","id":"-singleton-"}]
+ 
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"create-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-2a611bbd-8f2b-4f4d-b932-654ef509cea6","subscriptionId":"local-c87f1967-
+c5d4-44a0-913a-519ff53a3d4a","type":"PUSH","enabled":false,"address":"","status":"NO_PERMISSION"
+,"id":"9cc3c0be-ccdf-40c3-981f-d8375c2987a5"},{"name":"login-user","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-2a611bbd-8f2b-4f4d-
+b932-654ef509cea6","id":"601dc241-d007-41b5-820c-0663df4ccd96"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_INSTALL_ID
+Value: df80c9e1-49b6-4681-85f7-248a2ae42ca2
+
+Reference: android.content.SharedPreferences.Editor.putString Key: gmp_app_id
+Value: 1:482510542557:android:ad65649c0f46192b736d34
+
+Reference: android.content.SharedPreferences.Editor.putString Key: previous_os_version
+Value: 16
+
+Reference: android.content.SharedPreferences.Editor.putString Key: topic_operation_queue
+Value: S!NONE,
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"local-2a611bbd-8f2b-4f4d-b932-654ef509cea6","id":"-singleton-","timezone":"Asia\/Kolkata"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"create-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-2a611bbd-8f2b-4f4d-b932-654ef509cea6","subscriptionId":"local-c87f1967-
+c5d4-44a0-913a-519ff53a3d4a","type":"PUSH","enabled":false,"address":"","status":"NO_PERMISSION"
+,"id":"9cc3c0be-ccdf-40c3-981f-d8375c2987a5"},{"name":"login-user","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-2a611bbd-8f2b-4f4d-
+b932-654ef509cea6","id":"601dc241-d007-41b5-820c-0663df4ccd96"},{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-2a611bbd-8f2b-4f4d-b932-654ef509cea6","property":"timezone","value":"Asia\/
+Kolkata","id":"6dfc1ecc-4411-44da-9c32-4e215c6d038e"},{"name":"track-session-start","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-2a611bbd-8f2b-4f4d-b932-654ef509cea6","id":"d9c6450d-35e2-4862-863a-2f3e84d40593"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_session
+Value: [{"id":"-singleton-","isValid":true,"sessionId":"381021f2-7f85-406d-b4b9-4c8f4e82459b","startTime":1768980393288,"focusTime":1768980393288}]
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_ETAG_PREFIX_CACHE_KEY_REMOTE_PARAMS
+Value: W/"220283b59106ef9853cadbb01e39023f"
+ 
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_HTTP_CACHE_PREFIX_CACHE_KEY_REMOTE_PARAMS
+Value: {"awl_list":{},"android_sender_id":"482510542557","chnl_lst":[],"outcomes":{"direct":
+{"enabled":false},"indirect":{"notification_attribution":
+{"minutes_since_displayed":60,"limit":10},"enabled":false},"unattributed":
+{"enabled":false}},"receive_receipts_enable":false}
+
+Reference: android.content.SharedPreferences.Editor.putString Key: last-used-date
+Value: 2026-01-21
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"local-c87f1967-c5d4-44a0-913a-519ff53a3d4a","fcmParams":
+{},"httpGetTimeout":60000,"apiUrl":"https:\/\/ api.onesignal.com\/","opRepoExecutionInterval":5000,"foregroundFetchNotificationPermissionInter val":1000,"influenceParams":
+{"indirectNotificationAttributionWindow":60,"isUnattributedEnabled":false,"indirectIAMAttributi onWindow":1440,"notificationLimit":10,"isDirectEnabled":false,"isIndirectEnabled":false},"httpT imeout":120000,"restoreTTLFilter":true,"isInitializedWithRemote":true,"notificationChannels":"[] ","googleProjectNumber":"482510542557","receiveReceiptEnabled":false}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_identity
+Value: [{"onesignal_id":"b0d46b81-1b08-46f3-bf59-ef96de33ce15","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"b0d46b81-1b08-46f3-bf59-ef96de33ce15","id":"-singleton-","timezone":"Asia\/Kolkata"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"c7e470a9-48d0-41ed-9169-48bb80388e63","fcmParams":
+{},"httpGetTimeout":60000,"apiUrl":"https:\/\/ api.onesignal.com\/","opRepoExecutionInterval":5000,"foregroundFetchNotificationPermissionInter val":1000,"influenceParams":
+{"indirectNotificationAttributionWindow":60,"isUnattributedEnabled":false,"indirectIAMAttributi onWindow":1440,"notificationLimit":10,"isDirectEnabled":false,"isIndirectEnabled":false},"httpT imeout":120000,"restoreTTLFilter":true,"isInitializedWithRemote":true,"notificationChannels":"[] ","googleProjectNumber":"482510542557","receiveReceiptEnabled":false}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value:
+[{"id":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","optedIn":true,"address":"","status"
+:"NO_PERMISSION","sdk":"050138","deviceOS":"16","carrier":"","appVersion":"1"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-
+ 
+ef96de33ce15","property":"timezone","value":"Asia\/
+Kolkata","id":"6dfc1ecc-4411-44da-9c32-4e215c6d038e"},{"name":"track-session-start","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-ef96de33ce15","id":"d9c6450d-35e2-4862-863a-2f3e84d40593"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: app_instance_id
+Value: 74e3f9133fa98147a17dcf50fb76c9a5
+
+Reference: android.content.SharedPreferences.Editor.putString Key:
+T05FU0lHTkFMX1NES19GQ01fQVBQX05BTUU+MTo3NTQ3OTU2MTQwNDI6YW5kcm9pZDpjNjgyYjgxNDRhOGRkNTJiYzFhZDYz
+|T|482510542557|*
+Value: {"token":"cSBnCqoOSc-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","appVersion":"1","timestamp":1768980396592}
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value:
+[{"id":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","optedIn":true,"address":"cSBnCqoOSc
+-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-
+WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","status":"NO_PERMISSION","sdk":"050138","deviceOS":"16","carrier":"","appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-ef96de33ce15","property":"timezone","value":"Asia\/
+Kolkata","id":"6dfc1ecc-4411-44da-9c32-4e215c6d038e"},{"name":"track-session-start","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-ef96de33ce15","id":"d9c6450d-35e2-4862-863a-2f3e84d40593"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-
+ef96de33ce15","subscriptionId":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","enabled":f alse,"address":"cSBnCqoOSc-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","status":"NO_PERMISSION","id":"d032671f-87ef-4e8a-b0f8-c7a517a1fa44"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value:
+[{"id":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","optedIn":true,"address":"cSBnCqoOSc
+-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-
+WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","status":"SUBSCRIBED","sdk":"050138","deviceOS":"16","carrier":"","appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: |T|482510542557|*
+Value: {"token":"ceTGmzhgQimHc-cej6vV6Z:APA91bEqjo8c4rZPgPzhzf-wWIFNSvx2C2KMew2uPFDK5djqanbhtJ8HnLw7yuruWea-U4ywFiDeGkvjmXJTCLkx6wnXBVB3MwEtxU9w7x6nDcIykinyKhE","appVersion":"1","timestamp":1768980396779}
+Reference: android.content.SharedPreferences.Editor.putString Key: FirebaseToken
+ 
+Value: ceTGmzhgQimHc-cej6vV6Z:APA91bEqjo8c4rZPgPzhzf-wWIFNSvx2C2KMew2uPFDK5djqanbhtJ8HnLw7yuruWea-U4ywFiDeGkvjmXJTCLkx6wnXBVB3MwEtxU9w7x6nDcIykinyKhE
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-ef96de33ce15","property":"timezone","value":"Asia\/
+Kolkata","id":"6dfc1ecc-4411-44da-9c32-4e215c6d038e"},{"name":"track-session-start","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-ef96de33ce15","id":"d9c6450d-35e2-4862-863a-2f3e84d40593"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-
+ef96de33ce15","subscriptionId":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","enabled":f alse,"address":"cSBnCqoOSc-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","status":"NO_PERMISSION","id":"d032671f-87ef-4e8a-b0f8-c7a517a1fa44"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-
+ef96de33ce15","subscriptionId":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","enabled":t rue,"address":"cSBnCqoOSc-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","status":"SUBSCRIBED","id":"e2b44f62-15db-4757-a948-49df65676448"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: topic_operation_queue
+Value:
+
+Reference: android.content.SharedPreferences.Editor.putString Key: origins_visited_date
+Value: 1/21/26
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-ef96de33ce15","id":"d9c6450d-35e2-4862-863a-2f3e84d40593"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-
+ef96de33ce15","subscriptionId":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","enabled":f alse,"address":"cSBnCqoOSc-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","status":"NO_PERMISSION","id":"d032671f-87ef-4e8a-b0f8-c7a517a1fa44"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-
+ef96de33ce15","subscriptionId":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","enabled":t rue,"address":"cSBnCqoOSc-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","status":"SUBSCRIBED","id":"e2b44f62-15db-4757-a948-49df65676448"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-ef96de33ce15","subscriptionId":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","enabled":f alse,"address":"cSBnCqoOSc-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-
+ 
+WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","status":"NO_PERMISSION","id":"d032671f-87ef-4e8a-b0f8-c7a517a1fa44"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"b0d46b81-1b08-46f3-bf59-
+ef96de33ce15","subscriptionId":"c7e470a9-48d0-41ed-9169-48bb80388e63","type":"PUSH","enabled":t rue,"address":"cSBnCqoOSc-hNjGf1poB1s:APA91bEi0VDUPQRHWpT0z-WgqQdLwotj5J3tyI4p6xwdpYPJuNBMIsam0BZ5ptcYREXqB8sc2ooY3Naj74GC1l_vRa7ZzmxTmDFtKncWn00Pa5PYowFnQ Ys","status":"SUBSCRIBED","id":"e2b44f62-15db-4757-a948-49df65676448"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: []
+
+Reference: android.content.SharedPreferences.Editor.putString Key: last-used-date
+Value: 2026-01-21
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"local-d1e4957b-d809-4104-97fd-bef9106a2f7f"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_session
+Value: [{"id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value: [{"id":"local-d1e4957b-d809-4104-97fd-bef9106a2f7f","type":"PUSH","optedIn":true,"address":"","status":"NO_PERMISSION","sdk":"050138", "deviceOS":"16","carrier":"","appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_identity
+Value: [{"onesignal_id":"local-1b8bc11e-51b3-4daa-826b-f9b201023456","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"local-1b8bc11e-51b3-4daa-826b-f9b201023456","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: gmp_app_id
+Value: 1:482510542557:android:ad65649c0f46192b736d34
+
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_INSTALL_ID
+Value: f8f9b7b5-5b25-4d95-bfe1-f23d72681bc1
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"create-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-1b8bc11e-51b3-4daa-826b-f9b201023456","subscriptionId":"local-d1e4957b-d809-4104-97fd-bef9106a2f7f","type":"PUSH","enabled":false,"address":"","status":"NO_PERMISSION","id":"51377bf0
+-da49-4bb5-91c3-3766c984b5d3"},{"name":"login-user","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-1b8bc11e-51b3-4daa-826b-
+ 
+f9b201023456","id":"813c4c95-a8a4-4031-8ad2-d23a10d8d576"},{"name":"set-
+property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-1b8bc11e-51b3-4daa-826b-f9b201023456","property":"timezone","value":"Asia\/Kolkata","id":"9456e919-ba99-4599-b981-ead3f5e0e5c8"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"local-1b8bc11e-51b3-4daa-826b-f9b201023456","id":"-singleton-","timezone":"Asia\/Kolkata"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: previous_os_version
+Value: 16
+
+Reference: android.content.SharedPreferences.Editor.putString Key: topic_operation_queue
+Value: S!NONE,
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_session
+Value: [{"id":"-singleton-","isValid":true,"sessionId":"dcbed90d-d367-4a08-b24e-30f86ba1ac0c","startTime":1768980442588,"focusTime":1768980442588}]
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_ETAG_PREFIX_CACHE_KEY_REMOTE_PARAMS
+Value: W/"220283b59106ef9853cadbb01e39023f"
+
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_HTTP_CACHE_PREFIX_CACHE_KEY_REMOTE_PARAMS
+Value: {"awl_list":{},"android_sender_id":"482510542557","chnl_lst":[],"outcomes":{"direct":
+{"enabled":false},"indirect":{"notification_attribution":
+{"minutes_since_displayed":60,"limit":10},"enabled":false},"unattributed":
+{"enabled":false}},"receive_receipts_enable":false}
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"local-d1e4957b-d809-4104-97fd-bef9106a2f7f","fcmParams":
+{},"httpGetTimeout":60000,"apiUrl":"https:\/\/ api.onesignal.com\/","opRepoExecutionInterval":5000,"foregroundFetchNotificationPermissionInter val":1000,"influenceParams":
+{"indirectNotificationAttributionWindow":60,"isUnattributedEnabled":false,"indirectIAMAttributi onWindow":1440,"notificationLimit":10,"isDirectEnabled":false,"isIndirectEnabled":false},"isIni tializedWithRemote":true,"notificationChannels":"[]","googleProjectNumber":"482510542557","rece iveReceiptEnabled":false}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"create-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-1b8bc11e-51b3-4daa-826b-f9b201023456","subscriptionId":"local-d1e4957b-d809-4104-97fd-bef9106a2f7f","type":"PUSH","enabled":false,"address":"","status":"NO_PERMISSION","id":"51377bf0
+-da49-4bb5-91c3-3766c984b5d3"},{"name":"login-user","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-1b8bc11e-51b3-4daa-826b-f9b201023456","id":"813c4c95-a8a4-4031-8ad2-d23a10d8d576"},{"name":"set-
+ 
+property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-1b8bc11e-51b3-4daa-826b-f9b201023456","property":"timezone","value":"Asia\/Kolkata","id":"9456e919-ba99-4599-b981-ead3f5e0e5c8"},{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-1b8bc11e-51b3-4daa-826b-f9b201023456","id":"6354841a-df1c-4da8-98f8-06f488a90ab3"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: app_instance_id
+Value: c912c979243d78e770eb780adf33182a
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_identity
+Value: [{"onesignal_id":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","id":"-singleton-","timezone":"Asia\/Kolkata"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"caa7889e-2297-450c-9f95-90627769c9ad","fcmParams":
+{},"httpGetTimeout":60000,"apiUrl":"https:\/\/ api.onesignal.com\/","opRepoExecutionInterval":5000,"foregroundFetchNotificationPermissionInter val":1000,"influenceParams":
+{"indirectNotificationAttributionWindow":60,"isUnattributedEnabled":false,"indirectIAMAttributi onWindow":1440,"notificationLimit":10,"isDirectEnabled":false,"isIndirectEnabled":false},"isIni tializedWithRemote":true,"notificationChannels":"[]","googleProjectNumber":"482510542557","rece iveReceiptEnabled":false,"httpTimeout":120000,"restoreTTLFilter":true}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value:
+[{"id":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","optedIn":true,"address":"","status"
+:"NO_PERMISSION","sdk":"050138","deviceOS":"16","carrier":"","appVersion":"1"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","property":"timezone","value":"Asia\/Kolkata","id":"9456e919-ba99-4599-b981-ead3f5e0e5c8"},{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","id":"6354841a-df1c-4da8-98f8-06f488a90ab3"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: origins_visited_date
+Value: 1/21/26
+
+Reference: android.content.SharedPreferences.Editor.putString Key:
+T05FU0lHTkFMX1NES19GQ01fQVBQX05BTUU+MTo3NTQ3OTU2MTQwNDI6YW5kcm9pZDpjNjgyYjgxNDRhOGRkNTJiYzFhZDYz
+|T|482510542557|*
+Value: {"token":"cbUyl4NYRS-fTEVeBvrEWV:APA91bECLe-
+ 
+oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","appVersion":"1","timestamp":1768980445131}
+Reference: android.content.SharedPreferences.Editor.putString Key: |T|482510542557|*
+Value: {"token":"d1kXSXO0QxmQlrne57dhRs:APA91bF8VGN5oXzc0AT_oA3y2UIQC5OTyXaXpIcCcOEgq6AuD5bPjP-t83-
+jMurLKtJPetFepZVV4Ek2UTK0oyuRc3a481fIIuTIKqLcD69vciSqIIOjVR4","appVersion":"1","timestamp":17689 80445140}
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value:
+[{"id":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","optedIn":true,"address":"cbUyl4NYRS
+-fTEVeBvrEWV:APA91bECLe-
+oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","status":"NO_PERMISSION","sdk":"050138","deviceOS":"16","carrier":"","appVersion"
+:"1"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value:
+[{"id":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","optedIn":true,"address":"cbUyl4NYRS
+-fTEVeBvrEWV:APA91bECLe-
+oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","status":"SUBSCRIBED","sdk":"050138","deviceOS":"16","carrier":"","appVersion":"1 "}]
+Reference: android.content.SharedPreferences.Editor.putString Key: FirebaseToken
+Value: d1kXSXO0QxmQlrne57dhRs:APA91bF8VGN5oXzc0AT_oA3y2UIQC5OTyXaXpIcCcOEgq6AuD5bPjP-t83-jMurLKtJPetFepZVV4Ek2UTK0oyuRc3a481fIIuTIKqLcD69vciSqIIOjVR4
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","property":"timezone","value":"Asia\/Kolkata","id":"9456e919-ba99-4599-b981-ead3f5e0e5c8"},{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","id":"6354841a-df1c-4da8-98f8-06f488a90ab3"},{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","subscriptionId":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","enabled":f alse,"address":"cbUyl4NYRS-fTEVeBvrEWV:APA91bECLe-oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","status":"NO_PERMISSION","id":"eca3caef-9116-4e4f-9c40-f638aba78072"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","property":"timezone","value":"Asia\/Kolkata","id":"9456e919-ba99-4599-b981-ead3f5e0e5c8"},{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","id":"6354841a-df1c-4da8-98f8-06f488a90ab3"},{"name":"update-
+ 
+subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","subscriptionId":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","enabled":f alse,"address":"cbUyl4NYRS-fTEVeBvrEWV:APA91bECLe-oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","status":"NO_PERMISSION","id":"eca3caef-9116-4e4f-9c40-f638aba78072"},
+{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","subscriptionId":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","enabled":t rue,"address":"cbUyl4NYRS-fTEVeBvrEWV:APA91bECLe-oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","status":"SUBSCRIBED","id":"aca9ab47-771b-4e3b-9348-1fd37593e0c3"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: topic_operation_queue
+Value:
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"track-session-start","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","id":"6354841a-df1c-4da8-98f8-06f488a90ab3"},{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","subscriptionId":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","enabled":f alse,"address":"cbUyl4NYRS-fTEVeBvrEWV:APA91bECLe-oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","status":"NO_PERMISSION","id":"eca3caef-9116-4e4f-9c40-f638aba78072"},
+{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","subscriptionId":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","enabled":t rue,"address":"cbUyl4NYRS-fTEVeBvrEWV:APA91bECLe-oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","status":"SUBSCRIBED","id":"aca9ab47-771b-4e3b-9348-1fd37593e0c3"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","subscriptionId":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","enabled":f alse,"address":"cbUyl4NYRS-fTEVeBvrEWV:APA91bECLe-oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","status":"NO_PERMISSION","id":"eca3caef-9116-4e4f-9c40-f638aba78072"},
+{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"b67806e3-5be3-4d1b-89a9-f1c040bad6ff","subscriptionId":"caa7889e-2297-450c-9f95-90627769c9ad","type":"PUSH","enabled":t rue,"address":"cbUyl4NYRS-fTEVeBvrEWV:APA91bECLe-oDIvg6dlH8nri8cP_gd02IjR2obhbi3gS7wsrcXrTvREF4DRe0ruqVJvE4G-7Jw4iGSWP_xZza_ISegDHoNgDlhoQEhZk3g SfAcN9CvA1VYA","status":"SUBSCRIBED","id":"aca9ab47-771b-4e3b-9348-1fd37593e0c3"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: []
+ 
+Reference: android.content.SharedPreferences.Editor.putString Key: gmp_app_id
+Value: 1:482510542557:android:ad65649c0f46192b736d34
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"local-e8f17c17-a384-4cb7-8105-a59205fb69b0"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: previous_os_version
+Value: 13
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_session
+Value: [{"id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value: [{"id":"local-e8f17c17-a384-4cb7-8105-a59205fb69b0","type":"PUSH","optedIn":true,"address":"","status":"NO_PERMISSION","sdk":"050138", "deviceOS":"13","carrier":"","appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_identity
+Value: [{"onesignal_id":"local-e89c3f3b-5556-4a78-bbc7-80cdb0c0a12e","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"local-e89c3f3b-5556-4a78-bbc7-80cdb0c0a12e","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"create-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e89c3f3b-5556-4a78-bbc7-80cdb0c0a12e","subscriptionId":"local-e8f17c17-a384-4cb7-8105-
+a59205fb69b0","type":"PUSH","enabled":false,"address":"","status":"NO_PERMISSION","id":"5b3805ef
+-a2d6-413b-b648-2fe6a0bfa0a4"},{"name":"login-user","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e89c3f3b-5556-4a78-
+bbc7-80cdb0c0a12e","id":"318b53b0-1cfe-4bd7-a984-c057b4830355"},{"name":"set-property","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e89c3f3b-5556-4a78-bbc7-80cdb0c0a12e","property":"timezone","value":"Asia\/ Kolkata","id":"025c7cd3-087b-4fc3-a5d5-b751d81955a1"},{"name":"track-session-
+start","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"local-e89c3f3b-5556-4a78-bbc7-80cdb0c0a12e","id":"563ecd98-a448-46af-911d-38614d119f75"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_INSTALL_ID
+Value: c06b1af5-cb76-41fa-bb3e-b8c253bfc244
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"local-e89c3f3b-5556-4a78-bbc7-80cdb0c0a12e","id":"-singleton-","timezone":"Asia\/Kolkata"}]
+ 
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_session
+Value: [{"id":"-
+singleton-","isValid":true,"sessionId":"6b6f39b3-1d81-401d-8ef0-87b2459ddc57","startTime":176898 0510173,"focusTime":1768980510173}]
+Reference: android.content.SharedPreferences.Editor.putString Key: topic_operation_queue
+Value: S!NONE,
+
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_ETAG_PREFIX_CACHE_KEY_REMOTE_PARAMS
+Value: W/"220283b59106ef9853cadbb01e39023f"
+
+Reference: android.content.SharedPreferences.Editor.putString Key: PREFS_OS_HTTP_CACHE_PREFIX_CACHE_KEY_REMOTE_PARAMS
+Value: {"awl_list":{},"android_sender_id":"482510542557","chnl_lst":[],"outcomes":{"direct":
+{"enabled":false},"indirect":{"notification_attribution":
+{"minutes_since_displayed":60,"limit":10},"enabled":false},"unattributed":
+{"enabled":false}},"receive_receipts_enable":false}
+
+Reference: android.content.SharedPreferences.Editor.putString Key: last-used-date
+Value: 2026-01-21
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"local-e8f17c17-a384-4cb7-8105-a59205fb69b0","fcmParams":
+{},"httpGetTimeout":60000,"apiUrl":"https:\/\/ api.onesignal.com\/","opRepoExecutionInterval":5000,"foregroundFetchNotificationPermissionInter val":1000,"influenceParams":
+{"indirectNotificationAttributionWindow":60,"isUnattributedEnabled":false,"indirectIAMAttributi onWindow":1440,"notificationLimit":10,"isDirectEnabled":false,"isIndirectEnabled":false},"httpT imeout":120000,"isInitializedWithRemote":true,"notificationChannels":"[]","googleProjectNumber": "482510542557","receiveReceiptEnabled":false}]
+Reference: android.content.SharedPreferences.Editor.putString Key: app_instance_id
+Value: f00cfe0fff14d4a818dcc03d53a4608b
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_identity
+Value: [{"onesignal_id":"1509b9f6-b5bb-47b3-821f-6364544ff4b6","id":"-singleton-"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_properties
+Value: [{"onesignalId":"1509b9f6-b5bb-47b3-821f-6364544ff4b6","id":"-singleton-","timezone":"Asia\/Kolkata"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_config
+Value: [{"id":"-singleton-","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","backgroundFetchNotificationPermissionInterval":86400000,"pushSubs criptionId":"00528e73-66de-492b-b7a2-27b16baa2989","fcmParams":
+{},"httpGetTimeout":60000,"apiUrl":"https:\/\/
+ 
+api.onesignal.com\/","opRepoExecutionInterval":5000,"foregroundFetchNotificationPermissionInter val":1000,"influenceParams":
+{"indirectNotificationAttributionWindow":60,"isUnattributedEnabled":false,"indirectIAMAttributi onWindow":1440,"notificationLimit":10,"isDirectEnabled":false,"isIndirectEnabled":false},"httpT imeout":120000,"isInitializedWithRemote":true,"notificationChannels":"[]","googleProjectNumber": "482510542557","receiveReceiptEnabled":false,"restoreTTLFilter":true}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value: [{"id":"00528e73-66de-492b-
+b7a2-27b16baa2989","type":"PUSH","optedIn":true,"address":"","status":"NO_PERMISSION","sdk":"050
+138","deviceOS":"13","carrier":"","appVersion":"1"}]
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"1509b9f6-
+b5bb-47b3-821f-6364544ff4b6","property":"timezone","value":"Asia\/ Kolkata","id":"025c7cd3-087b-4fc3-a5d5-b751d81955a1"},{"name":"track-session-start","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"1509b9f6-b5bb-47b3-821f-6364544ff4b6","id":"563ecd98-a448-46af-911d-38614d119f75"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: |T|482510542557|*
+Value: {"token":"cDcytcF5QWCMZ-d4GKyUi2:APA91bFKGJ3gj9-zi3g5nmkPl22toF910xscWqk1A-RV7bZ5h0fEPm2bPHK16MoN8Jh8_TPUw8rNTLea2e5XxuZwVZ06_AaNuEg_jKjX-NXb_R2ZGSDBMU4","appVersion":"1","timestamp":1768980513052}
+Reference: android.content.SharedPreferences.Editor.putString Key: FirebaseToken
+Value: cDcytcF5QWCMZ-d4GKyUi2:APA91bFKGJ3gj9-zi3g5nmkPl22toF910xscWqk1A-RV7bZ5h0fEPm2bPHK16MoN8Jh8_TPUw8rNTLea2e5XxuZwVZ06_AaNuEg_jKjX-NXb_R2ZGSDBMU4
+Reference: android.content.SharedPreferences.Editor.putString Key:
+T05FU0lHTkFMX1NES19GQ01fQVBQX05BTUU+MTo3NTQ3OTU2MTQwNDI6YW5kcm9pZDpjNjgyYjgxNDRhOGRkNTJiYzFhZDYz
+|T|482510542557|*
+Value: {"token":"cqLQKM66Qz-nTjb0H5S-JR:APA91bFupXCXXJ1ieSTf_cUyHDN3ArbhfkeBFZuR3KqgO8GpvJ5bZzfM13X-yJxdev6nZknQdIEbVYPW8ohydWmdY3hWqhvNUjiRy6dpBYrUocGOV0ITxvQ","appVersion":"1","timestamp":176898 0513296}
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value: [{"id":"00528e73-66de-492b-
+b7a2-27b16baa2989","type":"PUSH","optedIn":true,"address":"cqLQKM66Qz-nTjb0H5S-JR:APA91bFupXCXXJ1ieSTf_cUyHDN3ArbhfkeBFZuR3KqgO8GpvJ5bZzfM13X-yJxdev6nZknQdIEbVYPW8ohydWmdY3hWqhvNUjiRy6dpBYrUocGOV0ITxvQ","status":"NO_PERMISSION","sdk":"050 138","deviceOS":"13","carrier":"","appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_subscriptions
+Value: [{"id":"00528e73-66de-492b-
+b7a2-27b16baa2989","type":"PUSH","optedIn":true,"address":"cqLQKM66Qz-nTjb0H5S-JR:APA91bFupXCXXJ1ieSTf_cUyHDN3ArbhfkeBFZuR3KqgO8GpvJ5bZzfM13X-
+ 
+yJxdev6nZknQdIEbVYPW8ohydWmdY3hWqhvNUjiRy6dpBYrUocGOV0ITxvQ","status":"SUBSCRIBED","sdk":"050138 ","deviceOS":"13","carrier":"","appVersion":"1"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"set-property","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"1509b9f6-
+b5bb-47b3-821f-6364544ff4b6","property":"timezone","value":"Asia\/ Kolkata","id":"025c7cd3-087b-4fc3-a5d5-b751d81955a1"},{"name":"track-session-start","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"1509b9f6-
+b5bb-47b3-821f-6364544ff4b6","id":"563ecd98-a448-46af-911d-38614d119f75"},{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"1509b9f6-
+b5bb-47b3-821f-6364544ff4b6","subscriptionId":"00528e73-66de-492b-
+b7a2-27b16baa2989","type":"PUSH","enabled":false,"address":"cqLQKM66Qz-nTjb0H5S-JR:APA91bFupXCXXJ1ieSTf_cUyHDN3ArbhfkeBFZuR3KqgO8GpvJ5bZzfM13X-yJxdev6nZknQdIEbVYPW8ohydWmdY3hWqhvNUjiRy6dpBYrUocGOV0ITxvQ","status":"NO_PERMISSION","id":"2f7 c9f07-6fb7-4927-b365-eb2c633cec32"},{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"1509b9f6-
+b5bb-47b3-821f-6364544ff4b6","subscriptionId":"00528e73-66de-492b-
+b7a2-27b16baa2989","type":"PUSH","enabled":true,"address":"cqLQKM66Qz-nTjb0H5S-JR:APA91bFupXCXXJ1ieSTf_cUyHDN3ArbhfkeBFZuR3KqgO8GpvJ5bZzfM13X-yJxdev6nZknQdIEbVYPW8ohydWmdY3hWqhvNUjiRy6dpBYrUocGOV0ITxvQ","status":"SUBSCRIBED","id":"9b4a3b d0-1f1f-4231-90a4-6862f93e6f30"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: topic_operation_queue
+Value:
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: [{"name":"update-subscription","appId":"d92bb380-fd4a-48af-9856-1c4bc57308ae","onesignalId":"1509b9f6-
+b5bb-47b3-821f-6364544ff4b6","subscriptionId":"00528e73-66de-492b-
+b7a2-27b16baa2989","type":"PUSH","enabled":false,"address":"cqLQKM66Qz-nTjb0H5S-JR:APA91bFupXCXXJ1ieSTf_cUyHDN3ArbhfkeBFZuR3KqgO8GpvJ5bZzfM13X-yJxdev6nZknQdIEbVYPW8ohydWmdY3hWqhvNUjiRy6dpBYrUocGOV0ITxvQ","status":"NO_PERMISSION","id":"2f7 c9f07-6fb7-4927-b365-eb2c633cec32"},{"name":"update-subscription","appId":"d92bb380-
+fd4a-48af-9856-1c4bc57308ae","onesignalId":"1509b9f6-
+b5bb-47b3-821f-6364544ff4b6","subscriptionId":"00528e73-66de-492b-
+b7a2-27b16baa2989","type":"PUSH","enabled":true,"address":"cqLQKM66Qz-nTjb0H5S-JR:APA91bFupXCXXJ1ieSTf_cUyHDN3ArbhfkeBFZuR3KqgO8GpvJ5bZzfM13X-yJxdev6nZknQdIEbVYPW8ohydWmdY3hWqhvNUjiRy6dpBYrUocGOV0ITxvQ","status":"SUBSCRIBED","id":"9b4a3b d0-1f1f-4231-90a4-6862f93e6f30"}]
+Reference: android.content.SharedPreferences.Editor.putString Key: origins_visited_date
+Value: 1/21/26
+
+Reference: android.content.SharedPreferences.Editor.putString Key: MODEL_STORE_operations
+Value: []
+
+
+
+This non-compliant code example shows an application that creates a file that is world readable, and hence not secure.
+ 
+openFileOutput("someFile", MODE_WORLD_READABLE);
+
+Any application could read the file and access any data stored in it.
+
+
+In this compliant solution the file is created using MODE_PRIVATE, so it can be accessed only by the app that created the file.
+openFileOutput("someFile", MODE_PRIVATE);
+
+
+
+Typically, malicious code steals sensitive information (passwords, session cookies, personally identifiable information, etc). Hence, the associated business impacts include:
+▪	Fraud
+▪	Privacy Violations

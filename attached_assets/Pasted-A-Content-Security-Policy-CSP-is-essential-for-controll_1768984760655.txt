@@ -1,0 +1,113 @@
+A Content Security Policy (CSP) is essential for controlling which resources (scripts, styles, etc.) a web page is allowed to load. An insecure or missing CSP can leave a website vulnerable to various attacks.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+3.1	Attack vector: NETWORK	Attack complexity: HIGH
+	Privileges required: NONE	User Interaction: REQUIRED
+	Scope: UNCHANGED	Confidentiality Impact: LOW
+	Integrity Impact: NONE	Availability Impact: NONE
+
+
+
+CWE	CWE-693 CWE-1021 CWE-16	https://cwe.mitre.org/data/definitions/693.html https://cwe.mitre.org/data/definitions/1021.html https://cwe.mitre.org/data/definitions/16.html
+
+OWASP API 2023	
+API8:2023	
+Security Misconfiguration
+
+ASVS	
+V14.5.3	
+Verify that the Cross-Origin Resource Sharing (CORS) Access-Control-Allow-Origin header uses a strict allow list of trusted domains and subdomains to match against and does not support the "null" origin.
+
+PCI-DSS (v4.0)	
+6.4	
+Develop and maintain secure systems and applications
+		Public-facing web applications are protected against attacks
+
+HIPAA	
+164.306(a)(1)	
+General Rules: General Requirements
+		▪	General Requirements (Required)
+Ensure the confidentiality, integrity, and availability of all electronic protected health information the covered entity or business associate creates, receives, maintains, or transmits.
+ 
+164.306(a)(2)	General Rules: General Requirements
+
+▪	General Requirements (Required)
+Protect against any reasonably anticipated threats or hazards to the security or integrity of such information.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+An improperly configured CSP can allow attackers to inject malicious scripts into a web page. This can lead to: * Cross-Site Scripting (XSS): Attackers can execute arbitrary JavaScript in the user's browser, potentially stealing credentials, session tokens, or performing other malicious actions. * Other Attacks: A weak CSP can also weaken defenses against clickjacking, frame injection, and other web-based attacks.
+https://247tech.net:443/?onesignal_push_id=95783120-768b-47a8-9c88-8c6e6ae13706: script-src: 'self' can be problematic if you host JSONP, AngularJS or user uploaded files.
+confidence: MEDIUM
+cvss: CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:N/A:N
+cvss_base: 3.1
+cvss_metrics_humanized: '[{"key": "Attack Vector", "value": "Network"}, {"key": "Attack Complexity", "value": "High"}, {"key": "Privileges Required", "value": "None"}, {"key": "User
+Interaction", "value": "Required"}, {"key": "Scope", "value": "Unchanged"}, {"key":
+"Confidentiality Impact", "value": "Low"}, {"key": "Integrity Impact", "value": "None"}, {"key": "Availability Impact", "value": "None"}]'
+param:
+location: headers
+variable: Content-Security-Policy request:
+body: '' headers:
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/ apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br, zstd Accept-Language: en-US,en;q=0.9 Connection: keep-alive
+Sec-Ch-Ua: '"Android WebView";v="143", "Chromium";v="143", "Not A(Brand";v="24"' Sec-Ch-Ua-Mobile: ?1
+Sec-Ch-Ua-Platform: '"Android"' Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Upgrade-Insecure-Requests: '1'
+User-Agent: Mozilla/5.0 (Linux; Android 16; Pixel 6a Build/BP3A.250905.014; wv) AppleWebKit/
+537.36 (KHTML, like Gecko) Version/4.0 Chrome/143.0.7499.192 Mobile Safari/537.36 X-Requested-With: com.digitaloperaocean.webviewcode
+method: GET params:
+onesignal_push_id: 95783120-768b-47a8-9c88-8c6e6ae13706
+url: https://247tech.net:443/?onesignal_push_id=95783120-768b-47a8-9c88-8c6e6ae13706
+ 
+response: cookie: {} headers:
+Accept-Ranges: bytes
+Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+Cache-Control: private, max-age=0 Content-Length: '686'
+Content-Security-Policy: 'default-src ''self''; script-src ''self''; style-src ''self'' ''unsafe-inline''; im .....
+
+Risk assessment content is partial due to large content. For full details please visit https://doh.appknox.com/dashboard/file/ 292/analysis/28375
+
+
+
+
+
+Examples of insecure CSP headers:
+*	`Content-Security-Policy: default-src *;` (Allows loading resources from any origin)
+*	`Content-Security-Policy: script-src 'unsafe-inline';` (Allows execution of inline scripts)
+*	`Content-Security-Policy: script-src 'unsafe-eval';` (Allows the use of eval() and similar functions)
+*	`Content-Security-Policy: ;` (Missing CSP header)
+
+
+
+A strong CSP should:
+*	Explicitly allow only trusted sources for scripts and other resources.
+*	Avoid 'unsafe-inline' and 'unsafe-eval' where possible.
+*	Use nonces or hashes for scripts and styles.
+*	Restrict the 'default-src' directive.
+*	Consider using 'strict-dynamic' for modern browsers.
+
+Example of a secure CSP header: Content-Security-Policy:
+default-src 'none';
+script-src 'self' 'nonce-r4nd0m';
+style-src 'self' 'sha256-YjMzZDyZA3FvN0JjYqUjE6n9igKZi4awCeqj0d4f4k='; object-src 'none';
+frame-ancestors 'self'; form-action 'self'; base-uri 'self';
+report-uri /csp-violation-report-endpoint; upgrade-insecure-requests;
+
+
+
+▪	Data breaches: Successful script injection can lead to the theft of sensitive user data.
+▪	Website defacement: Attackers can modify the appearance of a website, harming its reputation.
+▪	Loss of user trust: Users may lose trust in a website that is vulnerable to attacks.
+▪	Financial loss: In e-commerce scenarios, attackers can hijack transactions or steal payment information.
+ 
+
+ 
+Content Security Policy - MDN Docs CSP Evaluator

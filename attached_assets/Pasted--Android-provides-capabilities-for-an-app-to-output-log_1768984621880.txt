@@ -1,0 +1,107 @@
+
+Android provides capabilities for an app to output logging information and obtain log output. Applications can send information to log output using the android.util.Log class. To obtain log output, applications can execute the logcat command.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+6.2	Attack vector: LOCAL	Attack complexity: LOW
+	Privileges required: NONE	User Interaction: NONE
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: NONE	Availability Impact: NONE
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M6	Inadequate Privacy Controls
+M9	Insecure Data Storage
+ 
+CWE	CWE-779	https://cwe.mitre.org/data/definitions/779.html MSTG	MSTG-STORAGE-3	No sensitive data is written to application logs. OWASP MASVS (v2) MASVS-STORAGE-2	The app prevents leakage of sensitive data.
+
+
+PCI-DSS (v4.0)	3.2	Protect Account Data
+Storage of account data is kept to a minimum
+3.3	Protect Account Data
+Sensitive authentication data (SAD) is not stored after authorization
+3.4	Protect Account Data
+Access to displays of full PAN and ability to copy cardholder data are restricted
+3.5	Protect Account Data
+Primary account number (PAN) is secured wherever it is stored
+ 
+HIPAA	164.312(a)(1)	Technical Safeguards: Access Control
+
+▪	Unique User Identification (Required)
+Assign a unique name and/or number for identifying and tracking user identity
+▪	Emergency Access Procedure (Required)
+Establish (and implement as needed) procedures for obtaining necessary electronic protected health information during an emergency.
+▪	Automatic Logoff (Addressable)
+Implement electronic procedures that terminate an electronic session after a predetermined time of inactivity.
+▪	Encryption and Decryption (Addressable) Implement a method to encrypt and decrypt electronic protected health information.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+Application was found to be writing logs to the system logs
+
+Tag: myApp
+Message: [#] GPSService.java - WAKELOCK acquired [#] GPSService.java - BIND = onBind
+
+Tag: myApp
+Message: [#] GPSService.java - WAKELOCK acquired
+
+Tag: myApp
+Message: [#] GPSService.java - WAKELOCK released [#] GPSService.java - DESTROY = onDestroy
+
+Tag: myApp
+Message: [#] GPSService.java - START = onStartCommand
+
+Tag: myApp
+Message: [#] GPSService.java - WAKELOCK released
+
+Tag:	>
+Message: Lcom/google/android/ump/FormError;->getMessage()Ljava/lang/String;
+
+Tag: CustomerSupportChat
+Message: Ljava/lang/Exception;->getMessage()Ljava/lang/String;
+
+Tag: CustomerSupportChat
+Message: Ljava/lang/Exception;->getMessage()Ljava/lang/String;
+
+Tag: CustomerSupportChat
+Message: Ljava/net/URL;->toString()Ljava/lang/String;
+
+Tag: CustomerSupportChat
+Message: Ljava/lang/Exception;->getMessage()Ljava/lang/String;
+ 
+Risk assessment content is partial due to large content. For full details please visit https://doh.appknox.com/dashboard/file/ 292/analysis/28342
+
+
+
+
+
+Facebook SDK for Android contained the following code which sends Facebook access tokens to log output in plain text format.
+Log.d("Facebook-authorize", "Login Success! access_token=" + getAccessToken() + " expires=" + getAccessExpires());
+Here is another example. A weather report for Android sent a user's location data to the log output as follows:
+
+I/MyWeatherReport( 6483): Re-use MyWeatherReport data I/ ( 6483): GET JSON:
+http://example.com/smart/repo_piece.cgi? arc=0&lat=26.209026&lon=127.650803&rad=50&dir=-999&lim=52&category=1000
+If a user is using Android OS 4.0 or before, other applications with READ_LOGS permission can obtain the user's location information without declaring ACCESS_FINE_LOCATION permission in the manifest file.
+
+
+Never use logs in production. Find all Log.d() and remove them.
+
+Use exception parsers and crash-based-analytics tool capture crashes in production so that it can be debugged
+
+
+Sensitive data can inadvertently leak into the logs and may aid in further attacks
+
+
+▪	Facebook SDK for Android
+▪	JVN#23328321 Puella Magi Madoka Magica iP for Android vulnerable to information disclosure
+▪	JVN#86040029 Weathernews Touch for Android stores location information in the system log file
+▪	JVN#33159152 Loctouch for Android information management vulnerability
+▪	JVN#56923652 Monaca Debugger for Android information management vulnerability
