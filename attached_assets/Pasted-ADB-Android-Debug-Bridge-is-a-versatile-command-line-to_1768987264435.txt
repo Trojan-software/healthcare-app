@@ -1,0 +1,55 @@
+ADB (Android Debug Bridge) is a versatile command-line tool that provides a bridge between your computer and an Android device. It's essential for developers to test, debug, and optimize their apps. However, while ADB offers numerous functionalities, it also introduces potential security risks if not used carefully.
+Security Implications: - Data exposure: Unauthorized access can lead to data theft. - Malware installation: Malicious actors can install malware. - Device compromise: Misuse can grant root access, compromising the device. - USB debugging vulnerabilities: Connected to an untrusted computer can expose the device. - Shell command risks: Incorrect or malicious use can lead to security vulnerabilities.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+3.4	Attack vector: PHYSICAL	Attack complexity: LOW
+	Privileges required: HIGH	User Interaction: REQUIRED
+	Scope: CHANGED	Confidentiality Impact: NONE
+	Integrity Impact: LOW	Availability Impact: LOW
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M6	Inadequate Privacy Controls
+ 
+CWE	CWE-284	https://cwe.mitre.org/data/definitions/284.html CWE-541	https://cwe.mitre.org/data/definitions/541.html
+CWE-532	https://cwe.mitre.org/data/definitions/532.html
+
+
+MSTG	MSTG-RESILIENCE-2	The app prevents debugging and/or detects, and responds to, a
+debugger being attached. All available debugging protocols must be covered.
+
+OWASP MASVS (v2)	MASVS-RESILIANCE-1	The app validates the integrity of the platform.
+
+
+ASVS	V1.4.4	Verify the application uses a single and well-vetted access control mechanism for accessing protected data and resources. All requests must pass through this single mechanism to avoid copy and paste or insecure alternative paths.
+ 
+
+	V1.8.2	Verify that all protection levels have an associated set of protection requirements, such as encryption requirements, integrity requirements, retention, privacy and other confidentiality requirements, and that these are applied in the architecture.
+
+PCI-DSS (v4.0)	
+7.1	
+Restrict access to cardholder data by business need to know
+		Processes and mechanisms for restricting access to system components and cardholder data by business need to know are defined and understood
+	7.2	Restrict access to cardholder data by business need to know
+		Access to system components and data is appropriately defined and assigned
+
+HIPAA	
+164.308(a)(4)	
+Administrative Safeguards: Information Access Management
+		▪	Isolating Health Care Clearinghouse Functions
+(Required)
+If a health care clearinghouse is part of a larger organization, the clearinghouse must implement policies and procedures that protect the electronic protected health information of the clearinghouse from unauthorized access by the larger organization.
+▪	Access Authorization (Addressable)
+Implement policies and procedures for granting access to electronic protected health information, for example, through access to a workstation, transaction, program, process, or other mechanism.
+▪	Access Establishment and Modification (Addressable) Implement policies and procedures that, based upon the entity's access authorization policies, establish, document, review, and modify a user's right of access to a workstation, transaction, program, or process.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
