@@ -67,6 +67,11 @@ android {
                 storePassword keystorePassword
                 keyAlias keyAlias
                 keyPassword keyPassword
+                
+                // SECURITY: Janus vulnerability fix (CVE-2017-13156)
+                // Enable v2/v3 signing, disable v1-only signing
+                v1SigningEnabled true  // Keep for older device compatibility
+                v2SigningEnabled true  // Required for Janus protection
             }
         }
     }
