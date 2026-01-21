@@ -9,9 +9,20 @@ const app = express();
 // Trust proxy for proper HTTPS detection behind load balancers
 app.set('trust proxy', true);
 
-// Security headers middleware for production
+// Hide X-Powered-By header to prevent server info leakage (ADHCC Security)
+app.disable('x-powered-by');
+
+// Security headers middleware - apply to all requests
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // Only apply security middleware in production
+  // Cache-Control for API routes - prevent caching of sensitive data
+  if (req.path.startsWith('/api')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+  }
+
+  // Only apply additional security middleware in production
   if (process.env.NODE_ENV !== 'production') {
     return next();
   }
