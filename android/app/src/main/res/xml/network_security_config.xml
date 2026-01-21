@@ -3,7 +3,7 @@
     Network Security Configuration
     Security: CRITICAL (9.1) - Comprehensive Network Security
     
-    ADHCC Compliance: Network Security Misconfiguration Fix
+    ADHCC Compliance: Network Security + Certificate Pinning
     
     This configuration enforces:
     1. HTTPS-only communication (cleartext disabled globally)
@@ -11,7 +11,10 @@
     3. User-installed CA certificates BLOCKED
     4. No debug overrides in production
     
-    Compliance: OWASP MASVS-NETWORK-1, PCI-DSS 4.1-4.2, HIPAA 164.312(e)
+    Compliance: OWASP MASVS-NETWORK-1, MASVS-NETWORK-2, PCI-DSS 4.1-4.2, HIPAA 164.312(e)
+    
+    Certificate pins generated: January 2026
+    Pins must be regenerated when SSL certificates are renewed.
 -->
 <network-security-config>
     
@@ -32,18 +35,12 @@
             <certificates src="system" />
         </trust-anchors>
         
-        <!-- Certificate Pinning -->
-        <pin-set expiration="2027-12-31">
-            <!-- 
-                Generate pins for production using:
-                openssl s_client -servername 247tech.net -connect 247tech.net:443 2>/dev/null | \
-                openssl x509 -pubkey -noout | \
-                openssl pkey -pubin -outform der | \
-                openssl dgst -sha256 -binary | \
-                base64
-            -->
-            <pin digest="SHA-256">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
-            <pin digest="SHA-256">BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=</pin>
+        <!-- Certificate Pinning - SHA-256 Public Key Pins -->
+        <pin-set expiration="2027-01-21">
+            <!-- Primary certificate pin (leaf certificate) -->
+            <pin digest="SHA-256">Rktl1AzSr30CuXGSV3uEGnF5MYEXy3w655PEvZ3EV2Y=</pin>
+            <!-- Backup pin (intermediate CA certificate) -->
+            <pin digest="SHA-256">y7xVm0TVJNahMr2sZydE2jQH8SquXV9yLF9seROHHHU=</pin>
         </pin-set>
     </domain-config>
     
