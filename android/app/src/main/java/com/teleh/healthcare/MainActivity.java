@@ -3,38 +3,102 @@ package com.teleh.healthcare;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.WebView;
+import android.webkit.WebSettings;
+import android.widget.Toast;
+import android.util.Log;
 import com.getcapacitor.BridgeActivity;
+import com.teleh.healthcare.security.SecurityManager;
 
 public class MainActivity extends BridgeActivity {
+    
+    private static final String TAG = "MainActivity";
+    private SecurityManager securityManager;
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Register plugins
+        securityManager = SecurityManager.getInstance(this);
+        
         registerPlugin(HC03BluetoothPlugin.class);
         registerPlugin(SecurityPlugin.class);
         
-        // FLAG_SECURE: Prevent screenshots and screen recording (MediaProjection fix)
-        // Security: HIGH (6.8) - Prevents sensitive data exposure via screenshots/recording
+        performSecurityChecks();
+        
+        applySecurityProtections();
+        
+        configureSecureWebView();
+    }
+    
+    private void performSecurityChecks() {
+        if (securityManager.isRooted()) {
+            showSecurityWarning("Device appears to be rooted. Some features may be restricted.");
+        }
+        
+        if (securityManager.isHookingFrameworkDetected()) {
+            showSecurityWarning("Security framework detected. App functionality may be limited.");
+        }
+        
+        if (securityManager.isDeveloperOptionsEnabled()) {
+            if (!BuildConfig.DEBUG) {
+            }
+        }
+        
+        if (securityManager.isAdbEnabled()) {
+            if (!BuildConfig.DEBUG) {
+            }
+        }
+    }
+    
+    private void applySecurityProtections() {
         getWindow().setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
         );
         
-        // Tapjacking Protection: Filter touch events when window is obscured
-        // Security: MEDIUM (4.8) - Prevents overlay attacks and credential theft
-        // ADHCC Compliance: Android Tapjacking vulnerability fix
         enableTapjackingProtection();
     }
     
-    /**
-     * Enable tapjacking protection by filtering touch events when window is obscured.
-     * Prevents malicious overlay attacks that could steal user credentials.
-     */
+    private void configureSecureWebView() {
+        try {
+            WebView webView = getBridge().getWebView();
+            if (webView != null) {
+                WebSettings settings = webView.getSettings();
+                
+                settings.setAllowFileAccessFromFileURLs(false);
+                settings.setAllowUniversalAccessFromFileURLs(false);
+                
+                settings.setAllowFileAccess(false);
+                settings.setAllowContentAccess(false);
+                
+                settings.setGeolocationEnabled(false);
+                
+                settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+                
+                settings.setSaveFormData(false);
+                settings.setSavePassword(false);
+            }
+        } catch (Exception e) {
+        }
+    }
+    
     private void enableTapjackingProtection() {
         View rootView = getWindow().getDecorView().getRootView();
         if (rootView != null) {
             rootView.setFilterTouchesWhenObscured(true);
         }
+    }
+    
+    private void showSecurityWarning(String message) {
+        runOnUiThread(() -> {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        });
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        applySecurityProtections();
     }
 }
