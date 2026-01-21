@@ -37,12 +37,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email and password are required" });
       }
 
-      const user = await storage.getUserByEmail(email);
+      // Input validation - prevent injection attacks (ADHCC Security)
+      const emailStr = String(email).trim().toLowerCase();
+      const passwordStr = String(password);
+      
+      // Validate email format (basic regex check)
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(emailStr) || emailStr.length > 254) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+      
+      // Validate password length limits
+      if (passwordStr.length < 1 || passwordStr.length > 128) {
+        return res.status(400).json({ message: "Invalid password" });
+      }
+
+      const user = await storage.getUserByEmail(emailStr);
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcrypt.compare(passwordStr, user.password);
       if (!isValidPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }

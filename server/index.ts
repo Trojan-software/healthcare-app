@@ -14,6 +14,9 @@ app.disable('x-powered-by');
 
 // Security headers middleware - apply to all requests
 app.use((req: Request, res: Response, next: NextFunction) => {
+  // Explicitly remove X-Powered-By header (defense in depth)
+  res.removeHeader('X-Powered-By');
+  
   // Cache-Control for API routes - prevent caching of sensitive data
   if (req.path.startsWith('/api')) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
