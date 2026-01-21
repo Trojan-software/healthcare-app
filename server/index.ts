@@ -100,12 +100,36 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Global error handler - prevents stack trace/error detail leakage (ADHCC Security)
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+    
+    // Log error details server-side only (not exposed to client)
+    console.error(`[ERROR] ${status}: ${err.message || 'Unknown error'}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(err.stack);
+    }
+    
+    // Return generic message to client - never expose internal details
+    const safeMessages: Record<number, string> = {
+      400: "Bad Request",
+      401: "Unauthorized",
+      403: "Forbidden",
+      404: "Not Found",
+      405: "Method Not Allowed",
+      429: "Too Many Requests",
+      500: "Internal Server Error",
+      502: "Bad Gateway",
+      503: "Service Unavailable"
+    };
+    
+    const clientMessage = safeMessages[status] || "An error occurred";
+    res.status(status).json({ message: clientMessage });
+  });
+  
+  // 404 handler for undefined routes
+  app.use((_req: Request, res: Response) => {
+    res.status(404).json({ message: "Not Found" });
   });
 
   // Note: Vite setup is handled in registerRoutes to avoid double configuration
