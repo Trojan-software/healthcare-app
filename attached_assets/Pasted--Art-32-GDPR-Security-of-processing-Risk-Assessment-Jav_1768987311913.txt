@@ -1,0 +1,85 @@
+	Art-32-GDPR	Security of processing
+Risk Assessment		
+
+Java source code is typically compiled into Java bytecode – the instruction set of the Java virtual machine. The compiled Java bytecode can be easily reversed engineered back into source code by freely available decompilers. Bytecode Obfuscation is the process of modifying Java bytecode (executable or library) so that it is much harder to read and understand for a hacker but remains fully functional.
+Application is vulnerable to reverse engineering without any obfuscation
+
+
+
+Sample proguard-rules.pro lines which fails obfuscation when used:
+
+-dontobfuscate
+
+Or if no proguard or obfuscation is used then you can use number of freely available Java decompilers that can recreate source code from Java bytecode (executables or libraries).
+Popular decompilers include:
+
+▪	Bytecode Viewer - A Java 8 Jar & Android APK Reverse Engineering Suite (Decompiler, Editor, Debugger & More)
+▪	CFR - Another Java decompiler
+▪	JDGui - Yet another fast Java decompiler
+▪	Fernflower - An analytical decompiler for Java
+▪	JadX - tool to decompile APK and DEX files
+
+
+To enable shrinking, obfuscation, and optimization, using proguard include the following in your project-level
+build.gradle file.
+
+android {
+buildTypes {
+release {
+ 
+// Enables code shrinking, obfuscation, and optimization for only
+// your project's release build type. minifyEnabled true
+
+// Enables resource shrinking, which is performed by the
+// Android Gradle plugin. shrinkResources true
+
+ 
+
+
+
+
+
+
+
+
+}
+}
+...
+}
+ 
+// Includes the default ProGuard rules files that are packaged with
+// the Android Gradle plugin. To learn more, go to the section about
+// R8 configuration files. proguardFiles getDefaultProguardFile(
+'proguard-android-optimize.txt'), 'proguard-rules.pro'
+ 
+
+Sample proguard-rules.pro which you can use to obfuscate code:
+
+// Basic proguard rules
+-optimizations !code/simplification/arithmetic
+-keepattributes <em>Annotation</em>
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
+-keep class *<em>.R$</em>
+
+-dontskipnonpubliclibraryclasses
+-forceprocessing
+-optimizationpasses 5
+-overloadaggressively
+
+// Removing logging code
+-assumenosideeffects class android.util.Log { public static *** d();
+public static *** v(); public static *** i(); public static *** w(); public static *** e();
+}
+
+// Crashlytics code as given below which one can exclude
+
+-keep class com.crashlytics.** { *; }
+-keep class com.crashlytics.android.**
+-keepattributes SourceFile,LineNumberTable
+
+
+
+▪	M9: Reverse Engineering
+▪	Bytecode Obfuscation
+▪	Android Developer Resource to shrink and obfuscate your code in proguard
