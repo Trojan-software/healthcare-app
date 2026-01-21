@@ -45,18 +45,23 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   
   // Content Security Policy for healthcare app (production-ready)
+  // Enhanced CSP - ADHCC Security Compliant
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self'", // Removed unsafe-inline and unsafe-eval for production
-    "style-src 'self' 'unsafe-inline'", // Style inline needed for dynamic theming
+    "script-src 'self'", // No unsafe-inline/unsafe-eval, React bundled scripts only
+    "style-src 'self' 'unsafe-inline'", // Inline styles needed for dynamic theming
     "img-src 'self' data: https:",
     "font-src 'self'",
-    "connect-src 'self' wss:", // Only secure websockets in production
+    "connect-src 'self' wss:", // Secure websockets only
     "manifest-src 'self'",
     "worker-src 'self'",
-    "frame-ancestors 'none'", // Modern alternative to X-Frame-Options
-    "upgrade-insecure-requests", // Automatically upgrade HTTP to HTTPS
-    "block-all-mixed-content" // Block mixed content for security
+    "object-src 'none'", // Block plugins (Flash, Java applets)
+    "base-uri 'self'", // Prevent base tag hijacking
+    "form-action 'self'", // Forms can only submit to self
+    "frame-ancestors 'none'", // Prevent clickjacking
+    "frame-src 'none'", // No iframes allowed
+    "upgrade-insecure-requests",
+    "block-all-mixed-content"
   ].join('; ');
   
   res.setHeader('Content-Security-Policy', cspDirectives);
