@@ -1,0 +1,129 @@
+Keylogger protection is crucial for safeguarding sensitive information from malicious applications that may be installed on a device. A keylogger is a type of malware designed to capture and record keystrokes or other input data from the user. If such an application is present on the device, it can potentially intercept and steal personal or confidential information by tracking what you type.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+3.9	Attack vector: LOCAL	Attack complexity: HIGH
+	Privileges required: HIGH	User Interaction: NONE
+	Scope: CHANGED	Confidentiality Impact: LOW
+	Integrity Impact: LOW	Availability Impact: NONE
+
+
+
+ 
+OWASP Mobile Top 10 (2024)
+ 
+M6	Inadequate Privacy Controls
+ 
+CWE	CWE-693	https://cwe.mitre.org/data/definitions/693.html
+
+
+OWASP MASVS (v2)	MASVS-RESILIANCE-2	The app implements anti-tampering mechanisms.
+
+
+ASVS	V1.8.1	Verify that all sensitive data is identified and classified into protection levels.
+V1.8.2	Verify that all protection levels have an associated set of protection requirements, such as encryption requirements, integrity requirements, retention, privacy and other confidentiality requirements, and that these are applied in the architecture.
+
+PCI-DSS (v4.0)	7.1	Restrict access to cardholder data by business need to know
+Processes and mechanisms for restricting access to system components and cardholder data by business need to know are defined and understood
+ 
+
+	7.2	Restrict access to cardholder data by business need to
+know
+		Access to system components and data is appropriately defined and assigned
+	6.2	Develop and maintain secure systems and applications
+		Bespoke and custom software are developed securely
+	6.3	Develop and maintain secure systems and applications
+		Security vulnerabilities are identified and addressed
+
+HIPAA	
+164.308(a)(4)	
+Administrative Safeguards: Information Access Management
+		▪	Isolating Health Care Clearinghouse Functions
+(Required)
+If a health care clearinghouse is part of a larger organization, the clearinghouse must implement policies and procedures that protect the electronic protected health information of the clearinghouse from unauthorized access by the larger organization.
+▪	Access Authorization (Addressable)
+Implement policies and procedures for granting access to electronic protected health information, for example, through access to a workstation, transaction, program, process, or other mechanism.
+▪	Access Establishment and Modification (Addressable) Implement policies and procedures that, based upon the entity's access authorization policies, establish, document, review, and modify a user's right of access to a workstation, transaction, program, or process.
+
+164.312(c)(1)	Technical Safeguards: Integrity
+
+▪	Mechanism to Authenticate Electronic Protected (Addressable)
+Implement electronic mechanisms to corroborate that electronic protected health information has not been altered or destroyed in an unauthorized manner.
+
+
+GDPR	Art-25-GDPR	Data protection by design and by default Art-32-GDPR	Security of processing
+
+Keyloggers are malicious software designed to capture and record keystrokes or input data from users, posing a significant threat to personal and sensitive information. They operate by monitoring keyboard activity, potentially stealing passwords, credit card details, and other confidential data. Keylogger protection involves implementing secure input methods, such as custom keyboards and virtual keyboards, to prevent unauthorized access to typed information. Effective protection ensures that even if a keylogger is present, it cannot intercept or compromise the data being entered.
+ 
+No Keylogger Protection Found
+
+The application does not implement a virtual keyboard service and thus is vulnerable to keylogger attacks
+
+
+
+Application should utilize a virtual or custom keyboard. By doing so, the app can prevent keyloggers from capturing sensitive input. Below is an example of how to implement a virtual keyboard.
+Create a new service
+
+class MyInputMethodService : InputMethodService() { override fun onCreateInputView(): View {
+val keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardView return keyboardView
+}
+}
+
+Create an Input Method XML Configuration
+
+<?xml version="1.0" encoding="utf-8"?>
+<input-method xmlns:android="http://schemas.android.com/apk/res/android" android:settingsActivity=".SettingsActivity" android:service="com.example.MyInputMethodService">
+<subtype
+android:label="@string/subtype_label" android:locale="en_US" android:mode="keyboard" android:imeSubtypeLocale="en_US"/>
+</input-method>
+
+Create the keyboard layout XML
+
+<?xml version="1.0" encoding="utf-8"?>
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android">
+<Row>
+<Key android:codes="113" android:keyLabel="Q" />
+<Key android:codes="119" android:keyLabel="W" />
+<!-- Add more keys as needed -->
+</Row>
+<!-- Add more rows as needed -->
+</Keyboard>
+
+Create the keyboard view layout
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical"
+android:layout_width="match_parent" android:layout_height="wrap_content">
+<com.example.KeyboardView android:id="@+id/keyboard_view" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+</LinearLayout>
+ 
+Implement the keyboard logic and events
+
+class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardActionListener { private lateinit var keyboardView: KeyboardView
+private lateinit var keyboard: Keyboard override fun onCreateInputView(): View {
+keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardView keyboard = Keyboard(this, R.xml.keyboard_layout)
+keyboardView.keyboard = keyboard keyboardView.setOnKeyboardActionListener(this) return keyboardView
+}
+override fun onKey(primaryCode: Int, keyCodes: IntArray) { val inputConnection = currentInputConnection
+inputConnection?.commitText(primaryCode.toChar().toString(), 1)
+}
+}
+
+Add the service declaration in the manifest with correct permissions
+
+<service
+android:name=".MyInputMethodService" android:permission="android.permission.BIND_INPUT_METHOD">
+<intent-filter>
+<action android:name="android.service.inputmethod.InputMethodService" />
+</intent-filter>
+<meta-data
+android:name="android.view.im" android:resource="@xml/input_method_config"/>
+</service>
+
+
+
+Without keylogger protection, there is a significant risk of sensitive information being stolen, which could lead to serious consequences such as identity theft and financial loss. This vulnerability exposes both the application and its users to potential security breaches.
