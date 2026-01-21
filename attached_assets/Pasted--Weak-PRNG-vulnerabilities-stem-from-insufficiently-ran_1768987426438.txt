@@ -1,0 +1,99 @@
+
+Weak PRNG vulnerabilities stem from insufficiently random initializations, improper algorithms, or inadequate entropy sources. Such vulnerabilities can result in unauthorized access, data breaches, and compromised cryptographic operations.
+
+Activity := Lcom/pushwoosh/internal/network/c;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ pushwoosh/internal/network/c;->sendRequest(Lcom/pushwoosh/internal/network/PushRequest; Ljava/ lang/String; Lcom/pushwoosh/function/Callback;)V. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/onesignal/common/AndroidUtils;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ onesignal/common/AndroidUtils;->getRandomDelay(I I)I. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/internal/ads/zznt;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ google/android/gms/internal/ads/zznt;-><clinit>()V. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/internal/ads/zzuz;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ google/android/gms/internal/ads/zzuz;-><init>(I)V. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/internal/ads/zzaqf;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ google/android/gms/internal/ads/zzaqf;->zze()Ljava/util/Random;. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/ads/internal/client/zzay;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ google/android/gms/ads/internal/client/zzay;-><init>()V. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+ 
+Activity := Lcom/google/android/gms/measurement/internal/zzln;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ google/android/gms/measurement/internal/zzln;->zzq()J. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/internal/measurement/zzee;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ google/android/gms/internal/measurement/zzee;->zzb()J. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/internal/ads/zzuz;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ google/android/gms/internal/ads/zzuz;->zzg(I I)Lcom/google/android/gms/internal/ads/zzuz;. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/internal/ads/zzuz;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ google/android/gms/internal/ads/zzuz;->zzf()Lcom/google/android/gms/internal/ads/zzuz;. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/internal/ads/zzuz;
+
+An activity was found using an insecure randomization function via the Random class in Lcom/ google/android/gms/internal/ads/zzuz;->zzh(I I)Lcom/google/android/gms/internal/ads/zzuz;. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/firebase/installations/Utils;
+
+An activity was found using an insecure randomization function via the Math.random method in Lcom/google/firebase/installations/Utils;->getRandomDelayForSyncPrevention()J. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/facebook/ads/internal/dynamicloading/DexLoadErrorReporter;
+
+An activity was found using an insecure randomization function via the Math.random method in Lcom/facebook/ads/internal/dynamicloading/DexLoadErrorReporter;->reportDexLoadingIssue(Landroid/ content/Context; Ljava/lang/String; D)V. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/bumptech/glide/load/resource/gif/GifFrameLoader;
+
+An activity was found using an insecure randomization function via the Math.random method in Lcom/bumptech/glide/load/resource/gif/GifFrameLoader;->getFrameSignature()Lcom/bumptech/glide/ load/Key;. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+ 
+Activity := Lcom/google/android/gms/internal/ads/zzffk;
+
+An activity was found using an insecure randomization function via the Math.random method in Lcom/google/android/gms/internal/ads/zzffk;->zza()Z. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/internal/ads/zzbst;
+
+An activity was found using an insecure randomization function via the Math.random method in Lcom/google/android/gms/internal/ads/zzbst;->zzg(Ljava/lang/Throwable; Ljava/lang/String; F)V. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+Activity := Lcom/google/android/gms/ads/identifier/AdvertisingIdClient;
+
+An activity was found using an insecure randomization function via the Math.random method in Lcom/google/android/gms/ads/identifier/AdvertisingIdClient;->zzc(Lcom/google/android/gms/ads/ identifier/AdvertisingIdClient$Info; Z F J Ljava/lang/String; Ljava/lang/Throwable;)Z. As a result, the generated random data will be predictable and an attacker can guess or infer sensitive information
+
+
+
+import java.util.Random; public class generateRandom {
+public static void main(String args[]) { Random rand = new Random();
+int rand_int = rand.nextInt(1000);
+}
+}
+
+OR
+
+import java.lang.Math;
+
+public class generateRandom {
+public static void main(String[] args) { double randomValue = Math.random();
+}
+}
+
+
+
+
+import java.security.SecureRandom; public class generateRandom {
+public static void main(String args[]) { SecureRandom rand = new SecureRandom(); int rand_int = rand.nextInt(1000);
+}
+}
+ 
+
+ 
+Weak PRNG (Pseudorandom Number Generator) vulnerabilities within Android applications can have far-reaching business consequences. Such vulnerabilities can lead to data breaches and unauthorized access, undermining user trust and potentially violating regulatory requirements. Financial losses may result from legal actions, compensations, and operational disruptions caused by security incidents. Moreover, a compromised reputation can lead to decreased user adoption, loss of competitive advantage, and even app removal from stores

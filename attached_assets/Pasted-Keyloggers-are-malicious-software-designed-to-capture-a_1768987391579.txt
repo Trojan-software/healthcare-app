@@ -1,0 +1,70 @@
+Keyloggers are malicious software designed to capture and record keystrokes or input data from users, posing a significant threat to personal and sensitive information. They operate by monitoring keyboard activity, potentially stealing passwords, credit card details, and other confidential data. Keylogger protection involves implementing secure input methods, such as custom keyboards and virtual keyboards, to prevent unauthorized access to typed information. Effective protection ensures that even if a keylogger is present, it cannot intercept or compromise the data being entered.
+ 
+No Keylogger Protection Found
+
+The application does not implement a virtual keyboard service and thus is vulnerable to keylogger attacks
+
+
+
+Application should utilize a virtual or custom keyboard. By doing so, the app can prevent keyloggers from capturing sensitive input. Below is an example of how to implement a virtual keyboard.
+Create a new service
+
+class MyInputMethodService : InputMethodService() { override fun onCreateInputView(): View {
+val keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardView return keyboardView
+}
+}
+
+Create an Input Method XML Configuration
+
+<?xml version="1.0" encoding="utf-8"?>
+<input-method xmlns:android="http://schemas.android.com/apk/res/android" android:settingsActivity=".SettingsActivity" android:service="com.example.MyInputMethodService">
+<subtype
+android:label="@string/subtype_label" android:locale="en_US" android:mode="keyboard" android:imeSubtypeLocale="en_US"/>
+</input-method>
+
+Create the keyboard layout XML
+
+<?xml version="1.0" encoding="utf-8"?>
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android">
+<Row>
+<Key android:codes="113" android:keyLabel="Q" />
+<Key android:codes="119" android:keyLabel="W" />
+<!-- Add more keys as needed -->
+</Row>
+<!-- Add more rows as needed -->
+</Keyboard>
+
+Create the keyboard view layout
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical"
+android:layout_width="match_parent" android:layout_height="wrap_content">
+<com.example.KeyboardView android:id="@+id/keyboard_view" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+</LinearLayout>
+ 
+Implement the keyboard logic and events
+
+class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardActionListener { private lateinit var keyboardView: KeyboardView
+private lateinit var keyboard: Keyboard override fun onCreateInputView(): View {
+keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardView keyboard = Keyboard(this, R.xml.keyboard_layout)
+keyboardView.keyboard = keyboard keyboardView.setOnKeyboardActionListener(this) return keyboardView
+}
+override fun onKey(primaryCode: Int, keyCodes: IntArray) { val inputConnection = currentInputConnection
+inputConnection?.commitText(primaryCode.toChar().toString(), 1)
+}
+}
+
+Add the service declaration in the manifest with correct permissions
+
+<service
+android:name=".MyInputMethodService" android:permission="android.permission.BIND_INPUT_METHOD">
+<intent-filter>
+<action android:name="android.service.inputmethod.InputMethodService" />
+</intent-filter>
+<meta-data
+android:name="android.view.im" android:resource="@xml/input_method_config"/>
+</service>
+
+
+
+Without keylogger protection, there is a significant risk of sensitive information being stolen, which could lead to serious consequences such as identity theft and financial loss. This vulnerability exposes both the application and its users to potential security breaches.
