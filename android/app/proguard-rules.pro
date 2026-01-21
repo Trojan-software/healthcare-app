@@ -21,8 +21,12 @@
 # Keep custom plugins
 -keep class com.teleh.healthcare.HC03BluetoothPlugin { *; }
 -keep class com.teleh.healthcare.SecurityPlugin { *; }
--keep class com.teleh.healthcare.SecurityManager { *; }
 -keep class com.teleh.healthcare.EcgManager { *; }
+
+# Keep security package (public APIs only, internals are obfuscated)
+-keep class com.teleh.healthcare.security.SecurityManager {
+    public <methods>;
+}
 
 # Keep NeuroSky SDK
 -keep class com.neurosky.** { *; }
@@ -121,14 +125,6 @@
 # obfuscate internal methods and fields to protect security logic
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Obfuscate SecurityManager internal methods (keep only public API)
--keep class com.teleh.healthcare.SecurityManager {
-    public <methods>;
-}
--keepclassmembers class com.teleh.healthcare.SecurityManager {
-    private <methods>;
-    private <fields>;
-}
 
 # Additional protection for sensitive data classes
 -keepclassmembers class * implements java.io.Serializable {
