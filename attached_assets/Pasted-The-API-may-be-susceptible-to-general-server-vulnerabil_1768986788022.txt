@@ -1,0 +1,162 @@
+The API may be susceptible to general server vulnerabilities, which can lead to further attacks
+
+247tech.net:443/api/login: The difference in length between the response to the baseline request and the request returned when sending an attack string exceeds 1000.0 percent, which could indicate a vulnerability to injection attacks
+confidence: LOW
+cvss: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N
+cvss_base: 5.3
+cvss_metrics_humanized: '[{"key": "Attack Vector", "value": "Network"}, {"key": "Attack Complexity", "value": "Low"}, {"key": "Privileges Required", "value": "None"}, {"key": "User
+Interaction", "value": "None"}, {"key": "Scope", "value": "Unchanged"}, {"key": "Confidentiality
+Impact", "value": "None"}, {"key": "Integrity Impact", "value": "Low"}, {"key": "Availability Impact", "value": "None"}]'
+param:
+location: headers method: POST variables:
+-	Sec-Ch-Ua
+-	Accept
+-	Connection
+-	Accept-Encoding
+-	Cookie
+-	User-Agent
+-	Referer
+ 
+-	Sec-Fetch-Dest
+-	Sec-Fetch-Site
+-	Sec-Fetch-Mode
+-	Origin
+-	Sec-Ch-Ua-Mobile
+-	Sec-Ch-Ua-Platform
+-	Accept-Language
+-	X-Requested-With
+-	Content-Length request:
+body: '{"email": "samyabdo20221@gmaii.com", "password": "admin123"}' headers:
+Accept: '*/*'
+Accept-Encoding: gzip, deflate, br, zstd Accept-Language: en-US,en;q=0.9 Connection: keep-alive
+Content-Length: '57'
+Content-Type: application/json Cookie:
+GAESA=Cp4BMDA1ZWI2OTc0YzE3ZjMyNjFhMTViNDNkZTg5NTA3ZDVkZGI1ZTlkYWEyMzc2ZmY0YTlkMmMyYTM5ODc2OWQyN
+jllMTU3Y2MyZmVkZTNiZWVmM2YyMWE2ZjQ1YmIyNTJjNDBlMmFhNWJhMGY1Njg3NjFhNDg3NjlhMDdmMTAzNmU0Mzk4ZmRk YmJlZTcwNDQ5MjRjOGMxZjQyZjRkZmMQjdvV-70z
+Host: 247tech.net:443 Origin: https://247tech.net
+Referer: https://247tech.net/?onesignal_push_id=95783120-768b-47a8-9c88-8c6e6ae13706 Sec-Ch-Ua: '"Android WebView";v="143", "Chromium";v="143", "Not A(Brand";v="24"'
+Sec-Ch-Ua-Mobile: ?1
+Sec-Ch-Ua-Platform: '*!@#$^&()[]{}|.,"\''/''''"' Sec-Fetch-Dest: empty
+Sec-Fetch-Mode: cors
+Sec-Fetch-Site: same-origin
+User-Agent: Mozilla/5.0 (Linux; Android 16; Pixel 6a Build/BP3A.250905.014; wv) AppleWebKit/
+537.36 (KHTML, like Gecko) Version/4.0 Chrome/143.0.7499.192 Mobile Safari/537.36 X-Requested-With: com.digitaloperaocean.webviewcode
+method: POST params: {}
+url: https://247tech.net:443/api/login response:
+cookies: {} headers:
+Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate Content-Length: '33'
+Content-Security-Policy: 'default-src ''self''; script-src ''self''; style-src ''self'' ''unsafe-inline''; img-src ''self'' data: https:; font-src ''self''; connect-src ''self'' wss:; manifest-src ''self''; worker-src ''self''; frame-ancestors ''none''; upgrade-insecure-requests; block-all-mixed-content'
+Content-Type: application/json; charset=utf-8 Date: Wed, 21 Jan 2026 07:43:34 GMT
+Etag: W/"21-dBEoW0UmTF+EGUMaprEp9/8zNNA" Expires: '0'
+Pragma: no-cache
+Referrer-Policy: strict-origin-when-cross-origin Server: Google Frontend
+ 
+Strict-Transport-Security: max-age=63072000; includeSubDomains, max-age=31536000; includeSubDomains
+Surrogate-Control: no-store Via: 1.1 google
+X-Cloud-Trace-Context: 9552bdd86f0c7dde65d02c37137cd0f6 X-Content-Type-Options: nosniff
+X-Powered-By: Express
+X-Xss-Protection: 1; mode=block reason: Unauthorized
+status_code: 401
+text: '{"message":"Invalid credentials"}' url: https://247tech.net:443/api/login version: 11
+severity: MEDIUM
+
+confidence: LOW
+cvss: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N
+cvss_base: 5.3
+cvss_metrics_humanized: '[{"key": "Attack Vector", "value": "Network"}, {"key": "Attack Complexity", "value": "Low"}, {"key": "Privileges Required", "value": "None"}, {"key": "User
+Interaction", "value": "None"}, {"key": "Scope", "value": "Unchanged"}, {"key": "Confidentiality
+Impact", "value": "None"}, {"key": "Integrity Impact", "value": "Low"}, {"key": "Availability Impact", "value": "None"}]'
+param:
+location: data method: POST type: null variables:
+-	password
+-	email request:
+body: '{"email": "<IMG SRC=/ onerror=\"alert(String.fromCharCode(88,83,83))\"></img>", "password": "admin123"}'
+headers:
+Accept: '*/*'
+Accept-Encoding: gzip, deflate, br, zstd Accept-Language: en-US,en;q=0.9 Connection: keep-alive
+Content-Length: '57'
+Content-Type: application/json Cookie:
+GAESA=Cp4BMDA1ZWI2OTc0YzE3ZjMyNjFhMTViNDNkZTg5NTA3ZDVkZGI1ZTlkYWEyMzc2ZmY0YTlkMmMyYTM5ODc2OWQyN
+jllMTU3Y2MyZmVkZTNiZWVmM2YyMWE2ZjQ1YmIyNTJjNDBlMmFhNWJhMGY1Njg3NjFhNDg3NjlhMDdmMTAzNmU0Mzk4ZmRk YmJlZTcwNDQ5MjRjOGMxZjQyZjRkZmMQjdvV-70z
+Host: 247tech.net:443 Origin: https://247tech.net
+Referer: https://247tech.net/?onesignal_push_id=95783120-768b-47a8-9c88-8c6e6ae13706 Sec-Ch-Ua: '"Android WebView";v="143", "Chromium";v="143", "Not A(Brand";v="24"'
+Sec-Ch-Ua-Mobile: ?1
+Sec-Ch-Ua-Platform: '"Android"' Sec-Fetch-Dest: empty
+Sec-Fetch-Mode: cors
+Sec-Fetch-Site: same-origin
+User-Agent: Mozilla/5.0 (Linux; Android 16; Pixel 6a Build/BP3A.250905.014; wv) AppleWebKit/
+ 
+537.36 (KHTML, like Gecko) Version/4.0 Chrome/143.0.7499.192 Mobile Safari/537.36 X-Requested-With: com.digitaloperaocean.webviewcode
+method: POST params: {}
+url: https://247tech.net:443/api/login response:
+cookies: {} headers:
+Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate Content-Length: '33'
+Content-Security-Policy: 'default-src ''self''; script-src ''self''; style-src ''self'' ''unsafe-inline''; img-src ''self'' data: https:; font-src ''self''; connect-src ''self'' wss:; manifest-src ''self''; worker-src ''self''; frame-ancestors ''none''; upgrade-insecure-requests; block-all-mixed-content'
+Content-Type: application/json; charset=utf-8 Date: Wed, 21 Jan 2026 07:43:36 GMT
+Etag: W/"21-dBEoW0UmTF+EGUMaprEp9/8zNNA" Expires: '0'
+Pragma: no-cache
+Referrer-Policy: strict-origin-when-cross-origin Server: Google Frontend
+Strict-Transport-Security: max-age=63072000; includeSubDomains, max-age=31536000; includeSubDomains
+Surrogate-Control: no-store Via: 1.1 google
+X-Cloud-Trace-Context: ccaa848cedd82d153dde8d1de9c4182c X-Content-Type-Options: nosniff
+X-Powered-By: Express
+X-Xss-Protection: 1; mode=block reason: Unauthorized
+status_code: 401
+text: '{"message":"Invalid credentials"}' url: https://247tech.net:443/api/login version: 11
+severity: MEDIUM
+ 
+
+
+ 
+
+
+Android API offers WebView to deliver a web application (or just a web page) as a part of a client app. A common scenario in which using WebView is helpful is when you want to provide information in your application that you might need to update, such as an end-user agreement or a user guide. Another scenario is if your application provides data to the user that always requires an Internet connection to retrieve data, such as email. In this case, you might find that it's easier to build a WebView in your Android application that shows a web page with all the user data, rather than performing a network request, then parsing the data and rendering it in an Android layout.
+
+Risk Rating	Scan Type
+
+
+
+Version 3.0 Base Score
+
+5.4	Attack vector: NETWORK	Attack complexity: HIGH
+	Privileges required: LOW	User Interaction: REQUIRED
+	Scope: UNCHANGED	Confidentiality Impact: HIGH
+	Integrity Impact: LOW	Availability Impact: NONE
+
+
+
+CWE	CWE-749	https://cwe.mitre.org/data/definitions/749.html
+
+MSTG	
+MSTG-PLATFORM-5	
+JavaScript is disabled in WebViews unless explicitly required.
+
+OWASP MASVS (v2)	
+MASVS-PLATFORM-2	
+The app uses WebViews securely.
+
+GDPR	
+Art-25-GDPR Art-32-GDPR	
+Data protection by design and by default Security of processing
+Risk Assessment		
+
+WebView can be susceptible to various exploits including client side Javascript injection and network sniffing if improperly implemented.
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+ 
+Reference: android.webkit.WebView.loadUrl Javascript enabled within WebView
+
+
+
+When using WebView, ensure the following:
+
+▪	Use WebView to load only trusted content
+▪	Always load resources over HTTPS
+▪	Avoid using Javascript within WebView. If Javascript is absolutely required, be sure that each context is escaped properly by using an XSS filter component such as the OWASP Java Encoder Project
+▪	Accept only plain-text user input and sanitize it before displaying in WebView
+
+
+An improperly implemented WebView instance may be vulnerable to XSS can be used to gain access to shared preference files using file:///. When Javascript is enabled, it may allow adversaries to perform XSS attacks. Furthermore, not loading WebView over HTTPS may allow attackers to sniff data from network transmissions and perform Man-in-the-Middle attack by injecting arbitrary JavaScript into the WebView.
