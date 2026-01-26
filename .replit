@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["openjdk17", "android-tools", "unzip", "jdk21"]
+packages = ["openjdk17", "android-tools", "unzip", "jdk21", "apktool"]
 
 [deployment]
 deploymentTarget = "autoscale"
