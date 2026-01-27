@@ -3,16 +3,9 @@ workflows:
     name: 24/7 Tele H Android
     max_build_duration: 120
     instance_type: mac_mini_m1
-    integrations:
-      app_store_connect: codemagic
     environment:
-      android_signing:
-        - keystore_reference
-      groups:
-        - google_play
       vars:
         PACKAGE_NAME: "com.teleh.healthcare"
-        GOOGLE_PLAY_TRACK: internal
       node: 18
     scripts:
       - name: Install dependencies
@@ -25,10 +18,11 @@ workflows:
         script: |
           npx cap copy android
           npx cap update android
-      - name: Build Android
+      - name: Build Android Debug
         script: |
           cd android
-          ./gradlew assembleRelease
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
     artifacts:
       - android/app/build/outputs/**/*.apk
       - android/app/build/outputs/**/mapping.txt
