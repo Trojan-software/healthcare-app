@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -91,7 +92,7 @@ export default function EnhancedAdminDashboard() {
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/admin/dashboard'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/dashboard');
+      const response = await fetch(`${API_BASE_URL}/api/admin/dashboard`);
       if (!response.ok) throw new Error('Failed to fetch dashboard stats');
       return response.json();
     }
@@ -101,7 +102,7 @@ export default function EnhancedAdminDashboard() {
   const { data: patientsData, isLoading: patientsLoading } = useQuery({
     queryKey: ['/api/admin/patients'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/patients');
+      const response = await fetch(`${API_BASE_URL}/api/admin/patients`);
       if (!response.ok) throw new Error('Failed to fetch patients');
       return response.json();
     }
@@ -111,7 +112,7 @@ export default function EnhancedAdminDashboard() {
   const { data: devicesData, isLoading: devicesLoading } = useQuery({
     queryKey: ['/api/admin/devices'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/devices');
+      const response = await fetch(`${API_BASE_URL}/api/admin/devices`);
       if (!response.ok) throw new Error('Failed to fetch devices');
       return response.json();
     }

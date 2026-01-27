@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { handleApiError } from '@/lib/errorHandler';
+import { API_BASE_URL } from '@/lib/queryClient';
 import { useLanguage } from '@/lib/i18n';
 
 interface ScheduleSettings {
@@ -55,7 +56,7 @@ export default function CheckupScheduling({ patientId, onClose }: CheckupSchedul
 
   const loadPatients = async () => {
     try {
-      const response = await fetch('/api/patients');
+      const response = await fetch(`${API_BASE_URL}/api/patients`);
       if (response.ok) {
         const data = await response.json();
         setPatients(data);
