@@ -6,7 +6,7 @@ workflows:
     environment:
       vars:
         PACKAGE_NAME: "com.teleh.healthcare"
-      node: 18
+      node: 20
     scripts:
       - name: Install dependencies
         script: |
