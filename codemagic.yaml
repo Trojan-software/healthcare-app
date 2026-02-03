@@ -77,7 +77,7 @@ workflows:
       app_store_connect: codemagic
     environment:
       ios_signing:
-        distribution_type: development
+        distribution_type: ad_hoc
         bundle_identifier: com.teleh.healthcare
       vars:
         BUNDLE_ID: "com.teleh.healthcare"
