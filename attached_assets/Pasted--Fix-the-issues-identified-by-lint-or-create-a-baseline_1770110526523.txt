@@ -1,0 +1,49 @@
+ 
+  Fix the issues identified by lint, or create a baseline to see only new errors.
+  To create a baseline, run `gradlew updateLintBaseline` after adding the following to the module's build.gradle file:
+  ```
+  android {
+      lint {
+          baseline = file("lint-baseline.xml")
+      }
+  }
+  ```
+  For more details, see https://developer.android.com/studio/write/lint#snapshot
+  
+  /Users/builder/clone/android/app/src/main/AndroidManifest.xml:13: Error: Avoid hardcoding the debug mode; leaving it out allows debug and release builds to automatically assign one [HardcodedDebugMode]
+          android:debuggable="false"
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+     Explanation for issues of type "HardcodedDebugMode":
+     It's best to leave out the android:debuggable attribute from the manifest.
+     If you do, then the tools will automatically insert android:debuggable=true
+     when building an APK to debug on an emulator or device. And when you
+     perform a release build, such as Exporting APK, it will automatically set
+     it to false.
+  
+     If on the other hand you specify a specific value in the manifest file,
+     then the tools will always use it. This can lead to accidentally publishing
+     your app with debug information.
+  
+     https://goo.gle/HardcodedDebugMode
+  
+  1 errors, 0 warnings
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.12.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2m 48s
+114 actionable tasks: 114 executed
+
+
+Build failed :|
+Step 5 script `Build Android Release APK` exited with status code 1
