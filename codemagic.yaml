@@ -1,13 +1,9 @@
 workflows:
   ionic-capacitor-android:
-    name: 24/7 Tele H Android
+    name: 24/7 Tele H Android (Release)
     max_build_duration: 120
     instance_type: mac_mini_m1
     environment:
-      android_signing:
-        - healthcare_keystore
-      groups:
-        - android_credentials
       vars:
         PACKAGE_NAME: "com.teleh.healthcare"
       node: 20
@@ -22,11 +18,11 @@ workflows:
         script: |
           npx cap copy android
           npx cap update android
-      - name: Build Android Release
+      - name: Build Android Release APK
         script: |
           cd android
           chmod +x ./gradlew
-          # Build release APK with signing
+          # Build release APK (debuggable=false, ProGuard enabled)
           ./gradlew assembleRelease
     artifacts:
       - android/app/build/outputs/**/*.apk
