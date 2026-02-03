@@ -83,7 +83,7 @@ workflows:
         BUNDLE_ID: "com.teleh.healthcare"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
-        DEVELOPMENT_TEAM: "BPU9H96U68"
+        DEVELOPMENT_TEAM: "WN25J7TS7D"
       node: 20
       xcode: latest
       cocoapods: default
@@ -125,7 +125,7 @@ workflows:
               <key>provisioningProfiles</key>
               <dict>
                   <key>com.teleh.healthcare</key>
-                  <string>TeleH_AppStore</string>
+                  <string>24/7 Tele H App Store</string>
               </dict>
           </dict>
           </plist>
