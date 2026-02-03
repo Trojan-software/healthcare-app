@@ -83,6 +83,7 @@ workflows:
         BUNDLE_ID: "com.teleh.healthcare"
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
+        DEVELOPMENT_TEAM: "BPU9H96U68"
       node: 20
       xcode: latest
       cocoapods: default
@@ -101,13 +102,47 @@ workflows:
         script: |
           cd ios/App
           pod install
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+      - name: Create export options
+        script: |
+          cat > ~/export_options.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>$DEVELOPMENT_TEAM</string>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.teleh.healthcare</key>
+                  <string>TeleH_AppStore</string>
+              </dict>
+          </dict>
+          </plist>
+          EOF
       - name: Build iOS
         script: |
           cd ios/App
-          xcode-project build-ipa \
-            --workspace App.xcworkspace \
-            --scheme App \
-            --archive-flags "-destination 'generic/platform=iOS'"
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath $CM_BUILD_DIR/App.xcarchive \
+            archive
+          xcodebuild -exportArchive \
+            -archivePath $CM_BUILD_DIR/App.xcarchive \
+            -exportOptionsPlist ~/export_options.plist \
+            -exportPath $CM_BUILD_DIR/build/ios/ipa
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
