@@ -81,8 +81,16 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
             
+            // Use release signing if available, otherwise use debug for unsigned release
+            def keystorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            if (keystorePassword) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
+            
+            // SECURITY: Always disable debugging in release (ADHCC compliance)
             debuggable false
             jniDebuggable false
             renderscriptDebuggable false
