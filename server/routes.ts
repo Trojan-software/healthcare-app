@@ -94,6 +94,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mobile app login route - supports email or patient ID
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { emailOrPatientId, password } = req.body;
+
+      if (!emailOrPatientId || !password) {
+        return res.status(400).json({ success: false, message: "Email/Patient ID and password are required" });
+      }
+
+      const inputStr = String(emailOrPatientId).trim();
+      const passwordStr = String(password);
+      
+      // Validate password length limits
+      if (passwordStr.length < 1 || passwordStr.length > 128) {
+        return res.status(400).json({ success: false, message: "Invalid password" });
+      }
+
+      // Try to find user by email or patient ID
+      let user = null;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      
+      if (emailRegex.test(inputStr)) {
+        user = await storage.getUserByEmail(inputStr.toLowerCase());
+      } else {
+        user = await storage.getUserByPatientId(inputStr);
+      }
+      
+      if (!user) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+      }
+
+      const isValidPassword = await bcrypt.compare(passwordStr, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+      }
+
+      // Check if user account is active (verified)
+      if (!user.isVerified) {
+        return res.status(403).json({ 
+          success: false,
+          message: "Account is inactive. Please contact your administrator to activate your account." 
+        });
+      }
+
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        JWT_SECRET,
+        { expiresIn: "24h" }
+      );
+
+      const userResponse = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        patientId: user.patientId
+      };
+
+      res.json({ success: true, token, user: userResponse });
+    } catch (error) {
+      console.error("Auth login error:", error);
+      res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  });
+
   app.post("/api/register", async (req, res) => {
     try {
       const { 
