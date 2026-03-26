@@ -60,7 +60,7 @@ export default function MobileVitalSignsInput() {
 
   const recordVitalsMutation = useMutation({
     mutationFn: async (vitalsData: VitalSignsData) => {
-      const response = await apiRequest('POST', '/api/vital-signs', vitalsData);
+      const response = await apiRequest('/api/vital-signs', 'POST', vitalsData);
       return response.json();
     },
     onSuccess: () => {

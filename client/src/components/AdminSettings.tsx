@@ -57,7 +57,7 @@ export default function AdminSettings() {
         const s = settings.find(x => x.key === k);
         return { key: k, value: editValues[k], category: s?.category ?? 'general', description: s?.description ?? '' };
       });
-      const r = await apiRequest('PUT', '/api/admin/settings/bulk', payload);
+      const r = await apiRequest('/api/admin/settings/bulk', 'PUT', payload);
       if (!r.ok) throw new Error('Failed to save');
       return r.json();
     },

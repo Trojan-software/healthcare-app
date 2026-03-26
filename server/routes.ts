@@ -2048,6 +2048,442 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
 
+  // ─── Missing Routes — Aliases & New Endpoints ────────────────────────────
+
+  // /api/dashboard-stats  → alias of /api/admin/dashboard (no admin guard; used by patient app)
+  app.get("/api/dashboard-stats", async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const allAlerts = await storage.getAllAlerts();
+      const activePatients = patients.filter(p => p.isVerified).length;
+      const criticalAlerts = allAlerts.filter(a => a.severity === 'high').length;
+      res.json({
+        totalPatients: patients.length,
+        activePatients,
+        criticalAlerts,
+        activeAlerts: allAlerts.length,
+        completionRate: patients.length > 0 ? Math.round((activePatients / patients.length) * 100) : 0,
+        checkupsToday: allAlerts.filter(a => {
+          if (!a.createdAt) return false;
+          const d = new Date(a.createdAt);
+          const now = new Date();
+          return d.toDateString() === now.toDateString();
+        }).length,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  // /api/admin/patients/stats — patient count summary
+  app.get("/api/admin/patients/stats", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const now = Date.now();
+      const dayMs = 24 * 60 * 60 * 1000;
+      const byHospital: Record<string, number> = {};
+      for (const p of patients) {
+        if (p.hospitalId) byHospital[p.hospitalId] = (byHospital[p.hospitalId] || 0) + 1;
+      }
+      res.json({
+        stats: {
+          total: patients.length,
+          active: patients.filter(p => p.isVerified).length,
+          inactive: patients.filter(p => !p.isVerified).length,
+          registeredToday: patients.filter(p => p.createdAt && (now - new Date(p.createdAt).getTime()) < dayMs).length,
+          byHospital,
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch patient stats" });
+    }
+  });
+
+  // /api/admin/risk-patients — patients sorted by risk level based on vital status
+  app.get("/api/admin/risk-patients", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const riskFilter = req.query.filter as string || 'all';
+      const patientVitals = await Promise.all(
+        patients.map(async p => {
+          const pid = p.patientId || String(p.id);
+          const vitals = await storage.getVitalSignsByPatient(pid);
+          const latest = vitals.sort((a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime())[0];
+          const status = latest?.status || 'no_data';
+          const riskLevel = status === 'critical' ? 'critical' : status === 'attention' ? 'high' : status === 'normal' ? 'low' : 'moderate';
+          return {
+            patientId: pid,
+            patientName: `${p.firstName} ${p.lastName}`.trim(),
+            email: p.email,
+            hospitalId: p.hospitalId,
+            riskLevel,
+            vitalStatus: status,
+            lastReading: latest?.recordedAt || null,
+            heartRate: latest?.heartRate || null,
+            bloodPressure: latest?.bloodPressureSystolic ? `${latest.bloodPressureSystolic}/${latest.bloodPressureDiastolic}` : null,
+          };
+        })
+      );
+      const filtered = riskFilter === 'all' ? patientVitals : patientVitals.filter(p => p.riskLevel === riskFilter);
+      const sorted = filtered.sort((a, b) => {
+        const order: Record<string, number> = { critical: 0, high: 1, moderate: 2, low: 3 };
+        return (order[a.riskLevel] ?? 4) - (order[b.riskLevel] ?? 4);
+      });
+      res.json(sorted);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch risk patients" });
+    }
+  });
+
+  // /api/admin/health-metrics — aggregate vital metrics across all patients
+  app.get("/api/admin/health-metrics", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const allVitals = (await Promise.all(
+        patients.map(p => storage.getVitalSignsByPatient(p.patientId || String(p.id)))
+      )).flat();
+      const timeframe = req.query.timeframe as string || '7d';
+      const days = timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 7;
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+      const recent = allVitals.filter(v => v.recordedAt && new Date(v.recordedAt).getTime() > cutoff);
+      const hrVals = recent.filter(v => v.heartRate).map(v => v.heartRate!);
+      const sysVals = recent.filter(v => v.bloodPressureSystolic).map(v => v.bloodPressureSystolic!);
+      const diaVals = recent.filter(v => v.bloodPressureDiastolic).map(v => v.bloodPressureDiastolic!);
+      const o2Vals = recent.filter(v => v.oxygenLevel).map(v => v.oxygenLevel!);
+      const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+      const statusCounts = { normal: 0, attention: 0, critical: 0, no_data: 0 };
+      for (const v of recent) {
+        const s = (v.status || 'no_data') as keyof typeof statusCounts;
+        if (s in statusCounts) statusCounts[s]++;
+      }
+      res.json({
+        timeframe,
+        totalReadings: recent.length,
+        averages: {
+          heartRate: avg(hrVals),
+          systolic: avg(sysVals),
+          diastolic: avg(diaVals),
+          oxygenLevel: avg(o2Vals),
+        },
+        statusDistribution: statusCounts,
+        totalPatients: patients.length,
+        patientsWithReadings: new Set(recent.map(v => v.patientId)).size,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch health metrics" });
+    }
+  });
+
+  // /api/admin/health-trends — day-by-day vital averages
+  app.get("/api/admin/health-trends", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const allVitals = (await Promise.all(
+        patients.map(p => storage.getVitalSignsByPatient(p.patientId || String(p.id)))
+      )).flat();
+      const timeframe = req.query.timeframe as string || '7d';
+      const days = timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 7;
+      const result: any[] = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const dayVitals = allVitals.filter(v => {
+          if (!v.recordedAt) return false;
+          return new Date(v.recordedAt).toISOString().split('T')[0] === dateStr;
+        });
+        const hrVals = dayVitals.filter(v => v.heartRate).map(v => v.heartRate!);
+        const sysVals = dayVitals.filter(v => v.bloodPressureSystolic).map(v => v.bloodPressureSystolic!);
+        const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+        result.push({
+          date: dateStr,
+          readings: dayVitals.length,
+          avgHeartRate: avg(hrVals),
+          avgSystolic: avg(sysVals),
+          critical: dayVitals.filter(v => v.status === 'critical').length,
+          attention: dayVitals.filter(v => v.status === 'attention').length,
+          normal: dayVitals.filter(v => v.status === 'normal').length,
+        });
+      }
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch health trends" });
+    }
+  });
+
+  // /api/admin/health-comparison — multi-patient vital comparison
+  app.get("/api/admin/health-comparison", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const patientIds = req.query.patients ? String(req.query.patients).split(',') : [];
+      const timeframe = req.query.timeframe as string || '7d';
+      const days = timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 7;
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+      const targets = patientIds.length > 0
+        ? patients.filter(p => patientIds.includes(p.patientId || String(p.id)))
+        : patients.slice(0, 5);
+      const comparisons = await Promise.all(targets.map(async p => {
+        const pid = p.patientId || String(p.id);
+        const vitals = await storage.getVitalSignsByPatient(pid);
+        const recent = vitals.filter(v => v.recordedAt && new Date(v.recordedAt).getTime() > cutoff);
+        const hrVals = recent.filter(v => v.heartRate).map(v => v.heartRate!);
+        const sysVals = recent.filter(v => v.bloodPressureSystolic).map(v => v.bloodPressureSystolic!);
+        const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+        return {
+          patientId: pid,
+          patientName: `${p.firstName} ${p.lastName}`.trim(),
+          readings: recent.length,
+          avgHeartRate: avg(hrVals),
+          avgSystolic: avg(sysVals),
+          criticalCount: recent.filter(v => v.status === 'critical').length,
+        };
+      }));
+      res.json(comparisons);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch health comparison" });
+    }
+  });
+
+  // /api/admin/device-status — connected / disconnected device counts
+  app.get("/api/admin/device-status", requireAdmin, async (req, res) => {
+    try {
+      const devices = await storage.getAllHc03Devices();
+      const connected = devices.filter(d => d.connectionStatus === 'connected' || d.connectionStatus === 'charging').length;
+      const disconnected = devices.filter(d => d.connectionStatus === 'disconnected').length;
+      const lowBattery = devices.filter(d => typeof d.batteryLevel === 'number' && d.batteryLevel < 20).length;
+      const statusMap: Record<string, { connected: number; disconnected: number; lowBattery: number }> = {};
+      for (const d of devices) {
+        const pid = d.patientId || 'unknown';
+        if (!statusMap[pid]) statusMap[pid] = { connected: 0, disconnected: 0, lowBattery: 0 };
+        if (d.connectionStatus === 'connected' || d.connectionStatus === 'charging') statusMap[pid].connected++;
+        else statusMap[pid].disconnected++;
+        if (typeof d.batteryLevel === 'number' && d.batteryLevel < 20) statusMap[pid].lowBattery++;
+      }
+      res.json({
+        total: devices.length,
+        connected,
+        disconnected,
+        lowBattery,
+        devices: devices.map(d => ({
+          deviceId: d.deviceId,
+          patientId: d.patientId,
+          connectionStatus: d.connectionStatus,
+          batteryLevel: d.batteryLevel,
+          lastSync: d.lastSync,
+          firmwareVersion: d.firmwareVersion,
+        })),
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch device status" });
+    }
+  });
+
+  // /api/admin/create-patient — POST, admin creates patient record
+  app.post("/api/admin/create-patient", requireAdmin, async (req, res) => {
+    try {
+      const { firstName, lastName, middleName, email, password, mobileNumber, dateOfBirth, gender, hospitalId, emiratesId, role } = req.body;
+      if (!firstName || !lastName || !email || !password) {
+        return res.status(400).json({ message: "First name, last name, email, and password are required" });
+      }
+      const existing = await storage.getUserByEmail(email.toLowerCase());
+      if (existing) return res.status(409).json({ message: "A patient with this email already exists" });
+
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const patientId = `PT${Date.now().toString().slice(-6)}`;
+      const newUser = await storage.createUser({
+        firstName, lastName, middleName: middleName || '',
+        email: email.toLowerCase(), password: hashedPassword,
+        mobileNumber: mobileNumber || '', dateOfBirth: dateOfBirth || '',
+        gender: gender || 'not_specified', hospitalId: hospitalId || '',
+        emiratesId: emiratesId || '', patientId,
+        role: role || 'patient', isVerified: true,
+      });
+      await logAudit(req, 'create', 'patient', patientId, `Admin created patient: ${email}`);
+      const { password: _, ...safeUser } = newUser as any;
+      res.status(201).json({ success: true, patient: safeUser });
+    } catch (err: any) {
+      console.error("Admin create patient error:", err);
+      res.status(500).json({ message: err.message || "Failed to create patient" });
+    }
+  });
+
+  // /api/health-history — patient's own vital signs grouped by date
+  app.get("/api/health-history", async (req, res) => {
+    try {
+      const reqUser = (req as any).user;
+      if (!reqUser) return res.status(401).json({ message: "Authentication required" });
+
+      const dateRange = req.query.dateRange as string || '30d';
+      const statusFilter = req.query.status as string || 'all';
+
+      const days = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+
+      // Use admin's patients list or current user
+      let allVitals: any[];
+      if (reqUser.role === 'admin') {
+        const patients = await storage.getAllPatients();
+        allVitals = (await Promise.all(
+          patients.map(p => storage.getVitalSignsByPatient(p.patientId || String(p.id)))
+        )).flat();
+      } else {
+        const user = await storage.getUserById(reqUser.userId);
+        const pid = user?.patientId || String(reqUser.userId);
+        allVitals = await storage.getVitalSignsByPatient(pid);
+      }
+
+      const filtered = allVitals.filter(v => {
+        if (!v.recordedAt || new Date(v.recordedAt).getTime() < cutoff) return false;
+        if (statusFilter !== 'all' && v.status !== statusFilter) return false;
+        return true;
+      });
+
+      // Group by date
+      const byDate: Record<string, any[]> = {};
+      for (const v of filtered) {
+        const date = new Date(v.recordedAt!).toISOString().split('T')[0];
+        if (!byDate[date]) byDate[date] = [];
+        byDate[date].push({
+          id: String(v.id),
+          timestamp: v.recordedAt,
+          deviceId: v.deviceId || 'Manual',
+          readings: {
+            heartRate: v.heartRate,
+            bloodPressureSystolic: v.bloodPressureSystolic,
+            bloodPressureDiastolic: v.bloodPressureDiastolic,
+            bloodOxygen: v.oxygenLevel,
+            temperature: v.temperature ? parseFloat(v.temperature.toString()) : null,
+            bloodGlucose: v.bloodGlucose,
+          },
+          status: v.status || 'normal',
+        });
+      }
+      const result = Object.entries(byDate)
+        .sort(([a], [b]) => b.localeCompare(a))
+        .map(([date, records]) => ({ date, records }));
+      res.json(result);
+    } catch (err) {
+      console.error("Health history error:", err);
+      res.status(500).json({ message: "Failed to fetch health history" });
+    }
+  });
+
+  // /api/missed-readings — patients who haven't submitted readings in 24+ hours
+  app.get("/api/missed-readings", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const now = Date.now();
+      const DAY = 24 * 60 * 60 * 1000;
+      const missed: any[] = [];
+      for (const p of patients) {
+        const pid = p.patientId || String(p.id);
+        const vitals = await storage.getVitalSignsByPatient(pid);
+        const sorted = vitals.sort((a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime());
+        const last = sorted[0];
+        const lastTime = last?.recordedAt ? new Date(last.recordedAt).getTime() : null;
+        const missedDays = lastTime ? Math.floor((now - lastTime) / DAY) : 999;
+        if (missedDays >= 1) {
+          missed.push({
+            patientId: pid,
+            patientName: `${p.firstName} ${p.lastName}`.trim(),
+            email: p.email,
+            mobileNumber: p.mobileNumber,
+            hospitalId: p.hospitalId,
+            lastReading: last?.recordedAt || null,
+            missedDays,
+            priority: missedDays >= 3 ? 'critical' : missedDays >= 2 ? 'high' : 'medium',
+            readingType: 'vital_signs',
+            complianceRate: vitals.length > 0 ? Math.max(0, Math.round(100 - (missedDays / 7) * 100)) : 0,
+          });
+        }
+      }
+      missed.sort((a, b) => b.missedDays - a.missedDays);
+      res.json(missed);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch missed readings" });
+    }
+  });
+
+  // /api/alerts — all alerts (non-patient-specific, for cache invalidation)
+  app.get("/api/alerts", requireAdmin, async (req, res) => {
+    try {
+      const alerts = await storage.getAllAlerts();
+      res.json(alerts);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch alerts" });
+    }
+  });
+
+  // /api/user — GET/PUT current authenticated user profile
+  // requireAuth middleware already verified JWT and set req.user
+  app.get("/api/user", async (req, res) => {
+    try {
+      const reqUser = (req as any).user;
+      if (!reqUser) return res.status(401).json({ message: "Authentication required" });
+      const user = await storage.getUser(reqUser.userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const { password: _, ...safe } = user as any;
+      res.json(safe);
+    } catch (err) {
+      console.error("GET /api/user error:", err);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.put("/api/user", async (req, res) => {
+    try {
+      const reqUser = (req as any).user;
+      if (!reqUser) return res.status(401).json({ message: "Authentication required" });
+      const { firstName, lastName, mobileNumber } = req.body;
+      const updated = await storage.updateUser(reqUser.userId, { firstName, lastName, mobileNumber });
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      await logAudit(req, 'update', 'user', String(reqUser.userId), 'User updated their profile');
+      const { password: _, ...safe } = updated as any;
+      res.json(safe);
+    } catch (err) {
+      console.error("PUT /api/user error:", err);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // /api/hc03/devices — HC03 BLE devices for a patient
+  app.get("/api/hc03/devices", async (req, res) => {
+    try {
+      const patientId = req.query.patientId as string;
+      const devices = await storage.getAllHc03Devices();
+      const filtered = patientId ? devices.filter((d: any) => d.patientId === patientId) : devices;
+      res.json(filtered);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch HC03 devices" });
+    }
+  });
+
+  // /api/create-sample-data — admin utility to seed sample vital signs
+  app.post("/api/create-sample-data", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      let created = 0;
+      for (const p of patients.slice(0, 3)) {
+        const pid = p.patientId || String(p.id);
+        const vitals = [
+          { patientId: pid, heartRate: 75, bloodPressureSystolic: 120, bloodPressureDiastolic: 80, temperature: "36.8", oxygenLevel: 98, status: 'normal' },
+          { patientId: pid, heartRate: 95, bloodPressureSystolic: 145, bloodPressureDiastolic: 92, temperature: "37.2", oxygenLevel: 96, status: 'attention' },
+        ];
+        for (const v of vitals) {
+          await storage.createVitalSigns(v as any);
+          created++;
+        }
+      }
+      await logAudit(req, 'create', 'sample_data', undefined, `Created ${created} sample vital sign records`);
+      res.json({ message: `Created ${created} sample vital sign records`, count: created });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to create sample data" });
+    }
+  });
+
+  // ─── End Missing Routes ────────────────────────────────────────────────────
+
   // Setup Vite development server or static file serving
   const server = createServer(app);
   

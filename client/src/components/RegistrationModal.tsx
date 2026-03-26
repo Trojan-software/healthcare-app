@@ -52,7 +52,7 @@ export default function RegistrationModal({ open, onOpenChange }: RegistrationMo
   const registerMutation = useMutation({
     mutationFn: async (data: RegistrationData) => {
       const { confirmPassword, ...registrationData } = data;
-      return apiRequest('POST', '/api/register', {
+      return apiRequest('/api/register', 'POST', {
         ...registrationData,
         username: data.email, // Use email as username
       });
@@ -72,7 +72,7 @@ export default function RegistrationModal({ open, onOpenChange }: RegistrationMo
 
   const sendOtpMutation = useMutation({
     mutationFn: async (email: string) => {
-      return apiRequest('POST', '/api/send-otp', { email });
+      return apiRequest('/api/send-otp', 'POST', { email });
     },
     onSuccess: () => {
       toast({
@@ -91,7 +91,7 @@ export default function RegistrationModal({ open, onOpenChange }: RegistrationMo
 
   const verifyOtpMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', '/api/verify-otp', {
+      return apiRequest('/api/verify-otp', 'POST', {
         email: form.getValues('email'),
         code: otpCode,
       });

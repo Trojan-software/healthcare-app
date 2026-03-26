@@ -48,7 +48,7 @@ export function useVitals() {
   // Record new vital signs
   const recordVitalsMutation = useMutation({
     mutationFn: async (vitals: VitalSignsInput) => {
-      const response = await apiRequest('POST', '/api/vital-signs', vitals);
+      const response = await apiRequest('/api/vital-signs', 'POST', vitals);
       return response.json();
     },
     onSuccess: () => {

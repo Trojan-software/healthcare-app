@@ -82,7 +82,7 @@ export default function MedicalDeviceManagement() {
 
   const statusMutation = useMutation({
     mutationFn: ({ deviceId, status }: { deviceId: string; status: string }) =>
-      apiRequest('PATCH', `/api/devices/${deviceId}/status`, { status }),
+      apiRequest(`/api/devices/${deviceId}/status`, 'PATCH', { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/devices'] });
       toast({ title: 'Device status updated' });

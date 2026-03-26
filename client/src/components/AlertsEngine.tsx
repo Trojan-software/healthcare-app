@@ -74,19 +74,19 @@ export default function AlertsEngine() {
   });
 
   const acknowledge = useMutation({
-    mutationFn: (id: string) => apiRequest('POST', `/api/critical-alerts/${id}/acknowledge`, {}),
+    mutationFn: (id: string) => apiRequest(`/api/critical-alerts/${id}/acknowledge`, 'POST', {}),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/critical-alerts'] }); toast({ title: 'Alert acknowledged' }); },
     onError: () => toast({ title: 'Failed to acknowledge', variant: 'destructive' }),
   });
 
   const resolve = useMutation({
-    mutationFn: (id: string) => apiRequest('POST', `/api/critical-alerts/${id}/resolve`, {}),
+    mutationFn: (id: string) => apiRequest(`/api/critical-alerts/${id}/resolve`, 'POST', {}),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/critical-alerts'] }); toast({ title: 'Alert resolved' }); },
     onError: () => toast({ title: 'Failed to resolve', variant: 'destructive' }),
   });
 
   const sendEmail = useMutation({
-    mutationFn: (id: string) => apiRequest('POST', `/api/critical-alerts/${id}/send-email`, {}),
+    mutationFn: (id: string) => apiRequest(`/api/critical-alerts/${id}/send-email`, 'POST', {}),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/critical-alerts'] }); toast({ title: 'Email notification sent' }); },
     onError: () => toast({ title: 'Failed to send email', variant: 'destructive' }),
   });
