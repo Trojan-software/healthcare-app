@@ -320,12 +320,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const patients = await storage.getAllPatients();
       
       const patientsWithStats = await Promise.all(patients.map(async (patient) => {
-        const latestVitals = await storage.getLatestVitalSigns(patient.patientId || patient.id.toString());
-        const lastCheckup = await storage.getLastCheckupTime(patient.patientId || patient.id.toString());
-        
+        const [latestVitals, lastCheckup] = await Promise.all([
+          storage.getLatestVitalSigns(patient.patientId || patient.id.toString()),
+          storage.getLastCheckupTime(patient.patientId || patient.id.toString()),
+        ]);
+        const lastActivity = latestVitals?.timestamp
+          ? new Date(latestVitals.timestamp).toLocaleDateString()
+          : lastCheckup
+            ? new Date(lastCheckup).toLocaleDateString()
+            : 'Never';
         return {
           ...sanitizeUser(patient),
-          lastActivity: patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : 'Never',
+          lastActivity,
           status: determinePatientStatus({ ...patient, latestVitals }),
           vitals: latestVitals,
           lastCheckup: lastCheckup ? new Date(lastCheckup).toLocaleDateString() : 'Never',
@@ -386,11 +392,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const patients = await storage.getAllPatients();
       const patientsWithStats = await Promise.all(patients.map(async (patient) => {
-        const latestVitals = await storage.getLatestVitalSigns(patient.patientId || patient.id.toString());
-        const lastCheckup = await storage.getLastCheckupTime(patient.patientId || patient.id.toString());
+        const [latestVitals, lastCheckup] = await Promise.all([
+          storage.getLatestVitalSigns(patient.patientId || patient.id.toString()),
+          storage.getLastCheckupTime(patient.patientId || patient.id.toString()),
+        ]);
+        const lastActivity = latestVitals?.timestamp
+          ? new Date(latestVitals.timestamp).toLocaleDateString()
+          : lastCheckup
+            ? new Date(lastCheckup).toLocaleDateString()
+            : 'Never';
         return {
           ...sanitizeUser(patient),
-          lastActivity: patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : 'Never',
+          lastActivity,
           status: determinePatientStatus({ ...patient, latestVitals }),
           vitals: latestVitals,
           lastCheckup: lastCheckup ? new Date(lastCheckup).toLocaleDateString() : 'Never',
@@ -407,9 +420,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/admin/dashboard  →  same data as GET /api/dashboard/admin
   app.get("/api/admin/dashboard", async (req, res) => {
     try {
-      const [patients, allAlerts] = await Promise.all([
+      const [patients, allAlerts, allDevices] = await Promise.all([
         storage.getAllPatients(),
         storage.getAllAlerts(),
+        storage.getAllHc03Devices(),
       ]);
       const allVitals = await Promise.all(
         patients.map(p => storage.getVitalSignsByPatient(p.patientId || p.id.toString()))
@@ -417,13 +431,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vitalsData = allVitals.flat();
       const activePatients = patients.filter(p => p.isVerified).length;
       const criticalAlerts = vitalsData.filter(v => isVitalsCritical(v)).length;
+
+      // Device connections: count devices whose status is 'connected' or 'charging'
+      const deviceConnections = allDevices.filter(d =>
+        d.connectionStatus === 'connected' || d.connectionStatus === 'charging'
+      ).length;
+
+      // Weekly growth: patients registered in the last 7 days vs prior 7 days
+      const now = Date.now();
+      const week = 7 * 24 * 60 * 60 * 1000;
+      const thisWeek = patients.filter(p => p.createdAt && (now - new Date(p.createdAt).getTime()) < week).length;
+      const lastWeekTotal = patients.filter(p => p.createdAt && (now - new Date(p.createdAt).getTime()) < 2 * week).length;
+      const prevWeek = lastWeekTotal - thisWeek;
+      const weeklyGrowth = prevWeek > 0 ? Math.round(((thisWeek - prevWeek) / prevWeek) * 100 * 10) / 10 : (thisWeek > 0 ? 100 : 0);
+
       const stats = {
         totalPatients: patients.length,
         activePatients,
         criticalAlerts,
-        deviceConnections: Math.floor(activePatients * 0.85),
+        deviceConnections,
         complianceRate: calculateAdvancedComplianceRate(patients, vitalsData),
-        weeklyGrowth: 12.3,
+        weeklyGrowth,
         vitalsAverages: calculateVitalsAverages(vitalsData),
         trendsData: generateTrendsData(vitalsData),
         complianceBreakdown: getComplianceBreakdown(patients, vitalsData),
@@ -1003,9 +1031,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard endpoints
   app.get("/api/dashboard/admin", requireAdmin, async (req, res) => {
     try {
-      const [patients, allAlerts] = await Promise.all([
+      const [patients, allAlerts, allDevices] = await Promise.all([
         storage.getAllPatients(),
         storage.getAllAlerts(),
+        storage.getAllHc03Devices(),
       ]);
       const allVitals = await Promise.all(
         patients.map(p => storage.getVitalSignsByPatient(p.patientId || p.id.toString()))
@@ -1015,13 +1044,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activePatients = patients.filter(p => p.isVerified).length;
       const criticalAlerts = vitalsData.filter(v => isVitalsCritical(v)).length;
 
+      const deviceConnections = allDevices.filter(d =>
+        d.connectionStatus === 'connected' || d.connectionStatus === 'charging'
+      ).length;
+
+      const now = Date.now();
+      const week = 7 * 24 * 60 * 60 * 1000;
+      const thisWeek = patients.filter(p => p.createdAt && (now - new Date(p.createdAt).getTime()) < week).length;
+      const lastWeekTotal = patients.filter(p => p.createdAt && (now - new Date(p.createdAt).getTime()) < 2 * week).length;
+      const prevWeek = lastWeekTotal - thisWeek;
+      const weeklyGrowth = prevWeek > 0 ? Math.round(((thisWeek - prevWeek) / prevWeek) * 100 * 10) / 10 : (thisWeek > 0 ? 100 : 0);
+
       const stats = {
         totalPatients: patients.length,
         activePatients,
         criticalAlerts,
-        deviceConnections: Math.floor(activePatients * 0.85),
+        deviceConnections,
         complianceRate: calculateAdvancedComplianceRate(patients, vitalsData),
-        weeklyGrowth: 12.3,
+        weeklyGrowth,
         vitalsAverages: calculateVitalsAverages(vitalsData),
         trendsData: generateTrendsData(vitalsData),
         complianceBreakdown: getComplianceBreakdown(patients, vitalsData),
@@ -1068,7 +1108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let healthScore: number | null = null;
       if (vitalsSnapshot.heartRate !== null || vitalsSnapshot.oxygenLevel !== null ||
           vitalsSnapshot.bloodGlucose !== null || vitalsSnapshot.bloodPressureSystolic !== null) {
-        const vsStatus = calculateVitalSignsStatus({
+        const vsStatus = computeVitalStatus({
           heartRate: vitalsSnapshot.heartRate,
           bloodPressureSystolic: vitalsSnapshot.bloodPressureSystolic,
           bloodPressureDiastolic: vitalsSnapshot.bloodPressureDiastolic,
@@ -1112,6 +1152,282 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching patient dashboard:", error);
       res.status(500).json({ message: "Failed to fetch patient dashboard" });
+    }
+  });
+
+  // ─── CRITICAL ALERTS SYSTEM ──────────────────────────────────────────────────
+  // Powers CriticalAlertsSystem.tsx in the admin dashboard.
+
+  // Map the internal alerts row to the shape the frontend expects.
+  async function enrichAlert(alert: any) {
+    const user = await storage.getUserByPatientId(alert.patientId).catch(() => null)
+                  ?? await storage.getUser(parseInt(alert.patientId)).catch(() => null);
+    const patientName = user
+      ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || alert.patientId
+      : alert.patientId;
+
+    // Derive frontend `status` from the two boolean flags in the DB
+    const status = alert.isResolved
+      ? 'resolved'
+      : alert.doctorNotified
+        ? 'acknowledged'
+        : 'active';
+
+    // Map our internal type to a vitalType the UI understands
+    const vitalTypeMap: Record<string, string> = {
+      cardiac: 'heartRate',
+      respiratory: 'bloodOxygen',
+      glucose: 'bloodGlucose',
+      blood_pressure: 'bloodPressure',
+      fever: 'temperature',
+      hypothermia: 'temperature',
+    };
+    const vitalType = vitalTypeMap[alert.type] || 'heartRate';
+
+    // Map severity
+    const severityMap: Record<string, string> = {
+      high: 'emergency',
+      medium: 'critical',
+      low: 'warning',
+    };
+    const uiSeverity = severityMap[alert.severity || 'medium'] || 'critical';
+
+    return {
+      id: String(alert.id),
+      patientId: alert.patientId,
+      patientName,
+      vitalType,
+      severity: uiSeverity,
+      timestamp: alert.createdAt,
+      status,
+      title: alert.title,
+      description: alert.description,
+      emailSent: alert.doctorNotified,
+      isResolved: alert.isResolved,
+      type: alert.type,
+    };
+  }
+
+  // GET /api/critical-alerts?filter=active&severity=all
+  app.get("/api/critical-alerts", requireAdmin, async (req, res) => {
+    try {
+      const { filter = 'active', severity = 'all' } = req.query;
+      let allAlerts = await storage.getAllAlerts();
+
+      // Status filter
+      if (filter === 'active') {
+        allAlerts = allAlerts.filter(a => !a.isResolved && !a.doctorNotified);
+      } else if (filter === 'acknowledged') {
+        allAlerts = allAlerts.filter(a => a.doctorNotified && !a.isResolved);
+      } else if (filter === 'resolved') {
+        allAlerts = allAlerts.filter(a => a.isResolved);
+      }
+      // else 'all' — no filter
+
+      // Severity filter (maps our DB severity to UI severity)
+      if (severity !== 'all') {
+        const dbSeverityMap: Record<string, string> = {
+          emergency: 'high',
+          critical: 'medium',
+          warning: 'low',
+        };
+        const dbSev = dbSeverityMap[severity as string];
+        if (dbSev) allAlerts = allAlerts.filter(a => (a.severity || 'medium') === dbSev);
+      }
+
+      const enriched = await Promise.all(allAlerts.slice(0, 100).map(enrichAlert));
+      res.json(enriched);
+    } catch (error) {
+      console.error("Error fetching critical alerts:", error);
+      res.status(500).json({ message: "Failed to fetch alerts" });
+    }
+  });
+
+  // GET /api/alert-thresholds — DOH/ADHCC clinical reference thresholds
+  app.get("/api/alert-thresholds", requireAdmin, async (req, res) => {
+    res.json([
+      { vitalType: 'heartRate',     criticalMin: 50,  criticalMax: 120, warningMin: 60,  warningMax: 100,  unit: 'BPM'   },
+      { vitalType: 'bloodPressure', criticalMin: 90,  criticalMax: 180, warningMin: 110, warningMax: 140,  unit: 'mmHg'  },
+      { vitalType: 'bloodOxygen',   criticalMin: 90,  criticalMax: null, warningMin: 95, warningMax: null, unit: '%'     },
+      { vitalType: 'temperature',   criticalMin: 35.0, criticalMax: 39.0, warningMin: 36.0, warningMax: 38.0, unit: '°C' },
+      { vitalType: 'bloodGlucose',  criticalMin: 70,  criticalMax: 250, warningMin: 80,  warningMax: 180,  unit: 'mg/dL' },
+    ]);
+  });
+
+  // POST /api/critical-alerts/:id/acknowledge
+  app.post("/api/critical-alerts/:id/acknowledge", requireAdmin, async (req, res) => {
+    try {
+      const alertId = parseInt(req.params.id);
+      if (isNaN(alertId)) return res.status(400).json({ message: "Invalid alert ID" });
+      await storage.markAlertAsNotified(alertId);
+      const allAlerts = await storage.getAllAlerts();
+      const alert = allAlerts.find(a => a.id === alertId);
+      if (!alert) return res.status(404).json({ message: "Alert not found" });
+      res.json(await enrichAlert(alert));
+    } catch (error) {
+      console.error("Error acknowledging alert:", error);
+      res.status(500).json({ message: "Failed to acknowledge alert" });
+    }
+  });
+
+  // POST /api/critical-alerts/:id/resolve
+  app.post("/api/critical-alerts/:id/resolve", requireAdmin, async (req, res) => {
+    try {
+      const alertId = parseInt(req.params.id);
+      if (isNaN(alertId)) return res.status(400).json({ message: "Invalid alert ID" });
+      // Mark as both notified and resolved
+      await storage.markAlertAsNotified(alertId);
+      await storage.resolveAlert(alertId);
+      const allAlerts = await storage.getAllAlerts();
+      const alert = allAlerts.find(a => a.id === alertId);
+      if (!alert) return res.status(404).json({ message: "Alert not found" });
+      res.json(await enrichAlert(alert));
+    } catch (error) {
+      console.error("Error resolving alert:", error);
+      res.status(500).json({ message: "Failed to resolve alert" });
+    }
+  });
+
+  // POST /api/critical-alerts/:id/send-email
+  app.post("/api/critical-alerts/:id/send-email", requireAdmin, async (req, res) => {
+    try {
+      const alertId = parseInt(req.params.id);
+      if (isNaN(alertId)) return res.status(400).json({ message: "Invalid alert ID" });
+      const allAlerts = await storage.getAllAlerts();
+      const alert = allAlerts.find(a => a.id === alertId);
+      if (!alert) return res.status(404).json({ message: "Alert not found" });
+      await emailNotificationService.checkCriticalVitals(alert.patientId, { type: alert.type });
+      await storage.markAlertAsNotified(alertId);
+      res.json({ success: true, message: "Email notification sent" });
+    } catch (error) {
+      console.error("Error sending alert email:", error);
+      res.status(500).json({ message: "Failed to send email" });
+    }
+  });
+
+  // ─── WEEKLY REPORTS ───────────────────────────────────────────────────────────
+  // Powers WeeklyReportDashboard.tsx.
+
+  // GET /api/admin/patients-list — lightweight patient list for filter dropdowns
+  app.get("/api/admin/patients-list", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      res.json(patients.map(p => ({
+        id: p.patientId || String(p.id),
+        name: `${p.firstName || ''} ${p.lastName || ''}`.trim() || p.email,
+      })));
+    } catch (error) {
+      console.error("Error fetching patients list:", error);
+      res.status(500).json({ message: "Failed to fetch patients" });
+    }
+  });
+
+  // GET /api/reports/weekly
+  app.get("/api/reports/weekly", requireAdmin, async (req, res) => {
+    try {
+      const {
+        startDate,
+        endDate,
+        selectedPatient = 'all',
+      } = req.query as Record<string, string>;
+
+      const rangeEnd   = endDate   ? new Date(endDate)   : new Date();
+      const rangeStart = startDate ? new Date(startDate) : new Date(rangeEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const prevStart  = new Date(rangeStart.getTime() - (rangeEnd.getTime() - rangeStart.getTime()));
+
+      const patients = await storage.getAllPatients();
+      const targetPatients = selectedPatient === 'all'
+        ? patients
+        : patients.filter(p => (p.patientId || String(p.id)) === selectedPatient);
+
+      const reports = await Promise.all(targetPatients.map(async (patient) => {
+        const pid = patient.patientId || String(patient.id);
+        const [allVitals, patientAlerts] = await Promise.all([
+          storage.getVitalSignsByPatient(pid),
+          storage.getAlertsByPatient(pid),
+        ]);
+
+        // Filter vitals to the reporting period
+        const vitals = allVitals.filter(v =>
+          v.timestamp && new Date(v.timestamp) >= rangeStart && new Date(v.timestamp) <= rangeEnd
+        );
+        const prevVitals = allVitals.filter(v =>
+          v.timestamp && new Date(v.timestamp) >= prevStart && new Date(v.timestamp) < rangeStart
+        );
+
+        // Stats helper
+        const vitalStats = (vals: number[]) => {
+          if (vals.length === 0) return { average: 0, min: 0, max: 0 };
+          return {
+            average: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10,
+            min: Math.min(...vals),
+            max: Math.max(...vals),
+          };
+        };
+
+        const trend = (curr: number, prev: number): 'up' | 'down' | 'stable' => {
+          if (curr === 0 || prev === 0) return 'stable';
+          const delta = (curr - prev) / prev;
+          if (delta > 0.05) return 'up';
+          if (delta < -0.05) return 'down';
+          return 'stable';
+        };
+
+        const hrVals     = vitals.map(v => v.heartRate).filter((v): v is number => v != null);
+        const prevHrVals = prevVitals.map(v => v.heartRate).filter((v): v is number => v != null);
+        const sysVals    = vitals.map(v => v.bloodPressureSystolic).filter((v): v is number => v != null);
+        const diaVals    = vitals.map(v => v.bloodPressureDiastolic).filter((v): v is number => v != null);
+        const o2Vals     = vitals.map(v => v.oxygenLevel).filter((v): v is number => v != null);
+        const prevO2Vals = prevVitals.map(v => v.oxygenLevel).filter((v): v is number => v != null);
+        const tempVals   = vitals.map(v => parseTemp(v.temperature)).filter((v): v is number => v != null);
+
+        const hrStats  = vitalStats(hrVals);
+        const prevHrSt = vitalStats(prevHrVals);
+        const o2Stats  = vitalStats(o2Vals);
+        const prevO2St = vitalStats(prevO2Vals);
+
+        // Alerts in period
+        const periodAlerts = patientAlerts.filter(a =>
+          a.createdAt && new Date(a.createdAt) >= rangeStart && new Date(a.createdAt) <= rangeEnd
+        );
+
+        // Compliance: unique days with a reading in range
+        const totalDays = Math.max(1, Math.round((rangeEnd.getTime() - rangeStart.getTime()) / (24 * 60 * 60 * 1000)));
+        const activeDays = new Set(vitals.map(v => new Date(v.timestamp!).toISOString().split('T')[0])).size;
+        const complianceRate = Math.round((activeDays / totalDays) * 100 * 10) / 10;
+
+        return {
+          patientId: pid,
+          patientName: `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || patient.email,
+          reportPeriod: {
+            startDate: rangeStart.toISOString(),
+            endDate: rangeEnd.toISOString(),
+          },
+          vitalSigns: {
+            heartRate: { ...hrStats, readings: hrVals.length, trend: trend(hrStats.average, prevHrSt.average) },
+            bloodPressure: {
+              systolic:  vitalStats(sysVals),
+              diastolic: vitalStats(diaVals),
+              readings: sysVals.length,
+              trend: trend(vitalStats(sysVals).average, vitalStats(prevVitals.map(v => v.bloodPressureSystolic).filter((v): v is number => v != null)).average),
+            },
+            bloodOxygen: { ...o2Stats, readings: o2Vals.length, trend: trend(o2Stats.average, prevO2St.average) },
+            temperature: { ...vitalStats(tempVals), readings: tempVals.length, trend: 'stable' as const },
+          },
+          checkups: { scheduled: totalDays, completed: activeDays, missed: Math.max(0, totalDays - activeDays) },
+          alerts: {
+            critical: periodAlerts.filter(a => a.severity === 'high').length,
+            warning:  periodAlerts.filter(a => a.severity === 'medium').length,
+            resolved: periodAlerts.filter(a => a.isResolved).length,
+          },
+          compliance: { rate: complianceRate, missedReadings: Math.max(0, totalDays - activeDays), deviceUptime: complianceRate },
+        };
+      }));
+
+      res.json(reports);
+    } catch (error) {
+      console.error("Error fetching weekly report:", error);
+      res.status(500).json({ message: "Failed to generate report" });
     }
   });
 
@@ -1195,7 +1511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const settings = await storage.upsertReminderSettings({
         patientId,
-        frequency: 1,
+        frequency: typeof frequency === 'number' && frequency > 0 ? frequency : 8,
         isActive: true,
         pushNotifications: vitalsReminder || false,
         emailAlerts: medicationReminder || false,

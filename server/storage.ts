@@ -57,6 +57,7 @@ export interface IStorage {
   getAlertsByPatient(patientId: string): Promise<Alert[]>;
   getAllAlerts(): Promise<Alert[]>;
   markAlertAsNotified(alertId: number): Promise<void>;
+  resolveAlert(alertId: number): Promise<void>;
 
   // Dashboard stats
   getDashboardStats(patientId: string): Promise<any>;
@@ -65,6 +66,7 @@ export interface IStorage {
   registerHc03Device(device: any): Promise<any>;
   updateHc03Device(deviceId: string, updates: any): Promise<any>;
   getHc03DevicesByPatient(patientId: string): Promise<any[]>;
+  getAllHc03Devices(): Promise<any[]>;
   getHc03Device(deviceId: string): Promise<any | undefined>;
   updateDeviceStatus(deviceId: string, status: string): Promise<void>;
   updateDeviceBattery(deviceId: string, batteryLevel: number, chargingStatus: boolean): Promise<void>;
@@ -377,6 +379,10 @@ export class DatabaseStorage implements IStorage {
     await db.update(alerts).set({ doctorNotified: true }).where(eq(alerts.id, alertId));
   }
 
+  async resolveAlert(alertId: number): Promise<void> {
+    await db.update(alerts).set({ isResolved: true }).where(eq(alerts.id, alertId));
+  }
+
   // Dashboard stats
   async getDashboardStats(patientId: string): Promise<any> {
     const thirtyDaysAgo = new Date();
@@ -473,6 +479,10 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(hc03Devices)
       .where(eq(hc03Devices.patientId, patientId));
+  }
+
+  async getAllHc03Devices(): Promise<any[]> {
+    return await db.select().from(hc03Devices);
   }
 
   async getHc03Device(deviceId: string): Promise<any | undefined> {

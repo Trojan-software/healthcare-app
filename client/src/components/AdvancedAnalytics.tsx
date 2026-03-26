@@ -140,15 +140,15 @@ export default function AdvancedAnalytics({ onClose }: AdvancedAnalyticsProps) {
                     <div className="flex space-x-4 text-sm">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span>HR: {Math.round(day.heartRate)}</span>
+                        <span>HR: {day.heartRate != null ? Math.round(day.heartRate) : '—'}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <span>Temp: {day.temperature.toFixed(1)}°C</span>
+                        <span>Temp: {day.temperature != null ? Number(day.temperature).toFixed(1) : '—'}°C</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span>O2: {Math.round(day.oxygenLevel)}%</span>
+                        <span>O2: {day.oxygenLevel != null ? Math.round(day.oxygenLevel) : '—'}%</span>
                       </div>
                     </div>
                   </div>

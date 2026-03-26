@@ -118,18 +118,22 @@ export default function EnhancedAdminDashboard() {
     }
   });
 
-  // Default stats to avoid undefined errors
-  const mockStats: DashboardStats = dashboardStats?.stats || {
-    totalPatients: 0,
-    activeMonitoring: 0,
-    criticalAlerts: 0,
-    deviceConnections: 0,
-    newRegistrations: 0,
-    complianceRate: 0
+  // Default stats to avoid undefined errors — dashboardStats is a flat object from /api/admin/dashboard
+  const mockStats: DashboardStats = dashboardStats ? {
+    totalPatients:    dashboardStats.totalPatients    ?? 0,
+    activeMonitoring: dashboardStats.activePatients   ?? 0,
+    criticalAlerts:   dashboardStats.criticalAlerts   ?? 0,
+    deviceConnections:dashboardStats.deviceConnections?? 0,
+    newRegistrations: dashboardStats.weeklyGrowth     ?? 0,
+    complianceRate:   dashboardStats.complianceRate   ?? 0,
+  } : {
+    totalPatients: 0, activeMonitoring: 0, criticalAlerts: 0,
+    deviceConnections: 0, newRegistrations: 0, complianceRate: 0,
   };
 
-  const mockPatients: PatientRecord[] = patientsData?.patients || [];
-  const mockDevices: DeviceInfo[] = devicesData?.devices || [];
+  // /api/admin/patients and /api/admin/devices return arrays directly (no wrapper property)
+  const mockPatients: PatientRecord[] = Array.isArray(patientsData) ? patientsData : [];
+  const mockDevices: DeviceInfo[] = Array.isArray(devicesData) ? devicesData : [];
   const mockHospitals = ['Sheikh Khalifa Medical City', 'Cleveland Clinic Abu Dhabi', 'Mediclinic City Hospital'];
 
   const getStatusColor = (status: string) => {
@@ -319,27 +323,35 @@ export default function EnhancedAdminDashboard() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">{t('ecgMonitors')}</span>
-                      <Badge variant="secondary" className="bg-green-100 text-green-800">2 {t('active')}</Badge>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {mockDevices.filter(d => d.connectionStatus === 'connected').length} {t('active')}
+                      </Badge>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">{t('glucoseMonitors')}</span>
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">3 {t('devices')}</Badge>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        {mockStats.deviceConnections} {t('devices')}
+                      </Badge>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">{t('averageHeartRate')}</span>
-                      <span className="font-medium">72 BPM</span>
+                      <span className="font-medium">
+                        {dashboardStats?.vitalsAverages?.heartRate != null
+                          ? `${Math.round(dashboardStats.vitalsAverages.heartRate)} BPM`
+                          : '— BPM'}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Stress Levels</span>
-                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Moderate</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Critical Alerts</span>
-                      <Badge variant="destructive">2 Active</Badge>
+                      <span className="text-gray-600">{t('criticalAlerts')}</span>
+                      <Badge variant={mockStats.criticalAlerts > 0 ? 'destructive' : 'secondary'}>
+                        {mockStats.criticalAlerts} {t('active')}
+                      </Badge>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Compliance Rate</span>
-                      <span className="font-medium text-green-600">92%</span>
+                      <span className={`font-medium ${mockStats.complianceRate >= 80 ? 'text-green-600' : 'text-yellow-600'}`}>
+                        {mockStats.complianceRate.toFixed(1)}%
+                      </span>
                     </div>
                   </div>
                 </CardContent>
