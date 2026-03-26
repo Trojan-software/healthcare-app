@@ -151,7 +151,37 @@ export default function DeviceConnectScreen({ navigation }: Props) {
             <Text className="text-gray-700 font-bold text-base mb-3">Start Measurements</Text>
             {measurements.map(({ type, label, icon, unit, color }) => {
               const isActive = activeMeasurement === type;
-              const value = vitals[type as keyof typeof vitals];
+
+              // Map measurement type to the correct vitals key(s) — bloodPressure and ecg
+              // use composite / differently-named keys, so we resolve display value explicitly.
+              const resolveDisplayValue = (): string | null => {
+                switch (type) {
+                  case 'bloodPressure':
+                    return vitals.bloodPressureSystolic
+                      ? `${vitals.bloodPressureSystolic}/${vitals.bloodPressureDiastolic} ${unit}`
+                      : null;
+                  case 'oxygenLevel':
+                    return vitals.oxygenLevel != null
+                      ? `${vitals.oxygenLevel} ${unit}`
+                      : null;
+                  case 'temperature':
+                    return vitals.temperature != null
+                      ? `${vitals.temperature.toFixed(1)} ${unit}`
+                      : null;
+                  case 'bloodGlucose':
+                    return vitals.bloodGlucose != null
+                      ? `${vitals.bloodGlucose} ${unit}`
+                      : null;
+                  case 'ecg':
+                    return vitals.ecgData && vitals.ecgData.length > 0
+                      ? `${vitals.ecgData.length} data points`
+                      : null;
+                  default:
+                    return null;
+                }
+              };
+
+              const displayValue = resolveDisplayValue();
 
               return (
                 <View key={type} className="bg-white rounded-2xl p-4 shadow-sm mb-3">
@@ -165,19 +195,9 @@ export default function DeviceConnectScreen({ navigation }: Props) {
                       </View>
                       <View>
                         <Text className="font-semibold text-gray-900">{label}</Text>
-                        {value !== undefined && !Array.isArray(value) && (
+                        {displayValue !== null && (
                           <Text className="text-sm font-bold mt-0.5" style={{ color }}>
-                            {typeof value === 'number' ? value.toFixed(type === 'temperature' ? 1 : 0) : value} {unit}
-                          </Text>
-                        )}
-                        {type === 'bloodPressure' && vitals.bloodPressureSystolic && (
-                          <Text className="text-sm font-bold mt-0.5" style={{ color }}>
-                            {vitals.bloodPressureSystolic}/{vitals.bloodPressureDiastolic} {unit}
-                          </Text>
-                        )}
-                        {type === 'ecg' && Array.isArray(vitals.ecgData) && (
-                          <Text className="text-sm font-bold mt-0.5" style={{ color }}>
-                            {vitals.ecgData.length} data points
+                            {displayValue}
                           </Text>
                         )}
                       </View>

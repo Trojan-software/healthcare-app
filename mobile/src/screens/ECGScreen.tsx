@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Polyline, Line, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Polyline, Line } from 'react-native-svg';
 import { useBLE } from '../contexts/BLEContext';
 import Header from '../components/Header';
 

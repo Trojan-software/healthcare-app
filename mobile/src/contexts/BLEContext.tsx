@@ -133,9 +133,34 @@ export function BLEProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  /**
+   * Decode a base64 string to a Uint8Array without using Node's Buffer API.
+   * React Native does not have Buffer — using atob() which is available in
+   * the Hermes / JavaScriptCore runtime.
+   */
+  const base64ToBytes = (b64: string): Uint8Array => {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  };
+
+  /**
+   * Encode a number array to base64 without Buffer.
+   */
+  const bytesToBase64 = (arr: number[]): string => {
+    let binary = '';
+    for (const byte of arr) {
+      binary += String.fromCharCode(byte);
+    }
+    return btoa(binary);
+  };
+
   const parseHC03Data = (base64Data: string, type: MeasurementType) => {
     try {
-      const bytes = Buffer.from(base64Data, 'base64');
+      const bytes = base64ToBytes(base64Data);
       switch (type) {
         case 'bloodPressure':
           if (bytes.length >= 3) {
@@ -168,13 +193,14 @@ export function BLEProvider({ children }: { children: React.ReactNode }) {
             setVitals((prev) => ({ ...prev, bloodGlucose: glucose }));
           }
           break;
-        case 'ecg':
+        case 'ecg': {
           const ecgPoints = Array.from(bytes).slice(1).map((b) => b - 128);
           setVitals((prev) => ({
             ...prev,
             ecgData: [...(prev.ecgData || []), ...ecgPoints].slice(-500),
           }));
           break;
+        }
       }
     } catch {
     }
@@ -197,7 +223,7 @@ export function BLEProvider({ children }: { children: React.ReactNode }) {
     };
 
     try {
-      const command = Buffer.from(commandMap[type]).toString('base64');
+      const command = bytesToBase64(commandMap[type]);
       await connectedDevice.writeCharacteristicWithResponseForService(
         HC03_SERVICE_UUID,
         HC03_CHARACTERISTIC_UUID,
