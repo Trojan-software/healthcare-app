@@ -311,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const lastCheckup = await storage.getLastCheckupTime(patient.patientId || patient.id.toString());
         
         return {
-          ...patient,
+          ...sanitizeUser(patient),
           lastActivity: patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : 'Never',
           status: determinePatientStatus({ ...patient, latestVitals }),
           vitals: latestVitals,
@@ -376,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const latestVitals = await storage.getLatestVitalSigns(patient.patientId || patient.id.toString());
         const lastCheckup = await storage.getLastCheckupTime(patient.patientId || patient.id.toString());
         return {
-          ...patient,
+          ...sanitizeUser(patient),
           lastActivity: patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : 'Never',
           status: determinePatientStatus({ ...patient, latestVitals }),
           vitals: latestVitals,
@@ -798,7 +798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Patient not found" });
       }
       
-      res.json({ message: "Patient updated successfully", patient: updatedPatient });
+      res.json({ message: "Patient updated successfully", patient: sanitizeUser(updatedPatient) });
     } catch (error) {
       console.error("Error updating patient:", error);
       res.status(500).json({ message: "Failed to update patient" });
@@ -1183,6 +1183,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper functions
 
+  // Strip every field that must never reach the client.
+  // Call this on EVERY user/patient object before res.json().
+  function sanitizeUser(user: any) {
+    if (!user) return user;
+    const {
+      password,
+      resetCode,
+      resetCodeExpires,
+      ...safe
+    } = user;
+    return safe;
+  }
+
   // Parse a nullable temperature value (stored as decimal string or number) into
   // a float, returning null if the value is absent or unparseable.
   function parseTemp(raw: any): number | null {
@@ -1254,7 +1267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   function formatPatientData(patient: any) {
     return {
-      ...patient,
+      ...sanitizeUser(patient),
       fullName: `${patient.firstName} ${patient.lastName}`,
       age: patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : 'Unknown'
     };
