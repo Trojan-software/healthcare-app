@@ -70,7 +70,7 @@ export default function DoctorDashboard() {
   });
 
   const patients = (data?.patients ?? []).filter(p => {
-    const matchSearch = !search || p.patientName.toLowerCase().includes(search.toLowerCase()) || p.patientId.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || (p.patientName ?? '').toLowerCase().includes(search.toLowerCase()) || String(p.patientId ?? '').toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || p.status === statusFilter;
     return matchSearch && matchStatus;
   });

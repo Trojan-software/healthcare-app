@@ -84,7 +84,7 @@ export default function LiveMonitoringDashboard() {
   }, [dataUpdatedAt]);
 
   const filtered = data.filter(p => {
-    const matchSearch = !search || p.patientName.toLowerCase().includes(search.toLowerCase()) || p.patientId.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || (p.patientName ?? '').toLowerCase().includes(search.toLowerCase()) || String(p.patientId ?? '').toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === 'all' || p.status === filter;
     return matchSearch && matchFilter;
   });

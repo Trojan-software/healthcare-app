@@ -91,9 +91,12 @@ export default function AlertsEngine() {
     onError: () => toast({ title: 'Failed to send email', variant: 'destructive' }),
   });
 
-  const filtered = alerts.filter(a =>
-    !search || a.patientName.toLowerCase().includes(search.toLowerCase()) || a.patientId.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = alerts.filter(a => {
+    if (!search) return true;
+    const term = search.toLowerCase();
+    return (a.patientName ?? '').toLowerCase().includes(term) ||
+           String(a.patientId ?? '').toLowerCase().includes(term);
+  });
 
   const counts = {
     active: alerts.filter(a => a.status === 'active').length,
@@ -184,9 +187,9 @@ export default function AlertsEngine() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-gray-900">{alert.patientName}</span>
                         <span className="text-xs text-gray-500">{alert.patientId}</span>
-                        <Badge className={sStyle.badge}>{alert.severity.toUpperCase()}</Badge>
-                        <Badge variant="outline" className={STATUS_STYLES[alert.status]}>
-                          {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
+                        <Badge className={sStyle.badge}>{(alert.severity ?? 'low').toUpperCase()}</Badge>
+                        <Badge variant="outline" className={STATUS_STYLES[alert.status] ?? STATUS_STYLES['active']}>
+                          {((alert.status ?? 'active').charAt(0).toUpperCase() + (alert.status ?? 'active').slice(1))}
                         </Badge>
                         {alert.emailSent && (
                           <span className="text-xs text-green-600 flex items-center gap-1">

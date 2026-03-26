@@ -185,7 +185,7 @@ export default function MedicalDeviceManagement() {
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <div>
                       <span className="text-gray-500 text-xs">Type</span>
-                      <p className="font-medium text-gray-800 capitalize">{device.deviceType.replace('_', ' ')}</p>
+                      <p className="font-medium text-gray-800 capitalize">{(device.deviceType ?? 'unknown').replace(/_/g, ' ')}</p>
                     </div>
                     <div>
                       <span className="text-gray-500 text-xs">Battery</span>
@@ -220,8 +220,8 @@ export default function MedicalDeviceManagement() {
                     <div className="mt-3 pt-3 border-t border-gray-100">
                       <p className="text-xs text-gray-500 mb-1.5">Supported Measurements</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {device.supportedMeasurements.map(m => (
-                          <span key={m} className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full capitalize">{m.replace('_', ' ')}</span>
+                        {(device.supportedMeasurements ?? []).map((m: string) => (
+                          <span key={m} className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full capitalize">{(m ?? '').replace(/_/g, ' ')}</span>
                         ))}
                       </div>
                     </div>

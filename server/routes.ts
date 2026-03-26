@@ -528,13 +528,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/admin/devices  →  return all registered HC03 devices
   app.get("/api/admin/devices", async (req, res) => {
     try {
-      const patients = await storage.getAllPatients();
-      const allDevices: any[] = [];
-      for (const patient of patients) {
-        const devices = await storage.getHc03DevicesByPatient(patient.patientId || patient.id.toString());
-        allDevices.push(...devices.map(d => ({ ...d, patientName: `${patient.firstName} ${patient.lastName}` })));
-      }
-      res.json(allDevices);
+      const [patients, allDevices] = await Promise.all([
+        storage.getAllPatients(),
+        storage.getAllHc03Devices(),
+      ]);
+      const patientMap = new Map(patients.map(p => [
+        p.patientId || String(p.id),
+        `${p.firstName || ''} ${p.lastName || ''}`.trim() || p.email,
+      ]));
+      const enriched = allDevices.map((d: any) => ({
+        ...d,
+        patientName: patientMap.get(d.patientId) || 'Unassigned',
+      }));
+      res.json(enriched);
     } catch (error) {
       console.error("Error fetching devices:", error);
       res.status(500).json({ message: "Failed to fetch devices" });
@@ -2053,8 +2059,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // /api/dashboard-stats  → alias of /api/admin/dashboard (no admin guard; used by patient app)
   app.get("/api/dashboard-stats", async (req, res) => {
     try {
-      const patients = await storage.getAllPatients();
-      const allAlerts = await storage.getAllAlerts();
+      const [patients, allAlerts] = await Promise.all([
+        storage.getAllPatients(),
+        storage.getAllAlerts(),
+      ]);
       const activePatients = patients.filter(p => p.isVerified).length;
       const criticalAlerts = allAlerts.filter(a => a.severity === 'high').length;
       res.json({
@@ -2375,18 +2383,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const patients = await storage.getAllPatients();
       const now = Date.now();
       const DAY = 24 * 60 * 60 * 1000;
-      const missed: any[] = [];
-      for (const p of patients) {
-        const pid = p.patientId || String(p.id);
-        const vitals = await storage.getVitalSignsByPatient(pid);
-        const sorted = vitals.sort((a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime());
-        const last = sorted[0];
-        const lastTime = last?.recordedAt ? new Date(last.recordedAt).getTime() : null;
-        const missedDays = lastTime ? Math.floor((now - lastTime) / DAY) : 999;
-        if (missedDays >= 1) {
-          missed.push({
+
+      // Fetch all patient vitals in parallel (not sequentially)
+      const vitalsResults = await Promise.all(
+        patients.map(p => {
+          const pid = p.patientId || String(p.id);
+          return storage.getVitalSignsByPatient(pid).then(vitals => ({ p, pid, vitals }));
+        })
+      );
+
+      const missed = vitalsResults
+        .map(({ p, pid, vitals }) => {
+          const sorted = vitals.sort((a: any, b: any) =>
+            new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime()
+          );
+          const last = sorted[0];
+          const lastTime = last?.recordedAt ? new Date(last.recordedAt).getTime() : null;
+          const missedDays = lastTime ? Math.floor((now - lastTime) / DAY) : 999;
+          if (missedDays < 1) return null;
+          return {
             patientId: pid,
-            patientName: `${p.firstName} ${p.lastName}`.trim(),
+            patientName: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
             email: p.email,
             mobileNumber: p.mobileNumber,
             hospitalId: p.hospitalId,
@@ -2395,10 +2412,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             priority: missedDays >= 3 ? 'critical' : missedDays >= 2 ? 'high' : 'medium',
             readingType: 'vital_signs',
             complianceRate: vitals.length > 0 ? Math.max(0, Math.round(100 - (missedDays / 7) * 100)) : 0,
-          });
-        }
-      }
-      missed.sort((a, b) => b.missedDays - a.missedDays);
+          };
+        })
+        .filter(Boolean);
+
+      missed.sort((a: any, b: any) => b.missedDays - a.missedDays);
       res.json(missed);
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch missed readings" });

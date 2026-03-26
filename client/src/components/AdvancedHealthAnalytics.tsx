@@ -150,10 +150,12 @@ export default function AdvancedHealthAnalytics() {
 
   const currentRiskPatients = (riskPatients as PatientRisk[]) || defaultRiskPatients;
   
-  const filteredPatients = currentRiskPatients.filter((patient: PatientRisk) =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPatients = currentRiskPatients.filter((patient: PatientRisk) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (patient.name ?? '').toLowerCase().includes(term) ||
+           String(patient.id ?? '').toLowerCase().includes(term);
+  });
 
   if (metricsLoading || patientsLoading || trendsLoading) {
     return (
@@ -512,7 +514,7 @@ export default function AdvancedHealthAnalytics() {
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                         <span className="font-semibold text-gray-600">
-                          {patient.name.split(' ').map(n => n[0]).join('')}
+                          {(patient.name ?? 'P').split(' ').filter(Boolean).map(n => n[0]).join('') || 'P'}
                         </span>
                       </div>
                       
@@ -550,7 +552,7 @@ export default function AdvancedHealthAnalytics() {
                       <div className="flex flex-col items-end gap-2">
                         <Badge className={`${getRiskColor(patient.riskLevel)} flex items-center gap-1`}>
                           {getRiskIcon(patient.riskLevel)}
-                          {patient.riskLevel.toUpperCase()}
+                          {(patient.riskLevel ?? 'unknown').toUpperCase()}
                         </Badge>
                         
                         {patient.alerts > 0 && (
