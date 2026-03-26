@@ -309,43 +309,47 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
 
 
-  // Generate sample historical data for detailed views
+  // Build historical chart data from real vitalsHistory records
+  // Falls back to a flat line at the current value when no history is available
   const generateHistoricalData = (type: string, currentValue: any) => {
-    const hours = [];
-    const now = new Date();
-    
-    for (let i = 23; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-      let value;
-      
+    const history = dashboardData?.vitalsHistory ?? [];
+    const sorted = [...history].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    const recent = sorted.slice(-24);
+
+    if (recent.length === 0) {
+      // No data: render a flat line using the current reading
+      return Array.from({ length: 24 }, (_, i) => {
+        if (type === 'bloodPressure') {
+          const parts = String(currentValue).split('/');
+          return { time: i, value: { systolic: parseInt(parts[0]) || 120, diastolic: parseInt(parts[1]) || 80 } };
+        }
+        return { time: i, value: typeof currentValue === 'number' ? currentValue : parseFloat(currentValue) || 0 };
+      });
+    }
+
+    return recent.map((v) => {
+      const hour = new Date(v.timestamp).getHours();
+      let value: any;
       switch (type) {
         case 'heartRate':
-          value = Math.floor(Math.random() * 20) + (currentValue - 10);
+          value = v.heartRate ?? 0;
           break;
         case 'bloodPressure':
-          // Parse blood pressure string like "120/80" 
-          const parts = String(currentValue).split('/');
-          const systolic = parseInt(parts[0]) || 120;
-          const diastolic = parseInt(parts[1]) || 80;
-          value = {
-            systolic: Math.floor(Math.random() * 20) + (systolic - 10),
-            diastolic: Math.floor(Math.random() * 20) + (diastolic - 10)
-          };
+          value = { systolic: v.bloodPressureSystolic ?? 120, diastolic: v.bloodPressureDiastolic ?? 80 };
           break;
         case 'temperature':
-          value = Math.round((Math.random() * 1.5 + (currentValue - 0.75)) * 10) / 10;
+          value = parseFloat(v.temperature) || 0;
           break;
         case 'oxygenLevel':
-          value = Math.floor(Math.random() * 5) + (currentValue - 2);
+          value = v.oxygenLevel ?? 0;
           break;
         default:
-          value = currentValue;
+          value = 0;
       }
-      
-      hours.push({ time: time.getHours(), value });
-    }
-    
-    return hours;
+      return { time: hour, value };
+    });
   };
 
   const getVitalStatusForModal = (type: string, value: number | string | { systolic: number; diastolic: number }) => {

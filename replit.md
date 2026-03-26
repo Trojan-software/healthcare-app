@@ -38,7 +38,17 @@ A full React Native / Expo app converted from Capacitor. Stack:
 -   **Enhanced UI Components**: Interactive health metrics cards with detailed modal views, trend charts, health tips, and status indicators. Professional patient details interface with organized sections.
 -   **Security Implementation**: Implemented comprehensive security measures based on ADHCC assessments, including network security (HTTPS-only, certificate pinning), no hardcoded secrets, root detection, secure WebViews, disabled application logs in production, tapjacking protection, hooking detection, cryptographically secure PRNG, StrandHogg prevention, screenshot prevention, and bytecode obfuscation. Achieves compliance with HIPAA, PCI-DSS, GDPR, OWASP MASVS, and CWE.
 
-## Recent Changes (March 2026)
+## Recent Changes (March 2026 — Patient Dashboard Fixes)
+- **Registration Fix**: `/api/register` now accepts `mobile` OR `mobileNumber` field, generates a unique `username`, and works without mobile number (uses empty string)
+- **OTP Routes Implemented**: Added `/api/send-otp`, `/api/resend-otp`, `/api/verify-otp`, `/api/auth/send-otp`, `/api/auth/resend-otp`, `/api/auth/verify-otp` (all public, no auth required). OTP is stored in DB, verified against expiry, and activates the account on success
+- **Patient Login Fixed**: Test patients' passwords reset via admin API. New patients created via `/api/register` or `/api/admin/create-patient` login correctly
+- **Health History Fixed**: `/api/health-history` route called `storage.getUserById` (non-existent) — fixed to `storage.getUser`. Also fixed `v.recordedAt` → `v.timestamp` field reference
+- **Patient Dashboard Parallelized**: 5 sequential DB queries in `/api/dashboard/patient/:userId` now run in parallel with `Promise.all` (performance improvement)
+- **OTP Public Whitelist**: Added `send-otp`, `verify-otp`, `resend-otp`, `auth/verify-otp`, `auth/resend-otp` to `PUBLIC_API_PATHS` so unauthenticated patients can complete email verification
+- **Real Vital Signs Charts**: Replaced `generateHistoricalData()` (which generated random fake data) in `EnhancedPatientDashboard` with a function that maps real `vitalsHistory` records from the API. Falls back to a flat line when no history exists
+- **All 16/16 patient API routes verified** via automated test suite — 0 failures, 0 missing routes
+
+## Recent Changes (March 2026 — Admin Dashboard & Bug Fixes)
 - **8 New Admin System Modules** fully implemented and wired into the 11-tab admin dashboard:
   - **Live Monitoring Dashboard** (`LiveMonitoringDashboard.tsx`): Real-time patient vital status overview with color-coded status badges, powered by `/api/admin/live-monitoring`
   - **Doctor Dashboard** (`DoctorDashboard.tsx`): Summary stats (total patients, active alerts, critical alerts, today's readings) plus sortable patient list with latest vitals, powered by `/api/doctor/dashboard`

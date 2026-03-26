@@ -24,6 +24,11 @@ const PUBLIC_API_PATHS = new Set([
   '/reset-password',
   '/hospitals',
   '/hospitals/abudhabi',
+  '/send-otp',
+  '/verify-otp',
+  '/resend-otp',
+  '/auth/verify-otp',
+  '/auth/resend-otp',
 ]);
 
 // Middleware: verify Bearer JWT on every /api/* request except public paths above
@@ -272,10 +277,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName, 
         email, 
         password, 
-        mobile, 
+        mobile,
+        mobileNumber: mobileNumberField,
         hospitalId,
         dateOfBirth
       } = req.body;
+
+      // Accept mobile from either 'mobile' or 'mobileNumber' field; fallback to empty string
+      const mobileNumber = mobile || mobileNumberField || '';
 
       if (!firstName || !lastName || !email || !password) {
         return res.status(400).json({ message: "Required fields are missing" });
@@ -307,13 +316,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      // Generate a unique username from email prefix + random suffix
+      const usernameBase = email.split('@')[0].replace(/[^a-z0-9]/gi, '').toLowerCase();
+      const username = `${usernameBase}_${Date.now().toString(36)}`;
+
       const user = await storage.createUser({
         firstName,
         middleName,
         lastName,
         email,
         password: hashedPassword,
-        mobileNumber: mobile,
+        mobileNumber,
+        username,
         patientId, // Server-generated secure patient ID
         hospitalId,
         dateOfBirth,
@@ -336,6 +350,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  // ─── OTP / Email Verification routes (public — no auth required) ──────────
+
+  // Send OTP to email (called after registration or when resending)
+  const handleSendOtp = async (req: any, res: any) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ message: "Email is required" });
+
+      const user = await storage.getUserByEmail(email.toLowerCase());
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Generate 6-digit OTP using secure random
+      const code = generateSecureOTP(6);
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+      await storage.createOtpCode({ email: email.toLowerCase(), code, expiresAt, isUsed: false });
+      // In production this would email the code; for now return it in dev
+      const isDev = process.env.NODE_ENV !== 'production';
+      res.json({ message: "OTP sent successfully", ...(isDev ? { code } : {}) });
+    } catch (err) {
+      console.error("Send OTP error:", err);
+      res.status(500).json({ message: "Failed to send OTP" });
+    }
+  };
+
+  // Verify OTP code
+  const handleVerifyOtp = async (req: any, res: any) => {
+    try {
+      const { email, code } = req.body;
+      if (!email || !code) return res.status(400).json({ message: "Email and code are required" });
+
+      const isValid = await storage.verifyOtp(email.toLowerCase(), String(code));
+      if (!isValid) return res.status(400).json({ message: "Invalid or expired OTP code" });
+
+      // Activate the account once OTP is verified
+      const user = await storage.getUserByEmail(email.toLowerCase());
+      if (user) await storage.updateUser(user.id, { isVerified: true });
+
+      res.json({ message: "OTP verified successfully", verified: true });
+    } catch (err) {
+      console.error("Verify OTP error:", err);
+      res.status(500).json({ message: "Failed to verify OTP" });
+    }
+  };
+
+  app.post("/api/send-otp", handleSendOtp);
+  app.post("/api/resend-otp", handleSendOtp);
+  app.post("/api/verify-otp", handleVerifyOtp);
+  app.post("/api/auth/send-otp", handleSendOtp);
+  app.post("/api/auth/resend-otp", handleSendOtp);
+  app.post("/api/auth/verify-otp", handleVerifyOtp);
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Admin endpoints
   app.get("/api/patients", requireAdmin, async (req, res) => {
@@ -1126,11 +1194,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const patientId = user.patientId || String(user.id);
-      const vitalsSnapshot = await storage.getLatestVitalsSnapshot(patientId);
-      const vitalsHistory = await storage.getVitalSignsByPatient(patientId);
-      const checkupHistory = await storage.getCheckupHistory(patientId);
-      const alerts = await storage.getAlertsByPatient(patientId);
-      const reminderSettings = await storage.getReminderSettings(patientId);
+
+      // Run all 5 patient data queries in parallel for performance
+      const [vitalsSnapshot, vitalsHistory, checkupHistory, alerts, reminderSettings] = await Promise.all([
+        storage.getLatestVitalsSnapshot(patientId),
+        storage.getVitalSignsByPatient(patientId),
+        storage.getCheckupHistory(patientId),
+        storage.getAlertsByPatient(patientId),
+        storage.getReminderSettings(patientId),
+      ]);
 
       // Format vitals data using per-vital latest non-null values
       const formattedVitals = {
@@ -2336,13 +2408,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           patients.map(p => storage.getVitalSignsByPatient(p.patientId || String(p.id)))
         )).flat();
       } else {
-        const user = await storage.getUserById(reqUser.userId);
+        const user = await storage.getUser(reqUser.userId);
         const pid = user?.patientId || String(reqUser.userId);
         allVitals = await storage.getVitalSignsByPatient(pid);
       }
 
       const filtered = allVitals.filter(v => {
-        if (!v.recordedAt || new Date(v.recordedAt).getTime() < cutoff) return false;
+        const ts = v.timestamp || v.recordedAt;
+        if (!ts || new Date(ts).getTime() < cutoff) return false;
         if (statusFilter !== 'all' && v.status !== statusFilter) return false;
         return true;
       });
@@ -2350,11 +2423,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Group by date
       const byDate: Record<string, any[]> = {};
       for (const v of filtered) {
-        const date = new Date(v.recordedAt!).toISOString().split('T')[0];
+        const ts = v.timestamp || v.recordedAt;
+        const date = new Date(ts).toISOString().split('T')[0];
         if (!byDate[date]) byDate[date] = [];
         byDate[date].push({
           id: String(v.id),
-          timestamp: v.recordedAt,
+          timestamp: ts,
           deviceId: v.deviceId || 'Manual',
           readings: {
             heartRate: v.heartRate,
