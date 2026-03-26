@@ -1182,45 +1182,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Helper functions
-  function determinePatientStatus(vitals: any) {
+
+  // Parse a nullable temperature value (stored as decimal string or number) into
+  // a float, returning null if the value is absent or unparseable.
+  function parseTemp(raw: any): number | null {
+    if (raw === null || raw === undefined) return null;
+    const n = parseFloat(raw);
+    return isNaN(n) ? null : n;
+  }
+
+  // IMPORTANT: All vital-sign comparisons MUST guard against null fields.
+  // In JavaScript, `null` coerces to 0 in arithmetic/comparisons, so
+  // `null < 50` → true, which would falsely flag every partial record as critical.
+  function isVitalsCritical(vitals: any): boolean {
+    if (!vitals) return false;
+    const hr   = vitals.heartRate   as number | null | undefined;
+    const temp = parseTemp(vitals.temperature);
+    const o2   = vitals.oxygenLevel as number | null | undefined;
+    const gluc = vitals.bloodGlucose as number | null | undefined;
+
+    if (hr   != null && (hr   > 120 || hr   < 50))  return true;
+    if (temp != null && (temp > 39.0 || temp < 35.0)) return true;
+    if (o2   != null &&  o2   < 90)                  return true;
+    if (gluc != null && (gluc > 250  || gluc < 70))  return true;
+    return false;
+  }
+
+  function determinePatientStatus(vitals: any): string {
     if (!vitals.latestVitals) return 'No Data';
-    
     const latest = vitals.latestVitals;
     if (isVitalsCritical(latest)) return 'Critical';
-    if (latest.heartRate > 100 || latest.temperature > 38.0) return 'Attention';
+    const hr   = latest.heartRate   as number | null | undefined;
+    const temp = parseTemp(latest.temperature);
+    if ((hr   != null && hr   > 100) ||
+        (temp != null && temp > 38.0)) return 'Attention';
     return 'Normal';
   }
 
-  function isVitalsCritical(vitals: any) {
-    if (!vitals) return false;
-    
-    return (
-      vitals.heartRate > 120 || vitals.heartRate < 50 ||
-      vitals.temperature > 39.0 || vitals.temperature < 35.0 ||
-      vitals.oxygenLevel < 90 ||
-      (vitals.bloodGlucose && (vitals.bloodGlucose > 250 || vitals.bloodGlucose < 70))
-    );
-  }
-
-  function getCriticalAlertType(vitals: any) {
-    if (vitals.heartRate > 120 || vitals.heartRate < 50) return 'cardiac';
-    if (vitals.temperature > 39.0) return 'fever';
-    if (vitals.oxygenLevel < 90) return 'respiratory';
-    if (vitals.bloodGlucose && (vitals.bloodGlucose > 250 || vitals.bloodGlucose < 70)) return 'glucose';
+  function getCriticalAlertType(vitals: any): string {
+    const hr   = vitals.heartRate   as number | null | undefined;
+    const temp = parseTemp(vitals.temperature);
+    const o2   = vitals.oxygenLevel as number | null | undefined;
+    const gluc = vitals.bloodGlucose as number | null | undefined;
+    if (hr   != null && (hr   > 120 || hr < 50))   return 'cardiac';
+    if (temp != null &&  temp > 39.0)               return 'fever';
+    if (o2   != null &&  o2   < 90)                 return 'respiratory';
+    if (gluc != null && (gluc > 250  || gluc < 70)) return 'glucose';
     return 'general';
   }
 
-  function getSeverityLevel(vitals: any) {
-    if (vitals.heartRate > 140 || vitals.heartRate < 40 || 
-        vitals.temperature > 40.0 || vitals.oxygenLevel < 85) return 'high';
+  function getSeverityLevel(vitals: any): string {
+    const hr   = vitals.heartRate   as number | null | undefined;
+    const temp = parseTemp(vitals.temperature);
+    const o2   = vitals.oxygenLevel as number | null | undefined;
+    if ((hr   != null && (hr   > 140 || hr   < 40)) ||
+        (temp != null &&  temp > 40.0) ||
+        (o2   != null &&  o2   < 85)) return 'high';
     return 'medium';
   }
 
-  function getCriticalValue(vitals: any) {
-    const critical = [];
-    if (vitals.heartRate > 120 || vitals.heartRate < 50) critical.push(`HR: ${vitals.heartRate}`);
-    if (vitals.temperature > 39.0) critical.push(`Temp: ${vitals.temperature}°C`);
-    if (vitals.oxygenLevel < 90) critical.push(`O2: ${vitals.oxygenLevel}%`);
+  function getCriticalValue(vitals: any): string {
+    const critical: string[] = [];
+    const hr   = vitals.heartRate   as number | null | undefined;
+    const temp = parseTemp(vitals.temperature);
+    const o2   = vitals.oxygenLevel as number | null | undefined;
+    if (hr   != null && (hr   > 120 || hr < 50)) critical.push(`HR: ${hr}`);
+    if (temp != null &&  temp > 39.0)             critical.push(`Temp: ${temp}°C`);
+    if (o2   != null &&  o2   < 90)               critical.push(`O2: ${o2}%`);
     return critical.join(', ');
   }
 
@@ -1249,17 +1277,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       heartRate: 72, bloodPressure: "120/80", temperature: 36.6, oxygenLevel: 98
     };
 
-    const sum = vitalsData.reduce((acc, vital) => ({
-      heartRate: acc.heartRate + vital.heartRate,
-      temperature: acc.temperature + vital.temperature,
-      oxygenLevel: acc.oxygenLevel + vital.oxygenLevel
-    }), { heartRate: 0, temperature: 0, oxygenLevel: 0 });
+    // Only include records that actually have a value for each field.
+    // Averaging over null-fields (which JavaScript coerces to 0) produces
+    // misleadingly low readings.
+    const avg = (arr: number[]) =>
+      arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
+    const hrValues   = vitalsData.map(v => v.heartRate)   .filter((v): v is number => v != null);
+    const tempValues = vitalsData.map(v => parseTemp(v.temperature)).filter((v): v is number => v != null);
+    const o2Values   = vitalsData.map(v => v.oxygenLevel) .filter((v): v is number => v != null);
+
+    const avgHr   = avg(hrValues);
+    const avgTemp = avg(tempValues);
+    const avgO2   = avg(o2Values);
 
     return {
-      heartRate: Math.round(sum.heartRate / vitalsData.length),
+      heartRate:     avgHr   != null ? Math.round(avgHr)               : 72,
       bloodPressure: "120/80",
-      temperature: Math.round((sum.temperature / vitalsData.length) * 10) / 10,
-      oxygenLevel: Math.round(sum.oxygenLevel / vitalsData.length)
+      temperature:   avgTemp != null ? Math.round(avgTemp * 10) / 10   : 36.6,
+      oxygenLevel:   avgO2   != null ? Math.round(avgO2)               : 98,
     };
   }
 
