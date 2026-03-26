@@ -40,6 +40,12 @@ import AdvancedHealthAnalytics from './AdvancedHealthAnalytics';
 import PatientManagementModule from './PatientManagementModule';
 import BilingualPatientManagement from './BilingualPatientManagement';
 import PrivacyPolicyFooter from './PrivacyPolicyFooter';
+import DoctorDashboard from './DoctorDashboard';
+import LiveMonitoringDashboard from './LiveMonitoringDashboard';
+import MedicalDeviceManagement from './MedicalDeviceManagement';
+import AlertsEngine from './AlertsEngine';
+import AdminSettings from './AdminSettings';
+import AuditLogs from './AuditLogs';
 
 interface DashboardStats {
   totalPatients: number;
@@ -225,14 +231,18 @@ export default function EnhancedAdminDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="overview" data-testid="tab-overview">{t('dashboard')}</TabsTrigger>
-          <TabsTrigger value="patients" data-testid="tab-patients">{t('patientManagement')}</TabsTrigger>
-          <TabsTrigger value="devices" data-testid="tab-devices">{t('devices')}</TabsTrigger>
-          <TabsTrigger value="alerts" data-testid="tab-alerts">{t('criticalAlerts')}</TabsTrigger>
-          <TabsTrigger value="reports" data-testid="tab-reports">{t('reports')}</TabsTrigger>
-          <TabsTrigger value="scheduling" data-testid="tab-scheduling">{t('checkupScheduling')}</TabsTrigger>
-          <TabsTrigger value="analytics" data-testid="tab-analytics">{t('analytics')}</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-gray-100 p-1 rounded-lg">
+          <TabsTrigger value="overview"    data-testid="tab-overview"    className="text-xs px-3 py-1.5">{t('dashboard')}</TabsTrigger>
+          <TabsTrigger value="patients"   data-testid="tab-patients"    className="text-xs px-3 py-1.5">{t('patientManagement')}</TabsTrigger>
+          <TabsTrigger value="monitoring" data-testid="tab-monitoring"  className="text-xs px-3 py-1.5">Live Monitoring</TabsTrigger>
+          <TabsTrigger value="doctor"     data-testid="tab-doctor"      className="text-xs px-3 py-1.5">Doctor View</TabsTrigger>
+          <TabsTrigger value="devices"    data-testid="tab-devices"     className="text-xs px-3 py-1.5">Devices</TabsTrigger>
+          <TabsTrigger value="alerts"     data-testid="tab-alerts"      className="text-xs px-3 py-1.5">Alerts Engine</TabsTrigger>
+          <TabsTrigger value="reports"    data-testid="tab-reports"     className="text-xs px-3 py-1.5">{t('reports')}</TabsTrigger>
+          <TabsTrigger value="scheduling" data-testid="tab-scheduling"  className="text-xs px-3 py-1.5">{t('checkupScheduling')}</TabsTrigger>
+          <TabsTrigger value="analytics"  data-testid="tab-analytics"   className="text-xs px-3 py-1.5">{t('analytics')}</TabsTrigger>
+          <TabsTrigger value="settings"   data-testid="tab-settings"    className="text-xs px-3 py-1.5">Settings</TabsTrigger>
+          <TabsTrigger value="audit"      data-testid="tab-audit"       className="text-xs px-3 py-1.5">Audit Logs</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -438,72 +448,24 @@ export default function EnhancedAdminDashboard() {
           <PatientManagementModule />
         </TabsContent>
 
-        {/* Device Monitoring Tab */}
-        <TabsContent value="devices" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wifi className="w-5 h-5" />
-                Device Monitoring Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {mockDevices.map(device => (
-                  <div key={device.deviceId} className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                          <Signal className="w-6 h-6 text-blue-600" />
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-semibold text-gray-900">{device.deviceId}</h4>
-                          <p className="text-sm text-gray-600">
-                            Patient: {device.patientName} ({device.patientId})
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Firmware: {device.firmwareVersion}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge className={getStatusColor(device.connectionStatus)}>
-                              {device.connectionStatus}
-                            </Badge>
-                            <div className="flex items-center gap-1">
-                              {getBatteryIcon(device.batteryLevel)}
-                              <span className="text-sm">{device.batteryLevel}%</span>
-                            </div>
-                          </div>
-                          
-                          <div className="text-sm text-gray-600">
-                            Last sync: {getTimeAgo(device.lastSync)}
-                          </div>
-                          
-                          <div className="text-xs text-gray-500">
-                            Supports: {device.vitalTypesSupported.length} vital types
-                          </div>
-                        </div>
-                        
-                        <Button variant="ghost" size="sm">
-                          <Settings className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Live Monitoring Tab */}
+        <TabsContent value="monitoring" className="space-y-6">
+          <LiveMonitoringDashboard />
         </TabsContent>
 
-        {/* Critical Alerts Tab */}
+        {/* Doctor View Tab */}
+        <TabsContent value="doctor" className="space-y-6">
+          <DoctorDashboard />
+        </TabsContent>
+
+        {/* Device Management Tab */}
+        <TabsContent value="devices" className="space-y-6">
+          <MedicalDeviceManagement />
+        </TabsContent>
+
+        {/* Alerts Engine Tab */}
         <TabsContent value="alerts">
-          <CriticalAlertsSystem />
+          <AlertsEngine />
         </TabsContent>
 
         {/* Weekly Reports Tab */}
@@ -519,6 +481,16 @@ export default function EnhancedAdminDashboard() {
         {/* Analytics Tab */}
         <TabsContent value="analytics">
           <AdvancedHealthAnalytics />
+        </TabsContent>
+
+        {/* Admin Settings Tab */}
+        <TabsContent value="settings">
+          <AdminSettings />
+        </TabsContent>
+
+        {/* Audit Logs Tab */}
+        <TabsContent value="audit">
+          <AuditLogs />
         </TabsContent>
       </Tabs>
       

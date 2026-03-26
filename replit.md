@@ -38,6 +38,18 @@ A full React Native / Expo app converted from Capacitor. Stack:
 -   **Enhanced UI Components**: Interactive health metrics cards with detailed modal views, trend charts, health tips, and status indicators. Professional patient details interface with organized sections.
 -   **Security Implementation**: Implemented comprehensive security measures based on ADHCC assessments, including network security (HTTPS-only, certificate pinning), no hardcoded secrets, root detection, secure WebViews, disabled application logs in production, tapjacking protection, hooking detection, cryptographically secure PRNG, StrandHogg prevention, screenshot prevention, and bytecode obfuscation. Achieves compliance with HIPAA, PCI-DSS, GDPR, OWASP MASVS, and CWE.
 
+## Recent Changes (March 2026)
+- **8 New Admin System Modules** fully implemented and wired into the 11-tab admin dashboard:
+  - **Live Monitoring Dashboard** (`LiveMonitoringDashboard.tsx`): Real-time patient vital status overview with color-coded status badges, powered by `/api/admin/live-monitoring`
+  - **Doctor Dashboard** (`DoctorDashboard.tsx`): Summary stats (total patients, active alerts, critical alerts, today's readings) plus sortable patient list with latest vitals, powered by `/api/doctor/dashboard`
+  - **Medical Device Management** (`MedicalDeviceManagement.tsx`): Device list with BLE connection status, battery level, firmware version, and pairing controls
+  - **Alerts Engine** (`AlertsEngine.tsx`): Full alert management with acknowledge/resolve actions, severity filtering, and threshold configuration, powered by `/api/critical-alerts`
+  - **Admin Settings** (`AdminSettings.tsx`): 15 configurable key-value settings across 5 categories (General, Security, Alerts, Notifications, Compliance) stored in `admin_settings` DB table
+  - **Audit Logs** (`AuditLogs.tsx`): Searchable/filterable audit trail table with CSV export, powered by `/api/admin/audit-logs`
+- **Audit Logging Middleware**: Login events (both `/api/login` and `/api/auth/login`) and vital signs submissions now write to the `audit_logs` DB table automatically
+- **DB Schema**: Added `audit_logs` and `admin_settings` tables with full Drizzle ORM integration
+- **Bug Fix**: `LanguageProvider` now correctly wraps `EnhancedAdminDashboard` in `App.tsx` for the `/admin/*` path, resolving a `useLanguage must be used within a LanguageProvider` crash
+
 ## Recent Changes (January 2026)
 -   **Security Audit Fixes (247tech.net)**: Resolved HIGH severity JWT vulnerability and LOW severity caching issues:
     -   ✅ **Weak JWT Secret (HIGH)**: Fixed hardcoded "your-secret-key" - now uses secure `JWT_SECRET` environment variable

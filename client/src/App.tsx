@@ -3,6 +3,7 @@ import ComprehensiveHealthcareApp from './ComprehensiveHealthcareApp';
 import EnhancedAdminDashboard from './components/EnhancedAdminDashboard';
 import { DeviceDataProvider } from './contexts/DeviceDataContext';
 import { DeviceProvider } from './contexts/DeviceContext';
+import { LanguageProvider } from './lib/i18n';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -19,13 +20,15 @@ export default function App() {
   // Simple path-based routing without external router
   if (currentPath.startsWith('/admin')) {
     return (
-      <DeviceDataProvider>
-        <DeviceProvider>
-          <div data-testid="text-admin-wired">
-            <EnhancedAdminDashboard />
-          </div>
-        </DeviceProvider>
-      </DeviceDataProvider>
+      <LanguageProvider>
+        <DeviceDataProvider>
+          <DeviceProvider>
+            <div data-testid="text-admin-wired">
+              <EnhancedAdminDashboard />
+            </div>
+          </DeviceProvider>
+        </DeviceDataProvider>
+      </LanguageProvider>
     );
   }
 

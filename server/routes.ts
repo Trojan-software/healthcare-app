@@ -168,6 +168,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: user.role
       };
 
+      // Audit log the successful login
+      await storage.createAuditLog({
+        userId: user.patientId || String(user.id),
+        userEmail: user.email,
+        userRole: user.role,
+        action: 'login',
+        resource: 'session',
+        resourceId: user.patientId,
+        ipAddress: req.ip || req.headers['x-forwarded-for']?.toString().split(',')[0].trim(),
+        status: 'success',
+      }).catch(() => {});
+
       res.json({ success: true, token, user: userResponse });
     } catch (error) {
       console.error("Login error:", error);
@@ -233,6 +245,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: user.role,
         patientId: user.patientId
       };
+
+      await storage.createAuditLog({
+        userId: user.patientId || String(user.id),
+        userEmail: user.email,
+        userRole: user.role,
+        action: 'login',
+        resource: 'session',
+        resourceId: user.patientId,
+        ipAddress: req.ip || req.headers['x-forwarded-for']?.toString().split(',')[0].trim(),
+        status: 'success',
+      }).catch(() => {});
 
       res.json({ success: true, token, user: userResponse });
     } catch (error) {
@@ -569,6 +592,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await emailNotificationService.checkCriticalVitals(patientId, vitalSigns);
         }
       }
+
+      await storage.createAuditLog({
+        userId: (req as any).user?.userId ? String((req as any).user.userId) : patientId,
+        userEmail: (req as any).user?.email || '',
+        userRole: (req as any).user?.role || 'patient',
+        action: 'create',
+        resource: 'vital_signs',
+        resourceId: patientId,
+        details: `Status: ${vitalSigns.status}`,
+        ipAddress: req.ip,
+        status: 'success',
+      }).catch(() => {});
 
       res.status(201).json(vitalSigns);
     } catch (error) {
@@ -1152,6 +1187,197 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching patient dashboard:", error);
       res.status(500).json({ message: "Failed to fetch patient dashboard" });
+    }
+  });
+
+  // ─── AUDIT LOGGING HELPER ────────────────────────────────────────────────────
+  async function logAudit(req: any, action: string, resource?: string, resourceId?: string, details?: object, status = 'success') {
+    try {
+      const user = req.user;
+      await storage.createAuditLog({
+        userId: user?.patientId || user?.id?.toString() || 'system',
+        userEmail: user?.email || 'system',
+        userRole: user?.role || 'unknown',
+        action,
+        resource,
+        resourceId,
+        details: details ? JSON.stringify(details) : undefined,
+        ipAddress: req.ip || req.headers['x-forwarded-for']?.toString().split(',')[0].trim(),
+        status,
+      });
+    } catch (e) {
+      // Never let audit logging break a request
+    }
+  }
+
+  // GET /api/admin/audit-logs?action=&userEmail=&resource=&limit=&offset=
+  app.get("/api/admin/audit-logs", requireAdmin, async (req, res) => {
+    try {
+      const { action, userEmail, resource, limit = '100', offset = '0' } = req.query as Record<string, string>;
+      const [logs, total] = await Promise.all([
+        storage.getAuditLogs({ action, userEmail, resource, limit: parseInt(limit), offset: parseInt(offset) }),
+        storage.countAuditLogs({ action, userEmail, resource }),
+      ]);
+      res.json({ logs, total, limit: parseInt(limit), offset: parseInt(offset) });
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
+  // ─── ADMIN SETTINGS ───────────────────────────────────────────────────────────
+  const DEFAULT_SETTINGS = [
+    { key: 'org_name',                value: '24/7 Tele H Healthcare',    category: 'general',      description: 'Organization display name' },
+    { key: 'timezone',                value: 'Asia/Dubai',                category: 'general',      description: 'System timezone (IANA format)' },
+    { key: 'session_timeout_minutes', value: '60',                        category: 'security',     description: 'Auto-logout after inactivity (minutes)' },
+    { key: 'max_login_attempts',      value: '5',                         category: 'security',     description: 'Max failed logins before lockout' },
+    { key: 'alert_hr_critical_max',   value: '120',                       category: 'alerts',       description: 'Critical high heart rate threshold (BPM)' },
+    { key: 'alert_hr_critical_min',   value: '50',                        category: 'alerts',       description: 'Critical low heart rate threshold (BPM)' },
+    { key: 'alert_spo2_critical_min', value: '90',                        category: 'alerts',       description: 'Critical low SpO2 threshold (%)' },
+    { key: 'alert_temp_critical_max', value: '39.0',                      category: 'alerts',       description: 'Critical high temperature threshold (°C)' },
+    { key: 'alert_bp_sys_max',        value: '180',                       category: 'alerts',       description: 'Critical high systolic BP threshold (mmHg)' },
+    { key: 'alert_glucose_max',       value: '250',                       category: 'alerts',       description: 'Critical high blood glucose threshold (mg/dL)' },
+    { key: 'email_notifications',     value: 'true',                      category: 'notifications', description: 'Enable email notifications for critical alerts' },
+    { key: 'sms_notifications',       value: 'false',                     category: 'notifications', description: 'Enable SMS notifications for critical alerts' },
+    { key: 'compliance_standard',     value: 'DOH/ADHCC',                 category: 'compliance',   description: 'Regulatory compliance standard applied' },
+    { key: 'data_retention_days',     value: '2555',                      category: 'compliance',   description: 'Days to retain patient data (7 years = DOH requirement)' },
+    { key: 'audit_log_enabled',       value: 'true',                      category: 'compliance',   description: 'Enable audit logging for all actions' },
+  ];
+
+  app.get("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      const saved = await storage.getAllAdminSettings();
+      // Merge defaults with saved values (saved takes priority)
+      const savedMap = Object.fromEntries(saved.map(s => [s.key, s]));
+      const merged = DEFAULT_SETTINGS.map(d => savedMap[d.key] || { ...d, id: 0, updatedAt: null, updatedBy: null });
+      res.json(merged);
+    } catch (error) {
+      console.error("Error fetching admin settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.put("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      const { key, value, category, description } = req.body;
+      if (!key || value === undefined) return res.status(400).json({ message: "key and value are required" });
+      const user = (req as any).user;
+      const setting = await storage.upsertAdminSetting(key, String(value), category, description, user?.email);
+      await logAudit(req, 'update_setting', 'admin_setting', key, { key, value });
+      res.json(setting);
+    } catch (error) {
+      console.error("Error updating admin setting:", error);
+      res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
+  app.put("/api/admin/settings/bulk", requireAdmin, async (req, res) => {
+    try {
+      const settings: Array<{ key: string; value: string; category?: string; description?: string }> = req.body;
+      if (!Array.isArray(settings)) return res.status(400).json({ message: "Expected array of settings" });
+      const user = (req as any).user;
+      const results = await Promise.all(
+        settings.map(s => storage.upsertAdminSetting(s.key, String(s.value), s.category, s.description, user?.email))
+      );
+      await logAudit(req, 'bulk_update_settings', 'admin_setting', undefined, { count: results.length });
+      res.json(results);
+    } catch (error) {
+      console.error("Error bulk-updating admin settings:", error);
+      res.status(500).json({ message: "Failed to bulk update settings" });
+    }
+  });
+
+  // ─── LIVE MONITORING ──────────────────────────────────────────────────────────
+  // GET /api/admin/live-monitoring — latest vital for every patient, colored by severity
+  app.get("/api/admin/live-monitoring", requireAdmin, async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const monitoringData = await Promise.all(patients.map(async (patient) => {
+        const pid = patient.patientId;
+        const vitals = await storage.getVitalSignsByPatient(pid);
+        const latest = vitals[0] ?? null;
+        const device = (await storage.getHc03DevicesByPatient(pid))[0] ?? null;
+        return {
+          patientId: pid,
+          patientName: `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || patient.email,
+          email: patient.email,
+          hospitalId: patient.hospitalId,
+          status: latest?.status ?? 'no_data',
+          lastReading: latest?.timestamp ?? null,
+          vitals: latest ? {
+            heartRate: latest.heartRate,
+            bloodPressureSystolic: latest.bloodPressureSystolic,
+            bloodPressureDiastolic: latest.bloodPressureDiastolic,
+            temperature: latest.temperature ? parseFloat(String(latest.temperature)) : null,
+            oxygenLevel: latest.oxygenLevel,
+            bloodGlucose: latest.bloodGlucose,
+          } : null,
+          device: device ? {
+            deviceId: device.deviceId,
+            connectionStatus: device.connectionStatus,
+            batteryLevel: device.batteryLevel,
+          } : null,
+        };
+      }));
+      res.json(monitoringData);
+    } catch (error) {
+      console.error("Error fetching live monitoring:", error);
+      res.status(500).json({ message: "Failed to fetch monitoring data" });
+    }
+  });
+
+  // ─── DOCTOR DASHBOARD ─────────────────────────────────────────────────────────
+  // GET /api/doctor/dashboard — aggregated view for doctor role
+  app.get("/api/doctor/dashboard", requireAuth, async (req, res) => {
+    try {
+      const [patients, allAlerts] = await Promise.all([
+        storage.getAllPatients(),
+        storage.getAllAlerts(),
+      ]);
+
+      const activeAlerts = allAlerts.filter(a => !a.isResolved);
+      const criticalAlerts = activeAlerts.filter(a => a.severity === 'high');
+
+      // Recent readings across all patients (last 24h)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const patientSummaries = await Promise.all(patients.slice(0, 20).map(async (patient) => {
+        const vitals = await storage.getVitalSignsByPatient(patient.patientId);
+        const recentVitals = vitals.filter(v => v.timestamp && new Date(v.timestamp) >= oneDayAgo);
+        const latest = vitals[0];
+        return {
+          patientId: patient.patientId,
+          patientName: `${patient.firstName || ''} ${patient.lastName || ''}`.trim(),
+          status: latest?.status ?? 'no_data',
+          lastReading: latest?.timestamp ?? null,
+          readingsToday: recentVitals.length,
+          alertsCount: activeAlerts.filter(a => a.patientId === patient.patientId).length,
+          latestVitals: latest ? {
+            heartRate: latest.heartRate,
+            bloodPressureSystolic: latest.bloodPressureSystolic,
+            bloodPressureDiastolic: latest.bloodPressureDiastolic,
+            oxygenLevel: latest.oxygenLevel,
+            temperature: latest.temperature ? parseFloat(String(latest.temperature)) : null,
+          } : null,
+        };
+      }));
+
+      // Sort: critical first, then attention, then normal
+      const priority = { critical: 0, attention: 1, normal: 2, no_data: 3 };
+      patientSummaries.sort((a, b) => (priority[a.status as keyof typeof priority] ?? 3) - (priority[b.status as keyof typeof priority] ?? 3));
+
+      res.json({
+        summary: {
+          totalPatients: patients.length,
+          activeAlerts: activeAlerts.length,
+          criticalAlerts: criticalAlerts.length,
+          patientsWithReadingsToday: patientSummaries.filter(p => p.readingsToday > 0).length,
+        },
+        patients: patientSummaries,
+        recentAlerts: criticalAlerts.slice(0, 10),
+      });
+    } catch (error) {
+      console.error("Error fetching doctor dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch doctor dashboard" });
     }
   });
 

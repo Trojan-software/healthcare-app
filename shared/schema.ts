@@ -317,3 +317,55 @@ export type BloodGlucoseData = typeof bloodGlucoseData.$inferSelect;
 export type InsertBloodGlucoseData = z.infer<typeof insertBloodGlucoseDataSchema>;
 export type TemperatureData = typeof temperatureData.$inferSelect;
 export type InsertTemperatureData = z.infer<typeof insertTemperatureDataSchema>;
+
+// Audit Logs — tracks all significant system actions for compliance & traceability
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id"),
+  userEmail: text("user_email"),
+  userRole: text("user_role").default("patient"),
+  action: text("action").notNull(),         // e.g. login, logout, view_patient, submit_vitals
+  resource: text("resource"),               // e.g. patient, vital_signs, device, alert
+  resourceId: text("resource_id"),
+  details: text("details"),                 // JSON string with context
+  ipAddress: text("ip_address"),
+  status: text("status").default("success"),// success | failed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).pick({
+  userId: true,
+  userEmail: true,
+  userRole: true,
+  action: true,
+  resource: true,
+  resourceId: true,
+  details: true,
+  ipAddress: true,
+  status: true,
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+
+// Admin Settings — key/value config store for system-wide settings
+export const adminSettings = pgTable("admin_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  category: text("category").default("general"), // general | alerts | notifications | security | compliance
+  description: text("description"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: text("updated_by"),
+});
+
+export const insertAdminSettingSchema = createInsertSchema(adminSettings).pick({
+  key: true,
+  value: true,
+  category: true,
+  description: true,
+  updatedBy: true,
+});
+
+export type AdminSetting = typeof adminSettings.$inferSelect;
+export type InsertAdminSetting = z.infer<typeof insertAdminSettingSchema>;

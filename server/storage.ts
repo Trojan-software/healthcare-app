@@ -1,9 +1,11 @@
 import { 
   users, otpCodes, vitalSigns, checkupLogs, reminderSettings, alerts,
   hc03Devices, ecgData, bloodOxygenData, bloodPressureData, bloodGlucoseData, temperatureData,
+  auditLogs, adminSettings,
   type User, type InsertUser, type OtpCode, type InsertOtpCode,
   type VitalSigns, type InsertVitalSigns, type CheckupLog, type InsertCheckupLog,
-  type ReminderSettings, type InsertReminderSettings, type Alert, type InsertAlert
+  type ReminderSettings, type InsertReminderSettings, type Alert, type InsertAlert,
+  type AuditLog, type InsertAuditLog, type AdminSetting, type InsertAdminSetting
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -61,6 +63,17 @@ export interface IStorage {
 
   // Dashboard stats
   getDashboardStats(patientId: string): Promise<any>;
+
+  // Audit Log methods
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  getAuditLogs(opts?: { limit?: number; offset?: number; action?: string; userEmail?: string; resource?: string }): Promise<AuditLog[]>;
+  countAuditLogs(opts?: { action?: string; userEmail?: string; resource?: string }): Promise<number>;
+
+  // Admin Settings methods
+  getAdminSetting(key: string): Promise<AdminSetting | undefined>;
+  getAllAdminSettings(): Promise<AdminSetting[]>;
+  upsertAdminSetting(key: string, value: string, category?: string, description?: string, updatedBy?: string): Promise<AdminSetting>;
+  deleteAdminSetting(key: string): Promise<void>;
 
   // HC03 Device Management
   registerHc03Device(device: any): Promise<any>;
@@ -641,6 +654,65 @@ export class DatabaseStorage implements IStorage {
       .where(eq(temperatureData.patientId, patientId))
       .orderBy(desc(temperatureData.timestamp))
       .limit(limit);
+  }
+
+  // ─── Audit Log Implementations ──────────────────────────────────────────────
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const [created] = await db.insert(auditLogs).values(log).returning();
+    return created;
+  }
+
+  async getAuditLogs(opts: { limit?: number; offset?: number; action?: string; userEmail?: string; resource?: string } = {}): Promise<AuditLog[]> {
+    const { limit = 100, offset = 0, action, userEmail, resource } = opts;
+    const conditions: any[] = [];
+    if (action) conditions.push(eq(auditLogs.action, action));
+    if (userEmail) conditions.push(eq(auditLogs.userEmail, userEmail));
+    if (resource) conditions.push(eq(auditLogs.resource, resource));
+
+    const query = db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit).offset(offset);
+    if (conditions.length > 0) return await query.where(and(...conditions));
+    return await query;
+  }
+
+  async countAuditLogs(opts: { action?: string; userEmail?: string; resource?: string } = {}): Promise<number> {
+    const { action, userEmail, resource } = opts;
+    const conditions: any[] = [];
+    if (action) conditions.push(eq(auditLogs.action, action));
+    if (userEmail) conditions.push(eq(auditLogs.userEmail, userEmail));
+    if (resource) conditions.push(eq(auditLogs.resource, resource));
+    const [row] = conditions.length > 0
+      ? await db.select({ count: sql<number>`count(*)` }).from(auditLogs).where(and(...conditions))
+      : await db.select({ count: sql<number>`count(*)` }).from(auditLogs);
+    return Number(row?.count ?? 0);
+  }
+
+  // ─── Admin Settings Implementations ─────────────────────────────────────────
+  async getAdminSetting(key: string): Promise<AdminSetting | undefined> {
+    const [row] = await db.select().from(adminSettings).where(eq(adminSettings.key, key));
+    return row;
+  }
+
+  async getAllAdminSettings(): Promise<AdminSetting[]> {
+    return await db.select().from(adminSettings).orderBy(adminSettings.category, adminSettings.key);
+  }
+
+  async upsertAdminSetting(key: string, value: string, category = 'general', description?: string, updatedBy?: string): Promise<AdminSetting> {
+    const existing = await this.getAdminSetting(key);
+    if (existing) {
+      const [updated] = await db.update(adminSettings)
+        .set({ value, category, description, updatedBy, updatedAt: new Date() })
+        .where(eq(adminSettings.key, key))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(adminSettings)
+      .values({ key, value, category, description, updatedBy })
+      .returning();
+    return created;
+  }
+
+  async deleteAdminSetting(key: string): Promise<void> {
+    await db.delete(adminSettings).where(eq(adminSettings.key, key));
   }
 }
 
