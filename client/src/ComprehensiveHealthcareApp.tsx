@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { handleApiError } from '@/lib/errorHandler';
-import { API_BASE_URL } from '@/lib/queryClient';
+import { API_BASE_URL, queryClient } from '@/lib/queryClient';
 import FAQSection from './components/FAQSection';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
 import CheckupScheduling from './components/CheckupScheduling';
@@ -197,6 +197,12 @@ function AppContent() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    queryClient.clear();
+    setState({ view: 'login', user: null, loading: false, error: '' });
+  };
+
   const handleLogin = async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true, error: '' }));
 
@@ -209,6 +215,10 @@ function AppContent() {
 
       if (response.ok) {
         const data = await response.json();
+        // Save JWT so all subsequent API calls can include it in Authorization header
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+        }
         setState(prev => ({
           ...prev,
           user: data.user,
@@ -907,7 +917,7 @@ For questions, contact: support@24x7teleh.com
                   <p className="text-blue-100 text-sm">{t('administrator')}</p>
                 </div>
                 <button
-                  onClick={() => setState({ view: 'login', user: null, loading: false, error: '' })}
+                  onClick={handleLogout}
                   className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
                   data-testid="button-logout-admin"
                 >
@@ -1697,7 +1707,7 @@ For questions, contact: support@24x7teleh.com
     return (
       <EnhancedPatientDashboard 
         userId={state.user.id} 
-        onLogout={() => setState({ view: 'login', user: null, loading: false, error: '' })}
+        onLogout={handleLogout}
       />
     );
   }
@@ -1714,7 +1724,7 @@ For questions, contact: support@24x7teleh.com
                 <p className="text-green-100">Welcome, {state.user?.firstName} {state.user?.lastName}</p>
               </div>
               <button
-                onClick={() => setState({ view: 'login', user: null, loading: false, error: '' })}
+                onClick={handleLogout}
                 className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all"
               >
                 Logout

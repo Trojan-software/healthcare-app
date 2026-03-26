@@ -12,6 +12,38 @@ const JWT_SECRET = process.env.JWT_SECRET || (() => {
   throw new Error("JWT_SECRET environment variable is required for security");
 })();
 
+// Routes that do NOT require a valid JWT token
+const PUBLIC_API_PATHS = new Set([
+  '/api/login',
+  '/api/auth/login',
+  '/api/register',
+  '/api/forgot-password',
+  '/api/reset-password',
+  '/api/hospitals',
+  '/api/hospitals/abudhabi',
+]);
+
+// Middleware: verify Bearer JWT on every /api/* request except public paths above
+function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (PUBLIC_API_PATHS.has(req.path)) {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  const token = authHeader.slice(7);
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; email: string; role: string };
+    (req as any).user = decoded;
+    next();
+  } catch {
+    return res.status(401).json({ message: 'Invalid or expired token. Please log in again.' });
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
   app.use(express.json());
@@ -28,31 +60,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // Apply JWT authentication to all /api/* routes (public paths are exempt inside requireAuth)
+  app.use('/api', requireAuth);
+
   // API Routes
   app.post("/api/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
+      // Accept either "email" (web form) or "emailOrPatientId" (mobile) field
+      const rawInput = req.body.emailOrPatientId ?? req.body.email;
+      const { password } = req.body;
 
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
+      if (!rawInput || !password) {
+        return res.status(400).json({ message: "Email/Patient ID and password are required" });
       }
 
-      // Input validation - prevent injection attacks (ADHCC Security)
-      const emailStr = String(email).trim().toLowerCase();
+      const inputStr = String(rawInput).trim();
       const passwordStr = String(password);
-      
-      // Validate email format (basic regex check)
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      if (!emailRegex.test(emailStr) || emailStr.length > 254) {
-        return res.status(400).json({ message: "Invalid email format" });
-      }
-      
-      // Validate password length limits
+
+      // Validate password length to prevent abuse
       if (passwordStr.length < 1 || passwordStr.length > 128) {
         return res.status(400).json({ message: "Invalid password" });
       }
 
-      const user = await storage.getUserByEmail(emailStr);
+      // Resolve user by email or patient ID
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      let user = null;
+      if (emailRegex.test(inputStr) && inputStr.length <= 254) {
+        user = await storage.getUserByEmail(inputStr.toLowerCase());
+      } else {
+        user = await storage.getUserByPatientId(inputStr);
+      }
+
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -69,8 +107,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log(`User login - role: ${user.role} email: ${user.email}`);
-
       const token = jwt.sign(
         { userId: user.id, email: user.email, role: user.role },
         JWT_SECRET,
@@ -82,12 +118,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        patientId: user.patientId,
         role: user.role
       };
 
-      console.log(`Login response user role: ${userResponse.role}`);
-
-      res.json({ token, user: userResponse });
+      res.json({ success: true, token, user: userResponse });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Internal server error" });
