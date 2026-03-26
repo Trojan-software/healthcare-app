@@ -12,15 +12,18 @@ const JWT_SECRET = process.env.JWT_SECRET || (() => {
   throw new Error("JWT_SECRET environment variable is required for security");
 })();
 
-// Routes that do NOT require a valid JWT token
+// Routes that do NOT require a valid JWT token.
+// IMPORTANT: when registered via app.use('/api', requireAuth), Express strips
+// the '/api' mount prefix from req.path before the middleware sees it.
+// These entries must be the path WITHOUT the '/api' prefix.
 const PUBLIC_API_PATHS = new Set([
-  '/api/login',
-  '/api/auth/login',
-  '/api/register',
-  '/api/forgot-password',
-  '/api/reset-password',
-  '/api/hospitals',
-  '/api/hospitals/abudhabi',
+  '/login',
+  '/auth/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/hospitals',
+  '/hospitals/abudhabi',
 ]);
 
 // Middleware: verify Bearer JWT on every /api/* request except public paths above
