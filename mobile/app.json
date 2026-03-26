@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "24/7 Tele H",
+    "slug": "teleh-healthcare",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1e40af"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.teleh.healthcare",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "24/7 Tele H needs Bluetooth to connect to your HC03 health monitor device.",
+        "NSBluetoothPeripheralUsageDescription": "24/7 Tele H needs Bluetooth to connect to your HC03 health monitor device.",
+        "NSFaceIDUsageDescription": "Use Face ID to securely log in to 24/7 Tele H.",
+        "UIBackgroundModes": ["bluetooth-central"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1e40af"
+      },
+      "package": "com.teleh.healthcare",
+      "versionCode": 1,
+      "permissions": [
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_CONNECT",
+        "BLUETOOTH_SCAN",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["peripheral", "central"],
+          "bluetoothAlwaysPermission": "Allow $(PRODUCT_NAME) to connect to your health monitoring device"
+        }
+      ],
+      "expo-secure-store",
+      "expo-local-authentication"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "teleh-healthcare"
+      },
+      "apiBaseUrl": "https://247tech.net"
+    }
+  }
+}

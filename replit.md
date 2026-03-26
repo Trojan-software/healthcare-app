@@ -1,7 +1,7 @@
 # 24/7 Tele H - Health Monitoring System
 
 ## Overview
-The 24/7 Tele H platform is a comprehensive telemedicine and health monitoring system for healthcare professionals and patients. It provides vital signs tracking with manual data entry, health analytics, appointment scheduling, and offers a mobile-first Progressive Web App (PWA) experience. The system aims to enhance patient care through continuous monitoring, early alerts, and robust data analytics, improving health outcomes and operational efficiency.
+The 24/7 Tele H platform is a comprehensive telemedicine and health monitoring system for healthcare professionals and patients. It provides vital signs tracking with manual data entry, health analytics, appointment scheduling, and offers both a web app and a **native React Native mobile app**. The system aims to enhance patient care through continuous monitoring, early alerts, and robust data analytics, improving health outcomes and operational efficiency.
 
 ## User Preferences
 ```
@@ -11,7 +11,22 @@ PDF documentation: Professional technical documentation with detailed specificat
 ```
 
 ## System Architecture
-The system employs a modern full-stack architecture. The frontend uses **React 18** with **TypeScript**, **Tailwind CSS** (`shadcn/ui`), **TanStack Query**, and **Wouter**, built with **Vite** and full **PWA** support. The backend uses **Node.js** with **TypeScript** and **Express.js** for its REST API. Data management is handled by **PostgreSQL** (Neon Database) with **Drizzle ORM**. **JWT-based authentication** with `bcrypt` secures user access.
+
+### Web App (client/ + server/)
+The web platform uses **React 18** with **TypeScript**, **Tailwind CSS** (`shadcn/ui`), **TanStack Query**, and **Wouter**, built with **Vite** and full **PWA** support. The backend uses **Node.js** with **TypeScript** and **Express.js** for its REST API. Data management is handled by **PostgreSQL** (Neon Database) with **Drizzle ORM**. **JWT-based authentication** with `bcrypt` secures user access.
+
+### React Native Mobile App (mobile/)
+A full React Native / Expo app converted from Capacitor. Stack:
+- **Expo SDK 52** + **React Native 0.76**
+- **NativeWind v4** (Tailwind CSS for React Native)
+- **React Navigation v6** (native stack navigation)
+- **TanStack Query v5** (same as web — server state management)
+- **react-native-ble-plx** (true native Bluetooth for HC03 device)
+- **expo-secure-store** (JWT stored in device Secure Enclave/Keystore)
+- **EAS Build** for cloud APK/IPA generation
+
+**Mobile App Directory:** `mobile/`
+**Build Guide:** `REACT_NATIVE_BUILD_GUIDE.md`
 
 **Key Features and Design Decisions:**
 -   **Enhanced Patient Registration**: Comprehensive signup, UAE mobile validation, patient ID generation, Abu Dhabi hospital selection, OTP email verification, secure passwords, and role-based access.
