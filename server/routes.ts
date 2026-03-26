@@ -47,6 +47,16 @@ function requireAuth(req: express.Request, res: express.Response, next: express.
   }
 }
 
+// Second-tier guard: the JWT must exist AND carry role="admin".
+// Apply this to every route that should be admin-only.
+function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const user = (req as any).user as { userId: number; email: string; role: string } | undefined;
+  if (!user || user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON
   app.use(express.json());
@@ -65,6 +75,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Apply JWT authentication to all /api/* routes (public paths are exempt inside requireAuth)
   app.use('/api', requireAuth);
+
+  // All /api/admin/* routes require admin role in addition to a valid JWT
+  app.use('/api/admin', requireAdmin);
 
   // Session restore: return the authenticated user from the JWT
   // Frontend calls this on startup to rehydrate the session without re-entering credentials.
@@ -302,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin endpoints
-  app.get("/api/patients", async (req, res) => {
+  app.get("/api/patients", requireAdmin, async (req, res) => {
     try {
       const patients = await storage.getAllPatients();
       
@@ -782,17 +795,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Patient update endpoint for edit functionality
-  app.put("/api/patients/:id", async (req, res) => {
+  // Patient update endpoint for edit functionality (admin only)
+  app.put("/api/patients/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const updateData = req.body;
+
+      // Whitelist the exact fields that are safe to update.
+      // NEVER pass req.body directly — that would allow any caller to set
+      // role="admin", isVerified=true, or overwrite password with plaintext.
+      const { firstName, lastName, email, mobileNumber, dateOfBirth, gender, middleName, hospitalId } = req.body;
       
-      // Validate required fields
-      if (!updateData.firstName || !updateData.lastName || !updateData.email) {
+      if (!firstName || !lastName || !email) {
         return res.status(400).json({ message: "First name, last name, and email are required" });
       }
       
+      const updateData = { firstName, lastName, email, mobileNumber, dateOfBirth, gender, middleName, hospitalId };
       const updatedPatient = await storage.updateUser(parseInt(id), updateData);
       if (!updatedPatient) {
         return res.status(404).json({ message: "Patient not found" });
@@ -805,8 +822,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Reset patient password
-  app.post("/api/patients/:id/reset-password", async (req, res) => {
+  // Reset patient password (admin only)
+  app.post("/api/patients/:id/reset-password", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       
@@ -838,8 +855,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Toggle User Status endpoint
-  app.patch("/api/users/:id/toggle-status", async (req, res) => {
+  // Toggle User Status endpoint (admin only)
+  app.patch("/api/users/:id/toggle-status", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const userId = parseInt(id);
@@ -967,7 +984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard endpoints
-  app.get("/api/dashboard/admin", async (req, res) => {
+  app.get("/api/dashboard/admin", requireAdmin, async (req, res) => {
     try {
       const patients = await storage.getAllPatients();
       const allVitals = await Promise.all(
