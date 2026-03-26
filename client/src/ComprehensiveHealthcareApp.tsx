@@ -61,12 +61,48 @@ interface AppState {
 
 function AppContent() {
   const { t, isRTL } = useLanguage();
+  // sessionChecked prevents a flash of the login screen on page reload when the
+  // user is already authenticated (their JWT is in localStorage).
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [state, setState] = useState<AppState>({
     view: 'login',
     user: null,
     loading: false,
     error: ''
   });
+
+  // On mount: try to restore an existing session from the stored JWT so the
+  // user is not forced to log in again after a page refresh.
+  useEffect(() => {
+    const restoreSession = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setSessionChecked(true);
+        return;
+      }
+      try {
+        const res = await authedFetch('/api/auth/me');
+        if (res.ok) {
+          const user = await res.json();
+          setState({
+            view: user.role === 'admin' ? 'admin' : 'patient',
+            user,
+            loading: false,
+            error: ''
+          });
+        } else {
+          // Token is invalid or expired — clear it so the login form is shown clean
+          localStorage.removeItem('auth_token');
+          queryClient.clear();
+        }
+      } catch {
+        localStorage.removeItem('auth_token');
+      } finally {
+        setSessionChecked(true);
+      }
+    };
+    restoreSession();
+  }, []);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -403,6 +439,20 @@ For questions, contact: support@24x7teleh.com
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  // Show a neutral loading screen while we check whether a stored token is
+  // still valid. Without this guard the login form flashes for ~200ms on every
+  // page refresh even when the user is already authenticated.
+  if (!sessionChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-blue-700 font-medium">Loading 24/7 Tele H…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (state.view === 'login') {
     return (

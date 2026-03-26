@@ -66,6 +66,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply JWT authentication to all /api/* routes (public paths are exempt inside requireAuth)
   app.use('/api', requireAuth);
 
+  // Session restore: return the authenticated user from the JWT
+  // Frontend calls this on startup to rehydrate the session without re-entering credentials.
+  app.get("/api/auth/me", async (req, res) => {
+    try {
+      const decoded = (req as any).user as { userId: number; email: string; role: string };
+      const user = await storage.getUser(decoded.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      if (!user.isVerified) {
+        return res.status(403).json({ message: "Account is inactive" });
+      }
+      res.json({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        patientId: user.patientId,
+        role: user.role,
+        isVerified: user.isVerified,
+        hospitalId: user.hospitalId,
+        mobileNumber: user.mobileNumber,
+        dateOfBirth: user.dateOfBirth,
+      });
+    } catch (error) {
+      console.error("Auth/me error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // API Routes
   app.post("/api/login", async (req, res) => {
     try {
@@ -334,6 +364,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // ── Admin convenience aliases ──────────────────────────────────────────────
+  // The frontend calls these paths; they delegate to the canonical handlers.
+
+  // GET /api/admin/patients  →  same data as GET /api/patients
+  app.get("/api/admin/patients", async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const patientsWithStats = await Promise.all(patients.map(async (patient) => {
+        const latestVitals = await storage.getLatestVitalSigns(patient.patientId || patient.id.toString());
+        const lastCheckup = await storage.getLastCheckupTime(patient.patientId || patient.id.toString());
+        return {
+          ...patient,
+          lastActivity: patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : 'Never',
+          status: determinePatientStatus({ ...patient, latestVitals }),
+          vitals: latestVitals,
+          lastCheckup: lastCheckup ? new Date(lastCheckup).toLocaleDateString() : 'Never',
+          age: patient.dateOfBirth ? calculateAge(patient.dateOfBirth) : 'Unknown'
+        };
+      }));
+      res.json(patientsWithStats);
+    } catch (error) {
+      console.error("Error fetching admin patients:", error);
+      res.status(500).json({ message: "Failed to fetch patients" });
+    }
+  });
+
+  // GET /api/admin/dashboard  →  same data as GET /api/dashboard/admin
+  app.get("/api/admin/dashboard", async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const allVitals = await Promise.all(
+        patients.map(p => storage.getVitalSignsByPatient(p.patientId || p.id.toString()))
+      );
+      const vitalsData = allVitals.flat();
+      const activePatients = patients.filter(p => p.isVerified).length;
+      const criticalAlerts = vitalsData.filter(v => isVitalsCritical(v)).length;
+      const stats = {
+        totalPatients: patients.length,
+        activePatients,
+        criticalAlerts,
+        deviceConnections: Math.floor(activePatients * 0.85),
+        complianceRate: calculateAdvancedComplianceRate(patients, vitalsData),
+        weeklyGrowth: 12.3,
+        vitalsAverages: calculateVitalsAverages(vitalsData),
+        trendsData: generateTrendsData(vitalsData),
+        complianceBreakdown: getComplianceBreakdown(patients),
+        alertHistory: getAlertHistory([])
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
+    }
+  });
+
+  // POST /api/admin/create-patient  →  admin creates a verified patient account
+  app.post("/api/admin/create-patient", async (req, res) => {
+    try {
+      const { email, firstName, lastName, password, mobileNumber, hospitalId, dateOfBirth } = req.body;
+
+      if (!email || !firstName || !lastName || !password) {
+        return res.status(400).json({ message: "email, firstName, lastName and password are required" });
+      }
+
+      const existingUser = await storage.getUserByEmail(email.toLowerCase());
+      if (existingUser) {
+        return res.status(409).json({ message: "A user with this email already exists" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const patientId = generateSecurePatientId();
+
+      const newPatient = await storage.createPatientAccess({
+        email: email.toLowerCase(),
+        firstName,
+        lastName: lastName || '',
+        password: hashedPassword,
+        mobileNumber: mobileNumber || '',
+        patientId,
+        hospitalId: hospitalId || null,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+        isVerified: true,
+        role: 'patient',
+      });
+
+      const { password: _, ...safePatient } = newPatient;
+      res.status(201).json({ success: true, patient: safePatient });
+    } catch (error) {
+      console.error("Error creating patient:", error);
+      res.status(500).json({ message: "Failed to create patient" });
+    }
+  });
+
+  // GET /api/admin/devices  →  return all registered HC03 devices
+  app.get("/api/admin/devices", async (req, res) => {
+    try {
+      const patients = await storage.getAllPatients();
+      const allDevices: any[] = [];
+      for (const patient of patients) {
+        const devices = await storage.getHc03DevicesByPatient(patient.patientId || patient.id.toString());
+        allDevices.push(...devices.map(d => ({ ...d, patientName: `${patient.firstName} ${patient.lastName}` })));
+      }
+      res.json(allDevices);
+    } catch (error) {
+      console.error("Error fetching devices:", error);
+      res.status(500).json({ message: "Failed to fetch devices" });
+    }
+  });
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Vital signs endpoints
   app.post("/api/vital-signs", async (req, res) => {
