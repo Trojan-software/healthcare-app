@@ -407,7 +407,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/admin/dashboard  →  same data as GET /api/dashboard/admin
   app.get("/api/admin/dashboard", async (req, res) => {
     try {
-      const patients = await storage.getAllPatients();
+      const [patients, allAlerts] = await Promise.all([
+        storage.getAllPatients(),
+        storage.getAllAlerts(),
+      ]);
       const allVitals = await Promise.all(
         patients.map(p => storage.getVitalSignsByPatient(p.patientId || p.id.toString()))
       );
@@ -423,8 +426,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         weeklyGrowth: 12.3,
         vitalsAverages: calculateVitalsAverages(vitalsData),
         trendsData: generateTrendsData(vitalsData),
-        complianceBreakdown: getComplianceBreakdown(patients),
-        alertHistory: getAlertHistory([])
+        complianceBreakdown: getComplianceBreakdown(patients, vitalsData),
+        alertHistory: getAlertHistory(allAlerts),
       };
       res.json(stats);
     } catch (error) {
@@ -986,15 +989,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard endpoints
   app.get("/api/dashboard/admin", requireAdmin, async (req, res) => {
     try {
-      const patients = await storage.getAllPatients();
+      const [patients, allAlerts] = await Promise.all([
+        storage.getAllPatients(),
+        storage.getAllAlerts(),
+      ]);
       const allVitals = await Promise.all(
         patients.map(p => storage.getVitalSignsByPatient(p.patientId || p.id.toString()))
       );
       const vitalsData = allVitals.flat();
-      
+
       const activePatients = patients.filter(p => p.isVerified).length;
       const criticalAlerts = vitalsData.filter(v => isVitalsCritical(v)).length;
-      
+
       const stats = {
         totalPatients: patients.length,
         activePatients,
@@ -1004,10 +1010,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         weeklyGrowth: 12.3,
         vitalsAverages: calculateVitalsAverages(vitalsData),
         trendsData: generateTrendsData(vitalsData),
-        complianceBreakdown: getComplianceBreakdown(patients),
-        alertHistory: getAlertHistory([])
+        complianceBreakdown: getComplianceBreakdown(patients, vitalsData),
+        alertHistory: getAlertHistory(allAlerts),
       };
-      
+
       res.json(stats);
     } catch (error) {
       console.error("Error fetching admin dashboard:", error);
@@ -1043,6 +1049,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: vitalsSnapshot.timestamp || new Date()
       };
 
+      // Health score: derive from the latest available vitals status
+      // Critical = 50, Attention = 70, Normal = 90, No data = null
+      let healthScore: number | null = null;
+      if (vitalsSnapshot.heartRate !== null || vitalsSnapshot.oxygenLevel !== null ||
+          vitalsSnapshot.bloodGlucose !== null || vitalsSnapshot.bloodPressureSystolic !== null) {
+        const vsStatus = calculateVitalSignsStatus({
+          heartRate: vitalsSnapshot.heartRate,
+          bloodPressureSystolic: vitalsSnapshot.bloodPressureSystolic,
+          bloodPressureDiastolic: vitalsSnapshot.bloodPressureDiastolic,
+          temperature: vitalsSnapshot.temperature,
+          oxygenLevel: vitalsSnapshot.oxygenLevel,
+          bloodGlucose: vitalsSnapshot.bloodGlucose,
+        });
+        healthScore = vsStatus === 'critical' ? 50 : vsStatus === 'attention' ? 70 : 90;
+      }
+
+      // Compliance rate: % of the last 30 days on which the patient submitted at least one reading
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const recentVitals = vitalsHistory.filter(v => new Date(v.timestamp).getTime() > thirtyDaysAgo);
+      const activeDays = new Set(recentVitals.map(v => new Date(v.timestamp).toISOString().split('T')[0])).size;
+      const complianceRate = Math.round((activeDays / 30) * 100);
+
+      // Next appointment: first upcoming checkup from the scheduled list
+      const now = new Date();
+      const upcomingCheckups = checkupHistory.filter(c => c.nextScheduledDate && new Date(c.nextScheduledDate) > now);
+      upcomingCheckups.sort((a, b) => new Date(a.nextScheduledDate!).getTime() - new Date(b.nextScheduledDate!).getTime());
+      const nextAppointment = upcomingCheckups.length > 0
+        ? new Date(upcomingCheckups[0].nextScheduledDate!).toLocaleDateString()
+        : null;
+
       const stats = {
         user: formatPatientData(user),
         vitals: formattedVitals,
@@ -1050,9 +1086,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         checkupHistory: checkupHistory.slice(-10),
         alerts: alerts.slice(-5),
         reminderSettings,
-        healthScore: 85,
-        complianceRate: 92,
-        nextAppointment: "2025-06-25",
+        healthScore,
+        complianceRate,
+        nextAppointment,
         lastCheckup: checkupHistory.length > 0 ? 
           new Date(checkupHistory[checkupHistory.length - 1].date).toLocaleDateString() : 
           "Never"
@@ -1364,38 +1400,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return "normal";
   }
 
+  // Build real 7-day trend from actual vital sign records.
+  // vitalsData is the flat list of all patients' records already in memory.
   function generateTrendsData(vitalsData: any[]) {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+    return Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - i));
+      const dateStr = date.toISOString().split('T')[0];
+
+      const dayVitals = vitalsData.filter(v => {
+        if (!v.timestamp) return false;
+        return new Date(v.timestamp).toISOString().split('T')[0] === dateStr;
+      });
+
+      const hrValues   = dayVitals.map(v => v.heartRate).filter((v): v is number => v != null);
+      const tempValues = dayVitals.map(v => parseTemp(v.temperature)).filter((v): v is number => v != null);
+      const o2Values   = dayVitals.map(v => v.oxygenLevel).filter((v): v is number => v != null);
+
+      const avg = (arr: number[]) =>
+        arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
       return {
-        date: date.toISOString().split('T')[0],
-        heartRate: 72 + Math.random() * 20 - 10,
-        temperature: 36.6 + Math.random() * 2 - 1,
-        oxygenLevel: 98 + Math.random() * 4 - 2
+        date: dateStr,
+        heartRate:   avg(hrValues)   !== null ? Math.round(avg(hrValues)!)               : null,
+        temperature: avg(tempValues) !== null ? Math.round(avg(tempValues)! * 10) / 10   : null,
+        oxygenLevel: avg(o2Values)   !== null ? Math.round(avg(o2Values)!)               : null,
+        count: dayVitals.length,
       };
     });
-    
-    return last7Days;
   }
 
-  function getComplianceBreakdown(patients: any[]) {
-    const total = patients.length;
-    return {
-      excellent: Math.floor(total * 0.4),
-      good: Math.floor(total * 0.35),
-      needs_improvement: Math.floor(total * 0.25)
-    };
+  // Compute compliance tiers from how recently each patient submitted vitals.
+  function getComplianceBreakdown(patients: any[], vitalsData: any[]) {
+    const now = Date.now();
+    const DAY  = 24 * 60 * 60 * 1000;
+
+    // Build a map of patientId → most-recent vital timestamp
+    const lastVital: Record<string, number> = {};
+    for (const v of vitalsData) {
+      if (!v.timestamp) continue;
+      const t = new Date(v.timestamp).getTime();
+      if (!lastVital[v.patientId] || t > lastVital[v.patientId]) {
+        lastVital[v.patientId] = t;
+      }
+    }
+
+    let excellent = 0, good = 0, needs_improvement = 0;
+    for (const p of patients) {
+      const pid = p.patientId || String(p.id);
+      const last = lastVital[pid];
+      if (!last) {
+        needs_improvement++;
+      } else {
+        const daysAgo = (now - last) / DAY;
+        if (daysAgo <= 1)       excellent++;
+        else if (daysAgo <= 7)  good++;
+        else                    needs_improvement++;
+      }
+    }
+
+    return { excellent, good, needs_improvement };
   }
 
-  function getAlertHistory(alerts: any[]) {
-    return [
-      { type: 'High Heart Rate', count: 12, severity: 'medium' },
-      { type: 'Low Oxygen', count: 8, severity: 'high' },
-      { type: 'High Temperature', count: 5, severity: 'medium' },
-      { type: 'Blood Pressure', count: 3, severity: 'low' }
-    ];
+  // Aggregate real alert records into type → count buckets.
+  function getAlertHistory(alertRecords: any[]) {
+    const counts: Record<string, { count: number; severity: string }> = {};
+    for (const a of alertRecords) {
+      const type = a.type || 'general';
+      const severity = a.severity || (a.type === 'critical' ? 'high' : 'medium');
+      if (!counts[type]) counts[type] = { count: 0, severity };
+      counts[type].count++;
+    }
+    const result = Object.entries(counts)
+      .map(([type, { count, severity }]) => ({ type, count, severity }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // top 10 alert types
+
+    // Return empty array (not hardcoded fiction) if no alerts yet
+    return result;
   }
+
 
   // Setup Vite development server or static file serving
   const server = createServer(app);

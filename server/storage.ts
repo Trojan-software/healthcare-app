@@ -55,6 +55,7 @@ export interface IStorage {
   // Alert methods
   createAlert(insertAlert: InsertAlert): Promise<Alert>;
   getAlertsByPatient(patientId: string): Promise<Alert[]>;
+  getAllAlerts(): Promise<Alert[]>;
   markAlertAsNotified(alertId: number): Promise<void>;
 
   // Dashboard stats
@@ -362,6 +363,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(alerts)
       .where(eq(alerts.patientId, patientId))
+      .orderBy(desc(alerts.createdAt));
+  }
+
+  async getAllAlerts(): Promise<Alert[]> {
+    return await db
+      .select()
+      .from(alerts)
       .orderBy(desc(alerts.createdAt));
   }
 
