@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authedFetch } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -688,11 +689,9 @@ export default function BilingualPatientManagement() {
               hospitals={hospitals}
               onSubmit={async (updatedData) => {
                 try {
-                  const response = await fetch(`/api/patients/${selectedPatient.id}`, {
+                  const response = await authedFetch(`/api/patients/${selectedPatient.id}`, {
                     method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedData),
                   });
 

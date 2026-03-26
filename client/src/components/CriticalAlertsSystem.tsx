@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { authedFetch } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -71,7 +72,7 @@ export default function CriticalAlertsSystem() {
   // Acknowledge alert mutation
   const acknowledgeAlertMutation = useMutation({
     mutationFn: async ({ alertId, notes }: { alertId: string; notes?: string }) => {
-      const response = await fetch(`/api/critical-alerts/${alertId}/acknowledge`, {
+      const response = await authedFetch(`/api/critical-alerts/${alertId}/acknowledge`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes }),
@@ -86,7 +87,7 @@ export default function CriticalAlertsSystem() {
   // Resolve alert mutation
   const resolveAlertMutation = useMutation({
     mutationFn: async ({ alertId, notes }: { alertId: string; notes?: string }) => {
-      const response = await fetch(`/api/critical-alerts/${alertId}/resolve`, {
+      const response = await authedFetch(`/api/critical-alerts/${alertId}/resolve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes }),
@@ -101,7 +102,7 @@ export default function CriticalAlertsSystem() {
   // Send alert email mutation
   const sendAlertEmailMutation = useMutation({
     mutationFn: async (alertId: string) => {
-      const response = await fetch(`/api/critical-alerts/${alertId}/send-email`, {
+      const response = await authedFetch(`/api/critical-alerts/${alertId}/send-email`, {
         method: 'POST',
       });
       return response.json();

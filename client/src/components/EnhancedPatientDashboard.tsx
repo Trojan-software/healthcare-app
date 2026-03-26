@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { handleApiError } from '@/lib/errorHandler';
-import { API_BASE_URL } from '@/lib/queryClient';
+import { authedFetch } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -109,7 +109,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
 
   const loadDashboardData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/dashboard/patient/${userId}`);
+      const response = await authedFetch(`/api/dashboard/patient/${userId}`);
       if (response.ok) {
         const data = await response.json();
         setDashboardData(data);
@@ -159,7 +159,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     try {
       if (dashboardData?.user?.patientId) {
         // Loading vitals for patient (logged via structured system)
-        const response = await fetch(`${API_BASE_URL}/api/vital-signs/${dashboardData.user.patientId}`);
+        const response = await authedFetch(`/api/vital-signs/${dashboardData.user.patientId}`);
         if (response.ok) {
           const history = await response.json();
           // Vitals history loaded successfully

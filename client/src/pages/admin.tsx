@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { authedFetch } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -86,12 +87,8 @@ export default function AdminPage() {
   const { data: patients = [], isLoading } = useQuery({
     queryKey: ['/api/admin/patients'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/patients', {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+      const response = await authedFetch('/api/admin/patients', {
+        headers: { 'Content-Type': 'application/json' },
       });
       if (!response.ok) {
         throw new Error('Failed to fetch patients');
@@ -104,13 +101,9 @@ export default function AdminPage() {
   // Create patient mutation
   const createPatientMutation = useMutation({
     mutationFn: async (data: CreatePatientData) => {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/create-patient', {
+      const response = await authedFetch('/api/admin/create-patient', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
@@ -140,13 +133,9 @@ export default function AdminPage() {
   // Update patient access mutation
   const updateAccessMutation = useMutation({
     mutationFn: async ({ patientId, isActive }: { patientId: string; isActive: boolean }) => {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/admin/patient/${patientId}/access`, {
+      const response = await authedFetch(`/api/admin/patient/${patientId}/access`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive }),
       });
       if (!response.ok) {

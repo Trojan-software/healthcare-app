@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Users, Shield, LogOut, CheckCircle, AlertCircle } from "lucide-react";
 import { handleApiError } from '@/lib/errorHandler';
+import { authedFetch } from '@/lib/queryClient';
 
 interface Patient {
   id: number;
@@ -46,12 +47,8 @@ export default function SimpleAdminPage() {
 
   const fetchPatients = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/patients', {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+      const response = await authedFetch('/api/admin/patients', {
+        headers: { 'Content-Type': 'application/json' },
       });
       if (response.ok) {
         const data = await response.json();
@@ -67,13 +64,9 @@ export default function SimpleAdminPage() {
 
   const togglePatientAccess = async (patientId: string, isActive: boolean) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/admin/patient/${patientId}/access`, {
+      const response = await authedFetch(`/api/admin/patient/${patientId}/access`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !isActive }),
       });
       

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { handleApiError } from '@/lib/errorHandler';
 import { useQuery } from '@tanstack/react-query';
+import { authedFetch } from '@/lib/queryClient';
 
 interface User {
   id: number;
@@ -43,7 +44,7 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
     queryKey: ['/api/dashboard/patient', user.id],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/dashboard/patient/${user.id}`);
+        const response = await authedFetch(`/api/dashboard/patient/${user.id}`);
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: Failed to fetch dashboard data`);
         }

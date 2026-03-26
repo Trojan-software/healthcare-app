@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, authedFetch } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,7 +114,7 @@ export default function PatientManagementModule() {
   const { data: patientsData, isLoading: loadingPatients, error: patientsError } = useQuery({
     queryKey: ['/api/admin/patients'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/patients');
+      const response = await authedFetch('/api/admin/patients');
       if (!response.ok) {
         throw new Error('Failed to fetch patients');
       }

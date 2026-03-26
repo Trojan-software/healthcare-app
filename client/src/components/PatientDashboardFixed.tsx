@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { handleApiError } from '@/lib/errorHandler';
 import { useLanguage } from '@/lib/i18n';
+import { authedFetch } from '@/lib/queryClient';
 
 interface User {
   id: number;
@@ -48,7 +49,7 @@ export default function PatientDashboardFixed({ user, onLogout }: PatientDashboa
     queryKey: ['/api/dashboard/patient', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const response = await fetch(`/api/dashboard/patient/${user.id}`);
+      const response = await authedFetch(`/api/dashboard/patient/${user.id}`);
       if (!response.ok) {
         handleApiError('PatientDashboardFixed', 'dashboardQuery', new Error('Dashboard API failed'), { userId: user?.id });
         return null;

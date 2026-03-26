@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Droplets, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { authedFetch } from '@/lib/queryClient';
 
 interface BloodGlucoseReading {
   id: number;
@@ -29,7 +30,7 @@ export default function BloodGlucoseMonitor({ patientId }: BloodGlucoseMonitorPr
 
   const loadReadings = async () => {
     try {
-      const response = await fetch(`/api/blood-glucose/${patientId}`);
+      const response = await authedFetch(`/api/blood-glucose/${patientId}`);
       if (response.ok) {
         const data = await response.json();
         setReadings(data);

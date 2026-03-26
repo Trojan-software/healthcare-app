@@ -18,6 +18,29 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+/**
+ * Authenticated fetch — identical to the browser's native fetch() but
+ * automatically attaches the stored JWT as `Authorization: Bearer <token>`.
+ * Use this everywhere instead of a raw fetch() call so that the JWT
+ * protection added to all /api/* routes is honoured.
+ */
+export async function authedFetch(
+  input: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const token = localStorage.getItem('auth_token');
+  const fullUrl = input.startsWith('/') ? `${API_BASE_URL}${input}` : input;
+
+  const headers: Record<string, string> = {
+    ...(init.headers as Record<string, string> | undefined),
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return fetch(fullUrl, { credentials: 'include', ...init, headers });
+}
+
 export async function apiRequest(
   url: string,
   method: string = "GET",

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { handleApiError } from '@/lib/errorHandler';
-import { API_BASE_URL, queryClient } from '@/lib/queryClient';
+import { API_BASE_URL, queryClient, authedFetch } from '@/lib/queryClient';
 import FAQSection from './components/FAQSection';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
 import CheckupScheduling from './components/CheckupScheduling';
@@ -156,8 +156,8 @@ function AppContent() {
   const loadAdminData = async () => {
     try {
       const [patientsRes, statsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/patients`),
-        fetch(`${API_BASE_URL}/api/dashboard/admin`)
+        authedFetch(`/api/patients`),
+        authedFetch(`/api/dashboard/admin`)
       ]);
 
       if (patientsRes.ok && statsRes.ok) {
@@ -181,7 +181,7 @@ function AppContent() {
     if (!state.user) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/dashboard/patient/${state.user.id}`);
+      const response = await authedFetch(`/api/dashboard/patient/${state.user.id}`);
       if (response.ok) {
         const data = await response.json();
         setPatientData({
@@ -1239,7 +1239,7 @@ For questions, contact: support@24x7teleh.com
                                   const button = document.querySelector(`[data-testid="button-toggle-status-${patient.id}"]`) as HTMLButtonElement;
                                   if (button) button.disabled = true;
                                   
-                                  const response = await fetch(`${API_BASE_URL}/api/users/${patient.id}/toggle-status`, {
+                                  const response = await authedFetch(`/api/users/${patient.id}/toggle-status`, {
                                     method: 'PATCH',
                                     headers: {
                                       'Content-Type': 'application/json'

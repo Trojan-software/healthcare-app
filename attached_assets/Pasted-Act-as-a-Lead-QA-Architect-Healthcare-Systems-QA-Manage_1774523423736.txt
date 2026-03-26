@@ -1,0 +1,124 @@
+Act as a Lead QA Architect, Healthcare Systems QA Manager, and Senior Business Analyst.
+
+Generate a COMPLETE QA PACKAGE for the following system:
+
+System Name:
+Advanced Healthcare Management System
+
+System Description:
+An advanced healthcare management system providing comprehensive patient monitoring, real-time analytics, and seamless integration with medical devices.
+
+Your task is to produce a professional, enterprise-grade QA deliverable suitable for a regulated healthcare environment.
+
+Include the following sections in detail:
+
+1. Test Strategy
+- QA objectives
+- Testing scope
+- In-scope and out-of-scope items
+- Test levels (unit, integration, system, UAT, regression)
+- Test types
+- Assumptions
+- Dependencies
+- Risks and mitigation
+
+2. Requirement-Based Test Coverage
+Create a coverage matrix mapping business functions to test scenarios.
+
+3. Functional Test Scenarios
+Cover at minimum:
+- Patient registration and profile management
+- Patient search and retrieval
+- Medical history management
+- Real-time vital sign monitoring
+- Alerts and notifications
+- Dashboard and analytics
+- Device integration
+- User login and authentication
+- Role-based access
+- Appointment or visit workflow if applicable
+- Audit trail and activity logs
+- Report generation
+- Data synchronization between modules
+
+4. Detailed Test Cases
+Provide detailed test cases in this format:
+Test Case ID | Module | Test Case Title | Pre-Conditions | Steps | Test Data | Expected Result | Priority | Test Type
+
+5. Positive Test Cases
+6. Negative Test Cases
+7. Edge Cases
+8. Boundary Value Test Cases
+9. Data Validation Test Cases
+10. Error Handling Test Cases
+11. Integration Test Cases
+12. API Test Cases
+13. Device Connectivity Test Cases
+14. Real-Time Monitoring Test Cases
+15. Alert and Notification Test Cases
+16. Security Test Cases
+17. Performance and Load Test Cases
+18. Reliability and Recovery Test Cases
+19. UAT Scenarios
+20. Regression Test Set
+21. Compliance-Oriented Test Considerations
+22. Defect-prone areas and high-risk test focus
+
+Special Healthcare Focus:
+Make sure the QA covers:
+- Heart rate, blood pressure, oxygen saturation, temperature, glucose, ECG, and other vitals if applicable
+- Real-time streaming data from connected medical devices
+- Device disconnection and reconnection handling
+- Invalid or delayed device readings
+- Alert thresholds and escalation logic
+- Historical trend charts and analytics accuracy
+- Patient safety critical scenarios
+- Duplicate patient record prevention
+- Timestamp accuracy across all records
+- Timezone handling
+- Concurrent monitoring of multiple patients
+- Data consistency between dashboard, patient records, and reports
+
+Security and Access Control:
+Include test cases for:
+- Role-based access (doctor, nurse, admin, patient, technician)
+- Session timeout
+- Unauthorized access attempts
+- Sensitive patient data protection
+- Audit logs for critical actions
+- Secure API authentication
+- File upload protection if attachments exist
+
+Performance:
+Include test cases for:
+- Large number of concurrent users
+- Many devices sending data at the same time
+- Dashboard refresh under load
+- Alert delivery latency
+- Report generation speed
+- System behavior during network instability
+
+Compliance/Quality Expectations:
+Assume this is a healthcare-grade system requiring:
+- High availability
+- Accuracy of patient data
+- Secure handling of personal health information
+- Complete traceability of changes
+- Safe failure behavior
+
+Output format:
+A. High-level Test Scenarios
+B. Detailed Test Cases table
+C. UAT Scenarios
+D. Security Test Cases
+E. Performance Test Cases
+F. API and Device Integration Test Cases
+G. Risk-Based Testing Summary
+
+Make the output:
+- highly structured
+- detailed
+- professional
+- execution-ready
+- suitable for Excel or Jira import
+- aligned with real healthcare operational risks
