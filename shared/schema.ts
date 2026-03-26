@@ -150,7 +150,8 @@ export const reminderSettings = pgTable("reminder_settings", {
 export const alerts = pgTable("alerts", {
   id: serial("id").primaryKey(),
   patientId: text("patient_id").notNull(),
-  type: text("type").notNull(), // 'critical', 'warning', 'info'
+  type: text("type").notNull(), // alert category: 'cardiac', 'respiratory', 'glucose', 'blood_pressure', etc.
+  severity: text("severity").default("medium"), // 'high' | 'medium' | 'low'
   title: text("title").notNull(),
   description: text("description").notNull(),
   isResolved: boolean("is_resolved").default(false).notNull(),
@@ -226,6 +227,7 @@ export const insertReminderSettingsSchema = createInsertSchema(reminderSettings)
 export const insertAlertSchema = createInsertSchema(alerts).pick({
   patientId: true,
   type: true,
+  severity: true,
   title: true,
   description: true,
 });

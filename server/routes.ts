@@ -520,19 +520,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (oxygenLevel) vitalSignsData.oxygenLevel = parseInt(oxygenLevel);
       if (bloodGlucose) vitalSignsData.bloodGlucose = parseInt(bloodGlucose);
 
+      // Compute and persist the correct status BEFORE writing to DB.
+      vitalSignsData.status = computeVitalStatus(vitalSignsData);
+
       const vitalSigns = await storage.createVitalSigns(vitalSignsData);
 
-      // Check for critical vitals and send email notifications
-      if (isVitalsCritical(vitalSigns)) {
+      // Create alerts and send email for critical or attention readings.
+      if (vitalSigns.status === 'critical' || vitalSigns.status === 'attention') {
         await storage.createAlert({
           patientId,
           type: getCriticalAlertType(vitalSigns),
-          title: "Critical Vital Signs Alert",
-          description: `Critical vital signs detected: ${getCriticalValue(vitalSigns)}`
+          severity: vitalSigns.status === 'critical' ? 'high' : 'medium',
+          title: vitalSigns.status === 'critical'
+            ? "Critical Vital Signs Alert"
+            : "Vital Signs Require Attention",
+          description: `${vitalSigns.status === 'critical' ? 'Critical' : 'Elevated'} vital signs detected: ${getCriticalValue(vitalSigns)}`
         });
 
-        // Send email notification to assigned doctor
-        await emailNotificationService.checkCriticalVitals(patientId, vitalSigns);
+        if (vitalSigns.status === 'critical') {
+          await emailNotificationService.checkCriticalVitals(patientId, vitalSigns);
+        }
       }
 
       res.status(201).json(vitalSigns);
@@ -575,19 +582,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (oxygenLevel !== undefined && oxygenLevel !== null) vitalSignsData.oxygenLevel = parseInt(oxygenLevel);
       if (bloodGlucose !== undefined && bloodGlucose !== null) vitalSignsData.bloodGlucose = parseInt(bloodGlucose);
 
-      // Calculate status based on all vitals
-      vitalSignsData.status = calculateVitalSignsStatus(vitalSignsData);
+      // Compute and persist the correct status BEFORE writing to DB.
+      vitalSignsData.status = computeVitalStatus(vitalSignsData);
 
       const vitalSigns = await storage.createVitalSigns(vitalSignsData);
 
-      // Create alert if critical
-      if (vitalSignsData.status === "critical") {
+      // Create alerts for critical or attention readings.
+      if (vitalSigns.status === 'critical' || vitalSigns.status === 'attention') {
         await storage.createAlert({
           patientId,
-          type: "critical",
-          title: "Critical Vital Signs Alert",
-          description: `Critical vital signs detected at ${new Date().toLocaleTimeString()}`
+          type: getCriticalAlertType(vitalSigns),
+          severity: vitalSigns.status === 'critical' ? 'high' : 'medium',
+          title: vitalSigns.status === 'critical'
+            ? "Critical Vital Signs Alert"
+            : "Vital Signs Require Attention",
+          description: `${vitalSigns.status === 'critical' ? 'Critical' : 'Elevated'} vital signs detected at ${new Date().toLocaleTimeString()}: ${getCriticalValue(vitalSigns)}`
         });
+
+        if (vitalSigns.status === 'critical') {
+          await emailNotificationService.checkCriticalVitals(patientId, vitalSigns);
+        }
       }
 
       res.status(201).json(vitalSigns);
@@ -1257,54 +1271,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return isNaN(n) ? null : n;
   }
 
-  // IMPORTANT: All vital-sign comparisons MUST guard against null fields.
-  // In JavaScript, `null` coerces to 0 in arithmetic/comparisons, so
-  // `null < 50` → true, which would falsely flag every partial record as critical.
-  function isVitalsCritical(vitals: any): boolean {
-    if (!vitals) return false;
-    const hr   = vitals.heartRate   as number | null | undefined;
-    const temp = parseTemp(vitals.temperature);
-    const o2   = vitals.oxygenLevel as number | null | undefined;
-    const gluc = vitals.bloodGlucose as number | null | undefined;
+  // ─── SINGLE SOURCE OF TRUTH FOR VITAL-SIGN STATUS ───────────────────────────
+  //
+  // ALL status decisions (DB write, alert creation, dashboard counting, patient
+  // UI) MUST go through computeVitalStatus().  Never add a parallel check.
+  //
+  // Rules:
+  //   • Always use parseTemp() for temperature — Drizzle returns decimal as string.
+  //   • Always guard with `!= null` — JS coerces null to 0 in comparisons, so
+  //     `null < 50` is true and would falsely flag every partial reading.
+  //   • Thresholds follow DOH/ADHCC clinical guidelines.
+  //
+  // Returns: 'critical' | 'attention' | 'normal'
+  function computeVitalStatus(vitals: any): 'critical' | 'attention' | 'normal' {
+    if (!vitals) return 'normal';
 
-    if (hr   != null && (hr   > 120 || hr   < 50))  return true;
-    if (temp != null && (temp > 39.0 || temp < 35.0)) return true;
-    if (o2   != null &&  o2   < 90)                  return true;
-    if (gluc != null && (gluc > 250  || gluc < 70))  return true;
-    return false;
+    const hr   = vitals.heartRate              as number | null | undefined;
+    const sys  = vitals.bloodPressureSystolic  as number | null | undefined;
+    const dia  = vitals.bloodPressureDiastolic as number | null | undefined;
+    const temp = parseTemp(vitals.temperature);
+    const o2   = vitals.oxygenLevel            as number | null | undefined;
+    const gluc = vitals.bloodGlucose           as number | null | undefined;
+
+    // ── Critical thresholds ────────────────────────────────────────────────
+    if (hr   != null && (hr   > 120 || hr   < 50))   return 'critical';
+    if (sys  != null && (sys  > 180 || sys  < 90))   return 'critical';
+    if (dia  != null && (dia  > 120 || dia  < 60))   return 'critical';
+    if (temp != null && (temp > 39.0 || temp < 35.0)) return 'critical';
+    if (o2   != null &&  o2   < 90)                  return 'critical';
+    if (gluc != null && (gluc > 250  || gluc < 70))  return 'critical';
+
+    // ── Attention thresholds ───────────────────────────────────────────────
+    if (hr   != null && (hr   > 100 || hr   < 60))   return 'attention';
+    if (sys  != null && (sys  > 140 || sys  < 110))  return 'attention';
+    if (dia  != null && (dia  > 90  || dia  < 70))   return 'attention';
+    if (temp != null && (temp > 38.0 || temp < 36.0)) return 'attention';
+    if (o2   != null &&  o2   < 95)                  return 'attention';
+    if (gluc != null && (gluc > 180  || gluc < 80))  return 'attention';
+
+    return 'normal';
+  }
+
+  // Convenience wrappers kept for call-site compatibility
+  function isVitalsCritical(vitals: any): boolean {
+    return computeVitalStatus(vitals) === 'critical';
   }
 
   function determinePatientStatus(vitals: any): string {
     if (!vitals.latestVitals) return 'No Data';
-    const latest = vitals.latestVitals;
-    if (isVitalsCritical(latest)) return 'Critical';
-    const hr   = latest.heartRate   as number | null | undefined;
-    const temp = parseTemp(latest.temperature);
-    if ((hr   != null && hr   > 100) ||
-        (temp != null && temp > 38.0)) return 'Attention';
-    return 'Normal';
+    const s = computeVitalStatus(vitals.latestVitals);
+    return s === 'critical' ? 'Critical' : s === 'attention' ? 'Attention' : 'Normal';
   }
 
+  // Returns the primary alert type label for a critical/attention reading.
   function getCriticalAlertType(vitals: any): string {
-    const hr   = vitals.heartRate   as number | null | undefined;
+    const hr   = vitals.heartRate              as number | null | undefined;
+    const sys  = vitals.bloodPressureSystolic  as number | null | undefined;
     const temp = parseTemp(vitals.temperature);
-    const o2   = vitals.oxygenLevel as number | null | undefined;
-    const gluc = vitals.bloodGlucose as number | null | undefined;
-    if (hr   != null && (hr   > 120 || hr < 50))   return 'cardiac';
-    if (temp != null &&  temp > 39.0)               return 'fever';
-    if (o2   != null &&  o2   < 90)                 return 'respiratory';
-    if (gluc != null && (gluc > 250  || gluc < 70)) return 'glucose';
+    const o2   = vitals.oxygenLevel            as number | null | undefined;
+    const gluc = vitals.bloodGlucose           as number | null | undefined;
+    if (hr   != null && (hr   > 120 || hr  < 50))   return 'cardiac';
+    if (sys  != null && (sys  > 180 || sys < 90))    return 'blood_pressure';
+    if (temp != null &&  temp > 39.0)                return 'fever';
+    if (temp != null &&  temp < 35.0)                return 'hypothermia';
+    if (o2   != null &&  o2   < 90)                  return 'respiratory';
+    if (gluc != null && (gluc > 250 || gluc < 70))   return 'glucose';
     return 'general';
   }
 
   function getSeverityLevel(vitals: any): string {
-    const hr   = vitals.heartRate   as number | null | undefined;
-    const temp = parseTemp(vitals.temperature);
-    const o2   = vitals.oxygenLevel as number | null | undefined;
-    if ((hr   != null && (hr   > 140 || hr   < 40)) ||
-        (temp != null &&  temp > 40.0) ||
-        (o2   != null &&  o2   < 85)) return 'high';
-    return 'medium';
+    return computeVitalStatus(vitals) === 'critical' ? 'high' : 'medium';
   }
 
   function getCriticalValue(vitals: any): string {
@@ -1340,7 +1376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   function calculateVitalsAverages(vitalsData: any[]) {
     if (vitalsData.length === 0) return {
-      heartRate: 72, bloodPressure: "120/80", temperature: 36.6, oxygenLevel: 98
+      heartRate: null, bloodPressure: null, temperature: null, oxygenLevel: null
     };
 
     // Only include records that actually have a value for each field.
@@ -1349,19 +1385,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const avg = (arr: number[]) =>
       arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
 
-    const hrValues   = vitalsData.map(v => v.heartRate)   .filter((v): v is number => v != null);
+    const hrValues  = vitalsData.map(v => v.heartRate).filter((v): v is number => v != null);
+    const sysValues = vitalsData.map(v => v.bloodPressureSystolic).filter((v): v is number => v != null);
+    const diaValues = vitalsData.map(v => v.bloodPressureDiastolic).filter((v): v is number => v != null);
     const tempValues = vitalsData.map(v => parseTemp(v.temperature)).filter((v): v is number => v != null);
-    const o2Values   = vitalsData.map(v => v.oxygenLevel) .filter((v): v is number => v != null);
+    const o2Values  = vitalsData.map(v => v.oxygenLevel).filter((v): v is number => v != null);
 
-    const avgHr   = avg(hrValues);
+    const avgHr  = avg(hrValues);
+    const avgSys = avg(sysValues);
+    const avgDia = avg(diaValues);
     const avgTemp = avg(tempValues);
-    const avgO2   = avg(o2Values);
+    const avgO2  = avg(o2Values);
+
+    const bpStr = avgSys != null && avgDia != null
+      ? `${Math.round(avgSys)}/${Math.round(avgDia)}`
+      : avgSys != null ? `${Math.round(avgSys)}/--`
+      : null;
 
     return {
-      heartRate:     avgHr   != null ? Math.round(avgHr)               : 72,
-      bloodPressure: "120/80",
-      temperature:   avgTemp != null ? Math.round(avgTemp * 10) / 10   : 36.6,
-      oxygenLevel:   avgO2   != null ? Math.round(avgO2)               : 98,
+      heartRate:     avgHr   != null ? Math.round(avgHr)             : null,
+      bloodPressure: bpStr,
+      temperature:   avgTemp != null ? Math.round(avgTemp * 10) / 10 : null,
+      oxygenLevel:   avgO2   != null ? Math.round(avgO2)             : null,
     };
   }
 
@@ -1378,27 +1423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return Math.round((patientsWithRecentVitals.size / Math.max(activePatients.length, 1)) * 100 * 10) / 10;
   }
 
-  // Consolidated vital signs status calculation
-  function calculateVitalSignsStatus(vitals: any): string {
-    if (!vitals) return "normal";
-    
-    // Critical conditions
-    if (vitals.heartRate && (vitals.heartRate > 120 || vitals.heartRate < 50)) return "critical";
-    if (vitals.bloodPressureSystolic && vitals.bloodPressureSystolic > 180) return "critical";
-    if (vitals.bloodPressureDiastolic && vitals.bloodPressureDiastolic > 120) return "critical";
-    if (vitals.temperature && (vitals.temperature > 39.0 || vitals.temperature < 35.0)) return "critical";
-    if (vitals.oxygenLevel && vitals.oxygenLevel < 90) return "critical";
-    if (vitals.bloodGlucose && (vitals.bloodGlucose > 300 || vitals.bloodGlucose < 70)) return "critical";
-    
-    // Attention conditions
-    if (vitals.heartRate && (vitals.heartRate > 100 || vitals.heartRate < 60)) return "attention";
-    if (vitals.bloodPressureSystolic && vitals.bloodPressureSystolic > 140) return "attention";
-    if (vitals.temperature && (vitals.temperature > 38.0 || vitals.temperature < 36.1)) return "attention";
-    if (vitals.oxygenLevel && vitals.oxygenLevel < 95) return "attention";
-    if (vitals.bloodGlucose && (vitals.bloodGlucose > 200 || vitals.bloodGlucose < 100)) return "attention";
-    
-    return "normal";
-  }
+  // calculateVitalSignsStatus removed — use computeVitalStatus() everywhere.
 
   // Build real 7-day trend from actual vital sign records.
   // vitalsData is the flat list of all patients' records already in memory.
