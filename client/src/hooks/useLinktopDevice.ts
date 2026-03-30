@@ -85,7 +85,7 @@ export function useLinktopDevice() {
           moodIndex: data.mood,
           rrInterval: data.r2rInterval,
           hrv: data.hrv,
-          respiratoryRate: data.breathRate,
+          respiratoryRate: data.respiratoryRate,
           fingerDetected: data.fingerTouch,
           wave: data.smoothedWave !== undefined ? [data.smoothedWave] : undefined,
         });
@@ -94,6 +94,7 @@ export function useLinktopDevice() {
         updateReading(DetectionType.OX, {
           bloodOxygen: data.oxygenLevel,
           heartRate: data.heartRate,
+          fingerDetected: data.fingerDetection,
           wave: data.waveValue !== undefined ? [data.waveValue] : undefined,
         });
         break;

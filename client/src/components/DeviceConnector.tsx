@@ -111,7 +111,13 @@ export default function DeviceConnector({
     return 'bg-red-500';
   };
 
-  if (!isBluetoothSupported()) {
+  // Detect if the page is embedded inside an iframe (e.g. Replit preview, embedded dashboards).
+  // Web Bluetooth is blocked by browsers when running inside iframes even if the browser supports it.
+  const isInIframe = typeof window !== 'undefined' && window !== window.top;
+
+  if (!isBluetoothSupported() || isInIframe) {
+    const standaloneUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
     return (
       <div data-testid="device-connector-unsupported">
         <div className="text-center py-4">
@@ -119,27 +125,62 @@ export default function DeviceConnector({
           <p className="text-gray-500 mb-4">
             {isRTL ? 'لم يتم توصيل أي جهاز' : 'No device connected'}
           </p>
-          <Button 
-            onClick={handleConnect}
-            className="gap-2 mb-4"
-            data-testid="button-connect-device"
-          >
-            <Bluetooth className="w-4 h-4" />
-            {isRTL ? 'البحث عن الأجهزة' : 'Scan for Devices'}
-          </Button>
-          <div className="border border-amber-200 bg-amber-50 rounded-lg p-3 mt-4">
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <BluetoothOff className="w-5 h-5 text-amber-500 flex-shrink-0" />
-              <div className={`${isRTL ? 'text-right' : 'text-left'}`}>
-                <p className="text-sm text-amber-700">
-                  {isRTL ? 'البلوتوث غير متاح في هذا المتصفح' : 'Bluetooth unavailable in this browser'}
-                </p>
-                <p className="text-xs text-amber-600">
-                  {isRTL ? 'استخدم Chrome أو Edge على جهاز الكمبيوتر' : 'Use Chrome or Edge on desktop'}
-                </p>
+
+          {isInIframe ? (
+            /* ── Iframe / embedded-preview warning ─────────────────────── */
+            <div className="border border-blue-200 bg-blue-50 rounded-lg p-3 mt-4 text-left">
+              <div className="flex items-start gap-2">
+                <BluetoothOff className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-blue-800">
+                    {isRTL
+                      ? 'مطلوب علامة تبويب مستقلة للبلوتوث'
+                      : 'Standalone tab required for Bluetooth'}
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    {isRTL
+                      ? 'يتم تشغيل التطبيق داخل إطار مضمّن. يمنع المتصفح الوصول إلى البلوتوث داخل الإطارات.'
+                      : 'The app is running inside an embedded frame. Browsers block Bluetooth access inside iframes.'}
+                  </p>
+                  {standaloneUrl && (
+                    <a
+                      href={standaloneUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-2 px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                    >
+                      {isRTL ? 'فتح في علامة تبويب جديدة ←' : 'Open in new tab →'}
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            /* ── Browser doesn't support Web Bluetooth at all ──────────── */
+            <>
+              <Button
+                onClick={handleConnect}
+                className="gap-2 mb-4"
+                data-testid="button-connect-device"
+              >
+                <Bluetooth className="w-4 h-4" />
+                {isRTL ? 'البحث عن الأجهزة' : 'Scan for Devices'}
+              </Button>
+              <div className="border border-amber-200 bg-amber-50 rounded-lg p-3 mt-4">
+                <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <BluetoothOff className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                  <div className={`${isRTL ? 'text-right' : 'text-left'}`}>
+                    <p className="text-sm text-amber-700">
+                      {isRTL ? 'البلوتوث غير متاح في هذا المتصفح' : 'Bluetooth unavailable in this browser'}
+                    </p>
+                    <p className="text-xs text-amber-600">
+                      {isRTL ? 'استخدم Chrome أو Edge على جهاز الكمبيوتر' : 'Use Chrome or Edge on desktop'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
