@@ -284,7 +284,28 @@ export function useLinktopDevice() {
       }));
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Connection failed';
+      // Detect Permissions Policy / SecurityError specifically
+      // This happens when the page is loaded inside an iframe (e.g. Replit preview)
+      // or when the server doesn't send Permissions-Policy: bluetooth=*
+      const isPermissionsError =
+        (error instanceof DOMException &&
+          (error.name === 'SecurityError' || error.name === 'NotAllowedError')) ||
+        (error instanceof Error &&
+          error.message.toLowerCase().includes('permissions policy'));
+
+      const isUserCancelled =
+        error instanceof DOMException && error.name === 'NotFoundError';
+
+      let message: string;
+      if (isPermissionsError) {
+        message =
+          'Bluetooth is blocked by the browser. Please open the app directly in Chrome or Edge (not inside an embedded preview).';
+      } else if (isUserCancelled) {
+        message = 'No device selected. Please select your HC03 device from the list.';
+      } else {
+        message = error instanceof Error ? error.message : 'Connection failed';
+      }
+
       setDeviceState(prev => ({
         ...prev,
         isConnecting: false,

@@ -16,6 +16,11 @@ app.disable('x-powered-by');
 app.use((req: Request, res: Response, next: NextFunction) => {
   // Explicitly remove X-Powered-By header (defense in depth)
   res.removeHeader('X-Powered-By');
+
+  // Allow Web Bluetooth API — required for HC03 BLE device integration.
+  // Must be present on every response (not just /api) so the browser grants
+  // the bluetooth feature to the page itself.
+  res.setHeader('Permissions-Policy', 'bluetooth=*, camera=(), microphone=()');
   
   // Cache-Control for API routes - prevent caching of sensitive data
   if (req.path.startsWith('/api')) {
