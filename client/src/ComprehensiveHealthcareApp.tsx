@@ -30,12 +30,14 @@ interface Hospital {
 }
 
 interface VitalSigns {
-  heartRate: number;
-  bloodPressure: string;
-  temperature: number;
-  oxygenLevel: number;
+  heartRate?: number;
+  bloodPressure?: string;
+  bloodPressureSystolic?: number;
+  bloodPressureDiastolic?: number;
+  temperature?: number | string;
+  oxygenLevel?: number;
   bloodGlucose?: number;
-  timestamp: string;
+  timestamp?: string;
 }
 
 interface Patient {
@@ -139,6 +141,23 @@ function AppContent() {
   const [otpMethod, setOtpMethod] = useState<'email' | 'sms'>('email');
 
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatientLatestVitals, setSelectedPatientLatestVitals] = useState<VitalSigns | null>(null);
+  const [selectedPatientVitalsLoading, setSelectedPatientVitalsLoading] = useState(false);
+
+  // Fetch latest vitals whenever a patient detail modal opens
+  useEffect(() => {
+    if (!selectedPatient) { setSelectedPatientLatestVitals(null); return; }
+    const pid = selectedPatient.patientId;
+    if (!pid) return;
+    setSelectedPatientVitalsLoading(true);
+    authedFetch(`/api/vital-signs/${pid}`)
+      .then(r => r.ok ? r.json() : [])
+      .then((rows: VitalSigns[]) => {
+        setSelectedPatientLatestVitals(rows.length > 0 ? rows[0] : null);
+      })
+      .catch(() => setSelectedPatientLatestVitals(null))
+      .finally(() => setSelectedPatientVitalsLoading(false));
+  }, [selectedPatient?.patientId]);
 
   const [patientData, setPatientData] = useState({
     vitals: null as VitalSigns | null,
@@ -1482,48 +1501,108 @@ For questions, contact: support@24x7teleh.com
                 </div>
 
                 {/* Current Vital Signs */}
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6 border border-gray-200">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <span className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center text-white text-lg mr-3">💓</span>
-                    {t('currentVitalSigns')}
-                  </h3>
-                  {selectedPatient.vitals ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{selectedPatient.vitals.heartRate}</div>
-                          <div className="text-sm text-gray-600">{t('heartRateBPM')}</div>
-                        </div>
+                {(() => {
+                  const v = selectedPatientLatestVitals ?? selectedPatient.vitals ?? null;
+                  const sys = v?.bloodPressureSystolic;
+                  const dia = v?.bloodPressureDiastolic;
+                  const bpStr = v?.bloodPressure || (sys && dia ? `${sys}/${dia}` : null);
+                  const tempNum = v?.temperature != null ? parseFloat(String(v.temperature)) : null;
+                  const hr = v?.heartRate;
+                  const spo2 = v?.oxygenLevel;
+                  const glucose = v?.bloodGlucose;
+                  const ts = v?.timestamp;
+
+                  // Category helpers (inline, no import needed)
+                  const hrCat = hr ? (hr < 60 ? {label:'Bradycardia',cls:'text-blue-600 bg-blue-50'} : hr <= 100 ? {label:'Normal',cls:'text-green-600 bg-green-50'} : {label:'Tachycardia',cls:'text-red-600 bg-red-50'}) : null;
+                  const bpParts = bpStr ? bpStr.split('/').map(Number) : [];
+                  const bpCat = bpParts.length===2 && bpParts[0] > 0
+                    ? (bpParts[0]<120&&bpParts[1]<80 ? {label:'Normal',cls:'text-green-600 bg-green-50'}
+                      : bpParts[0]<130&&bpParts[1]<80 ? {label:'Elevated',cls:'text-yellow-600 bg-yellow-50'}
+                      : bpParts[0]<140||bpParts[1]<90 ? {label:'Stage 1',cls:'text-orange-600 bg-orange-50'}
+                      : bpParts[0]<180&&bpParts[1]<120 ? {label:'Stage 2',cls:'text-red-600 bg-red-50'}
+                      : {label:'Crisis',cls:'text-red-800 bg-red-100'}) : null;
+                  const tempCat = tempNum && !isNaN(tempNum)
+                    ? (tempNum<35 ? {label:'Hypothermia',cls:'text-blue-600 bg-blue-50'}
+                      : tempNum<36.5 ? {label:'Below Normal',cls:'text-cyan-600 bg-cyan-50'}
+                      : tempNum<=37.5 ? {label:'Normal',cls:'text-green-600 bg-green-50'}
+                      : tempNum<=38 ? {label:'Low-grade Fever',cls:'text-yellow-600 bg-yellow-50'}
+                      : tempNum<=39 ? {label:'Fever',cls:'text-orange-600 bg-orange-50'}
+                      : {label:'High Fever',cls:'text-red-600 bg-red-50'}) : null;
+                  const spo2Cat = spo2
+                    ? (spo2>=95 ? {label:'Normal',cls:'text-green-600 bg-green-50'}
+                      : spo2>=92 ? {label:'Mild',cls:'text-yellow-600 bg-yellow-50'}
+                      : spo2>=88 ? {label:'Moderate',cls:'text-orange-600 bg-orange-50'}
+                      : {label:'Severe',cls:'text-red-600 bg-red-50'}) : null;
+                  const glucoseCat = glucose
+                    ? (glucose<70 ? {label:'Hypoglycemia',cls:'text-blue-600 bg-blue-50'}
+                      : glucose<=99 ? {label:'Normal',cls:'text-green-600 bg-green-50'}
+                      : glucose<=125 ? {label:'Pre-diabetes',cls:'text-yellow-600 bg-yellow-50'}
+                      : {label:'Diabetes range',cls:'text-red-600 bg-red-50'}) : null;
+
+                  return (
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6 border border-gray-200">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                          <span className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center text-white text-lg mr-3">💓</span>
+                          {t('currentVitalSigns')}
+                        </h3>
+                        {selectedPatientVitalsLoading && (
+                          <span className="text-xs text-gray-400 animate-pulse">Loading…</span>
+                        )}
+                        {ts && !selectedPatientVitalsLoading && (
+                          <span className="text-xs text-gray-400">
+                            {new Date(ts).toLocaleString()}
+                          </span>
+                        )}
                       </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-green-600">{selectedPatient.vitals.bloodPressure}</div>
-                          <div className="text-sm text-gray-600">{t('bloodPressure')}</div>
+
+                      {v ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                          {/* Heart Rate */}
+                          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm text-center">
+                            <div className="text-2xl font-bold text-blue-600">{hr ?? '—'}</div>
+                            <div className="text-xs text-gray-500 mt-1">{t('heartRateBPM')}</div>
+                            {hrCat && <span className={`inline-block mt-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${hrCat.cls}`}>{hrCat.label}</span>}
+                          </div>
+                          {/* Blood Pressure */}
+                          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm text-center">
+                            <div className="text-2xl font-bold text-green-600">{bpStr ?? '—'}</div>
+                            <div className="text-xs text-gray-500 mt-1">{t('bloodPressure')}</div>
+                            {bpCat && <span className={`inline-block mt-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${bpCat.cls}`}>{bpCat.label}</span>}
+                          </div>
+                          {/* Temperature */}
+                          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm text-center">
+                            <div className="text-2xl font-bold text-orange-600">{tempNum != null ? `${tempNum.toFixed(1)}°C` : '—'}</div>
+                            <div className="text-xs text-gray-500 mt-1">{t('temperature')}</div>
+                            {tempCat && <span className={`inline-block mt-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tempCat.cls}`}>{tempCat.label}</span>}
+                          </div>
+                          {/* SpO2 */}
+                          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm text-center">
+                            <div className="text-2xl font-bold text-purple-600">{spo2 != null ? `${spo2}%` : '—'}</div>
+                            <div className="text-xs text-gray-500 mt-1">{t('bloodOxygen')}</div>
+                            {spo2Cat && <span className={`inline-block mt-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${spo2Cat.cls}`}>{spo2Cat.label}</span>}
+                          </div>
+                          {/* Blood Glucose */}
+                          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm text-center">
+                            <div className="text-2xl font-bold text-pink-600">{glucose != null ? `${glucose}` : '—'}</div>
+                            <div className="text-xs text-gray-500 mt-1">{t('bloodGlucose')} mg/dL</div>
+                            {glucoseCat && <span className={`inline-block mt-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${glucoseCat.cls}`}>{glucoseCat.label}</span>}
+                          </div>
                         </div>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-orange-600">{selectedPatient.vitals.temperature}°C</div>
-                          <div className="text-sm text-gray-600">{t('temperature')}</div>
+                      ) : !selectedPatientVitalsLoading ? (
+                        <div className="text-center py-8">
+                          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span className="text-2xl text-gray-400">📊</span>
+                          </div>
+                          <p className="text-gray-500 text-lg">No recent vital signs data available</p>
+                          <p className="text-gray-400 text-sm">Connect HC03 device or manually record measurements</p>
                         </div>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-purple-600">{selectedPatient.vitals.oxygenLevel}%</div>
-                          <div className="text-sm text-gray-600">{t('bloodOxygen')}</div>
-                        </div>
-                      </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-400 animate-pulse">Loading vitals…</div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl text-gray-400">📊</span>
-                      </div>
-                      <p className="text-gray-500 text-lg">No recent vital signs data available</p>
-                      <p className="text-gray-400 text-sm">Connect HC03 device or manually record measurements</p>
-                    </div>
-                  )}
-                </div>
+                  );
+                })()}
 
                 {/* Medical Summary */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
