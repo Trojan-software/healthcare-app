@@ -157,7 +157,46 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
     }
   };
 
-  // Handler for live device vitals updates
+  // Save a device reading to the DB and refresh history
+  const saveDeviceReading = async (vitals: {
+    heartRate?: number;
+    bloodPressure?: { systolic: number; diastolic: number };
+    oxygenLevel?: number;
+    temperature?: number;
+    bloodGlucose?: number;
+  }) => {
+    const patientId = dashboardData?.user?.patientId;
+    if (!patientId) return;
+    // Only save if at least one vital value is present
+    const hasValue = vitals.heartRate || vitals.bloodPressure || vitals.oxygenLevel != null || vitals.temperature != null || vitals.bloodGlucose != null;
+    if (!hasValue) return;
+    try {
+      const body: Record<string, unknown> = { patientId };
+      if (vitals.heartRate)    body.heartRate    = vitals.heartRate;
+      if (vitals.bloodPressure) {
+        body.bloodPressureSystolic  = vitals.bloodPressure.systolic;
+        body.bloodPressureDiastolic = vitals.bloodPressure.diastolic;
+      }
+      if (vitals.oxygenLevel  != null) body.oxygenLevel  = vitals.oxygenLevel;
+      if (vitals.temperature  != null) body.temperature  = vitals.temperature;
+      if (vitals.bloodGlucose != null) body.bloodGlucose = vitals.bloodGlucose;
+      const token = localStorage.getItem('auth_token');
+      await fetch('/api/vital-signs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(body)
+      });
+      // Refresh history table
+      await loadVitalsHistory();
+    } catch (err) {
+      handleApiError('EnhancedPatientDashboard', 'saveDeviceReading', err as Error);
+    }
+  };
+
+  // Handler for live device vitals updates — update display + persist to DB
   const handleLiveVitalsUpdate = (vitals: {
     heartRate?: number;
     bloodPressure?: { systolic: number; diastolic: number };
@@ -169,6 +208,7 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       ...prev,
       ...vitals
     }));
+    saveDeviceReading(vitals);
   };
 
   // Get displayed vitals (prefer live device readings over API data)
