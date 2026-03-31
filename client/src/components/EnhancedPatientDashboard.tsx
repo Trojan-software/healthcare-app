@@ -22,6 +22,34 @@ import {
 import { useLanguage, LanguageSwitcher } from '@/lib/i18n';
 import DeviceConnector from './DeviceConnector';
 
+// ─── Vital classification helpers ────────────────────────────────────────────
+function hrCategory(bpm: number): { label: string; labelAr: string; cls: string } {
+  if (bpm < 60)  return { label: 'Bradycardia',  labelAr: 'بطء القلب',   cls: 'bg-blue-400/30 text-blue-50' };
+  if (bpm <= 100) return { label: 'Normal',       labelAr: 'طبيعي',       cls: 'bg-white/20 text-white' };
+  return              { label: 'Tachycardia',  labelAr: 'تسرع القلب', cls: 'bg-red-400/30 text-red-100' };
+}
+function bpCategory(sys: number, dia: number): { label: string; labelAr: string; cls: string } {
+  if (sys < 120 && dia < 80)  return { label: 'Normal',          labelAr: 'طبيعي',         cls: 'bg-white/20 text-white' };
+  if (sys < 130 && dia < 80)  return { label: 'Elevated',        labelAr: 'مرتفع قليلاً',  cls: 'bg-yellow-300/30 text-yellow-100' };
+  if (sys < 140 || dia < 90)  return { label: 'Stage 1',         labelAr: 'مرحلة 1',       cls: 'bg-orange-400/30 text-orange-100' };
+  if (sys < 180 && dia < 120) return { label: 'Stage 2',         labelAr: 'مرحلة 2',       cls: 'bg-red-400/30 text-red-100' };
+  return                             { label: 'Crisis',           labelAr: 'أزمة ضغط',     cls: 'bg-red-600/40 text-red-100' };
+}
+function tempCategory(c: number): { label: string; labelAr: string; cls: string } {
+  if (c < 35.0)  return { label: 'Hypothermia',    labelAr: 'انخفاض حاد', cls: 'bg-blue-400/30 text-blue-100' };
+  if (c < 36.5)  return { label: 'Below Normal',   labelAr: 'أقل طبيعي',  cls: 'bg-cyan-300/30 text-cyan-100' };
+  if (c <= 37.5) return { label: 'Normal',          labelAr: 'طبيعي',      cls: 'bg-white/20 text-white' };
+  if (c <= 38.0) return { label: 'Low-grade Fever', labelAr: 'حمى خفيفة', cls: 'bg-yellow-300/30 text-yellow-100' };
+  if (c <= 39.0) return { label: 'Fever',           labelAr: 'حمى',        cls: 'bg-orange-400/30 text-orange-100' };
+  return               { label: 'High Fever',      labelAr: 'حمى شديدة',  cls: 'bg-red-400/30 text-red-100' };
+}
+function spo2Category(pct: number): { label: string; labelAr: string; cls: string } {
+  if (pct >= 95) return { label: 'Normal',    labelAr: 'طبيعي',           cls: 'bg-white/20 text-white' };
+  if (pct >= 92) return { label: 'Mild',      labelAr: 'نقص خفيف',        cls: 'bg-yellow-300/30 text-yellow-100' };
+  if (pct >= 88) return { label: 'Moderate',  labelAr: 'نقص متوسط',       cls: 'bg-orange-400/30 text-orange-100' };
+  return              { label: 'Severe',     labelAr: 'نقص حاد',          cls: 'bg-red-400/30 text-red-100' };
+}
+
 interface VitalSigns {
   id: number;
   heartRate: number;
@@ -857,67 +885,99 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Current Vitals */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-cyan-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('heartRate')} data-testid="card-heart-rate">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-3xl font-bold mb-1">{displayedVitals?.heartRate || dashboardData.vitals.heartRate}</div>
-                <div className="text-blue-100 text-sm">{t('heartRate')} ({t('bpm')}){liveVitals?.heartRate ? ' 🔴' : ''}</div>
-              </div>
-              <div className="text-right">
-                <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
-                <div className={`text-sm ${getTrendColor(getVitalTrend('heartRate'))}`}>
-                  {getTrendIcon(getVitalTrend('heartRate'))}
+          {/* ── Heart Rate card ─────────────────────────────────────────── */}
+          {(() => {
+            const hr = displayedVitals?.heartRate || dashboardData.vitals.heartRate;
+            const cat = hr ? hrCategory(hr) : null;
+            return (
+              <div className="bg-gradient-to-br from-blue-500 to-cyan-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('heartRate')} data-testid="card-heart-rate">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-3xl font-bold mb-1">{hr}</div>
+                    <div className="text-blue-100 text-sm">{t('heartRate')} ({t('bpm')}){liveVitals?.heartRate ? ' 🔴' : ''}</div>
+                    {cat && <span className={`inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded-full ${cat.cls}`}>{isRTL ? cat.labelAr : cat.label}</span>}
+                  </div>
+                  <div className="text-right">
+                    <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
+                    <div className={`text-sm ${getTrendColor(getVitalTrend('heartRate'))}`}>
+                      {getTrendIcon(getVitalTrend('heartRate'))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
-          <div className="bg-gradient-to-br from-green-500 to-emerald-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('bloodPressure')} data-testid="card-blood-pressure">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-3xl font-bold mb-1">
-                  {displayedVitals?.bloodPressure || dashboardData.vitals.bloodPressure}
+          {/* ── Blood Pressure card ──────────────────────────────────────── */}
+          {(() => {
+            const bpStr = displayedVitals?.bloodPressure || dashboardData.vitals.bloodPressure;
+            const parts = typeof bpStr === 'string' ? bpStr.split('/').map(Number) : [];
+            const cat = parts.length === 2 && parts[0] > 0 ? bpCategory(parts[0], parts[1]) : null;
+            return (
+              <div className="bg-gradient-to-br from-green-500 to-emerald-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('bloodPressure')} data-testid="card-blood-pressure">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-3xl font-bold mb-1">{bpStr}</div>
+                    <div className="text-green-100 text-sm">{t('bloodPressure')}{liveVitals?.bloodPressure ? ' 🔴' : ''}</div>
+                    {cat && <span className={`inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded-full ${cat.cls}`}>{isRTL ? cat.labelAr : cat.label}</span>}
+                  </div>
+                  <div className="text-right">
+                    <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
+                    <div className={`text-sm ${getTrendColor(getVitalTrend('bloodPressure'))}`}>
+                      {getTrendIcon(getVitalTrend('bloodPressure'))}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-green-100 text-sm">{t('bloodPressure')}{liveVitals?.bloodPressure ? ' 🔴' : ''}</div>
               </div>
-              <div className="text-right">
-                <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
-                <div className={`text-sm ${getTrendColor(getVitalTrend('bloodPressure'))}`}>
-                  {getTrendIcon(getVitalTrend('bloodPressure'))}
-                </div>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
-          <div className="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('temperature')} data-testid="card-temperature">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-3xl font-bold mb-1">{displayedVitals?.temperature !== undefined ? displayedVitals.temperature : dashboardData.vitals.temperature}°C</div>
-                <div className="text-pink-100 text-sm">{t('temperature')}{liveVitals?.temperature ? ' 🔴' : ''}</div>
-              </div>
-              <div className="text-right">
-                <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
-                <div className={`text-sm ${getTrendColor(getVitalTrend('temperature'))}`}>
-                  {getTrendIcon(getVitalTrend('temperature'))}
+          {/* ── Temperature card ─────────────────────────────────────────── */}
+          {(() => {
+            const tempVal = displayedVitals?.temperature !== undefined ? displayedVitals.temperature : dashboardData.vitals.temperature;
+            const tempNum = typeof tempVal === 'number' ? tempVal : parseFloat(String(tempVal));
+            const cat = !isNaN(tempNum) && tempNum > 0 ? tempCategory(tempNum) : null;
+            return (
+              <div className="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('temperature')} data-testid="card-temperature">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-3xl font-bold mb-1">{tempVal}°C</div>
+                    <div className="text-pink-100 text-sm">{t('temperature')}{liveVitals?.temperature ? ' 🔴' : ''}</div>
+                    {cat && <span className={`inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded-full ${cat.cls}`}>{isRTL ? cat.labelAr : cat.label}</span>}
+                  </div>
+                  <div className="text-right">
+                    <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
+                    <div className={`text-sm ${getTrendColor(getVitalTrend('temperature'))}`}>
+                      {getTrendIcon(getVitalTrend('temperature'))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
-          <div className="bg-gradient-to-br from-purple-500 to-violet-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('oxygenLevel')} data-testid="card-oxygen-level">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-3xl font-bold mb-1">{displayedVitals?.oxygenLevel || dashboardData.vitals.oxygenLevel}%</div>
-                <div className="text-purple-100 text-sm">{t('oxygenLevel')}{liveVitals?.oxygenLevel ? ' 🔴' : ''}</div>
-              </div>
-              <div className="text-right">
-                <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
-                <div className={`text-sm ${getTrendColor(getVitalTrend('oxygenLevel'))}`}>
-                  {getTrendIcon(getVitalTrend('oxygenLevel'))}
+          {/* ── Oxygen Level card ────────────────────────────────────────── */}
+          {(() => {
+            const spo2 = displayedVitals?.oxygenLevel || dashboardData.vitals.oxygenLevel;
+            const cat = spo2 ? spo2Category(spo2) : null;
+            return (
+              <div className="bg-gradient-to-br from-purple-500 to-violet-400 text-white p-6 rounded-2xl shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow" onClick={() => setSelectedMetric('oxygenLevel')} data-testid="card-oxygen-level">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-3xl font-bold mb-1">{spo2}%</div>
+                    <div className="text-purple-100 text-sm">{t('oxygenLevel')}{liveVitals?.oxygenLevel ? ' 🔴' : ''}</div>
+                    {cat && <span className={`inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded-full ${cat.cls}`}>{isRTL ? cat.labelAr : cat.label}</span>}
+                  </div>
+                  <div className="text-right">
+                    <Monitor className="w-5 h-5 text-white opacity-80 hover:opacity-100 mb-2" />
+                    <div className={`text-sm ${getTrendColor(getVitalTrend('oxygenLevel'))}`}>
+                      {getTrendIcon(getVitalTrend('oxygenLevel'))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
 
         {/* Health Overview */}
