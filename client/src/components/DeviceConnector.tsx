@@ -38,6 +38,17 @@ function getBpCategory(sys: number, dia: number): { label: string; labelAr: stri
   return                                    { label: 'Hypertensive Crisis', labelAr: 'أزمة ضغط',   color: 'text-red-900',    bg: 'bg-red-100 border-red-400' };
 }
 
+// ─── Temperature category (clinical fever thresholds) ────────────────────
+function getTempCategory(c: number): { label: string; labelAr: string; color: string; bg: string } {
+  if (c < 35.0)  return { label: 'Hypothermia',      labelAr: 'انخفاض درجة الحرارة', color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-200' };
+  if (c < 36.5)  return { label: 'Below Normal',     labelAr: 'أقل من الطبيعي',       color: 'text-cyan-700',   bg: 'bg-cyan-50 border-cyan-200' };
+  if (c <= 37.5) return { label: 'Normal',            labelAr: 'طبيعي',               color: 'text-green-700',  bg: 'bg-green-50 border-green-200' };
+  if (c <= 38.0) return { label: 'Low-grade Fever',   labelAr: 'حمى خفيفة',           color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' };
+  if (c <= 39.0) return { label: 'Fever',             labelAr: 'حمى',                 color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' };
+  if (c <= 41.0) return { label: 'High Fever',        labelAr: 'حمى شديدة',           color: 'text-red-700',    bg: 'bg-red-50 border-red-300' };
+  return                 { label: 'Hyperpyrexia',     labelAr: 'ارتفاع حاد',          color: 'text-red-900',    bg: 'bg-red-100 border-red-500' };
+}
+
 // ─── SpO2 category (WHO / pulse-ox clinical thresholds) ──────────────────
 function getSpo2Category(pct: number): { label: string; labelAr: string; color: string; bg: string } {
   if (pct >= 95)  return { label: 'Normal',              labelAr: 'طبيعي',           color: 'text-green-700',  bg: 'bg-green-50 border-green-200' };
@@ -170,6 +181,10 @@ export default function DeviceConnector({
   const [glucoseResult, setGlucoseResult] = useState<{ value: number; unit: string } | null>(null);
   const prevGlucoseActive = useRef(false);
 
+  // ─── Temperature result state ────────────────────────────────────────────
+  const [tempResult, setTempResult] = useState<number | null>(null);
+  const prevTempActive = useRef(false);
+
   // ─── SpO2 waveform buffer + result ────────────────────────────────────────
   const [spo2WaveBuffer, setSpo2WaveBuffer] = useState<number[]>([]);
   const [spo2Result, setSpo2Result] = useState<{ oxygenLevel: number; heartRate: number } | null>(null);
@@ -213,6 +228,16 @@ export default function DeviceConnector({
       setBpResult(bp.data);
     }
   }, [measurementState.bloodPressure.data, measurementState.bloodPressure.active]);
+
+  // ─── Temperature tracker ─────────────────────────────────────────────────
+  useEffect(() => {
+    const t = measurementState.temperature;
+    if (t.active && !prevTempActive.current) setTempResult(null);
+    prevTempActive.current = t.active;
+    if (t.data?.temperature && t.data.temperature >= 30 && t.data.temperature <= 45) {
+      setTempResult(t.data.temperature);
+    }
+  }, [measurementState.temperature.data, measurementState.temperature.active]);
 
   // ─── SpO2 tracker ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -830,6 +855,49 @@ export default function DeviceConnector({
                   <span className="bg-white/60 px-1.5 py-0.5 rounded">70–99 {isRTL ? 'طبيعي' : 'Normal'}</span>
                   <span className="bg-white/60 px-1.5 py-0.5 rounded">100–125 {isRTL ? 'ما قبل السكري' : 'Pre-DM'}</span>
                   <span className="bg-white/60 px-1.5 py-0.5 rounded">{'≥126 '}{isRTL ? 'سكري' : 'Diabetes'}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ── Temperature result card ──────────────────────────────────── */}
+          {tempResult && !measurementState.temperature.active && (() => {
+            const cat = getTempCategory(tempResult);
+            const fahrenheit = ((tempResult * 9) / 5 + 32).toFixed(1);
+            return (
+              <div className={`rounded-lg border p-3 ${cat.bg}`}>
+                {/* Header */}
+                <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Thermometer className={`w-4 h-4 ${cat.color}`} />
+                    <p className={`text-sm font-semibold ${cat.color}`}>
+                      {isRTL ? 'نتائج درجة الحرارة' : 'Temperature Results'}
+                    </p>
+                  </div>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${cat.color} ${cat.bg}`}>
+                    {isRTL ? cat.labelAr : cat.label}
+                  </span>
+                </div>
+
+                {/* Main reading — dual unit */}
+                <div className="flex items-end justify-center gap-6 mb-3">
+                  <div className="text-center">
+                    <p className={`text-5xl font-bold leading-none ${cat.color}`}>{tempResult.toFixed(1)}</p>
+                    <p className="text-xs text-gray-500 mt-1">°C</p>
+                  </div>
+                  <div className="text-center pb-1">
+                    <p className="text-2xl font-semibold text-gray-400 leading-none">{fahrenheit}</p>
+                    <p className="text-xs text-gray-400 mt-1">°F</p>
+                  </div>
+                </div>
+
+                {/* Clinical reference */}
+                <div className={`flex text-[10px] text-gray-500 gap-2 flex-wrap justify-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded text-blue-700">{'<35 '}{isRTL ? 'انخفاض' : 'Hypo'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded text-green-700">36.5–37.5 {isRTL ? 'طبيعي' : 'Normal'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded text-yellow-700">37.6–38 {isRTL ? 'خفيف' : 'Low fever'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded text-orange-700">38.1–39 {isRTL ? 'حمى' : 'Fever'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded text-red-700">{'>39 '}{isRTL ? 'شديد' : 'High'}</span>
                 </div>
               </div>
             );
