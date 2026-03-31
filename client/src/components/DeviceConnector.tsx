@@ -2,7 +2,7 @@
  * Device Connector Component
  * Provides UI for connecting to Linktop Health Monitor devices
  */
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,11 +18,85 @@ import {
   Activity,
   Thermometer,
   Droplets,
-  Loader2
+  Loader2,
+  Brain,
+  Wind,
+  Timer,
+  Smile,
+  Zap
 } from 'lucide-react';
 import { useDevice } from '@/contexts/DeviceContext';
-import { BatteryState } from '@/lib/linktop-sdk';
+import { BatteryState, ECGData } from '@/lib/linktop-sdk';
 import { useLanguage } from '@/lib/i18n';
+
+// ─── ECG waveform constants ────────────────────────────────────────────────
+const WAVE_BUFFER_SIZE = 250;   // ~5 seconds at ~50 Hz
+const SVG_W = 600;
+const SVG_H = 80;
+const MID_Y = SVG_H / 2;
+
+// ─── Inline ECG waveform component ────────────────────────────────────────
+function EcgWaveform({ samples }: { samples: number[] }) {
+  if (samples.length < 2) {
+    return (
+      <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full h-20 bg-black rounded">
+        <text x={SVG_W / 2} y={SVG_H / 2 + 4} textAnchor="middle" fill="#22c55e" fontSize="12">
+          Waiting for signal…
+        </text>
+      </svg>
+    );
+  }
+
+  const min = Math.min(...samples);
+  const max = Math.max(...samples);
+  const range = max - min || 1;
+  const pad = 6;
+
+  const points = samples.map((v, i) => {
+    const x = (i / (samples.length - 1)) * SVG_W;
+    const y = pad + ((max - v) / range) * (SVG_H - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  return (
+    <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full h-20 bg-black rounded" preserveAspectRatio="none">
+      {/* Grid line */}
+      <line x1="0" y1={MID_Y} x2={SVG_W} y2={MID_Y} stroke="#166534" strokeWidth="0.5" strokeDasharray="4 4" />
+      {/* ECG trace */}
+      <polyline
+        points={points.join(' ')}
+        fill="none"
+        stroke="#22c55e"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// ─── ECG result metric card ────────────────────────────────────────────────
+function EcgMetric({
+  icon,
+  label,
+  value,
+  unit,
+  color = 'text-gray-700',
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number | string;
+  unit?: string;
+  color?: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center p-2 bg-white border border-gray-100 rounded-lg shadow-sm text-center">
+      <div className={`mb-1 ${color}`}>{icon}</div>
+      <p className={`text-lg font-bold leading-none ${color}`}>{value}{unit && <span className="text-xs font-normal ml-0.5">{unit}</span>}</p>
+      <p className="text-[10px] text-gray-400 mt-0.5">{label}</p>
+    </div>
+  );
+}
 
 interface DeviceConnectorProps {
   compact?: boolean;
@@ -55,6 +129,39 @@ export default function DeviceConnector({
   } = useDevice();
 
   const [activeAction, setActiveAction] = useState<string | null>(null);
+
+  // ─── ECG waveform buffer ─────────────────────────────────────────────────
+  const [waveBuffer, setWaveBuffer] = useState<number[]>([]);
+  const [ecgResult, setEcgResult] = useState<ECGData | null>(null);
+  const prevEcgActive = useRef(false);
+
+  useEffect(() => {
+    const ecg = measurementState.ecg;
+
+    // Clear state when ECG starts
+    if (ecg.active && !prevEcgActive.current) {
+      setWaveBuffer([]);
+      setEcgResult(null);
+    }
+    prevEcgActive.current = ecg.active;
+
+    if (!ecg.data) return;
+
+    const d = ecg.data;
+
+    if (d.smoothedWave !== 0 && d.heartRate === 0) {
+      // Wave packet — accumulate into rolling buffer
+      setWaveBuffer(prev => {
+        const next = [...prev, d.smoothedWave];
+        return next.length > WAVE_BUFFER_SIZE ? next.slice(next.length - WAVE_BUFFER_SIZE) : next;
+      });
+    } else if (d.heartRate >= 30 && d.heartRate <= 240) {
+      // Result packet — store for display
+      setEcgResult(d);
+    }
+  }, [measurementState.ecg.data, measurementState.ecg.active]);
+
+  // ─── Handlers ───────────────────────────────────────────────────────────
 
   const handleConnect = async () => {
     setActiveAction('connect');
@@ -92,14 +199,10 @@ export default function DeviceConnector({
 
   const getBatteryIcon = () => {
     if (!measurementState.battery) return <Battery className="w-4 h-4" />;
-    
     switch (measurementState.battery.state) {
-      case BatteryState.CHARGING:
-        return <BatteryCharging className="w-4 h-4 text-yellow-500" />;
-      case BatteryState.CHARGE_FULL:
-        return <BatteryFull className="w-4 h-4 text-green-500" />;
-      default:
-        return <Battery className="w-4 h-4" />;
+      case BatteryState.CHARGING:    return <BatteryCharging className="w-4 h-4 text-yellow-500" />;
+      case BatteryState.CHARGE_FULL: return <BatteryFull className="w-4 h-4 text-green-500" />;
+      default:                       return <Battery className="w-4 h-4" />;
     }
   };
 
@@ -111,8 +214,7 @@ export default function DeviceConnector({
     return 'bg-red-500';
   };
 
-  // Detect if the page is embedded inside an iframe (e.g. Replit preview, embedded dashboards).
-  // Web Bluetooth is blocked by browsers when running inside iframes even if the browser supports it.
+  // Detect iframe — Web Bluetooth is blocked inside iframes
   const isInIframe = typeof window !== 'undefined' && window !== window.top;
 
   if (!isBluetoothSupported() || isInIframe) {
@@ -127,15 +229,12 @@ export default function DeviceConnector({
           </p>
 
           {isInIframe ? (
-            /* ── Iframe / embedded-preview warning ─────────────────────── */
             <div className="border border-blue-200 bg-blue-50 rounded-lg p-3 mt-4 text-left">
               <div className="flex items-start gap-2">
                 <BluetoothOff className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-blue-800">
-                    {isRTL
-                      ? 'مطلوب علامة تبويب مستقلة للبلوتوث'
-                      : 'Standalone tab required for Bluetooth'}
+                    {isRTL ? 'مطلوب علامة تبويب مستقلة للبلوتوث' : 'Standalone tab required for Bluetooth'}
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
                     {isRTL
@@ -156,13 +255,8 @@ export default function DeviceConnector({
               </div>
             </div>
           ) : (
-            /* ── Browser doesn't support Web Bluetooth at all ──────────── */
             <>
-              <Button
-                onClick={handleConnect}
-                className="gap-2 mb-4"
-                data-testid="button-connect-device"
-              >
+              <Button onClick={handleConnect} className="gap-2 mb-4" data-testid="button-connect-device">
                 <Bluetooth className="w-4 h-4" />
                 {isRTL ? 'البحث عن الأجهزة' : 'Scan for Devices'}
               </Button>
@@ -206,11 +300,7 @@ export default function DeviceConnector({
             </Button>
           </>
         ) : (
-          <Button 
-            size="sm" 
-            onClick={handleConnect}
-            disabled={deviceState.isConnecting}
-          >
+          <Button size="sm" onClick={handleConnect} disabled={deviceState.isConnecting}>
             {deviceState.isConnecting ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
@@ -225,14 +315,12 @@ export default function DeviceConnector({
 
   return (
     <div data-testid="device-connector">
+      {/* Battery bar */}
       {deviceState.isConnected && measurementState.battery && (
         <div className={`flex items-center justify-end gap-2 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
           {getBatteryIcon()}
           <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className={`h-full ${getBatteryColor()} transition-all`}
-              style={{ width: `${measurementState.battery.level}%` }}
-            />
+            <div className={`h-full ${getBatteryColor()} transition-all`} style={{ width: `${measurementState.battery.level}%` }} />
           </div>
           <span className="text-sm text-gray-600">{measurementState.battery.level}%</span>
           <Button size="icon" variant="ghost" onClick={refreshBattery}>
@@ -240,63 +328,64 @@ export default function DeviceConnector({
           </Button>
         </div>
       )}
-      {!deviceState.isConnected ? (
-          <div className="text-center py-4">
-            <Bluetooth className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500 mb-4">
-              {isRTL ? 'لم يتم توصيل أي جهاز' : 'No device connected'}
-            </p>
-            <Button 
-              onClick={handleConnect}
-              disabled={deviceState.isConnecting}
-              className="gap-2"
-              data-testid="button-connect-device"
-            >
-              {deviceState.isConnecting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {isRTL ? 'جاري الاتصال...' : 'Connecting...'}
-                </>
-              ) : (
-                <>
-                  <Bluetooth className="w-4 h-4" />
-                  {isRTL ? 'البحث عن الأجهزة' : 'Scan for Devices'}
-                </>
-              )}
-            </Button>
-            {deviceState.error && (
-              <p className="text-red-500 text-sm mt-2">{deviceState.error}</p>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className={`flex items-center justify-between p-3 bg-green-50 rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <BluetoothConnected className="w-6 h-6 text-green-600" />
-                <div className={isRTL ? 'text-right' : ''}>
-                  <p className="font-medium text-green-800">
-                    {deviceState.deviceInfo?.name || 'Health Monitor'}
-                  </p>
-                  {deviceState.deviceInfo?.firmwareVersion && (
-                    <p className="text-xs text-green-600">
-                      FW: {deviceState.deviceInfo.firmwareVersion}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleDisconnect}
-                disabled={activeAction === 'disconnect'}
-                data-testid="button-disconnect-device"
-              >
-                {isRTL ? 'قطع الاتصال' : 'Disconnect'}
-              </Button>
-            </div>
 
-            {showMeasurementControls && (
-              <div className="space-y-2">
+      {!deviceState.isConnected ? (
+        <div className="text-center py-4">
+          <Bluetooth className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-500 mb-4">
+            {isRTL ? 'لم يتم توصيل أي جهاز' : 'No device connected'}
+          </p>
+          <Button
+            onClick={handleConnect}
+            disabled={deviceState.isConnecting}
+            className="gap-2"
+            data-testid="button-connect-device"
+          >
+            {deviceState.isConnecting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {isRTL ? 'جاري الاتصال...' : 'Connecting...'}
+              </>
+            ) : (
+              <>
+                <Bluetooth className="w-4 h-4" />
+                {isRTL ? 'البحث عن الأجهزة' : 'Scan for Devices'}
+              </>
+            )}
+          </Button>
+          {deviceState.error && (
+            <p className="text-red-500 text-sm mt-2">{deviceState.error}</p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Connected device header */}
+          <div className={`flex items-center justify-between p-3 bg-green-50 rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <BluetoothConnected className="w-6 h-6 text-green-600" />
+              <div className={isRTL ? 'text-right' : ''}>
+                <p className="font-medium text-green-800">
+                  {deviceState.deviceInfo?.name || 'Health Monitor'}
+                </p>
+                {deviceState.deviceInfo?.firmwareVersion && (
+                  <p className="text-xs text-green-600">FW: {deviceState.deviceInfo.firmwareVersion}</p>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDisconnect}
+              disabled={activeAction === 'disconnect'}
+              data-testid="button-disconnect-device"
+            >
+              {isRTL ? 'قطع الاتصال' : 'Disconnect'}
+            </Button>
+          </div>
+
+          {/* Measurement buttons */}
+          {showMeasurementControls && (
+            <div className="space-y-2">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 <Button
                   variant={measurementState.spo2.active ? "destructive" : "outline"}
@@ -305,11 +394,7 @@ export default function DeviceConnector({
                   disabled={activeAction === 'spo2'}
                   data-testid="button-measure-spo2"
                 >
-                  {activeAction === 'spo2' ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Droplets className="w-4 h-4" />
-                  )}
+                  {activeAction === 'spo2' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Droplets className="w-4 h-4" />}
                   {measurementState.spo2.active ? (isRTL ? 'إيقاف' : 'Stop') : (isRTL ? 'أكسجين الدم' : 'SpO2')}
                 </Button>
 
@@ -320,11 +405,7 @@ export default function DeviceConnector({
                   disabled={activeAction === 'ecg'}
                   data-testid="button-measure-ecg"
                 >
-                  {activeAction === 'ecg' ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Activity className="w-4 h-4" />
-                  )}
+                  {activeAction === 'ecg' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
                   {measurementState.ecg.active ? (isRTL ? 'إيقاف' : 'Stop') : 'ECG'}
                 </Button>
 
@@ -335,11 +416,7 @@ export default function DeviceConnector({
                   disabled={activeAction === 'bloodPressure'}
                   data-testid="button-measure-bp"
                 >
-                  {activeAction === 'bloodPressure' ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Heart className="w-4 h-4" />
-                  )}
+                  {activeAction === 'bloodPressure' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
                   {measurementState.bloodPressure.active ? (isRTL ? 'إيقاف' : 'Stop') : (isRTL ? 'ضغط الدم' : 'BP')}
                 </Button>
 
@@ -350,11 +427,7 @@ export default function DeviceConnector({
                   disabled={activeAction === 'temperature'}
                   data-testid="button-measure-temp"
                 >
-                  {activeAction === 'temperature' ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Thermometer className="w-4 h-4" />
-                  )}
+                  {activeAction === 'temperature' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Thermometer className="w-4 h-4" />}
                   {measurementState.temperature.active ? (isRTL ? 'إيقاف' : 'Stop') : (isRTL ? 'الحرارة' : 'Temp')}
                 </Button>
 
@@ -365,67 +438,170 @@ export default function DeviceConnector({
                   disabled={activeAction === 'bloodGlucose'}
                   data-testid="button-measure-glucose"
                 >
-                  {activeAction === 'bloodGlucose' ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Droplets className="w-4 h-4" />
-                  )}
+                  {activeAction === 'bloodGlucose' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Droplets className="w-4 h-4" />}
                   {measurementState.bloodGlucose.active ? (isRTL ? 'إيقاف' : 'Stop') : (isRTL ? 'السكر' : 'Glucose')}
                 </Button>
               </div>
 
+              {/* Blood glucose strip status */}
               {measurementState.bloodGlucose.active && measurementState.bloodGlucose.data?.paperMessage && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
                   <Droplets className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                  <p className="text-xs text-amber-800">
-                    {measurementState.bloodGlucose.data.paperMessage}
-                  </p>
+                  <p className="text-xs text-amber-800">{measurementState.bloodGlucose.data.paperMessage}</p>
                 </div>
               )}
-              </div>
-            )}
+            </div>
+          )}
 
-            {(vitalSigns.heartRate || vitalSigns.oxygenLevel || vitalSigns.bloodPressure || vitalSigns.temperature || vitalSigns.bloodGlucose) && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm font-medium text-blue-800 mb-2">
-                  {isRTL ? 'القراءات الحالية' : 'Current Readings'}
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                  {vitalSigns.heartRate && (
-                    <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <Heart className="w-3 h-3 text-red-500" />
-                      <span>{vitalSigns.heartRate} bpm</span>
-                    </div>
-                  )}
-                  {vitalSigns.oxygenLevel && (
-                    <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <Droplets className="w-3 h-3 text-blue-500" />
-                      <span>{vitalSigns.oxygenLevel}%</span>
-                    </div>
-                  )}
-                  {vitalSigns.bloodPressure && (
-                    <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <Activity className="w-3 h-3 text-green-500" />
-                      <span>{vitalSigns.bloodPressure.systolic}/{vitalSigns.bloodPressure.diastolic}</span>
-                    </div>
-                  )}
-                  {vitalSigns.temperature && (
-                    <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <Thermometer className="w-3 h-3 text-orange-500" />
-                      <span>{vitalSigns.temperature.toFixed(1)}°C</span>
-                    </div>
-                  )}
-                  {vitalSigns.bloodGlucose && (
-                    <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <Droplets className="w-3 h-3 text-purple-500" />
-                      <span>{vitalSigns.bloodGlucose} mg/dL</span>
-                    </div>
-                  )}
+          {/* ── ECG live waveform ─────────────────────────────────────────── */}
+          {measurementState.ecg.active && (
+            <div className="rounded-lg overflow-hidden border border-gray-800">
+              <div className={`flex items-center justify-between px-3 py-1.5 bg-gray-900 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <Activity className="w-3.5 h-3.5 text-green-400" />
+                  <span className="text-xs font-medium text-green-400">
+                    {isRTL ? 'مخطط القلب الكهربائي' : 'ECG Live'}
+                  </span>
                 </div>
+                {measurementState.ecg.data?.heartRate && measurementState.ecg.data.heartRate > 0 && (
+                  <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Heart className="w-3 h-3 text-red-400 animate-pulse" />
+                    <span className="text-xs text-red-400 font-bold">
+                      {measurementState.ecg.data.heartRate} bpm
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        )}
+              <EcgWaveform samples={waveBuffer} />
+            </div>
+          )}
+
+          {/* ── ECG result card ───────────────────────────────────────────── */}
+          {ecgResult && !measurementState.ecg.active && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Activity className="w-4 h-4 text-blue-700" />
+                <p className="text-sm font-semibold text-blue-800">
+                  {isRTL ? 'نتائج مخطط القلب الكهربائي' : 'ECG Results'}
+                </p>
+              </div>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                {ecgResult.heartRate > 0 && (
+                  <EcgMetric
+                    icon={<Heart className="w-4 h-4" />}
+                    label={isRTL ? 'معدل القلب' : 'Heart Rate'}
+                    value={ecgResult.heartRate}
+                    unit=" bpm"
+                    color="text-red-500"
+                  />
+                )}
+                {ecgResult.hrv > 0 && (
+                  <EcgMetric
+                    icon={<Activity className="w-4 h-4" />}
+                    label="HRV"
+                    value={ecgResult.hrv}
+                    unit=" ms"
+                    color="text-blue-500"
+                  />
+                )}
+                {ecgResult.stress > 0 && (
+                  <EcgMetric
+                    icon={<Zap className="w-4 h-4" />}
+                    label={isRTL ? 'التوتر' : 'Stress'}
+                    value={ecgResult.stress}
+                    color="text-orange-500"
+                  />
+                )}
+                {ecgResult.mood > 0 && (
+                  <EcgMetric
+                    icon={<Smile className="w-4 h-4" />}
+                    label={isRTL ? 'المزاج' : 'Mood'}
+                    value={ecgResult.mood}
+                    color="text-yellow-500"
+                  />
+                )}
+                {ecgResult.respiratoryRate > 0 && (
+                  <EcgMetric
+                    icon={<Wind className="w-4 h-4" />}
+                    label={isRTL ? 'التنفس' : 'Resp. Rate'}
+                    value={ecgResult.respiratoryRate}
+                    unit=" /min"
+                    color="text-teal-500"
+                  />
+                )}
+                {ecgResult.heartAge > 0 && (
+                  <EcgMetric
+                    icon={<Brain className="w-4 h-4" />}
+                    label={isRTL ? 'عمر القلب' : 'Heart Age'}
+                    value={ecgResult.heartAge}
+                    unit=" yr"
+                    color="text-purple-500"
+                  />
+                )}
+                {ecgResult.rrMax > 0 && (
+                  <EcgMetric
+                    icon={<Timer className="w-4 h-4" />}
+                    label="RR Max"
+                    value={ecgResult.rrMax}
+                    unit=" ms"
+                    color="text-gray-500"
+                  />
+                )}
+                {ecgResult.rrMin > 0 && (
+                  <EcgMetric
+                    icon={<Timer className="w-4 h-4" />}
+                    label="RR Min"
+                    value={ecgResult.rrMin}
+                    unit=" ms"
+                    color="text-gray-500"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Current readings summary */}
+          {(vitalSigns.heartRate || vitalSigns.oxygenLevel || vitalSigns.bloodPressure || vitalSigns.temperature || vitalSigns.bloodGlucose) && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm font-medium text-blue-800 mb-2">
+                {isRTL ? 'القراءات الحالية' : 'Current Readings'}
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                {vitalSigns.heartRate && (
+                  <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Heart className="w-3 h-3 text-red-500" />
+                    <span>{vitalSigns.heartRate} bpm</span>
+                  </div>
+                )}
+                {vitalSigns.oxygenLevel && (
+                  <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Droplets className="w-3 h-3 text-blue-500" />
+                    <span>{vitalSigns.oxygenLevel}%</span>
+                  </div>
+                )}
+                {vitalSigns.bloodPressure && (
+                  <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Activity className="w-3 h-3 text-green-500" />
+                    <span>{vitalSigns.bloodPressure.systolic}/{vitalSigns.bloodPressure.diastolic}</span>
+                  </div>
+                )}
+                {vitalSigns.temperature && (
+                  <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Thermometer className="w-3 h-3 text-orange-500" />
+                    <span>{vitalSigns.temperature.toFixed(1)}°C</span>
+                  </div>
+                )}
+                {vitalSigns.bloodGlucose && (
+                  <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Droplets className="w-3 h-3 text-purple-500" />
+                    <span>{vitalSigns.bloodGlucose} mg/dL</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
