@@ -26,8 +26,17 @@ import {
   Zap
 } from 'lucide-react';
 import { useDevice } from '@/contexts/DeviceContext';
-import { BatteryState, ECGData } from '@/lib/linktop-sdk';
+import { BatteryState, ECGData, BloodPressureData } from '@/lib/linktop-sdk';
 import { useLanguage } from '@/lib/i18n';
+
+// ─── BP category (AHA/ACC 2017 guidelines) ────────────────────────────────
+function getBpCategory(sys: number, dia: number): { label: string; labelAr: string; color: string; bg: string } {
+  if (sys < 120 && dia < 80)        return { label: 'Normal',          labelAr: 'طبيعي',          color: 'text-green-700',  bg: 'bg-green-50 border-green-200' };
+  if (sys < 130 && dia < 80)        return { label: 'Elevated',         labelAr: 'مرتفع قليلاً',   color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' };
+  if (sys < 140 || dia < 90)        return { label: 'High — Stage 1',   labelAr: 'مرتفع - مرحلة 1', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' };
+  if (sys < 180 && dia < 120)       return { label: 'High — Stage 2',   labelAr: 'مرتفع - مرحلة 2', color: 'text-red-700',    bg: 'bg-red-50 border-red-200' };
+  return                                    { label: 'Hypertensive Crisis', labelAr: 'أزمة ضغط',   color: 'text-red-900',    bg: 'bg-red-100 border-red-400' };
+}
 
 // ─── ECG waveform constants ────────────────────────────────────────────────
 const WAVE_BUFFER_SIZE = 250;   // ~5 seconds at ~50 Hz
@@ -135,6 +144,10 @@ export default function DeviceConnector({
   const [ecgResult, setEcgResult] = useState<ECGData | null>(null);
   const prevEcgActive = useRef(false);
 
+  // ─── BP result state ─────────────────────────────────────────────────────
+  const [bpResult, setBpResult] = useState<BloodPressureData | null>(null);
+  const prevBpActive = useRef(false);
+
   useEffect(() => {
     const ecg = measurementState.ecg;
 
@@ -160,6 +173,18 @@ export default function DeviceConnector({
       setEcgResult(d);
     }
   }, [measurementState.ecg.data, measurementState.ecg.active]);
+
+  // ─── BP result tracker ──────────────────────────────────────────────────
+  useEffect(() => {
+    const bp = measurementState.bloodPressure;
+    if (bp.active && !prevBpActive.current) {
+      setBpResult(null);
+    }
+    prevBpActive.current = bp.active;
+    if (bp.data?.systolic && bp.data.systolic >= 50) {
+      setBpResult(bp.data);
+    }
+  }, [measurementState.bloodPressure.data, measurementState.bloodPressure.active]);
 
   // ─── Handlers ───────────────────────────────────────────────────────────
 
@@ -559,6 +584,64 @@ export default function DeviceConnector({
               </div>
             </div>
           )}
+
+          {/* ── Blood pressure result card ──────────────────────────────── */}
+          {bpResult && !measurementState.bloodPressure.active && (() => {
+            const cat = getBpCategory(bpResult.systolic, bpResult.diastolic);
+            const pulsePressure = bpResult.systolic - bpResult.diastolic;
+            const map = Math.round(bpResult.diastolic + pulsePressure / 3);
+            return (
+              <div className={`rounded-lg border p-3 ${cat.bg}`}>
+                {/* Header */}
+                <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Heart className={`w-4 h-4 ${cat.color}`} />
+                    <p className={`text-sm font-semibold ${cat.color}`}>
+                      {isRTL ? 'نتائج ضغط الدم' : 'Blood Pressure Results'}
+                    </p>
+                  </div>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${cat.color} ${cat.bg}`}>
+                    {isRTL ? cat.labelAr : cat.label}
+                  </span>
+                </div>
+
+                {/* Main reading — large display */}
+                <div className={`flex items-end gap-4 justify-center mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className="text-center">
+                    <p className={`text-4xl font-bold leading-none ${cat.color}`}>{bpResult.systolic}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">{isRTL ? 'الانقباضي' : 'Systolic'}</p>
+                  </div>
+                  <p className={`text-2xl font-light mb-1 ${cat.color}`}>/</p>
+                  <div className="text-center">
+                    <p className={`text-4xl font-bold leading-none ${cat.color}`}>{bpResult.diastolic}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">{isRTL ? 'الانبساطي' : 'Diastolic'}</p>
+                  </div>
+                  <p className="text-sm text-gray-400 mb-1">mmHg</p>
+                </div>
+
+                {/* Secondary metrics */}
+                <div className="grid grid-cols-3 gap-2">
+                  {bpResult.heartRate > 0 && (
+                    <div className="flex flex-col items-center p-2 bg-white/70 rounded-lg">
+                      <Heart className="w-3.5 h-3.5 text-red-500 mb-1" />
+                      <p className="text-base font-bold text-gray-800 leading-none">{bpResult.heartRate}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{isRTL ? 'نبضة/د' : 'bpm'}</p>
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center p-2 bg-white/70 rounded-lg">
+                    <Activity className="w-3.5 h-3.5 text-indigo-500 mb-1" />
+                    <p className="text-base font-bold text-gray-800 leading-none">{pulsePressure}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{isRTL ? 'ضغط النبض' : 'Pulse Pr.'}</p>
+                  </div>
+                  <div className="flex flex-col items-center p-2 bg-white/70 rounded-lg">
+                    <Wind className="w-3.5 h-3.5 text-teal-500 mb-1" />
+                    <p className="text-base font-bold text-gray-800 leading-none">{map}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">MAP</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Current readings summary */}
           {(vitalSigns.heartRate || vitalSigns.oxygenLevel || vitalSigns.bloodPressure || vitalSigns.temperature || vitalSigns.bloodGlucose) && (
