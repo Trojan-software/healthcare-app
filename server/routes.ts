@@ -161,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = jwt.sign(
         { userId: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "24h" }
+        { expiresIn: "7d" }
       );
 
       const userResponse = {
@@ -239,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = jwt.sign(
         { userId: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "24h" }
+        { expiresIn: "7d" }
       );
 
       const userResponse = {

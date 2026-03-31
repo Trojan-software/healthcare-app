@@ -113,6 +113,11 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
       if (response.ok) {
         const data = await response.json();
         setDashboardData(data);
+      } else if (response.status === 401) {
+        // Token expired or invalid — clear it and return to login
+        localStorage.removeItem('auth_token');
+        onLogout();
+        return;
       } else {
         setError('Failed to load dashboard data');
       }
@@ -164,6 +169,9 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
           const history = await response.json();
           // Vitals history loaded successfully
           setVitalsHistory(history);
+        } else if (response.status === 401) {
+          localStorage.removeItem('auth_token');
+          onLogout();
         } else {
           handleApiError('EnhancedPatientDashboard', 'loadVitalsHistory', new Error(`Failed to load vitals history: ${response.status}`), { patientId: dashboardData.user.patientId });
         }
