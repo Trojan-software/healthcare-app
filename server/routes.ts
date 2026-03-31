@@ -521,7 +521,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       const vitalsData = allVitals.flat();
       const activePatients = patients.filter(p => p.isVerified).length;
-      const criticalAlerts = vitalsData.filter(v => isVitalsCritical(v)).length;
+      // Count distinct patients whose MOST RECENT vital is critical (not total critical records)
+      const criticalAlerts = allVitals.filter(pv => pv.length > 0 && isVitalsCritical(pv[0])).length;
 
       // Device connections: count devices whose status is 'connected' or 'charging'
       const deviceConnections = allDevices.filter(d =>
@@ -1151,7 +1152,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vitalsData = allVitals.flat();
 
       const activePatients = patients.filter(p => p.isVerified).length;
-      const criticalAlerts = vitalsData.filter(v => isVitalsCritical(v)).length;
+      // Count distinct patients whose MOST RECENT vital is critical (not total critical records)
+      const criticalAlerts = allVitals.filter(pv => pv.length > 0 && isVitalsCritical(pv[0])).length;
 
       const deviceConnections = allDevices.filter(d =>
         d.connectionStatus === 'connected' || d.connectionStatus === 'charging'
