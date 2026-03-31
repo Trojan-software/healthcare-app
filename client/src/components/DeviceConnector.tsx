@@ -38,6 +38,16 @@ function getBpCategory(sys: number, dia: number): { label: string; labelAr: stri
   return                                    { label: 'Hypertensive Crisis', labelAr: 'أزمة ضغط',   color: 'text-red-900',    bg: 'bg-red-100 border-red-400' };
 }
 
+// ─── Glucose category (ADA guidelines) ───────────────────────────────────
+function getGlucoseCategory(mgdl: number): { label: string; labelAr: string; color: string; bg: string; icon: string } {
+  if (mgdl < 54)               return { label: 'Severe Hypoglycemia', labelAr: 'نقص سكر حاد',      color: 'text-red-900',    bg: 'bg-red-100 border-red-400',     icon: '🚨' };
+  if (mgdl < 70)               return { label: 'Low (Hypoglycemia)',   labelAr: 'منخفض',            color: 'text-red-700',    bg: 'bg-red-50 border-red-300',      icon: '⚠️' };
+  if (mgdl <= 99)              return { label: 'Normal (Fasting)',     labelAr: 'طبيعي',            color: 'text-green-700',  bg: 'bg-green-50 border-green-200',  icon: '✅' };
+  if (mgdl <= 125)             return { label: 'Pre-diabetes',         labelAr: 'ما قبل السكري',    color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200',icon: '⚡' };
+  if (mgdl <= 199)             return { label: 'Diabetes Range',       labelAr: 'نطاق السكري',      color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200',icon: '🔶' };
+  return                               { label: 'High — Hyperglycemia', labelAr: 'ارتفاع السكر',   color: 'text-red-700',    bg: 'bg-red-50 border-red-300',      icon: '🔴' };
+}
+
 // ─── ECG waveform constants ────────────────────────────────────────────────
 const WAVE_BUFFER_SIZE = 250;   // ~5 seconds at ~50 Hz
 const SVG_W = 600;
@@ -148,6 +158,10 @@ export default function DeviceConnector({
   const [bpResult, setBpResult] = useState<BloodPressureData | null>(null);
   const prevBpActive = useRef(false);
 
+  // ─── Glucose result state ─────────────────────────────────────────────────
+  const [glucoseResult, setGlucoseResult] = useState<{ value: number; unit: string } | null>(null);
+  const prevGlucoseActive = useRef(false);
+
   useEffect(() => {
     const ecg = measurementState.ecg;
 
@@ -185,6 +199,18 @@ export default function DeviceConnector({
       setBpResult(bp.data);
     }
   }, [measurementState.bloodPressure.data, measurementState.bloodPressure.active]);
+
+  // ─── Glucose result tracker ─────────────────────────────────────────────
+  useEffect(() => {
+    const bg = measurementState.bloodGlucose;
+    if (bg.active && !prevGlucoseActive.current) {
+      setGlucoseResult(null);
+    }
+    prevGlucoseActive.current = bg.active;
+    if (bg.data?.value && bg.data.value > 0) {
+      setGlucoseResult({ value: bg.data.value, unit: bg.data.unit });
+    }
+  }, [measurementState.bloodGlucose.data, measurementState.bloodGlucose.active]);
 
   // ─── Handlers ───────────────────────────────────────────────────────────
 
@@ -638,6 +664,51 @@ export default function DeviceConnector({
                     <p className="text-base font-bold text-gray-800 leading-none">{map}</p>
                     <p className="text-[10px] text-gray-400 mt-0.5">MAP</p>
                   </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ── Blood glucose result card ────────────────────────────────── */}
+          {glucoseResult && !measurementState.bloodGlucose.active && (() => {
+            const mgdl = glucoseResult.unit === 'mmol/L'
+              ? Math.round(glucoseResult.value * 18.016)
+              : glucoseResult.value;
+            const mmol = (mgdl / 18.016).toFixed(1);
+            const cat = getGlucoseCategory(mgdl);
+            return (
+              <div className={`rounded-lg border p-3 ${cat.bg}`}>
+                {/* Header */}
+                <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Droplets className={`w-4 h-4 ${cat.color}`} />
+                    <p className={`text-sm font-semibold ${cat.color}`}>
+                      {isRTL ? 'نتائج سكر الدم' : 'Blood Glucose Results'}
+                    </p>
+                  </div>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${cat.color} ${cat.bg}`}>
+                    {cat.icon} {isRTL ? cat.labelAr : cat.label}
+                  </span>
+                </div>
+
+                {/* Main value — dual unit display */}
+                <div className="flex items-end justify-center gap-6 mb-3">
+                  <div className="text-center">
+                    <p className={`text-5xl font-bold leading-none ${cat.color}`}>{mgdl}</p>
+                    <p className="text-xs text-gray-500 mt-1">mg/dL</p>
+                  </div>
+                  <div className="text-center pb-1">
+                    <p className="text-2xl font-semibold text-gray-400 leading-none">{mmol}</p>
+                    <p className="text-xs text-gray-400 mt-1">mmol/L</p>
+                  </div>
+                </div>
+
+                {/* ADA reference ranges */}
+                <div className={`flex text-[10px] text-gray-500 gap-2 flex-wrap justify-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded">{'<70 '}{isRTL ? 'منخفض' : 'Low'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded">70–99 {isRTL ? 'طبيعي' : 'Normal'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded">100–125 {isRTL ? 'ما قبل السكري' : 'Pre-DM'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded">{'≥126 '}{isRTL ? 'سكري' : 'Diabetes'}</span>
                 </div>
               </div>
             );
