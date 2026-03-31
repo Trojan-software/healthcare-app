@@ -38,6 +38,14 @@ function getBpCategory(sys: number, dia: number): { label: string; labelAr: stri
   return                                    { label: 'Hypertensive Crisis', labelAr: 'أزمة ضغط',   color: 'text-red-900',    bg: 'bg-red-100 border-red-400' };
 }
 
+// ─── SpO2 category (WHO / pulse-ox clinical thresholds) ──────────────────
+function getSpo2Category(pct: number): { label: string; labelAr: string; color: string; bg: string } {
+  if (pct >= 95)  return { label: 'Normal',              labelAr: 'طبيعي',           color: 'text-green-700',  bg: 'bg-green-50 border-green-200' };
+  if (pct >= 92)  return { label: 'Mild Hypoxemia',      labelAr: 'نقص أكسجين خفيف', color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' };
+  if (pct >= 88)  return { label: 'Moderate Hypoxemia',  labelAr: 'نقص أكسجين متوسط',color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' };
+  return                  { label: 'Severe Hypoxemia',   labelAr: 'نقص أكسجين حاد',  color: 'text-red-700',    bg: 'bg-red-50 border-red-300' };
+}
+
 // ─── Glucose category (ADA guidelines) ───────────────────────────────────
 function getGlucoseCategory(mgdl: number): { label: string; labelAr: string; color: string; bg: string; icon: string } {
   if (mgdl < 54)               return { label: 'Severe Hypoglycemia', labelAr: 'نقص سكر حاد',      color: 'text-red-900',    bg: 'bg-red-100 border-red-400',     icon: '🚨' };
@@ -162,6 +170,12 @@ export default function DeviceConnector({
   const [glucoseResult, setGlucoseResult] = useState<{ value: number; unit: string } | null>(null);
   const prevGlucoseActive = useRef(false);
 
+  // ─── SpO2 waveform buffer + result ────────────────────────────────────────
+  const [spo2WaveBuffer, setSpo2WaveBuffer] = useState<number[]>([]);
+  const [spo2Result, setSpo2Result] = useState<{ oxygenLevel: number; heartRate: number } | null>(null);
+  const [fingerOn, setFingerOn] = useState(false);
+  const prevSpo2Active = useRef(false);
+
   useEffect(() => {
     const ecg = measurementState.ecg;
 
@@ -199,6 +213,36 @@ export default function DeviceConnector({
       setBpResult(bp.data);
     }
   }, [measurementState.bloodPressure.data, measurementState.bloodPressure.active]);
+
+  // ─── SpO2 tracker ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const spo2 = measurementState.spo2;
+    if (spo2.active && !prevSpo2Active.current) {
+      setSpo2WaveBuffer([]);
+      setSpo2Result(null);
+      setFingerOn(false);
+    }
+    prevSpo2Active.current = spo2.active;
+    if (!spo2.data) return;
+    const d = spo2.data;
+    // Finger detection packet
+    if (d.fingerDetection !== undefined && d.oxygenLevel === 0) {
+      setFingerOn(d.fingerDetection);
+      return;
+    }
+    // Wave sample
+    if (d.waveValue !== undefined && d.oxygenLevel === 0) {
+      setSpo2WaveBuffer(prev => {
+        const next = [...prev, d.waveValue!];
+        return next.length > WAVE_BUFFER_SIZE ? next.slice(next.length - WAVE_BUFFER_SIZE) : next;
+      });
+      return;
+    }
+    // Final result
+    if (d.oxygenLevel >= 70 && d.oxygenLevel <= 100) {
+      setSpo2Result({ oxygenLevel: d.oxygenLevel, heartRate: d.heartRate });
+    }
+  }, [measurementState.spo2.data, measurementState.spo2.active]);
 
   // ─── Glucose result tracker ─────────────────────────────────────────────
   useEffect(() => {
@@ -610,6 +654,83 @@ export default function DeviceConnector({
               </div>
             </div>
           )}
+
+          {/* ── SpO2 live pleth waveform ─────────────────────────────────── */}
+          {measurementState.spo2.active && (
+            <div className="rounded-lg overflow-hidden border border-gray-800">
+              <div className={`flex items-center justify-between px-3 py-1.5 bg-gray-900 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <Droplets className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="text-xs font-medium text-blue-400">
+                    {isRTL ? 'موجة الأكسجين' : 'SpO2 Live'}
+                  </span>
+                </div>
+                <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  {/* Finger detection indicator */}
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${fingerOn ? 'bg-green-800 text-green-300' : 'bg-gray-700 text-gray-400'}`}>
+                    {fingerOn
+                      ? (isRTL ? '👆 الإصبع موضوع' : '👆 Finger on')
+                      : (isRTL ? '☝️ ضع إصبعك' : '☝️ Place finger')}
+                  </span>
+                  {measurementState.spo2.data?.oxygenLevel && measurementState.spo2.data.oxygenLevel > 0 && (
+                    <span className="text-xs text-blue-300 font-bold">
+                      {measurementState.spo2.data.oxygenLevel}%
+                    </span>
+                  )}
+                </div>
+              </div>
+              {/* Reuse EcgWaveform with blue override via wrapper */}
+              <div className="[&_polyline]:stroke-blue-400">
+                <EcgWaveform samples={spo2WaveBuffer} />
+              </div>
+            </div>
+          )}
+
+          {/* ── SpO2 result card ──────────────────────────────────────────── */}
+          {spo2Result && !measurementState.spo2.active && (() => {
+            const cat = getSpo2Category(spo2Result.oxygenLevel);
+            return (
+              <div className={`rounded-lg border p-3 ${cat.bg}`}>
+                {/* Header */}
+                <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Droplets className={`w-4 h-4 ${cat.color}`} />
+                    <p className={`text-sm font-semibold ${cat.color}`}>
+                      {isRTL ? 'نتائج الأكسجين' : 'SpO2 Results'}
+                    </p>
+                  </div>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${cat.color} ${cat.bg}`}>
+                    {isRTL ? cat.labelAr : cat.label}
+                  </span>
+                </div>
+
+                {/* Main SpO2 reading */}
+                <div className="flex items-end justify-center gap-6 mb-3">
+                  <div className="text-center">
+                    <p className={`text-5xl font-bold leading-none ${cat.color}`}>{spo2Result.oxygenLevel}</p>
+                    <p className="text-xs text-gray-500 mt-1">SpO2 %</p>
+                  </div>
+                  {spo2Result.heartRate > 0 && (
+                    <div className="text-center pb-1">
+                      <div className={`flex items-center gap-1 justify-center`}>
+                        <Heart className="w-4 h-4 text-red-500 animate-pulse" />
+                        <p className="text-2xl font-semibold text-gray-700 leading-none">{spo2Result.heartRate}</p>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">{isRTL ? 'نبضة/د' : 'bpm'}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Clinical reference */}
+                <div className={`flex text-[10px] text-gray-500 gap-2 flex-wrap justify-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded text-green-700">≥95% {isRTL ? 'طبيعي' : 'Normal'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded text-yellow-700">92–94% {isRTL ? 'خفيف' : 'Mild'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded text-orange-700">88–91% {isRTL ? 'متوسط' : 'Moderate'}</span>
+                  <span className="bg-white/60 px-1.5 py-0.5 rounded text-red-700">{'<88% '}{isRTL ? 'حاد' : 'Severe'}</span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ── Blood pressure result card ──────────────────────────────── */}
           {bpResult && !measurementState.bloodPressure.active && (() => {
