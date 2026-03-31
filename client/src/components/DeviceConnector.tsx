@@ -296,6 +296,7 @@ export default function DeviceConnector({
             </div>
 
             {showMeasurementControls && (
+              <div className="space-y-2">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 <Button
                   variant={measurementState.spo2.active ? "destructive" : "outline"}
@@ -367,14 +368,24 @@ export default function DeviceConnector({
                   {activeAction === 'bloodGlucose' ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Activity className="w-4 h-4" />
+                    <Droplets className="w-4 h-4" />
                   )}
                   {measurementState.bloodGlucose.active ? (isRTL ? 'إيقاف' : 'Stop') : (isRTL ? 'السكر' : 'Glucose')}
                 </Button>
               </div>
+
+              {measurementState.bloodGlucose.active && measurementState.bloodGlucose.data?.paperMessage && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
+                  <Droplets className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                  <p className="text-xs text-amber-800">
+                    {measurementState.bloodGlucose.data.paperMessage}
+                  </p>
+                </div>
+              )}
+              </div>
             )}
 
-            {(vitalSigns.heartRate || vitalSigns.oxygenLevel || vitalSigns.bloodPressure || vitalSigns.temperature) && (
+            {(vitalSigns.heartRate || vitalSigns.oxygenLevel || vitalSigns.bloodPressure || vitalSigns.temperature || vitalSigns.bloodGlucose) && (
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                 <p className="text-sm font-medium text-blue-800 mb-2">
                   {isRTL ? 'القراءات الحالية' : 'Current Readings'}
@@ -402,6 +413,12 @@ export default function DeviceConnector({
                     <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <Thermometer className="w-3 h-3 text-orange-500" />
                       <span>{vitalSigns.temperature.toFixed(1)}°C</span>
+                    </div>
+                  )}
+                  {vitalSigns.bloodGlucose && (
+                    <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <Droplets className="w-3 h-3 text-purple-500" />
+                      <span>{vitalSigns.bloodGlucose} mg/dL</span>
                     </div>
                   )}
                 </div>

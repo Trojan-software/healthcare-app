@@ -217,12 +217,16 @@ export function useLinktopDevice() {
             ...prev,
             bloodGlucose: { ...prev.bloodGlucose, data: measurement.data },
           }));
-          bridgeToDeviceDataContext('bloodGlucose', measurement.data);
-          setVitalSigns(prev => ({
-            ...prev,
-            bloodGlucose: measurement.data.value,
-            timestamp,
-          }));
+          // Only update vital signs and bridge with a real reading (value > 0).
+          // Paper-state notifications (value = 0) carry strip status, not a glucose value.
+          if (measurement.data.value > 0) {
+            bridgeToDeviceDataContext('bloodGlucose', measurement.data);
+            setVitalSigns(prev => ({
+              ...prev,
+              bloodGlucose: measurement.data.value,
+              timestamp,
+            }));
+          }
           break;
       }
     };
