@@ -168,6 +168,43 @@ export default function DeviceConnector({
 
   const [activeAction, setActiveAction] = useState<string | null>(null);
 
+  // ─── Device registration on BLE connect / disconnect ─────────────────────
+  const prevConnected = useRef(false);
+  useEffect(() => {
+    const wasConnected = prevConnected.current;
+    const isNowConnected = deviceState.isConnected;
+    prevConnected.current = isNowConnected;
+
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    if (!wasConnected && isNowConnected && deviceState.deviceInfo) {
+      // Device just connected — register/upsert with server
+      fetch('/api/devices/register', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          deviceId: deviceState.deviceInfo.id,
+          deviceName: deviceState.deviceInfo.name,
+          firmwareVersion: deviceState.deviceInfo.firmwareVersion || null,
+          deviceType: 'multi_function',
+          supportedMeasurements: ['ecg', 'blood_oxygen', 'temperature', 'blood_pressure', 'glucose', 'battery'],
+        }),
+      }).catch(() => {}); // best-effort — never block UI
+    } else if (wasConnected && !isNowConnected) {
+      // Device just disconnected — update server status
+      const deviceId = deviceState.deviceInfo?.id;
+      if (deviceId) {
+        fetch('/api/devices/disconnect', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ deviceId }),
+        }).catch(() => {});
+      }
+    }
+  }, [deviceState.isConnected, deviceState.deviceInfo]);
+
   // ─── ECG waveform buffer ─────────────────────────────────────────────────
   const [waveBuffer, setWaveBuffer] = useState<number[]>([]);
   const [ecgResult, setEcgResult] = useState<ECGData | null>(null);
@@ -217,7 +254,7 @@ export default function DeviceConnector({
     }
   }, [measurementState.ecg.data, measurementState.ecg.active]);
 
-  // ─── BP result tracker ──────────────────────────────────────────────────
+  // ─── BP result tracker — auto-save when reading arrives ─────────────────
   useEffect(() => {
     const bp = measurementState.bloodPressure;
     if (bp.active && !prevBpActive.current) {
@@ -226,20 +263,27 @@ export default function DeviceConnector({
     prevBpActive.current = bp.active;
     if (bp.data?.systolic && bp.data.systolic >= 50) {
       setBpResult(bp.data);
+      if (onVitalsUpdate) {
+        onVitalsUpdate({
+          bloodPressure: { systolic: bp.data.systolic, diastolic: bp.data.diastolic },
+          heartRate: bp.data.heartRate || undefined,
+        });
+      }
     }
   }, [measurementState.bloodPressure.data, measurementState.bloodPressure.active]);
 
-  // ─── Temperature tracker ─────────────────────────────────────────────────
+  // ─── Temperature tracker — auto-save when reading arrives ────────────────
   useEffect(() => {
     const t = measurementState.temperature;
     if (t.active && !prevTempActive.current) setTempResult(null);
     prevTempActive.current = t.active;
     if (t.data?.temperature && t.data.temperature >= 30 && t.data.temperature <= 45) {
       setTempResult(t.data.temperature);
+      if (onVitalsUpdate) onVitalsUpdate({ temperature: t.data.temperature });
     }
   }, [measurementState.temperature.data, measurementState.temperature.active]);
 
-  // ─── SpO2 tracker ────────────────────────────────────────────────────────
+  // ─── SpO2 tracker — auto-save on final result ────────────────────────────
   useEffect(() => {
     const spo2 = measurementState.spo2;
     if (spo2.active && !prevSpo2Active.current) {
@@ -266,10 +310,16 @@ export default function DeviceConnector({
     // Final result
     if (d.oxygenLevel >= 70 && d.oxygenLevel <= 100) {
       setSpo2Result({ oxygenLevel: d.oxygenLevel, heartRate: d.heartRate });
+      if (onVitalsUpdate) {
+        onVitalsUpdate({
+          oxygenLevel: d.oxygenLevel,
+          heartRate: d.heartRate || undefined,
+        });
+      }
     }
   }, [measurementState.spo2.data, measurementState.spo2.active]);
 
-  // ─── Glucose result tracker ─────────────────────────────────────────────
+  // ─── Glucose result tracker — auto-save when result arrives ─────────────
   useEffect(() => {
     const bg = measurementState.bloodGlucose;
     if (bg.active && !prevGlucoseActive.current) {
@@ -278,6 +328,7 @@ export default function DeviceConnector({
     prevGlucoseActive.current = bg.active;
     if (bg.data?.value && bg.data.value > 0) {
       setGlucoseResult({ value: bg.data.value, unit: bg.data.unit });
+      if (onVitalsUpdate) onVitalsUpdate({ bloodGlucose: bg.data.value });
     }
   }, [measurementState.bloodGlucose.data, measurementState.bloodGlucose.active]);
 
@@ -297,23 +348,24 @@ export default function DeviceConnector({
 
   const handleMeasurement = async (type: 'ecg' | 'spo2' | 'bloodPressure' | 'temperature' | 'bloodGlucose') => {
     const isActive = measurementState[type]?.active;
-    
+
     if (isActive) {
+      // Measurement is completing — stop and save the final accumulated reading
       await stopMeasurement(type);
+      if (onVitalsUpdate && vitalSigns) {
+        onVitalsUpdate({
+          heartRate: vitalSigns.heartRate || undefined,
+          bloodPressure: vitalSigns.bloodPressure || undefined,
+          oxygenLevel: vitalSigns.oxygenLevel || undefined,
+          temperature: vitalSigns.temperature || undefined,
+          bloodGlucose: vitalSigns.bloodGlucose || undefined,
+        });
+      }
     } else {
+      // Measurement is starting — just start, results auto-save via useEffects
       setActiveAction(type);
       await startMeasurement(type);
       setActiveAction(null);
-    }
-
-    if (onVitalsUpdate && vitalSigns) {
-      onVitalsUpdate({
-        heartRate: vitalSigns.heartRate || undefined,
-        bloodPressure: vitalSigns.bloodPressure || undefined,
-        oxygenLevel: vitalSigns.oxygenLevel || undefined,
-        temperature: vitalSigns.temperature || undefined,
-        bloodGlucose: vitalSigns.bloodGlucose || undefined,
-      });
     }
   };
 

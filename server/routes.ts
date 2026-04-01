@@ -594,6 +594,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/devices/register — register or update an HC03 device when it connects via BLE.
+  // Accessible to any authenticated user (patient, doctor, admin).
+  // Uses upsert so reconnecting the same device just refreshes its status.
+  app.post("/api/devices/register", async (req, res) => {
+    try {
+      const reqUser = (req as any).user;
+      if (!reqUser) return res.status(401).json({ message: "Authentication required" });
+
+      const { deviceId, deviceName, firmwareVersion, supportedMeasurements, deviceType } = req.body;
+      if (!deviceId) return res.status(400).json({ message: "deviceId is required" });
+
+      const patientId = reqUser.patientId || String(reqUser.userId);
+      const device = await storage.registerHc03Device({
+        deviceId,
+        deviceName: deviceName || 'HC03',
+        firmwareVersion: firmwareVersion || null,
+        patientId,
+        deviceType: deviceType || 'multi_function',
+        supportedMeasurements: supportedMeasurements || ['ecg', 'blood_oxygen', 'temperature', 'blood_pressure', 'glucose', 'battery'],
+      });
+
+      await logAudit(req, 'register', 'device', deviceId, { patientId });
+      res.json({ success: true, device });
+    } catch (error) {
+      console.error("Error registering device:", error);
+      res.status(500).json({ message: "Failed to register device" });
+    }
+  });
+
+  // POST /api/devices/disconnect — mark an HC03 device as disconnected.
+  // Accessible to any authenticated user.
+  app.post("/api/devices/disconnect", async (req, res) => {
+    try {
+      const reqUser = (req as any).user;
+      if (!reqUser) return res.status(401).json({ message: "Authentication required" });
+
+      const { deviceId } = req.body;
+      if (!deviceId) return res.status(400).json({ message: "deviceId is required" });
+
+      await storage.updateDeviceStatus(deviceId, 'disconnected');
+      res.json({ success: true, deviceId, status: 'disconnected' });
+    } catch (error) {
+      console.error("Error disconnecting device:", error);
+      res.status(500).json({ message: "Failed to update device status" });
+    }
+  });
+
   // GET /api/admin/devices  →  return all registered HC03 devices
   app.get("/api/admin/devices", async (req, res) => {
     try {
