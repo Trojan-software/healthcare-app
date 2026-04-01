@@ -16,12 +16,12 @@ export interface EmailOptions {
 }
 
 export const defaultEmailConfig: EmailConfig = {
-  host: process.env.VITE_SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.VITE_SMTP_PORT || '587'),
+  host: import.meta.env.VITE_SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(import.meta.env.VITE_SMTP_PORT || '587'),
   secure: false,
   auth: {
-    user: process.env.VITE_SMTP_USER || '',
-    pass: process.env.VITE_SMTP_PASS || '',
+    user: import.meta.env.VITE_SMTP_USER || '',
+    pass: import.meta.env.VITE_SMTP_PASS || '',
   },
 };
 

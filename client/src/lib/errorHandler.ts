@@ -41,7 +41,7 @@ class ErrorHandler {
     }
 
     // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.error(`[${severity.toUpperCase()}] ${component} - ${operation}:`, error);
       if (context) {
         console.error('Context:', context);

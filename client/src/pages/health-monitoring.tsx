@@ -14,9 +14,7 @@ import {
   AlertTriangle,
   FileText
 } from 'lucide-react';
-import HC03DeviceManager from '@/components/HC03DeviceManager';
-import ECGReport from '@/components/ECGReport';
-import ECGMonitor from '@/components/ECGMonitor';
+import DeviceConnector from '@/components/DeviceConnector';
 import BloodGlucoseMonitor from '@/components/BloodGlucoseMonitor';
 import ConsolidatedVitalsTable from '@/components/ConsolidatedVitalsTable';
 import { useQuery } from '@tanstack/react-query';
@@ -26,7 +24,6 @@ import { useLanguage } from '@/lib/i18n';
 export default function HealthMonitoringPage() {
   const { t, isRTL } = useLanguage();
   const patientId = "DEMO001"; // In real app, get from auth context
-  const [showECGReport, setShowECGReport] = useState(false);
   const [isGlucoseMeasuring, setIsGlucoseMeasuring] = useState(false);
 
   // Fetch comprehensive health data
@@ -90,32 +87,6 @@ export default function HealthMonitoringPage() {
   const latestTemp = getLatestReading((healthData as any)?.temperature);
   const latestGlucose = getLatestReading((healthData as any)?.bloodGlucose);
 
-  // Show ECG Report if requested
-  if (showECGReport) {
-    return (
-      <div className="container mx-auto p-6 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{t('ecgAnalysisReport')}</h1>
-            <p className="text-gray-600 mt-1">{t('detailedEcgAnalysis')}</p>
-          </div>
-          <Button 
-            onClick={() => setShowECGReport(false)}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Activity className="w-4 h-4" />
-            {t('backToDashboard')}
-          </Button>
-        </div>
-        
-        {/* ECG Report Component */}
-        <ECGReport patientId={patientId} />
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Header */}
@@ -125,13 +96,6 @@ export default function HealthMonitoringPage() {
           <p className="text-gray-600 mt-1">{t('realtimeVitalSigns')}</p>
         </div>
         <div className="flex items-center gap-4">
-          <Button 
-            onClick={() => setShowECGReport(true)}
-            className="flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            View ECG Report
-          </Button>
           <div className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-blue-600" />
             <span className="text-sm text-gray-600">Live Monitoring Active</span>
@@ -301,12 +265,12 @@ export default function HealthMonitoringPage() {
 
         {/* Device Manager Tab */}
         <TabsContent value="device">
-          <HC03DeviceManager patientId={patientId} />
+          <DeviceConnector />
         </TabsContent>
 
         {/* ECG Monitor Tab */}
         <TabsContent value="ecg">
-          <ECGMonitor patientId={patientId} deviceId="HC02-F1B51D" />
+          <DeviceConnector />
         </TabsContent>
 
         {/* History Tab */}

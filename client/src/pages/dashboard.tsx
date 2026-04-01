@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import RegistrationModal from "@/components/RegistrationModal";
-import VitalSignsCard from "@/components/VitalSignsCard";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import AlertsPanel from "@/components/AlertsPanel";
 import ReminderSettings from "@/components/ReminderSettings";
 import RecentActivity from "@/components/RecentActivity";
-import DeviceWidgetsPanel from "@/components/DeviceWidgetsPanel";
+import MedicalDeviceManagement from "@/components/MedicalDeviceManagement";
 import { useQuery } from "@tanstack/react-query";
 
 interface DashboardStats {
@@ -180,14 +179,13 @@ export default function Dashboard() {
         {/* Device Widgets Panel */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-foreground mb-4">Medical Device Monitoring</h2>
-          <DeviceWidgetsPanel layout="grid" />
+          <MedicalDeviceManagement />
         </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Vital Signs & Analytics */}
+          {/* Left Column - Analytics */}
           <div className="lg:col-span-2 space-y-8">
-            <VitalSignsCard />
             <AnalyticsDashboard />
           </div>
 
