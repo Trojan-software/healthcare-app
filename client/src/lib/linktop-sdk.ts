@@ -409,11 +409,12 @@ class LinktopSDK {
 
   private onDisconnect(): void {
     this.isConnected = false;
-    this.server    = null;
-    this.writeChar = null;
-    this.notifyChar = null;
-    this.cacheType = 0;
-    this.cacheData = [];
+    this.deviceInfo  = null;
+    this.server      = null;
+    this.writeChar   = null;
+    this.notifyChar  = null;
+    this.cacheType   = 0;
+    this.cacheData   = [];
     this.connectionCbs.forEach(cb => cb(false));
   }
 
@@ -623,8 +624,10 @@ class LinktopSDK {
     const subtype = data[0];
 
     if (subtype === 0x01) {
-      // Wave data — single or multiple 16-bit signed samples
-      const smoothedWave = (data[1] << 8) | (data[2] ?? 0);
+      // Wave data — single signed 16-bit sample (big-endian, centered around 0)
+      // Must be interpreted as signed int16: values above 0x7FFF are negative.
+      const rawU16 = ((data[1] & 0xff) << 8) | (data[2] ?? 0);
+      const smoothedWave = rawU16 > 0x7fff ? rawU16 - 0x10000 : rawU16;
       this.emit({ type: 'ecg', data: {
         heartRate: 0, smoothedWave, rrMax: 0, rrMin: 0, hrv: 0,
         mood: 0, heartAge: 0, stress: 0, respiratoryRate: 0,

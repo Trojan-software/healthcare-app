@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -10,67 +9,61 @@ export interface VitalSigns {
   bloodPressureDiastolic?: number;
   temperature?: number;
   oxygenLevel?: number;
+  bloodGlucose?: number;
   timestamp: string;
 }
 
 export interface VitalSignsInput {
+  patientId: string;
   heartRate?: number;
   bloodPressureSystolic?: number;
   bloodPressureDiastolic?: number;
   temperature?: number;
   oxygenLevel?: number;
+  bloodGlucose?: number;
 }
 
-export function useVitals() {
+export function useVitals(patientId: string) {
   const queryClient = useQueryClient();
 
-  // Get vital signs history
   const {
     data: vitalsHistory,
     isLoading: isLoadingHistory,
     error: historyError,
   } = useQuery<VitalSigns[]>({
-    queryKey: ['/api/vital-signs'],
-    staleTime: 30000, // 30 seconds
+    queryKey: ['/api/vital-signs', patientId],
+    enabled: !!patientId,
+    staleTime: 30000,
+    refetchInterval: 30000,
   });
 
-  // Get latest vital signs
-  const {
-    data: latestVitals,
-    isLoading: isLoadingLatest,
-    error: latestError,
-  } = useQuery<VitalSigns>({
-    queryKey: ['/api/vital-signs/latest'],
-    staleTime: 10000, // 10 seconds
-    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
-  });
+  // Derive latest vitals from history (most recent entry) — avoid a duplicate query.
+  const latestVitals: VitalSigns | undefined =
+    vitalsHistory && vitalsHistory.length > 0 ? vitalsHistory[0] : undefined;
 
-  // Record new vital signs
   const recordVitalsMutation = useMutation({
-    mutationFn: async (vitals: VitalSignsInput) => {
-      const response = await apiRequest('/api/vital-signs', 'POST', vitals);
+    mutationFn: async (vitals: Omit<VitalSignsInput, 'patientId'>) => {
+      const response = await apiRequest('/api/vital-signs', 'POST', { ...vitals, patientId });
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate and refetch vital signs data
-      queryClient.invalidateQueries({ queryKey: ['/api/vital-signs'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vital-signs/latest'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vital-signs', patientId] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/alerts'] });
     },
   });
 
-  // Check if vital signs are abnormal
-  const checkAbnormalVitals = (vitals: VitalSignsInput) => {
+  // Thresholds use Celsius — the HC03 device always reports temperature in °C.
+  const checkAbnormalVitals = (vitals: Omit<VitalSignsInput, 'patientId'>) => {
     const alerts = [];
-    
+
     if (vitals.heartRate && (vitals.heartRate < 60 || vitals.heartRate > 100)) {
       alerts.push({
         type: 'critical',
         message: `Abnormal heart rate: ${vitals.heartRate} BPM (Normal: 60-100 BPM)`,
       });
     }
-    
+
     if (vitals.bloodPressureSystolic && vitals.bloodPressureDiastolic) {
       if (vitals.bloodPressureSystolic > 140 || vitals.bloodPressureDiastolic > 90) {
         alerts.push({
@@ -79,25 +72,39 @@ export function useVitals() {
         });
       }
     }
-    
-    if (vitals.temperature && (vitals.temperature > 100.4 || vitals.temperature < 96.8)) {
-      alerts.push({
-        type: 'critical',
-        message: `Abnormal temperature: ${vitals.temperature}°F (Normal: 96.8-100.4°F)`,
-      });
+
+    if (vitals.temperature != null) {
+      // Temperature is in Celsius (HC03 protocol). Normal: 36.0–38.0 °C.
+      if (vitals.temperature > 39.0 || vitals.temperature < 35.0) {
+        alerts.push({
+          type: 'critical',
+          message: `Abnormal temperature: ${vitals.temperature}°C (Normal: 36.0–38.0°C)`,
+        });
+      } else if (vitals.temperature > 38.0 || vitals.temperature < 36.0) {
+        alerts.push({
+          type: 'warning',
+          message: `Elevated temperature: ${vitals.temperature}°C (Normal: 36.0–38.0°C)`,
+        });
+      }
     }
-    
+
     if (vitals.oxygenLevel && vitals.oxygenLevel < 95) {
       alerts.push({
         type: 'critical',
         message: `Low oxygen level: ${vitals.oxygenLevel}% (Normal: ≥95%)`,
       });
     }
-    
+
+    if (vitals.bloodGlucose && (vitals.bloodGlucose > 250 || vitals.bloodGlucose < 70)) {
+      alerts.push({
+        type: 'critical',
+        message: `Abnormal blood glucose: ${vitals.bloodGlucose} mg/dL (Normal: 70–250 mg/dL)`,
+      });
+    }
+
     return alerts;
   };
 
-  // Get vital signs status
   const getVitalStatus = (type: string, value: number) => {
     switch (type) {
       case 'heartRate':
@@ -107,83 +114,69 @@ export function useVitals() {
       case 'diastolic':
         return value < 90 ? 'normal' : 'abnormal';
       case 'temperature':
-        return value >= 96.8 && value <= 100.4 ? 'normal' : 'abnormal';
+        // Celsius thresholds (HC03 sends °C)
+        return value >= 36.0 && value <= 38.0 ? 'normal' : 'abnormal';
       case 'oxygen':
         return value >= 95 ? 'normal' : 'abnormal';
+      case 'glucose':
+        return value >= 70 && value <= 180 ? 'normal' : 'abnormal';
       default:
         return 'normal';
     }
   };
 
-  // Transform vitals history for chart display
   const getVitalsChartData = () => {
     if (!vitalsHistory || vitalsHistory.length === 0) {
-      return {
-        labels: [],
-        datasets: [],
-      };
+      return { labels: [], datasets: [] };
     }
 
     const sortedHistory = [...vitalsHistory]
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-      .slice(-24); // Last 24 readings
+      .slice(-24);
 
-    const labels = sortedHistory.map(vital => 
-      new Date(vital.timestamp).toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit' 
-      })
+    const labels = sortedHistory.map(v =>
+      new Date(v.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
     );
 
-    const datasets = [
-      {
-        label: 'Heart Rate (BPM)',
-        data: sortedHistory.map(vital => vital.heartRate || null),
-        borderColor: 'hsl(var(--alert-red))',
-        backgroundColor: 'hsl(var(--alert-red) / 0.1)',
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: 'Blood Pressure (Systolic)',
-        data: sortedHistory.map(vital => vital.bloodPressureSystolic || null),
-        borderColor: 'hsl(var(--medical-blue))',
-        backgroundColor: 'hsl(var(--medical-blue) / 0.1)',
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: 'Temperature (°F)',
-        data: sortedHistory.map(vital => vital.temperature || null),
-        borderColor: 'hsl(var(--warning-amber))',
-        backgroundColor: 'hsl(var(--warning-amber) / 0.1)',
-        tension: 0.4,
-        fill: false,
-      },
-    ];
-
-    return { labels, datasets };
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Heart Rate (BPM)',
+          data: sortedHistory.map(v => v.heartRate ?? null),
+          borderColor: 'hsl(var(--alert-red))',
+          backgroundColor: 'hsl(var(--alert-red) / 0.1)',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Blood Pressure Systolic (mmHg)',
+          data: sortedHistory.map(v => v.bloodPressureSystolic ?? null),
+          borderColor: 'hsl(var(--medical-blue))',
+          backgroundColor: 'hsl(var(--medical-blue) / 0.1)',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Temperature (°C)',
+          data: sortedHistory.map(v => v.temperature ?? null),
+          borderColor: 'hsl(var(--warning-amber))',
+          backgroundColor: 'hsl(var(--warning-amber) / 0.1)',
+          tension: 0.4,
+          fill: false,
+        },
+      ],
+    };
   };
 
   return {
-    // Data
     vitalsHistory,
     latestVitals,
-    
-    // Loading states
     isLoadingHistory,
-    isLoadingLatest,
     isRecording: recordVitalsMutation.isPending,
-    
-    // Error states
     historyError,
-    latestError,
     recordError: recordVitalsMutation.error,
-    
-    // Actions
     recordVitals: recordVitalsMutation.mutate,
-    
-    // Utilities
     checkAbnormalVitals,
     getVitalStatus,
     getVitalsChartData,
