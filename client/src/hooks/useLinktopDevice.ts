@@ -119,13 +119,15 @@ export function useLinktopDevice() {
         break;
       case 'battery':
         const batteryStateMap: Record<number, 'charging' | 'discharging' | 'full' | 'low'> = {
-          0: 'discharging',
-          1: 'charging',
-          2: 'full',
+          0: 'discharging', // BatteryState.UNKNOWN
+          1: 'discharging', // BatteryState.NORMAL
+          2: 'charging',    // BatteryState.CHARGING
+          3: 'full',        // BatteryState.CHARGE_FULL
+          4: 'low',         // BatteryState.LOW_BATTERY
         };
         updateReading(DetectionType.BATTERY, {
           level: data.level,
-          state: batteryStateMap[data.state] || 'discharging',
+          state: batteryStateMap[data.state] ?? 'discharging',
         });
         break;
     }

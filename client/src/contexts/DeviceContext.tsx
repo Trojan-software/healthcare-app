@@ -35,5 +35,3 @@ export function useDevice() {
   }
   return context;
 }
-
-export default DeviceContext;
