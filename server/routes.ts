@@ -363,10 +363,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) return res.status(404).json({ message: "User not found" });
 
       // Generate 6-digit OTP using secure random
-      const code = generateSecureOTP(6);
+      const code = generateSecureOTP();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
 
-      await storage.createOtpCode({ email: email.toLowerCase(), code, expiresAt, isUsed: false });
+      await storage.createOtpCode({ email: email.toLowerCase(), code, expiresAt });
       // In production this would email the code; for now return it in dev
       const isDev = process.env.NODE_ENV !== 'production';
       res.json({ message: "OTP sent successfully", ...(isDev ? { code } : {}) });
@@ -1256,10 +1256,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Next appointment: first upcoming checkup from the scheduled list
       const now = new Date();
-      const upcomingCheckups = checkupHistory.filter(c => c.nextScheduledDate && new Date(c.nextScheduledDate) > now);
-      upcomingCheckups.sort((a, b) => new Date(a.nextScheduledDate!).getTime() - new Date(b.nextScheduledDate!).getTime());
+      const upcomingCheckups = checkupHistory.filter(c => c.date && new Date(c.date) > now);
+      upcomingCheckups.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       const nextAppointment = upcomingCheckups.length > 0
-        ? new Date(upcomingCheckups[0].nextScheduledDate!).toLocaleDateString()
+        ? new Date(upcomingCheckups[0].date).toLocaleDateString()
         : null;
 
       const stats = {
@@ -1285,7 +1285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ─── AUDIT LOGGING HELPER ────────────────────────────────────────────────────
-  async function logAudit(req: any, action: string, resource?: string, resourceId?: string, details?: object, status = 'success') {
+  async function logAudit(req: any, action: string, resource?: string, resourceId?: string, details?: object | string, status = 'success') {
     try {
       const user = req.user;
       await storage.createAuditLog({
@@ -2204,7 +2204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         patients.map(async p => {
           const pid = p.patientId || String(p.id);
           const vitals = await storage.getVitalSignsByPatient(pid);
-          const latest = vitals.sort((a, b) => new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime())[0];
+          const latest = vitals.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime())[0];
           const status = latest?.status || 'no_data';
           const riskLevel = status === 'critical' ? 'critical' : status === 'attention' ? 'high' : status === 'normal' ? 'low' : 'moderate';
           return {
@@ -2214,7 +2214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             hospitalId: p.hospitalId,
             riskLevel,
             vitalStatus: status,
-            lastReading: latest?.recordedAt || null,
+            lastReading: latest?.timestamp || null,
             heartRate: latest?.heartRate || null,
             bloodPressure: latest?.bloodPressureSystolic ? `${latest.bloodPressureSystolic}/${latest.bloodPressureDiastolic}` : null,
           };
@@ -2241,7 +2241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timeframe = req.query.timeframe as string || '7d';
       const days = timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 7;
       const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-      const recent = allVitals.filter(v => v.recordedAt && new Date(v.recordedAt).getTime() > cutoff);
+      const recent = allVitals.filter(v => v.timestamp && new Date(v.timestamp).getTime() > cutoff);
       const hrVals = recent.filter(v => v.heartRate).map(v => v.heartRate!);
       const sysVals = recent.filter(v => v.bloodPressureSystolic).map(v => v.bloodPressureSystolic!);
       const diaVals = recent.filter(v => v.bloodPressureDiastolic).map(v => v.bloodPressureDiastolic!);
@@ -2285,8 +2285,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         d.setDate(d.getDate() - i);
         const dateStr = d.toISOString().split('T')[0];
         const dayVitals = allVitals.filter(v => {
-          if (!v.recordedAt) return false;
-          return new Date(v.recordedAt).toISOString().split('T')[0] === dateStr;
+          if (!v.timestamp) return false;
+          return new Date(v.timestamp).toISOString().split('T')[0] === dateStr;
         });
         const hrVals = dayVitals.filter(v => v.heartRate).map(v => v.heartRate!);
         const sysVals = dayVitals.filter(v => v.bloodPressureSystolic).map(v => v.bloodPressureSystolic!);
@@ -2321,7 +2321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const comparisons = await Promise.all(targets.map(async p => {
         const pid = p.patientId || String(p.id);
         const vitals = await storage.getVitalSignsByPatient(pid);
-        const recent = vitals.filter(v => v.recordedAt && new Date(v.recordedAt).getTime() > cutoff);
+        const recent = vitals.filter(v => v.timestamp && new Date(v.timestamp).getTime() > cutoff);
         const hrVals = recent.filter(v => v.heartRate).map(v => v.heartRate!);
         const sysVals = recent.filter(v => v.bloodPressureSystolic).map(v => v.bloodPressureSystolic!);
         const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
@@ -2439,7 +2439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const filtered = allVitals.filter(v => {
-        const ts = v.timestamp || v.recordedAt;
+        const ts = v.timestamp;
         if (!ts) return false;
         const t = new Date(ts).getTime();
         if (t < cutoff || t > endCutoff) return false;
@@ -2450,7 +2450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Group by date
       const byDate: Record<string, any[]> = {};
       for (const v of filtered) {
-        const ts = v.timestamp || v.recordedAt;
+        const ts = v.timestamp;
         const date = new Date(ts).toISOString().split('T')[0];
         if (!byDate[date]) byDate[date] = [];
         byDate[date].push({
@@ -2496,10 +2496,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const missed = vitalsResults
         .map(({ p, pid, vitals }) => {
           const sorted = vitals.sort((a: any, b: any) =>
-            new Date(b.recordedAt || 0).getTime() - new Date(a.recordedAt || 0).getTime()
+            new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
           );
           const last = sorted[0];
-          const lastTime = last?.recordedAt ? new Date(last.recordedAt).getTime() : null;
+          const lastTime = last?.timestamp ? new Date(last.timestamp).getTime() : null;
           const missedDays = lastTime ? Math.floor((now - lastTime) / DAY) : 999;
           if (missedDays < 1) return null;
           return {
@@ -2508,7 +2508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             email: p.email,
             mobileNumber: p.mobileNumber,
             hospitalId: p.hospitalId,
-            lastReading: last?.recordedAt || null,
+            lastReading: last?.timestamp || null,
             missedDays,
             priority: missedDays >= 3 ? 'critical' : missedDays >= 2 ? 'high' : 'medium',
             readingType: 'vital_signs',
