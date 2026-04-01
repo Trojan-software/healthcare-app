@@ -5,6 +5,7 @@ import FAQSection from './components/FAQSection';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
 import CheckupScheduling from './components/CheckupScheduling';
 import EnhancedPatientDashboard from './components/EnhancedPatientDashboard';
+import DoctorDashboard from './components/DoctorDashboard';
 import ForgotPasswordForm from './components/ForgotPasswordForm';
 import { LanguageProvider, useLanguage, LanguageSwitcher } from './lib/i18n';
 
@@ -55,7 +56,7 @@ interface Patient {
 }
 
 interface AppState {
-  view: 'login' | 'register' | 'admin' | 'patient' | 'forgot-password';
+  view: 'login' | 'register' | 'admin' | 'patient' | 'doctor' | 'forgot-password';
   user: User | null;
   loading: boolean;
   error: string;
@@ -86,8 +87,9 @@ function AppContent() {
         const res = await authedFetch('/api/auth/me');
         if (res.ok) {
           const user = await res.json();
+          const view = user.role === 'admin' ? 'admin' : user.role === 'doctor' ? 'doctor' : 'patient';
           setState({
-            view: user.role === 'admin' ? 'admin' : 'patient',
+            view,
             user,
             loading: false,
             error: ''
@@ -274,10 +276,11 @@ function AppContent() {
         if (data.token) {
           localStorage.setItem('auth_token', data.token);
         }
+        const view = data.user.role === 'admin' ? 'admin' : data.user.role === 'doctor' ? 'doctor' : 'patient';
         setState(prev => ({
           ...prev,
           user: data.user,
-          view: data.user.role === 'admin' ? 'admin' : 'patient',
+          view,
           loading: false
         }));
       } else {
@@ -1002,6 +1005,45 @@ function AppContent() {
             </form>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (state.view === 'doctor' && state.user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-gradient-to-r from-teal-600 to-green-600 text-white shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 py-5">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2zm0 12c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">24×7 TeleH — Doctor Dashboard</h1>
+                  <p className="text-teal-100 text-sm">
+                    {state.user.firstName} {state.user.lastName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('auth_token');
+                  queryClient.clear();
+                  setState({ view: 'login', user: null, loading: false, error: '' });
+                }}
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </header>
+        <main className="max-w-7xl mx-auto px-4 py-6">
+          <DoctorDashboard />
+        </main>
       </div>
     );
   }
