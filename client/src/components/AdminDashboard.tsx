@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Switch } from "@/components/ui/switch";
 import { Users, UserPlus, Shield, Activity, AlertCircle, CheckCircle, Monitor } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import AdminHC03DeviceManager from "./AdminHC03DeviceManager";
+import MedicalDeviceManagement from "./MedicalDeviceManagement";
 
 const createPatientSchema = z.object({
   patientId: z.string().min(3, "Patient ID must be at least 3 characters"),
@@ -413,12 +413,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="devices">
-            <AdminHC03DeviceManager 
-              onDeviceSelect={(device) => {
-                console.log('Selected device:', device);
-                // Optional: Handle device selection for detailed view
-              }}
-            />
+            <MedicalDeviceManagement />
           </TabsContent>
 
           <TabsContent value="activity">

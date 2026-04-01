@@ -18,6 +18,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { authedFetch } from '@/lib/queryClient';
 // Removed PDF imports - using text export instead
 
 interface WeeklyReportData {
@@ -83,7 +84,17 @@ export default function WeeklyReportDashboard() {
 
   // Fetch weekly report data
   const { data: weeklyReport, isLoading } = useQuery({
-    queryKey: ['/api/reports/weekly', dateRange, selectedVitalType, selectedPatient],
+    queryKey: ['/api/reports/weekly', dateRange.startDate, dateRange.endDate, selectedVitalType, selectedPatient],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+        selectedPatient,
+      });
+      const r = await authedFetch(`/api/reports/weekly?${params}`);
+      if (!r.ok) throw new Error('Failed to load weekly report');
+      return r.json();
+    },
     refetchInterval: 60000,
   });
 

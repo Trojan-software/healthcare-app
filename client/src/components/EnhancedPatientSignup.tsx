@@ -109,7 +109,7 @@ export default function EnhancedPatientSignup() {
   // Registration mutation
   const registerMutation = useMutation({
     mutationFn: async (data: SignupForm) => {
-      return await apiRequest('/api/auth/register', 'POST', { ...data, otpMethod });
+      return await apiRequest('/api/register', 'POST', { ...data, otpMethod });
     },
     onSuccess: (response: any) => {
       // Store registration data including server-generated patient ID

@@ -21,6 +21,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { authedFetch } from '@/lib/queryClient';
 
 interface VitalSignRecord {
   id: string;
@@ -66,7 +67,17 @@ export default function HealthHistoryOverview() {
 
   // Fetch health history data
   const { data: healthHistory, isLoading } = useQuery({
-    queryKey: ['/api/health-history', dateRange, selectedVitalType, statusFilter],
+    queryKey: ['/api/health-history', dateRange.startDate, dateRange.endDate, selectedVitalType, statusFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+        status: statusFilter,
+      });
+      const r = await authedFetch(`/api/health-history?${params}`);
+      if (!r.ok) throw new Error('Failed to load health history');
+      return r.json();
+    },
     refetchInterval: 60000,
   });
 

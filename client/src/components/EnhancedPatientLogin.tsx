@@ -50,7 +50,7 @@ export default function EnhancedPatientLogin({ onLoginSuccess, onShowSignup, onF
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
-      const response = await apiRequest('/api/auth/login', 'POST', data);
+      const response = await apiRequest('/api/login', 'POST', data);
       return await response.json();
     },
     onSuccess: (data: any) => {

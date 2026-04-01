@@ -615,6 +615,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch devices" });
     }
   });
+
+  // PATCH /api/devices/:deviceId/status — update device connection status
+  app.patch("/api/devices/:deviceId/status", requireAdmin, async (req, res) => {
+    try {
+      const { deviceId } = req.params;
+      const { status } = req.body;
+      if (!status) return res.status(400).json({ message: "status is required" });
+      await storage.updateDeviceStatus(deviceId, status);
+      res.json({ success: true, deviceId, status });
+    } catch (error) {
+      console.error("Error updating device status:", error);
+      res.status(500).json({ message: "Failed to update device status" });
+    }
+  });
   // ─────────────────────────────────────────────────────────────────────────
 
   // Vital signs endpoints
@@ -2397,10 +2411,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!reqUser) return res.status(401).json({ message: "Authentication required" });
 
       const dateRange = req.query.dateRange as string || '30d';
+      const startDate = req.query.startDate as string;
+      const endDate = req.query.endDate as string;
       const statusFilter = req.query.status as string || 'all';
 
-      const days = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
-      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+      let cutoff: number;
+      let endCutoff: number = Date.now();
+      if (startDate) {
+        cutoff = new Date(startDate).getTime();
+        if (endDate) endCutoff = new Date(endDate).getTime() + 86400000; // include full end day
+      } else {
+        const days = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
+        cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+      }
 
       // Use admin's patients list or current user
       let allVitals: any[];
@@ -2417,7 +2440,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const filtered = allVitals.filter(v => {
         const ts = v.timestamp || v.recordedAt;
-        if (!ts || new Date(ts).getTime() < cutoff) return false;
+        if (!ts) return false;
+        const t = new Date(ts).getTime();
+        if (t < cutoff || t > endCutoff) return false;
         if (statusFilter !== 'all' && v.status !== statusFilter) return false;
         return true;
       });
