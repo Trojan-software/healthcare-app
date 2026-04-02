@@ -559,14 +559,17 @@ class LinktopSDK {
 
     if (data.length === 0) return;
 
-    // Finger-detection notification
-    if (data.length >= 2 && data[0] === 0x00) {
+    // Finger-detection notification — protocol specifies exactly 2 bytes: [0x00, fingerFlag].
+    // Must check length === 2, NOT >= 2, because wave packets also have first byte 0x00
+    // whenever the high byte of the 16-bit wave value is zero (wave value < 256).
+    // Using >= 2 would swallow valid wave packets and leave the buffer empty forever.
+    if (data.length === 2 && data[0] === 0x00) {
       const fingerDetection = data[1] !== 0;
       this.emit({ type: 'spo2', data: { oxygenLevel: 0, heartRate: 0, fingerDetection } });
       return;
     }
 
-    // Wave data packet (BloodOxygenWaveData)
+    // Wave data packet (BloodOxygenWaveData) — always 3+ bytes
     if (data.length >= 3) {
       const waveValue = ((data[0] & 0xff) << 8) | (data[1] & 0xff);
 

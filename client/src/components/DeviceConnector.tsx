@@ -227,6 +227,9 @@ export default function DeviceConnector({
   const [spo2Result, setSpo2Result] = useState<{ oxygenLevel: number; heartRate: number } | null>(null);
   const [fingerOn, setFingerOn] = useState(false);
   const prevSpo2Active = useRef(false);
+  // SpO2 is a continuous measurement — throttle DB saves to once per 30 s.
+  // BP, temp, glucose each fire once per measurement cycle, so they don't need throttling.
+  const lastSpo2SaveTs = useRef<number>(0);
 
   useEffect(() => {
     const ecg = measurementState.ecg;
@@ -290,6 +293,7 @@ export default function DeviceConnector({
       setSpo2WaveBuffer([]);
       setSpo2Result(null);
       setFingerOn(false);
+      lastSpo2SaveTs.current = 0; // Reset throttle so the first reading saves immediately
     }
     prevSpo2Active.current = spo2.active;
     if (!spo2.data) return;
@@ -307,10 +311,13 @@ export default function DeviceConnector({
       });
       return;
     }
-    // Final result
+    // Final result — update display immediately, but throttle DB writes to once per 30 s.
+    // SpO2 sends readings every ~2 s; saving every one would flood the database (30/min per patient).
     if (d.oxygenLevel >= 70 && d.oxygenLevel <= 100) {
       setSpo2Result({ oxygenLevel: d.oxygenLevel, heartRate: d.heartRate });
-      if (onVitalsUpdate) {
+      const now = Date.now();
+      if (onVitalsUpdate && now - lastSpo2SaveTs.current >= 30_000) {
+        lastSpo2SaveTs.current = now;
         onVitalsUpdate({
           oxygenLevel: d.oxygenLevel,
           heartRate: d.heartRate || undefined,

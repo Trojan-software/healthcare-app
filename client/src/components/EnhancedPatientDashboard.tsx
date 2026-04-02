@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { handleApiError } from '@/lib/errorHandler';
 import { authedFetch } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
@@ -102,6 +102,9 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
   const [dashboardData, setDashboardData] = useState<PatientDashboardData | null>(null);
   const [vitalsHistory, setVitalsHistory] = useState<VitalSigns[]>([]);
   const [loading, setLoading] = useState(true);
+  // Debounce history reloads — multiple rapid saves (e.g. SpO2 continuous) should only
+  // trigger ONE history fetch, not one per save.
+  const historyRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedVitalType, setSelectedVitalType] = useState('all');
   const [fromDate, setFromDate] = useState(() => {
     const date = new Date();
@@ -189,8 +192,12 @@ export default function EnhancedPatientDashboard({ userId, onLogout }: EnhancedP
         },
         body: JSON.stringify(body)
       });
-      // Refresh history table
-      await loadVitalsHistory();
+      // Debounce the history refresh — if multiple saves arrive close together
+      // (e.g. SpO2 continuous mode), only fire ONE reload 2 seconds after the last save.
+      if (historyRefreshTimer.current) clearTimeout(historyRefreshTimer.current);
+      historyRefreshTimer.current = setTimeout(() => {
+        loadVitalsHistory();
+      }, 2000);
     } catch (err) {
       handleApiError('EnhancedPatientDashboard', 'saveDeviceReading', err as Error);
     }
