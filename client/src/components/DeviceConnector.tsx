@@ -208,6 +208,8 @@ export default function DeviceConnector({
   // ─── ECG waveform buffer ─────────────────────────────────────────────────
   const [waveBuffer, setWaveBuffer] = useState<number[]>([]);
   const [ecgResult, setEcgResult] = useState<ECGData | null>(null);
+  const [ecgCountdown, setEcgCountdown] = useState(30);
+  const ecgCountdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevEcgActive = useRef(false);
 
   // ─── BP result state ─────────────────────────────────────────────────────
@@ -231,13 +233,48 @@ export default function DeviceConnector({
   // BP, temp, glucose each fire once per measurement cycle, so they don't need throttling.
   const lastSpo2SaveTs = useRef<number>(0);
 
+  // ─── Auto-stop timers ─────────────────────────────────────────────────────
+  // BP / temp / glucose → auto-stop 2 s after result arrives (device is done).
+  // ECG                 → auto-stop after 30 s (standard single-lead recording).
+  const autoStopTimers = useRef<Partial<Record<'ecg'|'bloodPressure'|'temperature'|'bloodGlucose', ReturnType<typeof setTimeout>>>>({});
+  const scheduleAutoStop = (type: 'ecg'|'bloodPressure'|'temperature'|'bloodGlucose', delayMs: number) => {
+    if (autoStopTimers.current[type]) clearTimeout(autoStopTimers.current[type]);
+    autoStopTimers.current[type] = setTimeout(() => {
+      stopMeasurement(type);
+    }, delayMs);
+  };
+  const cancelAutoStop = (type: 'ecg'|'bloodPressure'|'temperature'|'bloodGlucose') => {
+    if (autoStopTimers.current[type]) {
+      clearTimeout(autoStopTimers.current[type]);
+      delete autoStopTimers.current[type];
+    }
+  };
+
   useEffect(() => {
     const ecg = measurementState.ecg;
 
-    // Clear state when ECG starts
+    // Clear state when ECG starts; arm the 30-second auto-stop + countdown
     if (ecg.active && !prevEcgActive.current) {
       setWaveBuffer([]);
       setEcgResult(null);
+      setEcgCountdown(30);
+      scheduleAutoStop('ecg', 30_000);
+      // Tick countdown every second
+      if (ecgCountdownTimer.current) clearInterval(ecgCountdownTimer.current);
+      ecgCountdownTimer.current = setInterval(() => {
+        setEcgCountdown(prev => {
+          if (prev <= 1) {
+            if (ecgCountdownTimer.current) clearInterval(ecgCountdownTimer.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    // If measurement stopped (manually or by auto-stop), cancel all timers
+    if (!ecg.active && prevEcgActive.current) {
+      cancelAutoStop('ecg');
+      if (ecgCountdownTimer.current) { clearInterval(ecgCountdownTimer.current); ecgCountdownTimer.current = null; }
     }
     prevEcgActive.current = ecg.active;
 
@@ -257,12 +294,13 @@ export default function DeviceConnector({
     }
   }, [measurementState.ecg.data, measurementState.ecg.active]);
 
-  // ─── BP result tracker — auto-save when reading arrives ─────────────────
+  // ─── BP result tracker — auto-save + auto-stop when reading arrives ──────
   useEffect(() => {
     const bp = measurementState.bloodPressure;
     if (bp.active && !prevBpActive.current) {
       setBpResult(null);
     }
+    if (!bp.active && prevBpActive.current) cancelAutoStop('bloodPressure');
     prevBpActive.current = bp.active;
     if (bp.data?.systolic && bp.data.systolic >= 50) {
       setBpResult(bp.data);
@@ -272,17 +310,22 @@ export default function DeviceConnector({
           heartRate: bp.data.heartRate || undefined,
         });
       }
+      // Device has finished its measurement cycle — auto-stop after 2 s so the
+      // user sees the result before the button resets.
+      scheduleAutoStop('bloodPressure', 2000);
     }
   }, [measurementState.bloodPressure.data, measurementState.bloodPressure.active]);
 
-  // ─── Temperature tracker — auto-save when reading arrives ────────────────
+  // ─── Temperature tracker — auto-save + auto-stop when reading arrives ────
   useEffect(() => {
     const t = measurementState.temperature;
     if (t.active && !prevTempActive.current) setTempResult(null);
+    if (!t.active && prevTempActive.current) cancelAutoStop('temperature');
     prevTempActive.current = t.active;
     if (t.data?.temperature && t.data.temperature >= 30 && t.data.temperature <= 45) {
       setTempResult(t.data.temperature);
       if (onVitalsUpdate) onVitalsUpdate({ temperature: t.data.temperature });
+      scheduleAutoStop('temperature', 2000);
     }
   }, [measurementState.temperature.data, measurementState.temperature.active]);
 
@@ -326,16 +369,18 @@ export default function DeviceConnector({
     }
   }, [measurementState.spo2.data, measurementState.spo2.active]);
 
-  // ─── Glucose result tracker — auto-save when result arrives ─────────────
+  // ─── Glucose result tracker — auto-save + auto-stop when result arrives ──
   useEffect(() => {
     const bg = measurementState.bloodGlucose;
     if (bg.active && !prevGlucoseActive.current) {
       setGlucoseResult(null);
     }
+    if (!bg.active && prevGlucoseActive.current) cancelAutoStop('bloodGlucose');
     prevGlucoseActive.current = bg.active;
     if (bg.data?.value && bg.data.value > 0) {
       setGlucoseResult({ value: bg.data.value, unit: bg.data.unit });
       if (onVitalsUpdate) onVitalsUpdate({ bloodGlucose: bg.data.value });
+      scheduleAutoStop('bloodGlucose', 2000);
     }
   }, [measurementState.bloodGlucose.data, measurementState.bloodGlucose.active]);
 
@@ -642,14 +687,22 @@ export default function DeviceConnector({
                     {isRTL ? 'مخطط القلب الكهربائي' : 'ECG Live'}
                   </span>
                 </div>
-                {measurementState.ecg.data?.heartRate && measurementState.ecg.data.heartRate > 0 && (
+                <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  {measurementState.ecg.data?.heartRate && measurementState.ecg.data.heartRate > 0 && (
+                    <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <Heart className="w-3 h-3 text-red-400 animate-pulse" />
+                      <span className="text-xs text-red-400 font-bold">
+                        {measurementState.ecg.data.heartRate} bpm
+                      </span>
+                    </div>
+                  )}
                   <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                    <Heart className="w-3 h-3 text-red-400 animate-pulse" />
-                    <span className="text-xs text-red-400 font-bold">
-                      {measurementState.ecg.data.heartRate} bpm
+                    <Timer className="w-3 h-3 text-yellow-400" />
+                    <span className="text-xs text-yellow-400 font-mono font-bold">
+                      {ecgCountdown}s
                     </span>
                   </div>
-                )}
+                </div>
               </div>
               <EcgWaveform samples={waveBuffer} />
             </div>
