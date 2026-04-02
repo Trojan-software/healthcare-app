@@ -26,7 +26,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useDevice } from '@/contexts/DeviceContext';
-import { BatteryState, ECGData, BloodPressureData } from '@/lib/linktop-sdk';
+import { BatteryState, ECGData, BloodPressureData, BloodGlucosePaperState } from '@/lib/linktop-sdk';
 import { useLanguage } from '@/lib/i18n';
 
 // ─── BP category (AHA/ACC 2017 guidelines) ────────────────────────────────
@@ -208,7 +208,7 @@ export default function DeviceConnector({
   // ─── ECG waveform buffer ─────────────────────────────────────────────────
   const [waveBuffer, setWaveBuffer] = useState<number[]>([]);
   const [ecgResult, setEcgResult] = useState<ECGData | null>(null);
-  const [ecgCountdown, setEcgCountdown] = useState(30);
+  const [ecgCountdown, setEcgCountdown] = useState(0);
   const ecgCountdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevEcgActive = useRef(false);
 
@@ -255,25 +255,18 @@ export default function DeviceConnector({
   useEffect(() => {
     const ecg = measurementState.ecg;
 
-    // Clear state when ECG starts; arm the 30-second auto-stop + countdown
+    // Clear state when ECG starts; start the elapsed-time countdown (display only)
     if (ecg.active && !prevEcgActive.current) {
       setWaveBuffer([]);
       setEcgResult(null);
-      setEcgCountdown(30);
-      scheduleAutoStop('ecg', 30_000);
-      // Tick countdown every second
+      setEcgCountdown(0);
+      // Tick elapsed seconds up (display only — NOT used to trigger auto-stop)
       if (ecgCountdownTimer.current) clearInterval(ecgCountdownTimer.current);
       ecgCountdownTimer.current = setInterval(() => {
-        setEcgCountdown(prev => {
-          if (prev <= 1) {
-            if (ecgCountdownTimer.current) clearInterval(ecgCountdownTimer.current);
-            return 0;
-          }
-          return prev - 1;
-        });
+        setEcgCountdown(prev => prev + 1);
       }, 1000);
     }
-    // If measurement stopped (manually or by auto-stop), cancel all timers
+    // If measurement stopped (manually or by auto-stop), cancel the display timer
     if (!ecg.active && prevEcgActive.current) {
       cancelAutoStop('ecg');
       if (ecgCountdownTimer.current) { clearInterval(ecgCountdownTimer.current); ecgCountdownTimer.current = null; }
@@ -291,12 +284,18 @@ export default function DeviceConnector({
         return next.length > WAVE_BUFFER_SIZE ? next.slice(next.length - WAVE_BUFFER_SIZE) : next;
       });
     } else if (d.heartRate >= 30 && d.heartRate <= 240) {
-      // Result packet — store for display
+      // Result packet (subtype 0x02 from device) — the device has finished its
+      // on-chip NSK Algo analysis. Store the result and auto-stop immediately.
       setEcgResult(d);
+      scheduleAutoStop('ecg', 500); // brief delay so user sees the result flash in
     }
   }, [measurementState.ecg.data, measurementState.ecg.active]);
 
-  // ─── BP result tracker — auto-save + auto-stop when reading arrives ──────
+  // ─── BP result tracker — auto-save + auto-stop on FINAL result ───────────
+  // The SDK emits two kinds of BP packets:
+  //   isFinal=false  → intermediate oscillometric sample (cuff still inflating)
+  //   isFinal=true   → device's final calculated result (measurement complete)
+  // Auto-save and auto-stop only happen on the final packet.
   useEffect(() => {
     const bp = measurementState.bloodPressure;
     if (bp.active && !prevBpActive.current) {
@@ -305,16 +304,18 @@ export default function DeviceConnector({
     if (!bp.active && prevBpActive.current) cancelAutoStop('bloodPressure');
     prevBpActive.current = bp.active;
     if (bp.data?.systolic && bp.data.systolic >= 50) {
+      // Always update display (show live cuff pressure while inflating)
       setBpResult(bp.data);
-      if (onVitalsUpdate) {
-        onVitalsUpdate({
-          bloodPressure: { systolic: bp.data.systolic, diastolic: bp.data.diastolic },
-          heartRate: bp.data.heartRate || undefined,
-        });
+      // Only save + stop on the final result (subtype 0x03 from device)
+      if (bp.data.isFinal) {
+        if (onVitalsUpdate) {
+          onVitalsUpdate({
+            bloodPressure: { systolic: bp.data.systolic, diastolic: bp.data.diastolic },
+            heartRate: bp.data.heartRate || undefined,
+          });
+        }
+        scheduleAutoStop('bloodPressure', 2000);
       }
-      // Device has finished its measurement cycle — auto-stop after 2 s so the
-      // user sees the result before the button resets.
-      scheduleAutoStop('bloodPressure', 2000);
     }
   }, [measurementState.bloodPressure.data, measurementState.bloodPressure.active]);
 
@@ -388,7 +389,10 @@ export default function DeviceConnector({
     }
   }, [measurementState.spo2.data, measurementState.spo2.active]);
 
-  // ─── Glucose result tracker — auto-save + auto-stop when result arrives ──
+  // ─── Glucose result tracker — auto-save + auto-stop on RESULT_READY ──────
+  // The SDK emits strip-state notifications (paper inserted, ready…) as intermediate
+  // packets. Auto-save and auto-stop only happen when the device sends the actual
+  // measurement value (subtype 0x03 → paperState === RESULT_READY).
   useEffect(() => {
     const bg = measurementState.bloodGlucose;
     if (bg.active && !prevGlucoseActive.current) {
@@ -396,7 +400,7 @@ export default function DeviceConnector({
     }
     if (!bg.active && prevGlucoseActive.current) cancelAutoStop('bloodGlucose');
     prevGlucoseActive.current = bg.active;
-    if (bg.data?.value && bg.data.value > 0) {
+    if (bg.data?.value && bg.data.value > 0 && bg.data.paperState === BloodGlucosePaperState.RESULT_READY) {
       setGlucoseResult({ value: bg.data.value, unit: bg.data.unit });
       if (onVitalsUpdate) onVitalsUpdate({ bloodGlucose: bg.data.value });
       scheduleAutoStop('bloodGlucose', 2000);
@@ -719,6 +723,9 @@ export default function DeviceConnector({
                     <Timer className="w-3 h-3 text-yellow-400" />
                     <span className="text-xs text-yellow-400 font-mono font-bold">
                       {ecgCountdown}s
+                    </span>
+                    <span className="text-[10px] text-yellow-600">
+                      {isRTL ? 'تسجيل' : 'recording'}
                     </span>
                   </div>
                 </div>

@@ -152,6 +152,8 @@ export interface BloodPressureData {
   systolic: number;   // mmHg
   diastolic: number;  // mmHg
   heartRate: number;  // bpm
+  /** true only for subtype 0x03 — the device's final calculated result (measurement complete) */
+  isFinal: boolean;
 }
 
 export interface TemperatureData {
@@ -704,15 +706,17 @@ class LinktopSDK {
       return;
     }
 
-    // subtype 0x02 or 0x03 — actual reading
+    // subtype 0x02 = intermediate reading (cuff inflating / oscillometric sample)
+    // subtype 0x03 = FINAL calculated result (measurement complete)
     if (data.length >= 4) {
       const systolic  = data[1];
       const diastolic = data[2];
       const heartRate = data[3];
+      const isFinal   = subtype === 0x03;
 
       if (systolic >= 50 && systolic <= 250 && diastolic >= 30 && diastolic <= 180) {
-        console.log('[HC03] BP SYS=' + systolic + ' DIA=' + diastolic + ' HR=' + heartRate);
-        this.emit({ type: 'bloodPressure', data: { systolic, diastolic, heartRate } });
+        console.log('[HC03] BP SYS=' + systolic + ' DIA=' + diastolic + ' HR=' + heartRate + (isFinal ? ' [FINAL]' : ' [interim]'));
+        this.emit({ type: 'bloodPressure', data: { systolic, diastolic, heartRate, isFinal } });
       }
     }
   }
