@@ -228,22 +228,24 @@ export default function DeviceConnector({
   const [spo2WaveBuffer, setSpo2WaveBuffer] = useState<number[]>([]);
   const [spo2Result, setSpo2Result] = useState<{ oxygenLevel: number; heartRate: number } | null>(null);
   const [fingerOn, setFingerOn] = useState(false);
+  const [spo2Countdown, setSpo2Countdown] = useState(60);
+  const spo2CountdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevSpo2Active = useRef(false);
-  // SpO2 is a continuous measurement — throttle DB saves to once per 30 s.
-  // BP, temp, glucose each fire once per measurement cycle, so they don't need throttling.
+  // SpO2 throttle DB saves to once per 30 s (continuous readings every ~2 s).
   const lastSpo2SaveTs = useRef<number>(0);
 
   // ─── Auto-stop timers ─────────────────────────────────────────────────────
   // BP / temp / glucose → auto-stop 2 s after result arrives (device is done).
   // ECG                 → auto-stop after 30 s (standard single-lead recording).
-  const autoStopTimers = useRef<Partial<Record<'ecg'|'bloodPressure'|'temperature'|'bloodGlucose', ReturnType<typeof setTimeout>>>>({});
-  const scheduleAutoStop = (type: 'ecg'|'bloodPressure'|'temperature'|'bloodGlucose', delayMs: number) => {
+  // SpO2                → auto-stop after 60 s.
+  const autoStopTimers = useRef<Partial<Record<'ecg'|'spo2'|'bloodPressure'|'temperature'|'bloodGlucose', ReturnType<typeof setTimeout>>>>({});
+  const scheduleAutoStop = (type: 'ecg'|'spo2'|'bloodPressure'|'temperature'|'bloodGlucose', delayMs: number) => {
     if (autoStopTimers.current[type]) clearTimeout(autoStopTimers.current[type]);
     autoStopTimers.current[type] = setTimeout(() => {
       stopMeasurement(type);
     }, delayMs);
   };
-  const cancelAutoStop = (type: 'ecg'|'bloodPressure'|'temperature'|'bloodGlucose') => {
+  const cancelAutoStop = (type: 'ecg'|'spo2'|'bloodPressure'|'temperature'|'bloodGlucose') => {
     if (autoStopTimers.current[type]) {
       clearTimeout(autoStopTimers.current[type]);
       delete autoStopTimers.current[type];
@@ -329,7 +331,7 @@ export default function DeviceConnector({
     }
   }, [measurementState.temperature.data, measurementState.temperature.active]);
 
-  // ─── SpO2 tracker — auto-save on final result ────────────────────────────
+  // ─── SpO2 tracker — auto-save + auto-stop after 60 s ────────────────────
   useEffect(() => {
     const spo2 = measurementState.spo2;
     if (spo2.active && !prevSpo2Active.current) {
@@ -337,6 +339,23 @@ export default function DeviceConnector({
       setSpo2Result(null);
       setFingerOn(false);
       lastSpo2SaveTs.current = 0; // Reset throttle so the first reading saves immediately
+      setSpo2Countdown(60);
+      scheduleAutoStop('spo2', 60_000);
+      // Start countdown
+      if (spo2CountdownTimer.current) clearInterval(spo2CountdownTimer.current);
+      spo2CountdownTimer.current = setInterval(() => {
+        setSpo2Countdown(prev => {
+          if (prev <= 1) {
+            if (spo2CountdownTimer.current) clearInterval(spo2CountdownTimer.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    if (!spo2.active && prevSpo2Active.current) {
+      cancelAutoStop('spo2');
+      if (spo2CountdownTimer.current) { clearInterval(spo2CountdownTimer.current); spo2CountdownTimer.current = null; }
     }
     prevSpo2Active.current = spo2.active;
     if (!spo2.data) return;
@@ -814,6 +833,10 @@ export default function DeviceConnector({
                       {measurementState.spo2.data.oxygenLevel}%
                     </span>
                   )}
+                  <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Timer className="w-3 h-3 text-yellow-400" />
+                    <span className="text-xs text-yellow-400 font-mono font-bold">{spo2Countdown}s</span>
+                  </div>
                 </div>
               </div>
               {/* Reuse EcgWaveform with blue override via wrapper */}
