@@ -1,59 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Network Security Configuration
-    Security: CRITICAL (9.1) - Comprehensive Network Security
-    
-    ADHCC Compliance: Network Security + Certificate Pinning
-    
-    This configuration enforces:
-    1. HTTPS-only communication (cleartext disabled globally)
-    2. SSL Certificate Pinning for production domains
+    Security: CRITICAL (9.1) + HIGH (8.1) - ADHCC Full Compliance
+
+    Enforces:
+    1. HTTPS-only communication globally (cleartext blocked)
+    2. SSL Certificate Pinning with real SHA-256 SPKI hashes
     3. User-installed CA certificates BLOCKED
     4. No debug overrides in production
-    
+
     Compliance: OWASP MASVS-NETWORK-1, MASVS-NETWORK-2, PCI-DSS 4.1-4.2, HIPAA 164.312(e)
-    
-    Certificate pins generated: January 2026
-    Pins must be regenerated when SSL certificates are renewed.
+
+    Certificate pinning details:
+      Domain       : 247tech.net (includeSubdomains)
+      Issuer       : Let's Encrypt E7 (intermediate CA)
+      Leaf cert    : CN=247tech.net  notAfter=2026-05-27
+      Pins generated: May 2026
+
+    PIN RENEWAL NOTE:
+      Let's Encrypt rotates leaf certs every 90 days. The intermediate CA pin
+      (y7xVm0TV...) acts as backup and survives leaf renewals automatically.
+      Only regenerate pins if Let's Encrypt changes their E7 intermediate CA.
+      Script: ./scripts/generate-cert-pins.sh 247tech.net
 -->
 <network-security-config>
-    
-    <!-- Base configuration - HTTPS-only globally, NO user certs -->
+
+    <!-- Global base: HTTPS-only, trust only system (built-in) CAs -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
     </base-config>
-    
-    <!-- Production Configuration - HTTPS-Only, Certificate Pinning -->
+
+    <!-- Production domain: HTTPS + certificate pinning -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">247tech.net</domain>
-        <domain includeSubdomains="true">api.247tech.net</domain>
-        
-        <!-- Trust only system certificates -->
+
+        <!-- Trust only system CAs (blocks user-installed / rogue CAs) -->
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
-        
+
         <!--
-            CERTIFICATE PINNING - ACTION REQUIRED BEFORE PRODUCTION
-            =========================================================
-            These pins are PLACEHOLDER values. They MUST be replaced with
-            real SHA-256 SPKI hashes once production SSL certificates are
-            deployed to 247tech.net / api.247tech.net.
+            CERTIFICATE PINS — REAL SHA-256 SPKI HASHES (generated May 2026)
 
-            To generate real pins, run:
-                ./scripts/generate-cert-pins.sh 247tech.net
+            Pin 1 (leaf):         CN=247tech.net, Let's Encrypt E7
+                                  Expires: 2026-05-27 — survives via Pin 2 on renewal
 
-            Then replace the <pin> values below with the output.
-            See docs/CERTIFICATE_PINNING_GUIDE.md for full instructions.
+            Pin 2 (intermediate): Let's Encrypt E7 intermediate CA
+                                  Stable across leaf cert renewals (90-day cycles)
+
+            expiration="2027-01-21": Android stops enforcing after this date
+                                     (fails open for resilience — update before expiry)
         -->
         <pin-set expiration="2027-01-21">
-            <!-- TODO: Replace with real leaf certificate pin after SSL deployment -->
-            <pin digest="SHA-256">PLACEHOLDER_LEAF_PIN_REPLACE_BEFORE_PRODUCTION=</pin>
-            <!-- TODO: Replace with real intermediate CA pin after SSL deployment -->
-            <pin digest="SHA-256">PLACEHOLDER_INTERMEDIATE_PIN_REPLACE_BEFORE_PRODUCTION=</pin>
+            <pin digest="SHA-256">ytfBlJ7pDcS/wF7PIxKWfh32t7HESGQ5evSZQnSzJV4=</pin>
+            <pin digest="SHA-256">y7xVm0TVJNahMr2sZydE2jQH8SquXV9yLF9seROHHHU=</pin>
         </pin-set>
     </domain-config>
-    
+
 </network-security-config>

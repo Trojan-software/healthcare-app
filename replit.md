@@ -77,9 +77,9 @@ A full React Native / Expo app converted from Capacitor. Stack:
 
 ## ADHCC Security Compliance (May 2026 — Full Audit Complete)
 
-**Audit Status**: ✅ **22/24 Implemented in Code | 2/24 Pending Production SSL Setup**
+**Audit Status**: ✅ **24/24 FULLY COMPLETE — 100% ADHCC Compliant**
 
-Full audit completed against the ADHCC Mobile Application Security Assessment Report (January 2026). All findings from the original `com.digitaloperaocean.webviewcode` app have been evaluated and addressed in `com.teleh.healthcare`. All code changes are production-ready; two findings require the production SSL certificate to be live before they can be finalized.
+Full audit completed against the ADHCC Mobile Application Security Assessment Report (January 2026). All 24 findings from the original `com.digitaloperaocean.webviewcode` app have been evaluated and fully remediated in `com.teleh.healthcare`. Real SHA-256 SPKI certificate pins generated from the live 247tech.net SSL certificate (Let's Encrypt E7, issued Feb 2026).
 
 ### Critical Severity (1/1 Complete)
 - ✅ **Network Security (9.1)**: `cleartextTrafficPermitted="false"` globally enforced. HTTPS-only. `network_security_config.xml` applied to all network traffic.
@@ -87,10 +87,10 @@ Full audit completed against the ADHCC Mobile Application Security Assessment Re
 ### High Severity (4/4 Complete)
 - ✅ **Hardcoded Secrets (7.5)**: Zero hardcoded credentials. No Google API keys or secrets in string resources. Keystore passwords via environment variables.
 - ✅ **JavaScript CORS / File Access in WebView (8.1)**: `setAllowUniversalAccessFromFileURLs(false)`, `setAllowFileAccessFromFileURLs(false)`, `setAllowFileAccess(false)` all set in `MainActivity.java`.
-- ✅ **SSL / Certificate Pinning Infrastructure (8.1)**: Pin-set configured in `network_security_config.xml`. **ACTION REQUIRED**: Replace placeholder pins with real values once production SSL is live (see below).
+- ✅ **SSL / Certificate Pinning (8.1)**: Real SHA-256 SPKI pins live in `network_security_config.xml`. Leaf pin: `ytfBlJ7pDcS/...` (247tech.net cert, exp 2026-05-27). Intermediate CA pin: `y7xVm0TV...` (Let's Encrypt E7 — survives 90-day leaf renewals). Pin-set expiry: 2027-01-21.
 - ✅ **Application Debugging Disabled (7.7)**: `debuggable false`, `jniDebuggable false`, `renderscriptDebuggable false` in release build type.
 
-### Medium Severity (12/13 Complete, 1/13 Pending)
+### Medium Severity (13/13 Complete)
 - ✅ **Root Detection (6.8)**: Multi-method detection — test-keys build tag, su binary paths, `which su` execution — in `SecurityManager.java`
 - ✅ **Screenshot Prevention (6.8)**: `FLAG_SECURE` set on window in `MainActivity.java` + `SecurityManager.enableScreenshotProtection()`
 - ✅ **StrandHogg Protection (6.5)**: `launchMode="singleInstance"` and `taskAffinity=""` on MainActivity. Only one exported activity; all others unexported.
@@ -98,7 +98,7 @@ Full audit completed against the ADHCC Mobile Application Security Assessment Re
 - ✅ **Broadcast Receivers (6.1)**: No dynamic receivers registered; no exported receivers in manifest
 - ✅ **SharedPreferences (6.1)**: No sensitive health/auth data stored in SharedPreferences. JWT stored server-side (web) or in Secure Enclave (React Native mobile). All SharedPreferences findings in audit were from third-party SDKs (OneSignal/Firebase) not present in our build.
 - ✅ **SQLite Data Storage (5.8)**: No app-owned SQLite databases with sensitive data. All audit findings were from OneSignal/Firebase SDK internal databases, not in our build. `allowBackup=false` prevents ADB extraction regardless.
-- ⏳ **Certificate Pinning (5.9)**: Pin-set XML infrastructure in place. **ACTION REQUIRED**: Replace `PLACEHOLDER_*` pin values in `network_security_config.xml` after production SSL deployment (see below).
+- ✅ **Certificate Pinning (5.9)**: Real SHA-256 SPKI pins deployed in `network_security_config.xml`. Leaf: `ytfBlJ7pDcS/wF7PIxKWfh32t7HESGQ5evSZQnSzJV4=` | Intermediate CA: `y7xVm0TVJNahMr2sZydE2jQH8SquXV9yLF9seROHHHU=`. Generated from live 247tech.net certificate (Let's Encrypt E7, May 2026).
 - ✅ **Hooking Detection (5.7)**: Detects Frida (file paths + port 27042/27043), Xposed (stack trace + package check), and Substrate (class load attempt) in `SecurityManager.java`
 - ✅ **WebView Security (5.4)**: JS enabled (required for Capacitor SPA), protected by HTTPS-only, no file access, Content Security Policy headers, `setCacheMode(LOAD_NO_CACHE)`
 - ✅ **Tapjacking Protection (4.8)**: `setFilterTouchesWhenObscured(true)` set on root DecorView in `MainActivity.java` and `SecurityManager.enableTapjackingProtection()`
@@ -117,29 +117,23 @@ Full audit completed against the ADHCC Mobile Application Security Assessment Re
 - ✅ **General Server Vulnerabilities (5.3)**: `/api/login` length anomaly flag is a scanner false positive. Backend uses Drizzle ORM with parameterized queries (no SQL injection). 401 responses are correct behavior.
 - ✅ **Cache Control**: `Cache-Control: no-store` applied to all `/api/*` routes.
 
-### Pre-Production Requirements (CRITICAL - Must Complete Before APK Release)
+### Pre-Production Checklist (APK Release)
 
-**🔴 BLOCKER: Certificate Pinning (Findings 9.1 & 5.9)**
+All security blockers are resolved. Remaining steps before APK distribution:
 
-The cert pin values in `network_security_config.xml` are currently placeholders. Replace them once SSL certs are live:
-
-1. **Deploy SSL Certificates** to `247tech.net` and `api.247tech.net`
-
-2. **Generate Real Pins**:
-   ```bash
-   ./scripts/generate-cert-pins.sh 247tech.net
-   ```
-   Replace the two `<pin>` lines in `android/app/src/main/res/xml/network_security_config.xml`
-
-3. **Set CI/CD Environment Variables**:
+1. **Set CI/CD Environment Variables**:
    - `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`
 
-4. **Build Release APK**:
+2. **Build Release APK**:
    ```bash
    cd android && ./gradlew clean assembleRelease
    ```
 
-5. **Validate**: Follow `docs/SECURITY_DEPLOYMENT_CHECKLIST.md`
+3. **Renew cert pins when Let's Encrypt rotates the intermediate CA** (E7):
+   ```bash
+   ./scripts/generate-cert-pins.sh 247tech.net
+   ```
+   Then update the two `<pin>` values in `network_security_config.xml`.
 
 **Reference Documentation**:
 - `docs/CERTIFICATE_PINNING_GUIDE.md` — Certificate pinning instructions
