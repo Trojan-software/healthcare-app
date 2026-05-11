@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from 'path';
@@ -11,6 +12,36 @@ app.set('trust proxy', true);
 
 // Hide X-Powered-By header to prevent server info leakage (ADHCC Security)
 app.disable('x-powered-by');
+
+// CORS — allow web browser, Capacitor Android/iOS app origins
+const allowedOrigins = [
+  'https://247tech.net',
+  'http://247tech.net',
+  'capacitor://localhost',   // Capacitor Android & iOS
+  'ionic://localhost',       // Ionic/Capacitor alternative origin
+  'http://localhost',        // Capacitor Android (some versions)
+  'http://localhost:5000',   // Local development
+  'http://localhost:3000',   // Local development alt port
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (curl, Postman, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow any localhost port for development
+    if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
+    // Allow Replit dev preview URLs
+    if (/^https:\/\/[a-z0-9-]+-\d{2}-[a-z0-9]+\.spock\.replit\.dev$/.test(origin)) return callback(null, true);
+    if (/^https:\/\/[a-z0-9-]+\.replit\.dev$/.test(origin)) return callback(null, true);
+    return callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Request-Id'],
+  maxAge: 86400, // Cache preflight for 24 hours
+}));
 
 // Security headers middleware - apply to all requests
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -57,7 +88,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     "style-src 'self' 'unsafe-inline'", // Inline styles needed for dynamic theming
     "img-src 'self' data: https:",
     "font-src 'self'",
-    "connect-src 'self' wss:", // Secure websockets only
+    "connect-src 'self' https://247tech.net wss: wss://247tech.net", // API + websockets
     "manifest-src 'self'",
     "worker-src 'self'",
     "object-src 'none'", // Block plugins (Flash, Java applets)
