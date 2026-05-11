@@ -63,15 +63,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Surrogate-Control', 'no-store');
   }
 
-  // Only apply additional security middleware in production
+  // Only apply additional security headers in production
+  // NOTE: No HTTPS redirect here — Replit's load balancer already enforces HTTPS
+  // Adding a redirect causes an infinite loop (proxy doesn't always forward x-forwarded-proto)
   if (process.env.NODE_ENV !== 'production') {
     return next();
-  }
-
-  // Force HTTPS in production with proper redirect
-  if (req.header('x-forwarded-proto') !== 'https') {
-    const publicBaseUrl = process.env.PUBLIC_BASE_URL || 'https://247tech.net';
-    return res.redirect(301, `${publicBaseUrl}${req.url}`);
   }
 
   // Security headers
