@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "_lYd-DOtCKbUG6S3UOdvt"
+uri = "file://teleh-mobile.zip"
+type = "unspecified"
+title = "24/7 Tele H — Mobile App (React Native)"
