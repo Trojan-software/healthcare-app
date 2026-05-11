@@ -21,7 +21,8 @@ function isAllowedOrigin(origin: string | undefined): boolean {
   if (origin === 'capacitor://localhost') return true;  // Capacitor Android & iOS
   if (origin === 'ionic://localhost') return true;       // Ionic/Capacitor alternative
   if (origin === 'http://localhost') return true;
-  if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return true;  // any localhost port
+  if (origin === 'https://localhost') return true;              // Capacitor androidScheme: 'https'
+  if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return true; // any localhost port (http or https)
   if (/\.replit\.dev$/.test(origin)) return true;               // Replit dev previews
   if (/\.replit\.app$/.test(origin)) return true;               // Replit published apps
   return false;
