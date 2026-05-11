@@ -1,5 +1,4 @@
 import express, { type Request, Response, NextFunction } from "express";
-import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from 'path';
@@ -13,35 +12,38 @@ app.set('trust proxy', true);
 // Hide X-Powered-By header to prevent server info leakage (ADHCC Security)
 app.disable('x-powered-by');
 
-// CORS — allow web browser, Capacitor Android/iOS app origins
-const allowedOrigins = [
-  'https://247tech.net',
-  'http://247tech.net',
-  'capacitor://localhost',   // Capacitor Android & iOS
-  'ionic://localhost',       // Ionic/Capacitor alternative origin
-  'http://localhost',        // Capacitor Android (some versions)
-  'http://localhost:5000',   // Local development
-  'http://localhost:3000',   // Local development alt port
-];
+// CORS — inline implementation (no external package, avoids CJS/ESM issues)
+// Allows: production domain, Capacitor Android/iOS, local dev, Replit preview
+function isAllowedOrigin(origin: string | undefined): boolean {
+  if (!origin) return true; // curl, Postman, server-to-server
+  if (origin === 'https://247tech.net') return true;
+  if (origin === 'http://247tech.net') return true;
+  if (origin === 'capacitor://localhost') return true;  // Capacitor Android & iOS
+  if (origin === 'ionic://localhost') return true;       // Ionic/Capacitor alternative
+  if (origin === 'http://localhost') return true;
+  if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return true;  // any localhost port
+  if (/\.replit\.dev$/.test(origin)) return true;               // Replit dev previews
+  if (/\.replit\.app$/.test(origin)) return true;               // Replit published apps
+  return false;
+}
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (curl, Postman, server-to-server)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    // Allow any localhost port for development
-    if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
-    // Allow Replit dev preview URLs
-    if (/^https:\/\/[a-z0-9-]+-\d{2}-[a-z0-9]+\.spock\.replit\.dev$/.test(origin)) return callback(null, true);
-    if (/^https:\/\/[a-z0-9-]+\.replit\.dev$/.test(origin)) return callback(null, true);
-    return callback(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Length', 'X-Request-Id'],
-  maxAge: 86400, // Cache preflight for 24 hours
-}));
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+  if (isAllowedOrigin(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Length,X-Request-Id');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
+  // Handle preflight — respond immediately so the browser can proceed
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
 
 // Security headers middleware - apply to all requests
 app.use((req: Request, res: Response, next: NextFunction) => {
