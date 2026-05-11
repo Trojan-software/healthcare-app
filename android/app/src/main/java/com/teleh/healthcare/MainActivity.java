@@ -40,9 +40,11 @@ public class MainActivity extends BridgeActivity {
         }
         
         if (securityManager.isDeveloperOptionsEnabled()) {
+            showSecurityWarning("Developer options are enabled. Please disable them for full security protection.");
         }
         
         if (securityManager.isAdbEnabled()) {
+            showSecurityWarning("USB debugging (ADB) is enabled. Disable it when not developing to keep your data safe.");
         }
     }
     

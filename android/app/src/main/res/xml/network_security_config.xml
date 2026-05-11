@@ -35,12 +35,24 @@
             <certificates src="system" />
         </trust-anchors>
         
-        <!-- Certificate Pinning - SHA-256 Public Key Pins -->
+        <!--
+            CERTIFICATE PINNING - ACTION REQUIRED BEFORE PRODUCTION
+            =========================================================
+            These pins are PLACEHOLDER values. They MUST be replaced with
+            real SHA-256 SPKI hashes once production SSL certificates are
+            deployed to 247tech.net / api.247tech.net.
+
+            To generate real pins, run:
+                ./scripts/generate-cert-pins.sh 247tech.net
+
+            Then replace the <pin> values below with the output.
+            See docs/CERTIFICATE_PINNING_GUIDE.md for full instructions.
+        -->
         <pin-set expiration="2027-01-21">
-            <!-- Primary certificate pin (leaf certificate) -->
-            <pin digest="SHA-256">Rktl1AzSr30CuXGSV3uEGnF5MYEXy3w655PEvZ3EV2Y=</pin>
-            <!-- Backup pin (intermediate CA certificate) -->
-            <pin digest="SHA-256">y7xVm0TVJNahMr2sZydE2jQH8SquXV9yLF9seROHHHU=</pin>
+            <!-- TODO: Replace with real leaf certificate pin after SSL deployment -->
+            <pin digest="SHA-256">PLACEHOLDER_LEAF_PIN_REPLACE_BEFORE_PRODUCTION=</pin>
+            <!-- TODO: Replace with real intermediate CA pin after SSL deployment -->
+            <pin digest="SHA-256">PLACEHOLDER_INTERMEDIATE_PIN_REPLACE_BEFORE_PRODUCTION=</pin>
         </pin-set>
     </domain-config>
     
