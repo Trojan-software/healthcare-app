@@ -189,16 +189,22 @@ export function useLinktopDevice() {
             ...prev,
             bloodPressure: { ...prev.bloodPressure, data: measurement.data },
           }));
-          bridgeToDeviceDataContext('bloodPressure', measurement.data);
-          setVitalSigns(prev => ({
-            ...prev,
-            bloodPressure: { 
-              systolic: measurement.data.systolic, 
-              diastolic: measurement.data.diastolic 
-            },
-            heartRate: measurement.data.heartRate || prev.heartRate,
-            timestamp,
-          }));
+          // Only update persistent vitalSigns and the DeviceDataContext bridge for the
+          // FINAL calculated result (subtype 0x03, isFinal=true).
+          // Interim oscillometric samples (isFinal=false) are shown live in the UI but
+          // must not be treated as a confirmed reading.
+          if (measurement.data.isFinal) {
+            bridgeToDeviceDataContext('bloodPressure', measurement.data);
+            setVitalSigns(prev => ({
+              ...prev,
+              bloodPressure: { 
+                systolic: measurement.data.systolic, 
+                diastolic: measurement.data.diastolic 
+              },
+              heartRate: measurement.data.heartRate || prev.heartRate,
+              timestamp,
+            }));
+          }
           break;
           
         case 'temperature':

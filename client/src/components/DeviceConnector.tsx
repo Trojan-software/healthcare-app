@@ -285,8 +285,10 @@ export default function DeviceConnector({
       });
     } else if (d.heartRate >= 30 && d.heartRate <= 240) {
       // Result packet (subtype 0x02 from device) — the device has finished its
-      // on-chip NSK Algo analysis. Store the result and auto-stop immediately.
+      // on-chip NSK Algo analysis. Save, display, then auto-stop.
       setEcgResult(d);
+      // Save the ECG heart rate to DB now (auto-stop won't call onVitalsUpdate).
+      if (onVitalsUpdate) onVitalsUpdate({ heartRate: d.heartRate });
       scheduleAutoStop('ecg', 500); // brief delay so user sees the result flash in
     }
   }, [measurementState.ecg.data, measurementState.ecg.active]);
@@ -899,6 +901,38 @@ export default function DeviceConnector({
             );
           })()}
 
+          {/* ── Blood pressure — measuring animation ─────────────────────── */}
+          {measurementState.bloodPressure.active && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <div className={`flex items-center gap-2 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Heart className="w-4 h-4 text-blue-600 animate-pulse" />
+                <p className="text-sm font-semibold text-blue-800">
+                  {isRTL ? 'جاري قياس ضغط الدم…' : 'Measuring blood pressure…'}
+                </p>
+              </div>
+              {bpResult ? (
+                <div className={`flex items-end gap-3 justify-center py-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-700 leading-none">{bpResult.systolic}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">{isRTL ? 'الانقباضي' : 'Systolic'}</p>
+                  </div>
+                  <p className="text-xl font-light text-blue-500 mb-1">/</p>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-700 leading-none">{bpResult.diastolic}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">{isRTL ? 'الانبساطي' : 'Diastolic'}</p>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-1">mmHg</p>
+                </div>
+              ) : (
+                <div className="flex justify-center gap-1 py-2">
+                  {[0,1,2].map(i => (
+                    <div key={i} className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── Blood pressure result card ──────────────────────────────── */}
           {bpResult && !measurementState.bloodPressure.active && (() => {
             const cat = getBpCategory(bpResult.systolic, bpResult.diastolic);
@@ -1001,6 +1035,23 @@ export default function DeviceConnector({
               </div>
             );
           })()}
+
+          {/* ── Temperature — measuring animation ────────────────────────── */}
+          {measurementState.temperature.active && (
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
+              <div className={`flex items-center gap-2 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Thermometer className="w-4 h-4 text-orange-500 animate-pulse" />
+                <p className="text-sm font-semibold text-orange-800">
+                  {isRTL ? 'جاري قياس درجة الحرارة…' : 'Measuring temperature…'}
+                </p>
+              </div>
+              <div className="flex justify-center gap-1 py-2">
+                {[0,1,2].map(i => (
+                  <div key={i} className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ── Temperature result card ──────────────────────────────────── */}
           {tempResult && !measurementState.temperature.active && (() => {
