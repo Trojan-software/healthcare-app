@@ -16,7 +16,12 @@ end
 
 target 'App' do
   capacitor_pods
-  # Add your Pods here
+
+  # ADHCC Security Compliance — iOS runtime protections
+  # Covers: Jailbreak Detection (6.8), Tamper Detection (4.4),
+  #         Hooking Detection (4.4), Debugging Detection (5.7)
+  pod 'IOSSecuritySuite', '~> 1.9'
+
 end
 
 post_install do |installer|

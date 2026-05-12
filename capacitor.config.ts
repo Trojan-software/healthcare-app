@@ -5,7 +5,8 @@ const config: CapacitorConfig = {
   appName: '24/7 Tele H',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    allowNavigation: ['247tech.net']
   }
 };
 
