@@ -12,6 +12,18 @@
 # Compliance: OWASP MASVS-RESILIENCE-4, CWE-656
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# R8 Missing-class suppressions
+# androidx.security:security-crypto pulls in google/tink which
+# references compile-time-only annotation libraries that are not
+# packaged in the APK. These are annotations only — no runtime impact.
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**
+-dontwarn javax.annotation.concurrent.**
+-dontwarn org.checkerframework.**
+-dontwarn com.google.auto.value.**
+
 # Keep Capacitor classes
 -keep class com.getcapacitor.** { *; }
 -keep @com.getcapacitor.annotation.CapacitorPlugin class * {
