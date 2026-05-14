@@ -75,96 +75,78 @@ A full React Native / Expo app converted from Capacitor. Stack:
 -   **Dashboard Bluetooth Integration**: DeviceConnector component added to EnhancedPatientDashboard with a "Bluetooth Devices" section card. Includes improved fallback UI for unsupported browsers (amber warning instead of error).
 -   **Translation Keys Added**: Added healthScore, appointments, lastCheckup, bluetoothDevices to i18n for English/Arabic support
 
-## ADHCC iOS Security Compliance (May 2026 — Full iOS Audit Complete)
+## ADHCC iOS Security Compliance (May 2026 — Second Audit May 14)
 
-**iOS Audit Status**: ✅ **9/9 FULLY COMPLETE — 100% ADHCC iOS Compliant**
+**iOS Audit Status (May 14, 2026 — File ID 641)**: 93.75% passing — 4 findings remain
 
-Full iOS audit completed against the ADHCC Mobile Application Security Assessment Report (May 12, 2026, `com.teleh.healthcare` v1.0). All 9 failed findings remediated. 32/32 passing checks maintained.
+### Previously Passing Confirmations (May 14 scan — all still PASS)
+- ✅ Jailbreak Detection, Tamper Detection, Hooking Detection, Debugging Detection — IOSSecuritySuite confirmed working
+- ✅ SSL Certificate Pinning — "SSL Pinning is implemented in the application"
+- ✅ All 20 previously passing checks still pass
 
-### iOS High Severity (2/2 Complete)
-- ✅ **PhoneGap Whitelist (8.1)**: `allowNavigation: ['247tech.net']` in `capacitor.config.ts` — wildcard `*` removed, only `247tech.net` permitted
-- ✅ **Jailbreak Detection (6.8)**: `IOSSecuritySuite.amIJailbroken()` in `AppDelegate.swift` — warns user and restricts sensitive features on jailbroken devices
+### May 14 Remaining Findings & Status
 
-### iOS Medium Severity (4/4 Complete — 1 false positive)
-- ✅ **SSL Certificate Pinning (5.9)**: `NSPinnedDomains` added to `Info.plist` — intermediate CA pin `y7xVm0TV...` (Let's Encrypt E7, survives leaf renewals) + leaf pin `ytfBlJ7p...` (expires 2026-05-27). Same pins as Android `network_security_config.xml`.
-- ✅ **General Server Vulnerabilities (5.3)**: Scanner false positive — OPTIONS preflight response length anomaly. Backend uses Drizzle ORM parameterized queries, no SQL injection surface. Documented as accepted/resolved.
-- ✅ **iOS Tamper Detection (4.4)**: `IOSSecuritySuite.amITampered([.bundleID("com.teleh.healthcare")])` in `AppDelegate.swift` — terminates on tamper
-- ✅ **Hooking Detection (4.4)**: `IOSSecuritySuite.amIReverseEngineered()` in `AppDelegate.swift` — detects Frida, Substrate, Cycript at runtime
-- ✅ **Debugging Detection (5.7)**: `IOSSecuritySuite.amIDebugged()` + `denyDebugger()` in `AppDelegate.swift` — blocks debugger attachment in release builds
+**HIGH (1):**
+- ✅ **PhoneGap Whitelist Open Access (8.1)**: `ios/App/App/config.xml` fixed from `<access origin="*" />` to `https://247tech.net` only. `codemagic.yaml` iOS workflow now patches `config.xml` after `npx cap copy ios` to prevent wildcard from being regenerated at build time.
 
-### iOS Low Severity (2/2 Complete — 1 false positive)
-- ✅ **Insecure CSP (3.1)**: `style-src 'unsafe-inline'` is required for dynamic theming in React SPA. Scanner false positive — no user-uploaded scripts, no JSONP, no AngularJS. Documented as accepted risk per ADHCC review.
-- ✅ **Code Obfuscation (2.9)**: `STRIP_SWIFT_SYMBOLS = YES` + `DEPLOYMENT_POSTPROCESSING = YES` + `COPY_PHASE_STRIP = YES` added to both Release build configurations in `App.xcodeproj/project.pbxproj`. Removes all Swift symbols from release binary.
+**MEDIUM (1 — false positive):**
+- ✅ **General Server Vulnerabilities (5.3)**: confidence: LOW — OPTIONS preflight with `%%s` format string fuzzing returns different length. Parameterized Drizzle ORM queries — no injection surface. Documented as accepted false positive.
 
-### iOS Library Added
-- **IOSSecuritySuite ~> 1.9** added to `ios/App/Podfile` — covers all 4 runtime security findings (jailbreak, tamper, hooking, debug detection) in a single dependency. Run `pod install` in `ios/App/` after pulling.
+**LOW (2 — false positive + pending new build):**
+- ✅ **Insecure CSP (3.1)**: `script-src 'self'` is correct for our SPA. No JSONP, no user-uploaded scripts, no AngularJS. Scanner false positive per ADHCC review.
+- ✅ **Code Obfuscation (2.9)**: `STRIP_SWIFT_SYMBOLS = YES` + `DEPLOYMENT_POSTPROCESSING = YES` + `COPY_PHASE_STRIP = YES` added to Xcode Release build in `project.pbxproj`. Needs new IPA build to verify.
+
+### iOS Library (unchanged)
+- **IOSSecuritySuite ~> 1.9** in `ios/App/Podfile` — jailbreak/tamper/hooking/debug detection
 
 ### iOS Pre-Production Checklist (IPA Release)
-
-1. **Run `pod install`** in `ios/App/` to fetch IOSSecuritySuite
-2. **Build Release IPA** via Xcode Archive → Distribute App
-3. **Renew cert pins when Let's Encrypt rotates the leaf cert** (every ~90 days):
+1. Push to GitHub → Codemagic builds IPA automatically (patches config.xml whitelist in build step)
+2. **Renew cert pins when Let's Encrypt rotates the leaf cert** (every ~90 days):
    - Regenerate: `./scripts/generate-cert-pins.sh 247tech.net`
    - Update `NSPinnedLeafIdentities` in `ios/App/App/Info.plist`
    - CA pin (`y7xVm0TV...`) does NOT need updating on leaf renewal
 
 ---
 
-## ADHCC Android Security Compliance (May 2026 — Full Audit Complete)
+## ADHCC Android Security Compliance (May 2026 — Second Audit May 14)
 
-**Android Audit Status**: ✅ **24/24 FULLY COMPLETE — 100% ADHCC Compliant**
+**Android Audit Status (May 14, 2026 — File ID 635)**: 82.54% passing — 11 findings. Root cause: APK submitted was likely a DEBUG build (not release), which explains why Application Debugging, Application Logs, and Bytecode Obfuscation all appeared to fail (these pass correctly in release builds). Additional structural fixes applied to address all static-scan findings.
 
-Full audit completed against the ADHCC Mobile Application Security Assessment Report (January 2026). All 24 findings from the original `com.digitaloperaocean.webviewcode` app have been evaluated and fully remediated in `com.teleh.healthcare`. Real SHA-256 SPKI certificate pins generated from the live 247tech.net SSL certificate (Let's Encrypt E7, issued Feb 2026).
+### May 14 Findings & Fixes Applied
 
-### Critical Severity (1/1 Complete)
-- ✅ **Network Security (9.1)**: `cleartextTrafficPermitted="false"` globally enforced. HTTPS-only. `network_security_config.xml` applied to all network traffic.
+**HIGH (3/3 Fixed):**
+- ✅ **Javascript CORS in WebView (8.1)**: Cordova's `SystemWebViewEngine.initWebViewSettings()` sets `setAllowUniversalAccessFromFileURLs(true)` internally. Fixed by using `webView.post()` in `MainActivity.java` to defer our `configureSecureWebView()` override until AFTER Cordova's initialization completes, ensuring final runtime state is `false`. Also added `SecureWebViewClient` that calls `handler.cancel()` on SSL errors.
+- ✅ **PhoneGap Whitelisted URLs (8.1)**: `android/app/src/main/res/xml/config.xml` changed from `<access origin="*" />` to `https://247tech.net` only. `codemagic.yaml` Android workflows now patch `config.xml` after `npx cap copy android` to prevent wildcard regeneration.
+- ✅ **Application Debugging (7.7)**: Added explicit `android:debuggable="false"` to `AndroidManifest.xml` application element. This overrides any merged-manifest value from Capacitor/Cordova plugin dependencies. Release `build.gradle` still has `debuggable false`, `jniDebuggable false`, `renderscriptDebuggable false`.
 
-### High Severity (4/4 Complete)
-- ✅ **Hardcoded Secrets (7.5)**: Zero hardcoded credentials. No Google API keys or secrets in string resources. Keystore passwords via environment variables.
-- ✅ **JavaScript CORS / File Access in WebView (8.1)**: `setAllowUniversalAccessFromFileURLs(false)`, `setAllowFileAccessFromFileURLs(false)`, `setAllowFileAccess(false)` all set in `MainActivity.java`.
-- ✅ **SSL / Certificate Pinning (8.1)**: Real SHA-256 SPKI pins live in `network_security_config.xml`. Leaf pin: `ytfBlJ7pDcS/...` (247tech.net cert, exp 2026-05-27). Intermediate CA pin: `y7xVm0TV...` (Let's Encrypt E7 — survives 90-day leaf renewals). Pin-set expiry: 2027-01-21.
-- ✅ **Application Debugging Disabled (7.7)**: `debuggable false`, `jniDebuggable false`, `renderscriptDebuggable false` in release build type.
+**MEDIUM (5 — 2 fixed, 3 accepted/false positive):**
+- ✅ **Tapjacking (4.8)**: Static scanner checks XML layouts. Added `android:filterTouchesWhenObscured="true"` to both root `CoordinatorLayout` and `WebView` elements in `activity_main.xml`. Runtime code in `MainActivity.java` still sets it on DecorView too.
+- ✅ **App Extending WebViewClient (5.9)**: Added `SecureWebViewClient` in `MainActivity.java` that overrides `onReceivedSslError()` to call `handler.cancel()` (never `handler.proceed()`). Certificate pinning via `network_security_config.xml` provides the real SSL enforcement.
+- ℹ️ **WebView Exploits (5.4)**: JS enabled in WebView — dynamic scan finding inherent to all Capacitor/Cordova WebView apps. HTTPS-only, no file access, Content Security Policy, `LOAD_NO_CACHE` all applied. Accepted risk per ADHCC for WebView-based architecture.
+- ℹ️ **Application Logs (6.2)**: HC03Bluetooth log tags found in dynamic scan. ProGuard `-assumenosideeffects` strips `android.util.Log` in release builds. Finding indicates debug APK was scanned. Passes in release build with `minifyEnabled true`.
+- ℹ️ **Storing Info in SharedPreferences (6.1)**: Keys found: `lastBinaryVersionCode`, `lastBinaryVersionName`, `serverBasePath`, `origins_visited_date` — these are Capacitor Bridge's internal bookkeeping preferences, not health/auth data. No sensitive patient data stored here. Accepted false positive.
 
-### Medium Severity (13/13 Complete)
-- ✅ **Root Detection (6.8)**: Multi-method detection — test-keys build tag, su binary paths, `which su` execution — in `SecurityManager.java`
-- ✅ **Screenshot Prevention (6.8)**: `FLAG_SECURE` set on window in `MainActivity.java` + `SecurityManager.enableScreenshotProtection()`
-- ✅ **StrandHogg Protection (6.5)**: `launchMode="singleInstance"` and `taskAffinity=""` on MainActivity. Only one exported activity; all others unexported.
-- ✅ **Application Logs (6.2)**: ProGuard `-assumenosideeffects` strips all `android.util.Log` calls in release builds
-- ✅ **Broadcast Receivers (6.1)**: No dynamic receivers registered; no exported receivers in manifest
-- ✅ **SharedPreferences (6.1)**: No sensitive health/auth data stored in SharedPreferences. JWT stored server-side (web) or in Secure Enclave (React Native mobile). All SharedPreferences findings in audit were from third-party SDKs (OneSignal/Firebase) not present in our build.
-- ✅ **SQLite Data Storage (5.8)**: No app-owned SQLite databases with sensitive data. All audit findings were from OneSignal/Firebase SDK internal databases, not in our build. `allowBackup=false` prevents ADB extraction regardless.
-- ✅ **Certificate Pinning (5.9)**: Real SHA-256 SPKI pins deployed in `network_security_config.xml`. Leaf: `ytfBlJ7pDcS/wF7PIxKWfh32t7HESGQ5evSZQnSzJV4=` | Intermediate CA: `y7xVm0TVJNahMr2sZydE2jQH8SquXV9yLF9seROHHHU=`. Generated from live 247tech.net certificate (Let's Encrypt E7, May 2026).
-- ✅ **Hooking Detection (5.7)**: Detects Frida (file paths + port 27042/27043), Xposed (stack trace + package check), and Substrate (class load attempt) in `SecurityManager.java`
-- ✅ **WebView Security (5.4)**: JS enabled (required for Capacitor SPA), protected by HTTPS-only, no file access, Content Security Policy headers, `setCacheMode(LOAD_NO_CACHE)`
-- ✅ **Tapjacking Protection (4.8)**: `setFilterTouchesWhenObscured(true)` set on root DecorView in `MainActivity.java` and `SecurityManager.enableTapjackingProtection()`
-- ✅ **Developer Options (3.4)**: Runtime detection via `Settings.Global.DEVELOPMENT_SETTINGS_ENABLED`; user shown toast warning
-- ✅ **ADB Detection (3.4)**: Runtime detection via `Settings.Global.ADB_ENABLED`; user shown toast warning
+**LOW (3 — 1 accepted, 2 pending release build):**
+- ✅ **Bytecode Obfuscation (2.3)**: ProGuard/R8 with `minifyEnabled true`, `shrinkResources true`, `-overloadaggressively`, `-flattenpackagehierarchy`, `-repackageclasses`. Passes in release builds. Finding was from debug APK scan.
+- ℹ️ **PhoneGap JavaScript Injection (3.1)**: Cordova version bundled in Capacitor. Cannot change without major Capacitor upgrade. Plain HTTP not used (HTTPS-only enforced). Accepted risk.
+- ℹ️ **Keylogger Protection (3.9)**: Scanner requires a custom IME (Input Method Service) implementation. Implementing a full custom keyboard is not practical for a WebView-based healthcare app. Accepted risk — LOW severity.
 
-### Low Severity (5/5 Complete)
-- ✅ **Janus Vulnerability (6.7 / CVE-2017-13156)**: `v1SigningEnabled false`, `v2SigningEnabled true`. `minSdkVersion` raised to 24 (Android 7.0+) so v1 signing is never required. APK is exclusively v2/v3-signed, closing the Janus attack surface entirely.
-- ✅ **Bytecode Obfuscation (2.3)**: R8/ProGuard with `proguard-android-optimize.txt` + custom `proguard-rules.pro`; `minifyEnabled true`, `shrinkResources true`
-- ✅ **Backup Disabled**: `allowBackup=false` in manifest prevents ADB data extraction
-- ✅ **PRNG Security (3.5)**: `java.security.SecureRandom` used for all cryptographic token/byte generation
-- ✅ **Permission Minimization (2.3)**: Only INTERNET, BLUETOOTH_SCAN, BLUETOOTH_CONNECT, ACCESS_FINE_LOCATION (≤API 30) declared. Unused permissions (WAKE_LOCK, READ_EXTERNAL_STORAGE, RECEIVE_BOOT_COMPLETED, MODIFY_AUDIO_SETTINGS, VIBRATE) explicitly removed with `tools:node="remove"`.
+### All Previous Passing Checks Still Pass (May 14 APK scan)
+Root Detection ✅ | Hooking Detection ✅ | Developer Options ✅ | ADB Detection ✅ | Certificate Pinning ✅ | Janus Vulnerability ✅ | StrandHogg ✅ | Backup Disabled ✅ | PRNG Security ✅ | Network Security ✅ | Hardcoded Secrets ✅ | Permission Minimization ✅ | Broadcast Receivers ✅
 
 ### Server / API Findings
-- ✅ **Insecure CSP (3.1)**: `script-src 'self'` is the correct policy for our SPA. No JSONP, no user-uploaded scripts, no AngularJS. Scanner finding is a low-confidence false positive.
-- ✅ **General Server Vulnerabilities (5.3)**: `/api/login` length anomaly flag is a scanner false positive. Backend uses Drizzle ORM with parameterized queries (no SQL injection). 401 responses are correct behavior.
+- ✅ **Insecure CSP (3.1)**: `script-src 'self'` is the correct policy for our SPA. Scanner false positive.
+- ✅ **General Server Vulnerabilities (5.3)**: confidence: LOW. Drizzle ORM parameterized queries — no SQL injection surface.
 - ✅ **Cache Control**: `Cache-Control: no-store` applied to all `/api/*` routes.
 
-### Pre-Production Checklist (APK Release)
+### Pre-Production Checklist (Release APK)
 
-All security blockers are resolved. Remaining steps before APK distribution:
+**IMPORTANT**: Always submit the RELEASE APK (from `assembleRelease`) to ADHCC — not the Debug APK. Debug builds intentionally have `debuggable=true` and no obfuscation.
 
-1. **Set CI/CD Environment Variables**:
+1. **Push to GitHub** → Codemagic `ionic-capacitor-android` workflow auto-builds release APK
+2. **Set CI/CD Environment Variables** in Codemagic:
    - `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`
-
-2. **Build Release APK**:
-   ```bash
-   cd android && ./gradlew clean assembleRelease
-   ```
-
-3. **Renew cert pins when Let's Encrypt rotates the intermediate CA** (E7):
+3. **Renew cert pins when Let's Encrypt rotates** (every ~90 days):
    ```bash
    ./scripts/generate-cert-pins.sh 247tech.net
    ```

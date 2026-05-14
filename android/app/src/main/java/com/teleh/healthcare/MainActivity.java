@@ -1,101 +1,126 @@
 package com.teleh.healthcare;
 
+import android.net.http.SslError;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.webkit.WebSettings;
 import android.widget.Toast;
 import com.getcapacitor.BridgeActivity;
 import com.teleh.healthcare.security.SecurityManager;
 
 public class MainActivity extends BridgeActivity {
-    
-    private static final String TAG = "MainActivity";
+
     private SecurityManager securityManager;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         securityManager = SecurityManager.getInstance(this);
-        
+
         registerPlugin(HC03BluetoothPlugin.class);
         registerPlugin(SecurityPlugin.class);
-        
+
         performSecurityChecks();
-        
+
         applySecurityProtections();
-        
-        configureSecureWebView();
+
+        scheduleWebViewSecurityConfig();
     }
-    
+
     private void performSecurityChecks() {
         if (securityManager.isRooted()) {
             showSecurityWarning("Device appears to be rooted. Some features may be restricted.");
         }
-        
+
         if (securityManager.isHookingFrameworkDetected()) {
             showSecurityWarning("Security framework detected. App functionality may be limited.");
         }
-        
+
         if (securityManager.isDeveloperOptionsEnabled()) {
             showSecurityWarning("Developer options are enabled. Please disable them for full security protection.");
         }
-        
+
         if (securityManager.isAdbEnabled()) {
             showSecurityWarning("USB debugging (ADB) is enabled. Disable it when not developing to keep your data safe.");
         }
     }
-    
+
     private void applySecurityProtections() {
         getWindow().setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
         );
-        
+
         enableTapjackingProtection();
     }
-    
-    private void configureSecureWebView() {
+
+    private void scheduleWebViewSecurityConfig() {
         try {
             WebView webView = getBridge().getWebView();
             if (webView != null) {
-                WebSettings settings = webView.getSettings();
-                
-                settings.setAllowFileAccessFromFileURLs(false);
-                settings.setAllowUniversalAccessFromFileURLs(false);
-                
-                settings.setAllowFileAccess(false);
-                settings.setAllowContentAccess(false);
-                
-                settings.setGeolocationEnabled(false);
-                
-                settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-                
-                settings.setSaveFormData(false);
-                settings.setSavePassword(false);
+                webView.post(this::configureSecureWebView);
             }
         } catch (Exception e) {
         }
     }
-    
+
+    private void configureSecureWebView() {
+        try {
+            WebView webView = getBridge().getWebView();
+            if (webView == null) return;
+
+            WebSettings settings = webView.getSettings();
+
+            settings.setAllowFileAccessFromFileURLs(false);
+            settings.setAllowUniversalAccessFromFileURLs(false);
+
+            settings.setAllowFileAccess(false);
+            settings.setAllowContentAccess(false);
+
+            settings.setGeolocationEnabled(false);
+
+            settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+
+            settings.setSaveFormData(false);
+            settings.setSavePassword(false);
+
+            webView.setWebViewClient(new SecureWebViewClient());
+
+            webView.setFilterTouchesWhenObscured(true);
+
+        } catch (Exception e) {
+        }
+    }
+
     private void enableTapjackingProtection() {
         View rootView = getWindow().getDecorView().getRootView();
         if (rootView != null) {
             rootView.setFilterTouchesWhenObscured(true);
         }
     }
-    
+
     private void showSecurityWarning(String message) {
         runOnUiThread(() -> {
             Toast.makeText(this, message, Toast.LENGTH_LONG).show();
         });
     }
-    
+
     @Override
     public void onResume() {
         super.onResume();
         applySecurityProtections();
+        scheduleWebViewSecurityConfig();
+    }
+
+    private static class SecureWebViewClient extends WebViewClient {
+        @Override
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            handler.cancel();
+        }
     }
 }

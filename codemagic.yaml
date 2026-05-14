@@ -18,6 +18,22 @@ workflows:
         script: |
           npx cap copy android
           npx cap update android
+      - name: Patch config.xml whitelist (ADHCC HIGH 8.1 compliance)
+        script: |
+          # Replace Cordova wildcard access origin with specific domain only
+          # Fixes PhoneGap Whitelisted URLs (CVSS 8.1) and Javascript CORS (CVSS 8.1)
+          CONFIG_XML="android/app/src/main/res/xml/config.xml"
+          cat > "$CONFIG_XML" << 'EOF'
+          <?xml version='1.0' encoding='utf-8'?>
+          <widget version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+            <access origin="https://247tech.net" />
+            <access origin="https://*.247tech.net" />
+            <allow-navigation href="https://247tech.net" />
+            <allow-navigation href="https://*.247tech.net" />
+          </widget>
+          EOF
+          echo "Android config.xml whitelist patched:"
+          cat "$CONFIG_XML"
       - name: Build Android Release APK
         script: |
           cd android
@@ -54,6 +70,19 @@ workflows:
         script: |
           npx cap copy android
           npx cap update android
+      - name: Patch config.xml whitelist (ADHCC HIGH 8.1 compliance)
+        script: |
+          CONFIG_XML="android/app/src/main/res/xml/config.xml"
+          cat > "$CONFIG_XML" << 'EOF'
+          <?xml version='1.0' encoding='utf-8'?>
+          <widget version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+            <access origin="https://247tech.net" />
+            <access origin="https://*.247tech.net" />
+            <allow-navigation href="https://247tech.net" />
+            <allow-navigation href="https://*.247tech.net" />
+          </widget>
+          EOF
+          echo "Android config.xml whitelist patched"
       - name: Build Android Debug
         script: |
           cd android
@@ -98,6 +127,22 @@ workflows:
         script: |
           npx cap copy ios
           npx cap update ios
+      - name: Patch config.xml whitelist (ADHCC HIGH 8.1 compliance)
+        script: |
+          # Replace Cordova wildcard access origin with specific domain only
+          # Fixes PhoneGap Whitelist Open Access (CVSS 8.1)
+          CONFIG_XML="ios/App/App/config.xml"
+          cat > "$CONFIG_XML" << 'EOF'
+          <?xml version='1.0' encoding='utf-8'?>
+          <widget version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+            <access origin="https://247tech.net" />
+            <access origin="https://*.247tech.net" />
+            <allow-navigation href="https://247tech.net" />
+            <allow-navigation href="https://*.247tech.net" />
+          </widget>
+          EOF
+          echo "iOS config.xml whitelist patched:"
+          cat "$CONFIG_XML"
       - name: Install CocoaPods dependencies
         script: |
           cd ios/App
