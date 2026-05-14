@@ -78,13 +78,13 @@
 }
 
 # Optimization flags
--optimizationpasses 7
+-optimizationpasses 5
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
--dontpreverify
 -verbose
 
-# Obfuscation options
+# Obfuscation options — repackageclasses moves all classes into a single flat package
+# NOTE: do NOT use -flattenpackagehierarchy together with -repackageclasses (mutually exclusive)
 -repackageclasses ''
 -allowaccessmodification
 -optimizations !code/simplification/arithmetic,!field/*,!class/merging/*
@@ -107,16 +107,15 @@
 # ENHANCED SECURITY: Additional Obfuscation & Hardening
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Aggressive class name obfuscation
--overloadaggressively
-
 # String encryption for additional security
 -adaptclassstrings
 -adaptresourcefilenames
 -adaptresourcefilecontents
 
-# Flatten package hierarchy (makes reverse engineering harder)
--flattenpackagehierarchy ''
+# NOTE: -overloadaggressively and -flattenpackagehierarchy are NOT supported by R8
+# and cause "Compilation failed to complete". Removed — -repackageclasses '' above
+# already flattens the entire package hierarchy into a single unnamed package,
+# achieving the same obfuscation goal.
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # SECURITY: Protect Security-Critical Classes
