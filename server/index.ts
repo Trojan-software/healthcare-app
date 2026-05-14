@@ -86,39 +86,34 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Surrogate-Control', 'no-store');
   }
 
-  // Security headers — applied to ALL environments so scanner always sees them
-  // NOTE: No HTTPS redirect — Replit's load balancer already enforces HTTPS;
-  //       a redirect here causes an infinite loop behind the proxy.
-
+  // Basic security headers — safe in all environments
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // HSTS — production only (dev/staging don't serve over public HTTPS)
-  if (process.env.NODE_ENV === 'production') {
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  // Production-only headers
+  // NOTE: CSP uses script-src 'self' which blocks Vite's inline React Fast Refresh
+  // preamble script in development — so CSP and HSTS are production-only.
+  // The ADHCC scanner scans https://247tech.net (production), so this is fine.
+  if (process.env.NODE_ENV !== 'production') {
+    return next();
   }
 
-  // ADHCC Finding 3.1 — Content Security Policy (tightened)
-  //
-  // Changes from previous version:
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+
+  // ADHCC Finding 3.1 — Content Security Policy (tightened vs previous version)
   //   img-src:     removed bare 'https:' wildcard → explicit https://247tech.net only
   //   connect-src: removed bare 'wss:' wildcard    → explicit wss://247tech.net only
-  //   media-src:   added 'self' (covers <audio>/<video> elements)
-  //   child-src:   added 'none' (Web Workers in frame context)
-  //   Applied to ALL environments (was production-only) so scanner always sees it
-  //
+  //   media-src:   added 'self'
+  //   child-src:   added 'none'
   // 'unsafe-inline' in style-src is retained — required for Tailwind/shadcn
-  // dynamic class injection; does NOT affect script execution.
-  const isProd = process.env.NODE_ENV === 'production';
-  const selfHost = isProd ? 'https://247tech.net' : '';
   const cspDirectives = [
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: blob:${selfHost ? ' ' + selfHost : ''}`,
+    "img-src 'self' data: blob: https://247tech.net",
     "font-src 'self' data:",
-    `connect-src 'self'${selfHost ? ' ' + selfHost + ' wss://' + '247tech.net' : ''}`,
+    "connect-src 'self' https://247tech.net wss://247tech.net",
     "manifest-src 'self'",
     "worker-src 'self' blob:",
     "media-src 'self'",
