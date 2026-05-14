@@ -30,18 +30,40 @@ function isAllowedOrigin(origin: string | undefined): boolean {
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
-  if (isAllowedOrigin(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  const allowed = isAllowedOrigin(origin);
+
+  // ADHCC Finding 5.3 — General Server Vulnerabilities
+  // OPTIONS preflight must ALWAYS return an identical, fixed set of headers
+  // regardless of what is in the Origin header (including fuzz/format strings).
+  //
+  // Root cause of previous finding: non-whitelisted origins received NO CORS
+  // headers → shorter response → scanner detected response-length variation
+  // when fuzzing Origin with %%s and flagged it as a potential injection surface.
+  //
+  // Fix: OPTIONS always emits a complete, deterministic header block.
+  //   - Access-Control-Allow-Origin is always present (falls back to production
+  //     domain for unknown origins so header count and structure are identical).
+  //   - Vary: Origin tells CDNs the response varies by origin (correct behaviour).
+  //   - All other CORS headers are unconditional so byte count is constant.
+  if (req.method === 'OPTIONS') {
+    const responseOrigin = (origin && allowed) ? origin : 'https://247tech.net';
+    res.setHeader('Access-Control-Allow-Origin', responseOrigin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.setHeader('Vary', 'Origin');
+    res.status(204).end();
+    return;
+  }
+
+  // Non-OPTIONS: only reflect CORS headers for whitelisted origins
+  if (allowed) {
+    res.setHeader('Access-Control-Allow-Origin', origin || 'https://247tech.net');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
     res.setHeader('Access-Control-Expose-Headers', 'Content-Length,X-Request-Id');
-    res.setHeader('Access-Control-Max-Age', '86400');
-  }
-  // Handle preflight — respond immediately so the browser can proceed
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(204);
-    return;
   }
   next();
 });
@@ -64,43 +86,54 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Surrogate-Control', 'no-store');
   }
 
-  // Only apply additional security headers in production
-  // NOTE: No HTTPS redirect here — Replit's load balancer already enforces HTTPS
-  // Adding a redirect causes an infinite loop (proxy doesn't always forward x-forwarded-proto)
-  if (process.env.NODE_ENV !== 'production') {
-    return next();
-  }
+  // Security headers — applied to ALL environments so scanner always sees them
+  // NOTE: No HTTPS redirect — Replit's load balancer already enforces HTTPS;
+  //       a redirect here causes an infinite loop behind the proxy.
 
-  // Security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  // HSTS header (without preload initially for safety)
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  
-  // Content Security Policy for healthcare app (production-ready)
-  // Enhanced CSP - ADHCC Security Compliant
+
+  // HSTS — production only (dev/staging don't serve over public HTTPS)
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+
+  // ADHCC Finding 3.1 — Content Security Policy (tightened)
+  //
+  // Changes from previous version:
+  //   img-src:     removed bare 'https:' wildcard → explicit https://247tech.net only
+  //   connect-src: removed bare 'wss:' wildcard    → explicit wss://247tech.net only
+  //   media-src:   added 'self' (covers <audio>/<video> elements)
+  //   child-src:   added 'none' (Web Workers in frame context)
+  //   Applied to ALL environments (was production-only) so scanner always sees it
+  //
+  // 'unsafe-inline' in style-src is retained — required for Tailwind/shadcn
+  // dynamic class injection; does NOT affect script execution.
+  const isProd = process.env.NODE_ENV === 'production';
+  const selfHost = isProd ? 'https://247tech.net' : '';
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self'", // No unsafe-inline/unsafe-eval, React bundled scripts only
-    "style-src 'self' 'unsafe-inline'", // Inline styles needed for dynamic theming
-    "img-src 'self' data: https:",
-    "font-src 'self'",
-    "connect-src 'self' https://247tech.net wss: wss://247tech.net", // API + websockets
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: blob:${selfHost ? ' ' + selfHost : ''}`,
+    "font-src 'self' data:",
+    `connect-src 'self'${selfHost ? ' ' + selfHost + ' wss://' + '247tech.net' : ''}`,
     "manifest-src 'self'",
-    "worker-src 'self'",
-    "object-src 'none'", // Block plugins (Flash, Java applets)
-    "base-uri 'self'", // Prevent base tag hijacking
-    "form-action 'self'", // Forms can only submit to self
-    "frame-ancestors 'none'", // Prevent clickjacking
-    "frame-src 'none'", // No iframes allowed
+    "worker-src 'self' blob:",
+    "media-src 'self'",
+    "object-src 'none'",
+    "child-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "frame-src 'none'",
     "upgrade-insecure-requests",
     "block-all-mixed-content"
   ].join('; ');
-  
+
   res.setHeader('Content-Security-Policy', cspDirectives);
-  
+
   next();
 });
 
