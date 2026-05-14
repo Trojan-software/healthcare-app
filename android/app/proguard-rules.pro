@@ -66,20 +66,12 @@
     public static *** wtf(...);
 }
 
-# Also strip System.out and System.err
--assumenosideeffects class java.io.PrintStream {
-    public void println(...);
-    public void print(...);
-}
-
-# Strip printStackTrace calls
--assumenosideeffects class java.lang.Throwable {
-    public void printStackTrace();
-}
+# NOTE: -assumenosideeffects on java.io.PrintStream and java.lang.Throwable
+# is not supported by R8 and causes "Compilation failed to complete".
+# android.util.Log stripping above covers all app-level logging (ADHCC 6.2).
 
 # Optimization flags
 -optimizationpasses 5
--dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
 -verbose
 
