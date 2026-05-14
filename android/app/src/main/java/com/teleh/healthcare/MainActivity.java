@@ -100,11 +100,9 @@ public class MainActivity extends BridgeActivity {
             settings.setSaveFormData(false);
             settings.setSavePassword(false);
 
-            // ADHCC Finding 3.9 (Keylogger Protection) — hint to IME not to
-            // use personalised learning / suggestion logging for this WebView.
-            // "nm" = no microphone; combined with JS injection below this
-            // prevents the system keyboard from caching sensitive input.
-            webView.setPrivateImeOptions("nm,noExtractUi,noCursorUpdate");
+            // ADHCC Finding 3.9 (Keylogger Protection) — handled via JS injection
+            // in SecureWebViewClient.onPageFinished() which sets autocomplete="off",
+            // spellcheck="false", and data-lpignore="true" on all input elements.
 
             webView.setWebViewClient(new SecureWebViewClient());
 
