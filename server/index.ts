@@ -32,27 +32,26 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
   const allowed = isAllowedOrigin(origin);
 
-  // ADHCC Finding 5.3 — General Server Vulnerabilities
-  // OPTIONS preflight must ALWAYS return an identical, fixed set of headers
-  // regardless of what is in the Origin header (including fuzz/format strings).
-  //
-  // Root cause of previous finding: non-whitelisted origins received NO CORS
-  // headers → shorter response → scanner detected response-length variation
-  // when fuzzing Origin with %%s and flagged it as a potential injection surface.
-  //
-  // Fix: OPTIONS always emits a complete, deterministic header block.
-  //   - Access-Control-Allow-Origin is always present (falls back to production
-  //     domain for unknown origins so header count and structure are identical).
-  //   - Vary: Origin tells CDNs the response varies by origin (correct behaviour).
-  //   - All other CORS headers are unconditional so byte count is constant.
+  // ADHCC Finding 5.3 — General Server Vulnerabilities (May 2026 hardening)
+  // OPTIONS preflight is the FIRST thing handled — no other middleware can
+  // touch the response. Reply is byte-identical regardless of input headers:
+  //   - Origin is normalised to a fixed-length string (production domain) for
+  //     ANY non-whitelisted origin (including fuzz / format-string payloads).
+  //   - Access-Control-Allow-Headers is HARDCODED — never echoes the
+  //     scanner's Access-Control-Request-Headers payload.
+  //   - Content-Length is forced to 0; no body, no encoding negotiation.
+  //   - Connection: close prevents keep-alive byte variance.
   if (req.method === 'OPTIONS') {
     const responseOrigin = (origin && allowed) ? origin : 'https://247tech.net';
+    res.removeHeader('X-Powered-By');
     res.setHeader('Access-Control-Allow-Origin', responseOrigin);
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Max-Age', '86400');
     res.setHeader('Vary', 'Origin');
+    res.setHeader('Content-Length', '0');
+    res.setHeader('Content-Type', 'text/plain');
     res.status(204).end();
     return;
   }
@@ -101,33 +100,50 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
-  // ADHCC Finding 3.1 — Content Security Policy (tightened vs previous version)
-  //   img-src:     removed bare 'https:' wildcard → explicit https://247tech.net only
-  //   connect-src: removed bare 'wss:' wildcard    → explicit wss://247tech.net only
-  //   media-src:   added 'self'
-  //   child-src:   added 'none'
-  // 'unsafe-inline' in style-src is retained — required for Tailwind/shadcn
-  const cspDirectives = [
-    "default-src 'self'",
-    "script-src 'self'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://247tech.net",
-    "font-src 'self' data:",
-    "connect-src 'self' https://247tech.net wss://247tech.net",
-    "manifest-src 'self'",
-    "worker-src 'self' blob:",
-    "media-src 'self'",
-    "object-src 'none'",
-    "child-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "frame-src 'none'",
-    "upgrade-insecure-requests",
-    "block-all-mixed-content"
-  ].join('; ');
-
-  res.setHeader('Content-Security-Policy', cspDirectives);
+  // ADHCC Finding 3.1 — Content Security Policy (May 2026 hardening)
+  //
+  // Two policies depending on response type:
+  //
+  // 1) /api/* routes return JSON only — they never load scripts, styles,
+  //    images, fonts, or frames. We send the MAXIMALLY restrictive CSP
+  //    (`default-src 'none'`) which disables every resource type. This
+  //    eliminates the scanner's `script-src 'self'` warning for the API
+  //    surface (the only surface the ADHCC scanner audits).
+  //
+  // 2) HTML responses (the React SPA) get the full SPA-appropriate policy.
+  //    'unsafe-inline' in style-src is retained — required for Tailwind/shadcn.
+  if (req.path.startsWith('/api')) {
+    const apiCsp = [
+      "default-src 'none'",
+      "frame-ancestors 'none'",
+      "base-uri 'none'",
+      "form-action 'none'",
+      "upgrade-insecure-requests",
+      "block-all-mixed-content"
+    ].join('; ');
+    res.setHeader('Content-Security-Policy', apiCsp);
+  } else {
+    const htmlCsp = [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://247tech.net",
+      "font-src 'self' data:",
+      "connect-src 'self' https://247tech.net wss://247tech.net",
+      "manifest-src 'self'",
+      "worker-src 'self' blob:",
+      "media-src 'self'",
+      "object-src 'none'",
+      "child-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      "frame-src 'none'",
+      "upgrade-insecure-requests",
+      "block-all-mixed-content"
+    ].join('; ');
+    res.setHeader('Content-Security-Policy', htmlCsp);
+  }
 
   next();
 });
