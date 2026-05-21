@@ -6,10 +6,10 @@ import android.view.View;
 import android.view.WindowManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.webkit.WebSettings;
 import android.widget.Toast;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebViewClient;
 import com.teleh.healthcare.security.SecurityManager;
 
 public class MainActivity extends BridgeActivity {
@@ -19,7 +19,6 @@ public class MainActivity extends BridgeActivity {
     static {
         // ADHCC Finding 5.4 (WebView Exploits) — disable WebView remote debugging
         // globally at class-load time, before any WebView instance is created.
-        // Applies to ALL WebViews in the process.
         WebView.setWebContentsDebuggingEnabled(false);
     }
 
@@ -100,11 +99,11 @@ public class MainActivity extends BridgeActivity {
             settings.setSaveFormData(false);
             settings.setSavePassword(false);
 
-            // ADHCC Finding 3.9 (Keylogger Protection) — handled via JS injection
-            // in SecureWebViewClient.onPageFinished() which sets autocomplete="off",
-            // spellcheck="false", and data-lpignore="true" on all input elements.
-
-            webView.setWebViewClient(new SecureWebViewClient());
+            // ADHCC Finding 5.9 + 3.9 — Use SecureWebViewClient which EXTENDS
+            // Capacitor's BridgeWebViewClient (preserves JS bridge) and adds:
+            //   • onReceivedSslError → always cancel (never proceed)
+            //   • onPageFinished → inject keylogger-protection JS
+            webView.setWebViewClient(new SecureWebViewClient(getBridge()));
 
             webView.setFilterTouchesWhenObscured(true);
 
@@ -133,16 +132,17 @@ public class MainActivity extends BridgeActivity {
     }
 
     /**
-     * SecureWebViewClient
+     * SecureWebViewClient — extends BridgeWebViewClient (not plain WebViewClient)
+     *
+     * CRITICAL: Extending BridgeWebViewClient preserves Capacitor's JavaScript bridge.
+     * Extending plain WebViewClient destroys it and crashes the app.
      *
      * ADHCC Finding 5.9  — App Extending WebViewClient: cancels SSL errors (never proceeds).
      * ADHCC Finding 3.9  — Keylogger Protection: on every page load, injects a script that:
      *   1. Sets autocomplete="off" + spellcheck="false" on all existing input/textarea fields.
      *   2. Installs a MutationObserver so dynamically-added fields get the same treatment.
-     *   This prevents the system keyboard and third-party IMEs from persisting typed content
-     *   or sending it to cloud suggestion services.
      */
-    private static class SecureWebViewClient extends WebViewClient {
+    private static class SecureWebViewClient extends BridgeWebViewClient {
 
         private static final String KEYLOGGER_PROTECTION_JS =
             "(function() {" +
@@ -172,6 +172,10 @@ public class MainActivity extends BridgeActivity {
             "  observer.observe(document.body || document.documentElement," +
             "    { childList: true, subtree: true });" +
             "})();";
+
+        SecureWebViewClient(com.getcapacitor.Bridge bridge) {
+            super(bridge);
+        }
 
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
