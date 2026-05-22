@@ -23,6 +23,9 @@
 -dontwarn javax.annotation.concurrent.**
 -dontwarn org.checkerframework.**
 -dontwarn com.google.auto.value.**
+# Tink's KeysDownloader (we don't use it) references Google HTTP Client + Joda
+-dontwarn com.google.api.client.**
+-dontwarn org.joda.time.**
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CRITICAL: Classes referenced by name in AndroidManifest.xml MUST be kept.
