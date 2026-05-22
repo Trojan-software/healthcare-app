@@ -24,16 +24,44 @@
 -dontwarn org.checkerframework.**
 -dontwarn com.google.auto.value.**
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CRITICAL: Classes referenced by name in AndroidManifest.xml MUST be kept.
+# Without these, -repackageclasses '' renames them and Android throws
+# ClassNotFoundException on launch → instant crash.
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-keep class com.teleh.healthcare.TeleHApplication { *; }
+-keep class com.teleh.healthcare.MainActivity { *; }
+-keep class com.teleh.healthcare.MainActivity$* { *; }
+
+# Standard Android components — manifest references and framework reflection
+-keep public class * extends android.app.Application
+-keep public class * extends android.app.Activity
+-keep public class * extends android.app.Service
+-keep public class * extends android.content.BroadcastReceiver
+-keep public class * extends android.content.ContentProvider
+-keep public class * extends androidx.core.content.FileProvider
+
 # Keep Capacitor classes
 -keep class com.getcapacitor.** { *; }
+-keep interface com.getcapacitor.** { *; }
 -keep @com.getcapacitor.annotation.CapacitorPlugin class * {
     @com.getcapacitor.annotation.PluginMethod <methods>;
 }
 
 # Keep custom plugins
 -keep class com.teleh.healthcare.HC03BluetoothPlugin { *; }
+-keep class com.teleh.healthcare.HC03BluetoothPlugin$* { *; }
 -keep class com.teleh.healthcare.SecurityPlugin { *; }
+-keep class com.teleh.healthcare.SecurityPlugin$* { *; }
 -keep class com.teleh.healthcare.EcgManager { *; }
+-keep class com.teleh.healthcare.EcgManager$* { *; }
+
+# Keep entire security package (SecurityManager + helpers referenced via reflection)
+-keep class com.teleh.healthcare.security.** { *; }
+
+# Keep androidx.security crypto (EncryptedSharedPreferences depends on Tink)
+-keep class androidx.security.** { *; }
+-keep class com.google.crypto.tink.** { *; }
 
 # Keep security package (public APIs only, internals are obfuscated)
 -keep class com.teleh.healthcare.security.SecurityManager {
