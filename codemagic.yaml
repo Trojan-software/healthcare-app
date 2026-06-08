@@ -38,11 +38,16 @@ workflows:
         script: |
           cd android
           chmod +x ./gradlew
+          # Clean first so no stale debug APK lingers in the outputs folder
+          ./gradlew clean
           # Build release APK (debuggable=false, ProGuard enabled)
           ./gradlew assembleRelease
+          echo "=== Release APK(s) produced (ONLY these are valid for ADHCC) ==="
+          ls -lh app/build/outputs/apk/release/*.apk
     artifacts:
-      - android/app/build/outputs/**/*.apk
-      - android/app/build/outputs/**/mapping.txt
+      # ONLY publish the release APK — never debug — so the wrong file can't be submitted to ADHCC
+      - android/app/build/outputs/apk/release/*.apk
+      - android/app/build/outputs/mapping/release/mapping.txt
     publishing:
       email:
         recipients:
