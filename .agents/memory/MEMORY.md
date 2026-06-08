@@ -1,0 +1,1 @@
+- [ADHCC Android audit triage](adhcc-android-audits.md) — debug-vs-release tell-tale (logs+obfuscation both fail = debug); 6.1/3.5 false positives; pdftotext -upw to open reports.
